@@ -34,6 +34,16 @@ type Variant = {
   isActive: boolean;
 };
 
+type ProductMedia = {
+  id: string;
+  type: "IMAGE" | "VIDEO";
+  url: string;
+  thumbnailUrl?: string | null;
+  altText?: string | null;
+  sortOrder: number;
+  isActive: boolean;
+};
+
 type Product = {
   id: string;
   name: string;
@@ -86,6 +96,13 @@ export default function ProductsPage() {
   const [sizeSearch, setSizeSearch] = useState("");
 
   const [variants, setVariants] = useState<Variant[]>([]);
+  const [media, setMedia] = useState<ProductMedia[]>([]);
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [mediaType, setMediaType] = useState<"IMAGE" | "VIDEO">("IMAGE");
+  const [mediaAltText, setMediaAltText] = useState("");
+  const [addingMedia, setAddingMedia] = useState(false);
+
+
 
   const [isFeatured, setIsFeatured] = useState(false);
   const [isTrending, setIsTrending] = useState(false);
@@ -366,9 +383,40 @@ export default function ProductsPage() {
         return;
       }
 
+      const createdProductId = data.id;
+
+      if (createdProductId && media.length > 0) {
+        for (const item of media) {
+          const mediaResponse = await fetch("/api/media", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              productId: createdProductId,
+              type: item.type,
+              url: item.url,
+              thumbnailUrl: item.thumbnailUrl ?? null,
+              altText: item.altText ?? null,
+            }),
+          });
+
+          if (!mediaResponse.ok) {
+            console.error(
+              "Failed to save product media:",
+              await mediaResponse.text(),
+            );
+          }
+        }
+      }
+
       alert("Product created successfully");
 
       resetForm();
+      setMedia([]);
+      setMediaUrl("");
+      setMediaAltText("");
+      setMediaType("IMAGE");
       await loadData();
     } catch (error) {
       console.error(error);
@@ -856,11 +904,162 @@ export default function ProductsPage() {
             )}
           </section>
 
+          {/* PRODUCT MEDIA */}
+          <section className="mb-6 rounded-3xl border border-purple-400/20 bg-purple-400/[0.03] p-5 sm:p-7">
+            <div className="mb-6">
+              <p className="text-xs font-bold uppercase tracking-widest text-purple-400">
+                06
+              </p>
+
+              <h2 className="mt-1 text-xl font-bold">
+                Product Media
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Add product images and videos for your product gallery.
+              </p>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[150px_1fr_auto]">
+              <select
+                value={mediaType}
+                onChange={(event) =>
+                  setMediaType(
+                    event.target.value as "IMAGE" | "VIDEO"
+                  )
+                }
+                className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3.5 outline-none focus:border-purple-400"
+              >
+                <option value="IMAGE">Image</option>
+                <option value="VIDEO">Video</option>
+              </select>
+
+              <input
+                value={mediaUrl}
+                onChange={(event) =>
+                  setMediaUrl(event.target.value)
+                }
+                placeholder={
+                  mediaType === "IMAGE"
+                    ? "https://example.com/product-image.jpg"
+                    : "https://example.com/product-video.mp4"
+                }
+                className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3.5 outline-none focus:border-purple-400"
+              />
+
+              <button
+                type="button"
+                disabled={!mediaUrl.trim()}
+                onClick={() => {
+                  if (!mediaUrl.trim()) return;
+
+                  setMedia((current) => [
+                    ...current,
+                    {
+                      id: `temp-${Date.now()}`,
+                      type: mediaType,
+                      url: mediaUrl.trim(),
+                      thumbnailUrl: null,
+                      altText: mediaAltText.trim() || null,
+                      sortOrder: current.length,
+                      isActive: true,
+                    },
+                  ]);
+
+                  setMediaUrl("");
+                  setMediaAltText("");
+                }}
+                className="rounded-2xl bg-purple-400 px-6 py-3.5 font-bold text-slate-950 transition hover:bg-purple-300 disabled:opacity-50"
+              >
+                + Add Media
+              </button>
+            </div>
+
+            <div className="mt-4">
+              <input
+                value={mediaAltText}
+                onChange={(event) =>
+                  setMediaAltText(event.target.value)
+                }
+                placeholder="Alt text / media description"
+                className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3.5 text-sm outline-none focus:border-purple-400"
+              />
+            </div>
+
+            {media.length === 0 ? (
+              <div className="mt-5 rounded-2xl border border-dashed border-white/10 p-8 text-center">
+                <p className="font-semibold text-slate-300">
+                  No product media added
+                </p>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  Add product images or videos above.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {media.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900"
+                  >
+                    <div className="aspect-square bg-slate-950">
+                      {item.type === "IMAGE" ? (
+                        <img
+                          src={item.url}
+                          alt={item.altText ?? "Product image"}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <video
+                          src={item.url}
+                          controls
+                          className="h-full w-full object-cover"
+                        />
+                      )}
+                    </div>
+
+                    <div className="p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="rounded-full bg-purple-400/10 px-2.5 py-1 text-[10px] font-bold uppercase text-purple-400">
+                          {item.type}
+                        </span>
+
+                        <span className="text-xs text-slate-500">
+                          #{index + 1}
+                        </span>
+                      </div>
+
+                      <p className="mt-2 truncate text-xs text-slate-500">
+                        {item.url}
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMedia((current) =>
+                            current.filter(
+                              (mediaItem) =>
+                                mediaItem.id !== item.id
+                            )
+                          )
+                        }
+                        className="mt-3 w-full rounded-xl border border-red-400/20 bg-red-400/5 py-2 text-xs font-semibold text-red-400 hover:bg-red-400/10"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
           {/* SETTINGS */}
           <section className="mb-6 rounded-3xl border border-white/10 bg-white/[0.04] p-5 sm:p-7">
             <div className="mb-6">
               <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
-                06
+                07
               </p>
 
               <h2 className="mt-1 text-xl font-bold">
