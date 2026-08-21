@@ -1,0 +1,546 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  CUSTOMER
+  RESELLER
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  BLOCKED
+  PENDING
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  OUT_OF_STOCK
+}
+
+enum OrderType {
+  RETAIL
+  RESELLER
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURN_REQUESTED
+  RETURNED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIAL
+}
+
+enum PaymentMethod {
+  COD
+  UPI
+  CARD
+  NET_BANKING
+  WALLET
+}
+
+enum SalesModeStatus {
+  OPEN
+  CLOSED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  HIDDEN
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum ResellerSetType {
+  FIXED
+  MIXED
+  ASSORTED
+}
+
+enum ResellerSetStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  SOLD_OUT
+}
+
+model User {
+  id            String        @id @default(cuid())
+  name          String?
+  email         String?       @unique
+  phone         String?       @unique
+  passwordHash  String?
+  role          UserRole      @default(CUSTOMER)
+  status        AccountStatus @default(ACTIVE)
+  isReseller    Boolean       @default(false)
+  resellerLevel String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  addresses      Address[]
+  orders         Order[]
+  cart           Cart?
+  wishlist       WishlistItem[]
+  reviews        Review[]
+  notifications  Notification[]
+  resellerOrders ResellerContent[]
+}
+
+model Address {
+  id           String   @id @default(cuid())
+  userId       String
+  name         String
+  phone        String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  pincode      String
+  landmark     String?
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([userId])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parentId String?
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryTree")
+
+  products Product[]
+
+  @@index([parentId])
+}
+
+model Color {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  hexCode   String?
+  imageUrl  String?
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  variants  ProductVariant[]
+  setColors ResellerSetColor[]
+
+  @@index([isActive])
+}
+
+model Size {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  category  String?
+  sizeType  String?
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  variants ProductVariant[]
+  setSizes ResellerSetSize[]
+
+  @@index([isActive])
+}
+
+model Product {
+  id            String        @id @default(cuid())
+  name          String
+  slug          String        @unique
+  sku           String?       @unique
+  description   String?
+  fabric        String?
+  retailPrice   Decimal       @db.Decimal(10, 2)
+  resellerPrice Decimal?      @db.Decimal(10, 2)
+  mrp           Decimal?      @db.Decimal(10, 2)
+  resellerMOQ   Int?
+  status        ProductStatus @default(DRAFT)
+  isFeatured    Boolean       @default(false)
+  isTrending    Boolean       @default(false)
+  isNewArrival  Boolean       @default(false)
+  sortOrder     Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  variants      ProductVariant[]
+  media         ProductMedia[]
+  cartItems     CartItem[]
+  wishlistItems WishlistItem[]
+  reviews       Review[]
+  orderItems    OrderItem[]
+  resellerItems ResellerSetItem[]
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([isFeatured])
+  @@index([isTrending])
+}
+
+model ProductVariant {
+  id            String   @id @default(cuid())
+  productId     String
+  colorId       String
+  sizeId        String
+  sku           String?  @unique
+  stock         Int      @default(0)
+  reservedStock Int      @default(0)
+  costPrice     Decimal? @db.Decimal(10, 2)
+  retailPrice   Decimal? @db.Decimal(10, 2)
+  resellerPrice Decimal? @db.Decimal(10, 2)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  color      Color       @relation(fields: [colorId], references: [id])
+  size       Size        @relation(fields: [sizeId], references: [id])
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+
+  @@unique([productId, colorId, sizeId])
+  @@index([productId])
+  @@index([colorId])
+  @@index([sizeId])
+}
+
+model ProductMedia {
+  id           String    @id @default(cuid())
+  productId    String
+  type         MediaType
+  url          String
+  thumbnailUrl String?
+  altText      String?
+  sortOrder    Int       @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  productId String
+  variantId String?
+  quantity  Int      @default(1)
+  unitPrice Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart    Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@unique([cartId, productId, variantId])
+  @@index([cartId])
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model Order {
+  id             String         @id @default(cuid())
+  orderNumber    String         @unique
+  userId         String
+  addressId      String?
+  type           OrderType
+  status         OrderStatus    @default(PENDING)
+  paymentStatus  PaymentStatus  @default(PENDING)
+  paymentMethod  PaymentMethod?
+  subtotal       Decimal        @db.Decimal(10, 2)
+  discountAmount Decimal        @default(0) @db.Decimal(10, 2)
+  deliveryCharge Decimal        @default(0) @db.Decimal(10, 2)
+  totalAmount    Decimal        @db.Decimal(10, 2)
+  couponCode     String?
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id])
+  address         Address?         @relation(fields: [addressId], references: [id])
+  items           OrderItem[]
+  payment         Payment?
+  resellerContent ResellerContent?
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  productId   String
+  variantId   String?
+  productName String
+  colorName   String?
+  sizeName    String?
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(10, 2)
+  totalPrice  Decimal @db.Decimal(10, 2)
+
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  orderId         String        @unique
+  provider        String?
+  transactionId   String?
+  providerOrderId String?
+  amount          Decimal       @db.Decimal(10, 2)
+  status          PaymentStatus @default(PENDING)
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model ResellerSet {
+  id            String            @id @default(cuid())
+  name          String
+  slug          String            @unique
+  description   String?
+  type          ResellerSetType
+  pieces        Int
+  setPrice      Decimal           @db.Decimal(10, 2)
+  perPiecePrice Decimal           @db.Decimal(10, 2)
+  moq           Int               @default(1)
+  videoUrl      String?
+  thumbnailUrl  String?
+  status        ResellerSetStatus @default(DRAFT)
+  isFeatured    Boolean           @default(false)
+  sortOrder     Int               @default(0)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  items    ResellerSetItem[]
+  colors   ResellerSetColor[]
+  sizes    ResellerSetSize[]
+  contents ResellerContent[]
+
+  @@index([status])
+}
+
+model ResellerSetItem {
+  id        String  @id @default(cuid())
+  setId     String
+  productId String
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+
+  set     ResellerSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+  product Product     @relation(fields: [productId], references: [id])
+
+  @@unique([setId, productId])
+}
+
+model ResellerSetColor {
+  id       String @id @default(cuid())
+  setId    String
+  colorId  String
+  quantity Int    @default(0)
+
+  set   ResellerSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+  color Color       @relation(fields: [colorId], references: [id])
+
+  @@unique([setId, colorId])
+}
+
+model ResellerSetSize {
+  id       String @id @default(cuid())
+  setId    String
+  sizeId   String
+  quantity Int    @default(0)
+
+  set  ResellerSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+  size Size        @relation(fields: [sizeId], references: [id])
+
+  @@unique([setId, sizeId])
+}
+
+model ResellerContent {
+  id          String   @id @default(cuid())
+  userId      String
+  orderId     String?  @unique
+  setId       String
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order Order?      @relation(fields: [orderId], references: [id])
+  set   ResellerSet @relation(fields: [setId], references: [id])
+}
+
+model SalesMode {
+  id              String          @id @default(cuid())
+  retailStatus    SalesModeStatus @default(OPEN)
+  resellerStatus  SalesModeStatus @default(OPEN)
+  retailMessage   String?
+  resellerMessage String?
+  updatedAt       DateTime        @updatedAt
+}
+
+model Coupon {
+  id            String       @id @default(cuid())
+  code          String       @unique
+  discountType  DiscountType
+  discountValue Decimal      @db.Decimal(10, 2)
+  minOrderValue Decimal?     @db.Decimal(10, 2)
+  maxDiscount   Decimal?     @db.Decimal(10, 2)
+  startsAt      DateTime?
+  expiresAt     DateTime?
+  isActive      Boolean      @default(true)
+  resellerOnly  Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([isActive])
+}
+
+model Review {
+  id        String       @id @default(cuid())
+  userId    String
+  productId String
+  rating    Int
+  title     String?
+  comment   String?
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([status])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model HomeSection {
+  id          String   @id @default(cuid())
+  title       String
+  sectionType String
+  config      Json?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+model Banner {
+  id         String    @id @default(cuid())
+  title      String?
+  subtitle   String?
+  imageUrl   String?
+  videoUrl   String?
+  buttonText String?
+  buttonUrl  String?
+  isActive   Boolean   @default(true)
+  sortOrder  Int       @default(0)
+  startsAt   DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([isActive, sortOrder])
+}
