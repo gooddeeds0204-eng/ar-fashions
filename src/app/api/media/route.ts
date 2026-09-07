@@ -1,7 +1,15 @@
+import { requireAdmin } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
+  /* ADMIN_GUARD_GET */
+  const adminError = await requireAdmin();
+
+  if (adminError) {
+    return adminError;
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const productId = searchParams.get("productId");
@@ -36,6 +44,13 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  /* ADMIN_GUARD_POST */
+  const adminError = await requireAdmin();
+
+  if (adminError) {
+    return adminError;
+  }
+
   try {
     const body = await request.json();
 
@@ -110,6 +125,13 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  /* ADMIN_GUARD_PATCH */
+  const adminError = await requireAdmin();
+
+  if (adminError) {
+    return adminError;
+  }
+
   try {
     const body = await request.json();
     const id = String(body.id ?? "").trim();
@@ -216,6 +238,13 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  /* ADMIN_GUARD_DELETE */
+  const adminError = await requireAdmin();
+
+  if (adminError) {
+    return adminError;
+  }
+
   try {
     const body = await request.json();
     const id = String(body.id ?? "").trim();

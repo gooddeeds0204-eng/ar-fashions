@@ -1,7 +1,15 @@
+import { requireAdmin } from "@/lib/admin-auth";
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
+  /* ADMIN_GUARD_POST */
+  const adminError = await requireAdmin();
+
+  if (adminError) {
+    return adminError;
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get("file");

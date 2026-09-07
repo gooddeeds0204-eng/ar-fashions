@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
   ADMIN_SESSION_COOKIE,
@@ -33,4 +34,21 @@ export async function getAuthenticatedAdmin() {
       role: true,
     },
   });
+}
+
+export async function requireAdmin() {
+  const admin =
+    await getAuthenticatedAdmin();
+
+  if (!admin) {
+    return NextResponse.json(
+      {
+        error:
+          "Admin authentication required.",
+      },
+      { status: 401 },
+    );
+  }
+
+  return null;
 }

@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -166,6 +167,13 @@ export async function PUT(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  /* ADMIN_GUARD_PUT */
+  const adminError = await requireAdmin();
+
+  if (adminError) {
+    return adminError;
+  }
+
   try {
     const { id } = await context.params;
     const body = await request.json();
@@ -744,6 +752,13 @@ export async function DELETE(
     params: Promise<{ id: string }>;
   },
 ) {
+  /* ADMIN_GUARD_DELETE */
+  const adminError = await requireAdmin();
+
+  if (adminError) {
+    return adminError;
+  }
+
   try {
     const { id } =
       await context.params;

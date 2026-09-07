@@ -1,3 +1,4 @@
+import { requireAdmin } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -22,6 +23,13 @@ function toInt(value: unknown) {
  * product, color and size information.
  */
 export async function GET(request: Request) {
+  /* ADMIN_GUARD_GET */
+  const adminError = await requireAdmin();
+
+  if (adminError) {
+    return adminError;
+  }
+
   try {
     const { searchParams } = new URL(request.url);
 
@@ -210,6 +218,13 @@ export async function GET(request: Request) {
  * recreate inventory variants.
  */
 export async function PATCH(request: Request) {
+  /* ADMIN_GUARD_PATCH */
+  const adminError = await requireAdmin();
+
+  if (adminError) {
+    return adminError;
+  }
+
   try {
     const body = await request.json();
 
