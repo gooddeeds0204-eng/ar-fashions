@@ -50,6 +50,18 @@ type Banner = {
   sortOrder: number;
 };
 
+type HomeSection = {
+  id: string;
+  title: string;
+  subtitle: string;
+  sectionType:
+    | "NEW_ARRIVALS"
+    | "TRENDING"
+    | "REELS"
+    | "FEATURED";
+  sortOrder: number;
+};
+
 type Mode = "RETAIL" | "RESELLER";
 
 function money(value: string | number | null) {
@@ -352,6 +364,110 @@ function ProductSection({
   );
 }
 
+
+function FashionReelsSection({
+  title,
+  subtitle,
+  products,
+  mode,
+}: {
+  title: string;
+  subtitle: string;
+  products: Product[];
+  mode: Mode;
+}) {
+  const router = useRouter();
+
+  if (products.length === 0) {
+    return null;
+  }
+
+  return (
+    <section
+      id="fashion-reels"
+      className="bg-zinc-950 py-12 text-white"
+    >
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-6">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-emerald-400">
+            Shop the Look
+          </p>
+
+          <h2 className="mt-2 text-3xl font-black">
+            {title}
+          </h2>
+
+          <p className="mt-1 text-sm text-zinc-500">
+            {subtitle}
+          </p>
+        </div>
+
+        <div className="flex gap-4 overflow-x-auto pb-3">
+          {products.slice(0, 8).map(
+            (product) => {
+              const video =
+                product.media.find(
+                  (item) =>
+                    item.type ===
+                    "VIDEO",
+                );
+
+              if (!video) {
+                return null;
+              }
+
+              return (
+                <div
+                  key={product.id}
+                  className="relative min-w-[190px] overflow-hidden rounded-3xl bg-zinc-900 sm:min-w-[230px]"
+                >
+                  <video
+                    src={video.url}
+                    muted
+                    autoPlay
+                    loop
+                    playsInline
+                    className="aspect-[9/14] w-full object-cover"
+                  />
+
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/30 to-transparent p-4 pt-20">
+                    <p className="text-sm font-bold">
+                      {product.name}
+                    </p>
+
+                    <p className="mt-1 text-xs text-zinc-300">
+                      {money(
+                        mode ===
+                          "RESELLER" &&
+                          product.resellerPrice !==
+                            null
+                          ? product.resellerPrice
+                          : product.retailPrice,
+                      )}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        router.push(
+                          `/products/${product.id}?mode=${mode.toLowerCase()}`,
+                        )
+                      }
+                      className="mt-3 rounded-full bg-white px-4 py-2 text-[10px] font-black text-black"
+                    >
+                      Shop Now
+                    </button>
+                  </div>
+                </div>
+              );
+            },
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Home() {
   const router = useRouter();
 
@@ -359,6 +475,11 @@ export default function Home() {
 
   const [banners, setBanners] =
     useState<Banner[]>([]);
+
+  const [
+    homeSections,
+    setHomeSections,
+  ] = useState<HomeSection[]>([]);
 
   const [bannerIndex, setBannerIndex] =
     useState(0);
@@ -433,6 +554,40 @@ export default function Home() {
     }
 
     loadBanners();
+
+    async function loadHomeSections() {
+      try {
+        const response =
+          await fetch(
+            "/api/home-sections",
+            {
+              cache: "no-store",
+            },
+          );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        setHomeSections(
+          Array.isArray(
+            data.sections,
+          )
+            ? data.sections
+            : [],
+        );
+      } catch (error) {
+        console.error(
+          "Homepage sections failed:",
+          error,
+        );
+      }
+    }
+
+    loadHomeSections();
   }, []);
 
   useEffect(() => {
@@ -503,8 +658,57 @@ export default function Home() {
 
   const reels = visibleProducts.filter(
     (product) =>
-      product.media.some((item) => item.type === "VIDEO"),
+      product.media.some(
+        (item) =>
+          item.type === "VIDEO",
+      ),
   );
+
+  const defaultHomeSections:
+    HomeSection[] = [
+      {
+        id: "default-new-arrivals",
+        title: "New Arrivals",
+        subtitle:
+          "Fresh styles just added",
+        sectionType:
+          "NEW_ARRIVALS",
+        sortOrder: 0,
+      },
+      {
+        id: "default-trending",
+        title: "Trending Now",
+        subtitle:
+          "What shoppers are loving",
+        sectionType:
+          "TRENDING",
+        sortOrder: 1,
+      },
+      {
+        id: "default-reels",
+        title: "Fashion Reels",
+        subtitle:
+          "Watch it. Love it. Buy it.",
+        sectionType:
+          "REELS",
+        sortOrder: 2,
+      },
+      {
+        id: "default-featured",
+        title:
+          "Featured Collection",
+        subtitle:
+          "Our hand-picked favourites",
+        sectionType:
+          "FEATURED",
+        sortOrder: 3,
+      },
+    ];
+
+  const contentSections =
+    homeSections.length > 0
+      ? homeSections
+      : defaultHomeSections;
 
   return (
     <main className="min-h-screen bg-[#f7f7f5] text-zinc-950">
@@ -840,101 +1044,93 @@ export default function Home() {
         </section>
       ) : (
         <>
-          <ProductSection
-            title="New Arrivals"
-            subtitle="Fresh styles just added"
-            products={newArrivals}
-            mode={mode}
-          />
+          {contentSections.map(
+            (section) => {
+              if (
+                section.sectionType ===
+                "NEW_ARRIVALS"
+              ) {
+                return (
+                  <ProductSection
+                    key={section.id}
+                    title={
+                      section.title
+                    }
+                    subtitle={
+                      section.subtitle
+                    }
+                    products={
+                      newArrivals
+                    }
+                    mode={mode}
+                  />
+                );
+              }
 
-          <ProductSection
-            title="Trending Now"
-            subtitle="What shoppers are loving"
-            products={trending}
-            mode={mode}
-          />
+              if (
+                section.sectionType ===
+                "TRENDING"
+              ) {
+                return (
+                  <ProductSection
+                    key={section.id}
+                    title={
+                      section.title
+                    }
+                    subtitle={
+                      section.subtitle
+                    }
+                    products={
+                      trending
+                    }
+                    mode={mode}
+                  />
+                );
+              }
 
-          {/* VIDEO / REELS */}
-          {reels.length > 0 && (
-            <section
-              id="fashion-reels"
-              className="bg-zinc-950 py-12 text-white"
-            >
-              <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div className="mb-6">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-emerald-400">
-                    Shop the Look
-                  </p>
+              if (
+                section.sectionType ===
+                "REELS"
+              ) {
+                return (
+                  <FashionReelsSection
+                    key={section.id}
+                    title={
+                      section.title
+                    }
+                    subtitle={
+                      section.subtitle
+                    }
+                    products={reels}
+                    mode={mode}
+                  />
+                );
+              }
 
-                  <h2 className="mt-2 text-3xl font-black">
-                    Fashion Reels
-                  </h2>
+              if (
+                section.sectionType ===
+                "FEATURED"
+              ) {
+                return (
+                  <ProductSection
+                    key={section.id}
+                    title={
+                      section.title
+                    }
+                    subtitle={
+                      section.subtitle
+                    }
+                    products={
+                      featured
+                    }
+                    mode={mode}
+                  />
+                );
+              }
 
-                  <p className="mt-1 text-sm text-zinc-500">
-                    Watch it. Love it. Buy it.
-                  </p>
-                </div>
-
-                <div className="flex gap-4 overflow-x-auto pb-3">
-                  {reels.slice(0, 8).map((product) => {
-                    const video = product.media.find(
-                      (item) => item.type === "VIDEO",
-                    );
-
-                    if (!video) return null;
-
-                    return (
-                      <div
-                        key={product.id}
-                        className="relative min-w-[190px] overflow-hidden rounded-3xl bg-zinc-900 sm:min-w-[230px]"
-                      >
-                        <video
-                          src={video.url}
-                          muted
-                          autoPlay
-                          loop
-                          playsInline
-                          className="aspect-[9/14] w-full object-cover"
-                        />
-
-                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/30 to-transparent p-4 pt-20">
-                          <p className="text-sm font-bold">
-                            {product.name}
-                          </p>
-
-                          <p className="mt-1 text-xs text-zinc-300">
-                            {money(
-                              mode === "RESELLER" &&
-                                product.resellerPrice !== null
-                                ? product.resellerPrice
-                                : product.retailPrice,
-                            )}
-                          </p>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              router.push(`/products/${product.id}?mode=${mode.toLowerCase()}`)
-                            }
-                            className="mt-3 rounded-full bg-white px-4 py-2 text-[10px] font-black text-black"
-                          >
-                            Shop Now
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </section>
+              return null;
+            },
           )}
-
-          <ProductSection
-            title="Featured Collection"
-            subtitle="Our hand-picked favourites"
-            products={featured}
-            mode={mode}
-          />
         </>
       )}
 
