@@ -223,6 +223,15 @@ export default function CheckoutPage() {
         );
       }
 
+      if (
+        typeof data.userId === "string"
+      ) {
+        localStorage.setItem(
+          "ar-fashions-user-id",
+          data.userId,
+        );
+      }
+
       localStorage.removeItem("ar-fashions-cart");
 
       router.replace(

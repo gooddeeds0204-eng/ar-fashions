@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  CUSTOMER_SESSION_COOKIE,
+  CUSTOMER_SESSION_OPTIONS,
+  createCustomerSessionToken,
+} from "@/lib/customer-session";
 
 type OrderItemInput = {
   productId?: unknown;
@@ -898,6 +903,7 @@ export async function POST(request: Request) {
 
         return {
           orderId: order.id,
+          userId: user.id,
           orderNumber:
             order.orderNumber,
           subtotal,
@@ -911,15 +917,26 @@ export async function POST(request: Request) {
       },
     );
 
-    return NextResponse.json(
-      {
-        success: true,
-        message:
-          "Order placed successfully.",
-        ...result,
-      },
-      { status: 201 },
+    const response =
+      NextResponse.json(
+        {
+          success: true,
+          message:
+            "Order placed successfully.",
+          ...result,
+        },
+        { status: 201 },
+      );
+
+    response.cookies.set(
+      CUSTOMER_SESSION_COOKIE,
+      createCustomerSessionToken(
+        result.userId,
+      ),
+      CUSTOMER_SESSION_OPTIONS,
     );
+
+    return response;
   } catch (error) {
     console.error(
       "POST /api/orders failed:",
