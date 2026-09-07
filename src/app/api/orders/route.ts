@@ -5,6 +5,7 @@ type OrderItemInput = {
   productId?: unknown;
   variantId?: unknown;
   quantity?: unknown;
+  mode?: unknown;
 };
 
 function cleanString(value: unknown) {
@@ -307,6 +308,25 @@ export async function PATCH(request: Request) {
             continue;
           }
 
+          /*
+           * Atomically claim this order item for stock restore.
+           * This prevents two simultaneous CANCEL/RETURN requests
+           * from restoring the same inventory twice.
+           */
+          const claimed = await tx.orderItem.updateMany({
+            where: {
+              id: item.id,
+              inventoryRestored: false,
+            },
+            data: {
+              inventoryRestored: true,
+            },
+          });
+
+          if (claimed.count === 0) {
+            continue;
+          }
+
           const restored = await tx.productVariant.updateMany({
             where: {
               id: item.variantId,
@@ -323,15 +343,6 @@ export async function PATCH(request: Request) {
               `Failed to restore stock for ${item.productName}.`,
             );
           }
-
-          await tx.orderItem.update({
-            where: {
-              id: item.id,
-            },
-            data: {
-              inventoryRestored: true,
-            },
-          });
 
           stockRestored = true;
         }
@@ -413,11 +424,13 @@ export async function POST(request: Request) {
       body.paymentMethod,
     );
 
-    if (type !== "RETAIL") {
+    if (
+      type !== "RETAIL" &&
+      type !== "RESELLER"
+    ) {
       return NextResponse.json(
         {
-          error:
-            "Only retail orders are supported right now.",
+          error: "Invalid order type.",
         },
         { status: 400 },
       );
@@ -561,6 +574,16 @@ export async function POST(request: Request) {
 
         let subtotal = 0;
 
+        const resellerProductTotals =
+          new Map<
+            string,
+            {
+              productName: string;
+              quantity: number;
+              moq: number;
+            }
+          >();
+
         for (const item of items) {
           const productId = cleanString(
             item.productId,
@@ -581,6 +604,15 @@ export async function POST(request: Request) {
           ) {
             throw new Error(
               "Invalid cart item.",
+            );
+          }
+
+          const itemMode =
+            cleanString(item.mode) || "RETAIL";
+
+          if (itemMode !== type) {
+            throw new Error(
+              "Retail and reseller items cannot be mixed in the same order.",
             );
           }
 
@@ -624,13 +656,46 @@ export async function POST(request: Request) {
             );
           }
 
+          if (
+            type === "RETAIL" &&
+            variant.product.salesMode !== "RETAIL" &&
+            variant.product.salesMode !== "BOTH"
+          ) {
+            throw new Error(
+              `${variant.product.name} is not available for retail purchase.`,
+            );
+          }
+
+          if (
+            type === "RESELLER" &&
+            variant.product.salesMode !== "BULK" &&
+            variant.product.salesMode !== "BOTH"
+          ) {
+            throw new Error(
+              `${variant.product.name} is not available for reseller purchase.`,
+            );
+          }
+
           /*
-           * Price comes from DB.
+           * Price always comes from database.
            */
-          const price = Number(
-            variant.retailPrice ??
-              variant.product.retailPrice,
-          );
+          const rawPrice =
+            type === "RESELLER"
+              ? variant.resellerPrice ??
+                variant.product.resellerPrice
+              : variant.retailPrice ??
+                variant.product.retailPrice;
+
+          if (
+            rawPrice === null ||
+            rawPrice === undefined
+          ) {
+            throw new Error(
+              `Price is not configured for ${variant.product.name}.`,
+            );
+          }
+
+          const price = Number(rawPrice);
 
           if (
             !Number.isFinite(price) ||
@@ -648,6 +713,34 @@ export async function POST(request: Request) {
             throw new Error(
               `Only ${variant.stock} pieces available for ${variant.product.name} (${variant.color.name}, ${variant.size.name}).`,
             );
+          }
+
+          if (type === "RESELLER") {
+            const moq = Math.max(
+              1,
+              variant.product.resellerMOQ ?? 1,
+            );
+
+            const existing =
+              resellerProductTotals.get(productId);
+
+            if (existing) {
+              existing.quantity += quantity;
+              existing.moq = Math.max(
+                existing.moq,
+                moq,
+              );
+            } else {
+              resellerProductTotals.set(
+                productId,
+                {
+                  productName:
+                    variant.product.name,
+                  quantity,
+                  moq,
+                },
+              );
+            }
           }
 
           const totalPrice =
@@ -668,6 +761,16 @@ export async function POST(request: Request) {
             unitPrice: price,
             totalPrice,
           });
+        }
+
+        if (type === "RESELLER") {
+          for (const group of resellerProductTotals.values()) {
+            if (group.quantity < group.moq) {
+              throw new Error(
+                `Reseller MOQ not reached for ${group.productName}: ${group.quantity}/${group.moq} pieces.`,
+              );
+            }
+          }
         }
 
         /*
@@ -710,7 +813,10 @@ export async function POST(request: Request) {
             orderNumber,
             userId: user.id,
             addressId: address.id,
-            type: "RETAIL",
+            type:
+              type === "RESELLER"
+                ? "RESELLER"
+                : "RETAIL",
             status: "PENDING",
             paymentStatus: "PENDING",
             paymentMethod: "COD",

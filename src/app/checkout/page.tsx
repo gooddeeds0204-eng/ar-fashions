@@ -15,6 +15,8 @@ type CartItem = {
   sizeName: string;
   price: number;
   quantity: number;
+  mode?: "RETAIL" | "RESELLER";
+  resellerMOQ?: number;
 };
 
 function money(value: number) {
@@ -67,11 +69,78 @@ export default function CheckoutPage() {
     [cart],
   );
 
+  const hasResellerItems = cart.some(
+    (item) => item.mode === "RESELLER",
+  );
+
+  const hasRetailItems = cart.some(
+    (item) => (item.mode ?? "RETAIL") === "RETAIL",
+  );
+
+  const isMixedCart =
+    hasResellerItems && hasRetailItems;
+
+  const isResellerOrder =
+    hasResellerItems && !hasRetailItems;
+
+  const invalidResellerGroups = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        productName: string;
+        quantity: number;
+        moq: number;
+      }
+    >();
+
+    for (const item of cart) {
+      if (item.mode !== "RESELLER") continue;
+
+      const existing = groups.get(item.productId);
+
+      if (existing) {
+        existing.quantity += item.quantity;
+        existing.moq = Math.max(
+          existing.moq,
+          item.resellerMOQ ?? 1,
+        );
+      } else {
+        groups.set(item.productId, {
+          productName: item.productName,
+          quantity: item.quantity,
+          moq: Math.max(1, item.resellerMOQ ?? 1),
+        });
+      }
+    }
+
+    return Array.from(groups.values()).filter(
+      (group) => group.quantity < group.moq,
+    );
+  }, [cart]);
+
+  const canPlaceOrder =
+    !isMixedCart &&
+    invalidResellerGroups.length === 0;
+
   const deliveryCharge = subtotal >= 999 ? 0 : 79;
 
   const total = subtotal + deliveryCharge;
 
   async function placeOrder() {
+    if (isMixedCart) {
+      alert(
+        "Retail and reseller items must be ordered separately.",
+      );
+      return;
+    }
+
+    if (invalidResellerGroups.length > 0) {
+      alert(
+        "Reseller MOQ is not reached. Please return to cart.",
+      );
+      return;
+    }
+
     if (!name.trim()) {
       alert("Please enter your name.");
       return;
@@ -117,7 +186,9 @@ export default function CheckoutPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          type: "RETAIL",
+          type: isResellerOrder
+            ? "RESELLER"
+            : "RETAIL",
           paymentMethod: "COD",
           customer: {
             name: name.trim(),
@@ -139,6 +210,7 @@ export default function CheckoutPage() {
             sizeName: item.sizeName,
             quantity: item.quantity,
             unitPrice: item.price,
+            mode: item.mode ?? "RETAIL",
           })),
         }),
       });
@@ -203,7 +275,9 @@ export default function CheckoutPage() {
           </button>
 
           <span className="ml-auto text-xs font-bold text-zinc-500">
-            Secure Checkout
+            {isResellerOrder
+              ? "Secure Reseller Checkout"
+              : "Secure Checkout"}
           </span>
         </div>
       </header>
@@ -354,9 +428,17 @@ export default function CheckoutPage() {
 
         {/* ORDER SUMMARY */}
         <aside className="h-fit rounded-3xl bg-white p-5 shadow-sm sm:p-7 lg:sticky lg:top-24">
-          <h2 className="text-lg font-black">
-            Order Summary
-          </h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-black">
+              Order Summary
+            </h2>
+
+            {isResellerOrder && (
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-700">
+                Reseller Order
+              </span>
+            )}
+          </div>
 
           <div className="mt-5 space-y-4">
             {cart.map((item) => (
@@ -442,14 +524,39 @@ export default function CheckoutPage() {
             </p>
           </div>
 
+          {isMixedCart && (
+            <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-bold text-red-700">
+              Retail and reseller items must be ordered separately.
+            </div>
+          )}
+
+          {invalidResellerGroups.length > 0 && (
+            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-xs font-black text-amber-900">
+                Reseller MOQ not reached
+              </p>
+
+              {invalidResellerGroups.map((group) => (
+                <p
+                  key={group.productName}
+                  className="mt-2 text-xs font-semibold text-amber-800"
+                >
+                  {group.productName}: {group.quantity}/{group.moq} pcs
+                </p>
+              ))}
+            </div>
+          )}
+
           <button
             onClick={placeOrder}
-            disabled={loading}
+            disabled={loading || !canPlaceOrder}
             className="mt-5 w-full rounded-2xl bg-zinc-950 py-4 text-sm font-black text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-zinc-300"
           >
             {loading
               ? "Placing Order..."
-              : `Place Order · ${money(total)}`}
+              : isResellerOrder
+                ? `Place Reseller Order · ${money(total)}`
+                : `Place Order · ${money(total)}`}
           </button>
         </aside>
       </div>

@@ -183,7 +183,7 @@ function ProductCard({
 
   return (
     <article
-      onClick={() => router.push(`/products/${product.id}`)}
+      onClick={() => router.push(`/products/${product.id}?mode=${mode.toLowerCase()}`)}
       className="group min-w-[230px] cursor-pointer overflow-hidden rounded-3xl border border-black/5 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl sm:min-w-0"
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-zinc-100">
@@ -271,7 +271,7 @@ function ProductCard({
           type="button"
           onClick={(event) => {
             event.stopPropagation();
-            router.push(`/products/${product.id}`);
+            router.push(`/products/${product.id}?mode=${mode.toLowerCase()}`);
           }}
           className="mt-4 w-full rounded-xl bg-zinc-950 py-3 text-xs font-bold text-white transition hover:bg-emerald-600"
         >
@@ -750,7 +750,7 @@ export default function Home() {
                           <button
                             type="button"
                             onClick={() =>
-                              router.push(`/products/${product.id}`)
+                              router.push(`/products/${product.id}?mode=${mode.toLowerCase()}`)
                             }
                             className="mt-3 rounded-full bg-white px-4 py-2 text-[10px] font-black text-black"
                           >

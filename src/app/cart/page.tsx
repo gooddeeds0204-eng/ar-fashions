@@ -15,6 +15,8 @@ type CartItem = {
   sizeName: string;
   price: number;
   quantity: number;
+  mode?: "RETAIL" | "RESELLER";
+  resellerMOQ?: number;
 };
 
 function money(value: number) {
@@ -112,6 +114,52 @@ export default function CartPage() {
       ),
     [cart],
   );
+
+  const resellerGroups = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        productId: string;
+        productName: string;
+        quantity: number;
+        moq: number;
+      }
+    >();
+
+    for (const item of cart) {
+      if (item.mode !== "RESELLER") continue;
+
+      const existing = groups.get(item.productId);
+
+      if (existing) {
+        existing.quantity += item.quantity;
+        existing.moq = Math.max(
+          existing.moq,
+          item.resellerMOQ ?? 1,
+        );
+      } else {
+        groups.set(item.productId, {
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          moq: Math.max(1, item.resellerMOQ ?? 1),
+        });
+      }
+    }
+
+    return Array.from(groups.values());
+  }, [cart]);
+
+  const invalidResellerGroups = useMemo(
+    () =>
+      resellerGroups.filter(
+        (group) => group.quantity < group.moq,
+      ),
+    [resellerGroups],
+  );
+
+  const canCheckout =
+    invalidResellerGroups.length === 0;
 
   const delivery = subtotal >= 999 || subtotal === 0 ? 0 : 79;
 
@@ -236,6 +284,12 @@ export default function CartPage() {
                           <p className="text-xs text-zinc-500">
                             Size: {item.sizeName}
                           </p>
+
+                          {item.mode === "RESELLER" && (
+                            <p className="mt-1 inline-flex rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-700">
+                              Reseller
+                            </p>
+                          )}
                         </div>
 
                         <button
@@ -337,12 +391,42 @@ export default function CartPage() {
                 </p>
               )}
 
-              <button
-                onClick={() => router.push("/checkout")}
-                className="mt-6 w-full rounded-2xl bg-zinc-950 py-4 text-sm font-black text-white transition hover:bg-emerald-600"
-              >
-                Proceed to Checkout
-              </button>
+              {invalidResellerGroups.length > 0 && (
+                <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-sm font-black text-amber-900">
+                    Reseller MOQ not reached
+                  </p>
+
+                  <div className="mt-3 space-y-2">
+                    {invalidResellerGroups.map(
+                      (group) => (
+                        <div
+                          key={group.productId}
+                          className="text-xs font-semibold text-amber-800"
+                        >
+                          {group.productName}:{" "}
+                          {group.quantity}/{group.moq} pcs
+                          · Add{" "}
+                          {group.moq -
+                            group.quantity}{" "}
+                          more
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {canCheckout && (
+                <button
+                  onClick={() =>
+                    router.push("/checkout")
+                  }
+                  className="mt-6 w-full rounded-2xl bg-zinc-950 py-4 text-sm font-black text-white transition hover:bg-emerald-600"
+                >
+                  Proceed to Checkout
+                </button>
+              )}
 
               <div className="mt-4 text-center text-[11px] text-zinc-400">
                 Secure checkout • AR Fashions

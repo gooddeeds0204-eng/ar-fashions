@@ -65,6 +65,8 @@ type CartItem = {
   sizeName: string;
   price: number;
   quantity: number;
+  mode?: "RETAIL" | "RESELLER";
+  resellerMOQ?: number;
 };
 
 function money(value: string | number | null) {
@@ -104,10 +106,17 @@ export default function ProductDetailPage() {
   const [selectedMedia, setSelectedMedia] = useState(0);
 
   const [quantity, setQuantity] = useState(1);
+  const [isReseller, setIsReseller] = useState(false);
+  const [resellerQuantities, setResellerQuantities] = useState<Record<string, number>>({});
   const [adding, setAdding] = useState(false);
 
   const [wishlisted, setWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  useEffect(() => {
+    const mode = new URLSearchParams(window.location.search).get("mode");
+    setIsReseller(mode === "reseller");
+  }, []);
 
   useEffect(() => {
     async function loadProduct() {
@@ -318,12 +327,191 @@ export default function ProductDetailPage() {
     selectedSizeId,
   ]);
 
-  const currentPrice = selectedVariant?.retailPrice
-    ? Number(selectedVariant.retailPrice)
-    : Number(product?.retailPrice ?? 0);
+  const minimumQuantity = isReseller
+    ? Math.max(1, product?.resellerMOQ ?? 1)
+    : 1;
+
+  const currentPrice = isReseller
+    ? selectedVariant?.resellerPrice !== null &&
+      selectedVariant?.resellerPrice !== undefined
+      ? Number(selectedVariant.resellerPrice)
+      : Number(
+          product?.resellerPrice ??
+            product?.retailPrice ??
+            0,
+        )
+    : selectedVariant?.retailPrice
+      ? Number(selectedVariant.retailPrice)
+      : Number(product?.retailPrice ?? 0);
 
   const availableStock =
     selectedVariant?.stock ?? 0;
+
+  const meetsMOQ =
+    !isReseller || quantity >= minimumQuantity;
+
+  const totalResellerQuantity = useMemo(() => {
+    return Object.values(resellerQuantities).reduce(
+      (total, value) => total + value,
+      0,
+    );
+  }, [resellerQuantities]);
+
+  const resellerTotal = useMemo(() => {
+    if (!product) return 0;
+
+    return product.variants.reduce((total, variant) => {
+      const variantQuantity =
+        resellerQuantities[variant.id] ?? 0;
+
+      const price =
+        variant.resellerPrice !== null &&
+        variant.resellerPrice !== undefined
+          ? Number(variant.resellerPrice)
+          : Number(
+              product.resellerPrice ??
+                product.retailPrice ??
+                0,
+            );
+
+      return total + price * variantQuantity;
+    }, 0);
+  }, [product, resellerQuantities]);
+
+  const resellerMeetsMOQ =
+    totalResellerQuantity >= minimumQuantity;
+
+  function changeResellerQuantity(
+    variantId: string,
+    stock: number,
+    change: number,
+  ) {
+    setResellerQuantities((current) => {
+      const currentQuantity = current[variantId] ?? 0;
+
+      const nextQuantity = Math.max(
+        0,
+        Math.min(stock, currentQuantity + change),
+      );
+
+      const next = { ...current };
+
+      if (nextQuantity === 0) {
+        delete next[variantId];
+      } else {
+        next[variantId] = nextQuantity;
+      }
+
+      return next;
+    });
+  }
+
+  function addResellerSelectionToCart() {
+    if (!product) return;
+
+    const selectedVariants = product.variants.filter(
+      (variant) =>
+        (resellerQuantities[variant.id] ?? 0) > 0,
+    );
+
+    if (selectedVariants.length === 0) {
+      alert("Select reseller quantities first.");
+      return;
+    }
+
+    if (!resellerMeetsMOQ) {
+      alert(
+        `Minimum ${minimumQuantity} pieces required for reseller purchase.`,
+      );
+      return;
+    }
+
+    const cart = getCart();
+
+    for (const variant of selectedVariants) {
+      const selectedQuantity =
+        resellerQuantities[variant.id] ?? 0;
+
+      const existingIndex = cart.findIndex(
+        (item) =>
+          item.productId === product.id &&
+          item.variantId === variant.id &&
+          (item.mode ?? "RETAIL") === "RESELLER",
+      );
+
+      const existingQuantity =
+        existingIndex >= 0
+          ? cart[existingIndex].quantity
+          : 0;
+
+      if (
+        existingQuantity + selectedQuantity >
+        variant.stock
+      ) {
+        alert(
+          `Only ${variant.stock} pieces available for ${variant.color.name} / ${variant.size.name}.`,
+        );
+        return;
+      }
+    }
+
+    setAdding(true);
+
+    for (const variant of selectedVariants) {
+      const selectedQuantity =
+        resellerQuantities[variant.id] ?? 0;
+
+      const price =
+        variant.resellerPrice !== null &&
+        variant.resellerPrice !== undefined
+          ? Number(variant.resellerPrice)
+          : Number(
+              product.resellerPrice ??
+                product.retailPrice ??
+                0,
+            );
+
+      const existingIndex = cart.findIndex(
+        (item) =>
+          item.productId === product.id &&
+          item.variantId === variant.id &&
+          (item.mode ?? "RETAIL") === "RESELLER",
+      );
+
+      if (existingIndex >= 0) {
+        cart[existingIndex].quantity += selectedQuantity;
+      } else {
+        cart.push({
+          id: `${product.id}-${variant.id}-RESELLER`,
+          productId: product.id,
+          productName: product.name,
+          image:
+            product.media.find(
+              (item) => item.type === "IMAGE",
+            )?.url ??
+            product.media[0]?.url ??
+            null,
+          variantId: variant.id,
+          colorId: variant.color.id,
+          colorName: variant.color.name,
+          sizeId: variant.size.id,
+          sizeName: variant.size.name,
+          price,
+          quantity: selectedQuantity,
+          mode: "RESELLER",
+          resellerMOQ: minimumQuantity,
+        });
+      }
+    }
+
+    localStorage.setItem(
+      "ar-fashions-cart",
+      JSON.stringify(cart),
+    );
+
+    setAdding(false);
+    router.push("/cart");
+  }
 
   function selectColor(colorId: string) {
     setSelectedColorId(colorId);
@@ -364,6 +552,13 @@ export default function ProductDetailPage() {
       return;
     }
 
+    if (isReseller && quantity < minimumQuantity) {
+      alert(
+        `Minimum ${minimumQuantity} pieces required for reseller purchase.`,
+      );
+      return;
+    }
+
     setAdding(true);
 
     const cart = getCart();
@@ -371,7 +566,9 @@ export default function ProductDetailPage() {
     const existingIndex = cart.findIndex(
       (item) =>
         item.productId === product.id &&
-        item.variantId === selectedVariant.id,
+        item.variantId === selectedVariant.id &&
+        (item.mode ?? "RETAIL") ===
+          (isReseller ? "RESELLER" : "RETAIL"),
     );
 
     if (existingIndex >= 0) {
@@ -384,7 +581,7 @@ export default function ProductDetailPage() {
       );
     } else {
       cart.push({
-        id: `${product.id}-${selectedVariant.id}`,
+        id: `${product.id}-${selectedVariant.id}-${isReseller ? "RESELLER" : "RETAIL"}`,
         productId: product.id,
         productName: product.name,
         image:
@@ -400,6 +597,8 @@ export default function ProductDetailPage() {
         sizeName: selectedVariant.size.name,
         price: currentPrice,
         quantity,
+        mode: isReseller ? "RESELLER" : "RETAIL",
+        resellerMOQ: isReseller ? minimumQuantity : undefined,
       });
     }
 
@@ -600,6 +799,19 @@ export default function ProductDetailPage() {
               )}
           </div>
 
+          {isReseller && (
+            <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+              <p className="text-xs font-black uppercase tracking-wider text-emerald-700">
+                Reseller Price
+              </p>
+              <p className="mt-1 text-sm font-bold text-emerald-900">
+                MOQ {minimumQuantity} pieces
+              </p>
+            </div>
+          )}
+
+          {!isReseller ? (
+            <>
           {/* COLOR */}
           <div className="mt-8">
             <div className="mb-3 flex items-center justify-between">
@@ -745,19 +957,207 @@ export default function ProductDetailPage() {
           </div>
 
           {/* ACTION */}
-          <button
-            disabled={
-              adding ||
-              !selectedVariant ||
-              availableStock <= 0
-            }
-            onClick={addToCart}
-            className="mt-8 w-full rounded-2xl bg-zinc-950 py-4 text-sm font-black text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-zinc-300"
-          >
-            {adding
-              ? "Adding..."
-              : "Add to Cart"}
-          </button>
+          {!isReseller || meetsMOQ ? (
+            <button
+              disabled={
+                adding ||
+                !selectedVariant ||
+                availableStock <= 0
+              }
+              onClick={addToCart}
+              className="mt-8 w-full rounded-2xl bg-zinc-950 py-4 text-sm font-black text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-zinc-300"
+            >
+              {adding
+                ? "Adding..."
+                : isReseller
+                  ? "Proceed to Buy"
+                  : "Add to Cart"}
+            </button>
+          ) : (
+            <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
+              {!selectedVariant
+                ? `Select color and size. Minimum ${minimumQuantity} pieces required.`
+                : availableStock < minimumQuantity
+                  ? `Reseller MOQ is ${minimumQuantity} pieces, but only ${availableStock} are available.`
+                  : `Select at least ${minimumQuantity} pieces to continue. Currently selected: ${quantity}.`}
+            </div>
+          )}
+
+
+            </>
+          ) : (
+            <div className="mt-8">
+              {/* RESELLER VARIANT BUILDER */}
+              <div className="mb-5">
+                <h2 className="text-base font-black">
+                  Build Your Reseller Set
+                </h2>
+                <p className="mt-1 text-sm text-zinc-500">
+                  Mix sizes and colors. Total quantity must reach MOQ {minimumQuantity}.
+                </p>
+              </div>
+
+              <div className="space-y-5">
+                {colors.map((color) => {
+                  const colorVariants =
+                    product.variants.filter(
+                      (variant) =>
+                        variant.color.id === color.id,
+                    );
+
+                  return (
+                    <div
+                      key={color.id}
+                      className="rounded-2xl border border-black/10 bg-white p-4"
+                    >
+                      <div className="mb-4 flex items-center justify-between">
+                        <p className="font-black">
+                          {color.name}
+                        </p>
+
+                        <p className="text-xs font-bold text-zinc-500">
+                          {colorVariants.reduce(
+                            (total, variant) =>
+                              total + variant.stock,
+                            0,
+                          )} pcs stock
+                        </p>
+                      </div>
+
+                      <div className="space-y-3">
+                        {colorVariants.map((variant) => {
+                          const variantQuantity =
+                            resellerQuantities[
+                              variant.id
+                            ] ?? 0;
+
+                          const variantPrice =
+                            variant.resellerPrice !==
+                              null &&
+                            variant.resellerPrice !==
+                              undefined
+                              ? Number(
+                                  variant.resellerPrice,
+                                )
+                              : Number(
+                                  product.resellerPrice ??
+                                    product.retailPrice ??
+                                    0,
+                                );
+
+                          return (
+                            <div
+                              key={variant.id}
+                              className="flex items-center justify-between gap-3 rounded-xl bg-zinc-50 p-3"
+                            >
+                              <div>
+                                <p className="text-sm font-black">
+                                  Size {variant.size.name}
+                                </p>
+
+                                <p className="mt-1 text-xs text-zinc-500">
+                                  {money(variantPrice)} each · Stock {variant.stock}
+                                </p>
+                              </div>
+
+                              <div className="flex items-center overflow-hidden rounded-xl border border-black/10 bg-white">
+                                <button
+                                  disabled={
+                                    variantQuantity <= 0
+                                  }
+                                  onClick={() =>
+                                    changeResellerQuantity(
+                                      variant.id,
+                                      variant.stock,
+                                      -1,
+                                    )
+                                  }
+                                  className="px-3 py-2 font-black disabled:text-zinc-300"
+                                >
+                                  −
+                                </button>
+
+                                <span className="min-w-9 text-center text-sm font-black">
+                                  {variantQuantity}
+                                </span>
+
+                                <button
+                                  disabled={
+                                    variantQuantity >=
+                                    variant.stock
+                                  }
+                                  onClick={() =>
+                                    changeResellerQuantity(
+                                      variant.id,
+                                      variant.stock,
+                                      1,
+                                    )
+                                  }
+                                  className="px-3 py-2 font-black disabled:text-zinc-300"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-black/10 bg-zinc-950 p-5 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                      Total Selected
+                    </p>
+
+                    <p className="mt-1 text-2xl font-black">
+                      {totalResellerQuantity} / {minimumQuantity}
+                    </p>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                      Total
+                    </p>
+
+                    <p className="mt-1 text-xl font-black">
+                      {money(resellerTotal)}
+                    </p>
+                  </div>
+                </div>
+
+                {!resellerMeetsMOQ ? (
+                  <p className="mt-4 rounded-xl bg-amber-400/15 px-4 py-3 text-sm font-bold text-amber-300">
+                    Add {Math.max(
+                      0,
+                      minimumQuantity -
+                        totalResellerQuantity,
+                    )} more pieces to reach MOQ.
+                  </p>
+                ) : (
+                  <p className="mt-4 rounded-xl bg-emerald-400/15 px-4 py-3 text-sm font-bold text-emerald-300">
+                    ✓ MOQ reached. You can proceed.
+                  </p>
+                )}
+              </div>
+
+              {resellerMeetsMOQ && (
+                <button
+                  disabled={adding}
+                  onClick={addResellerSelectionToCart}
+                  className="mt-6 w-full rounded-2xl bg-emerald-600 py-4 text-sm font-black text-white transition hover:bg-emerald-700 disabled:bg-zinc-300"
+                >
+                  {adding
+                    ? "Adding..."
+                    : "Proceed to Buy"}
+                </button>
+              )}
+            </div>
+          )}
 
           {product.description && (
             <div className="mt-8 border-t border-black/10 pt-6">
