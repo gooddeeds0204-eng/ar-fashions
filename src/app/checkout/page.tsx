@@ -17,6 +17,12 @@ type CartItem = {
   quantity: number;
   mode?: "RETAIL" | "RESELLER";
   resellerMOQ?: number;
+
+  resellerSetId?: string;
+  resellerSetSlug?: string;
+  resellerSetCount?: number;
+  resellerSetName?: string;
+  resellerSetPrice?: number;
 };
 
 type AppliedCoupon = {
@@ -230,7 +236,7 @@ export default function CheckoutPage() {
     );
   }
 
-  const subtotal = useMemo(
+  const rawSubtotal = useMemo(
     () =>
       cart.reduce(
         (total, item) =>
@@ -239,6 +245,109 @@ export default function CheckoutPage() {
       ),
     [cart],
   );
+
+  const hasCuratedSetItems =
+    cart.some(
+      (item) =>
+        Boolean(
+          item.resellerSetId,
+        ),
+    );
+
+  const curatedSet = useMemo(() => {
+    if (cart.length === 0) {
+      return null;
+    }
+
+    const first = cart[0];
+
+    if (
+      first.mode !== "RESELLER" ||
+      !first.resellerSetId
+    ) {
+      return null;
+    }
+
+    const setId =
+      first.resellerSetId;
+
+    const setCount =
+      Number(
+        first.resellerSetCount,
+      );
+
+    const setPrice =
+      Number(
+        first.resellerSetPrice,
+      );
+
+    if (
+      !Number.isInteger(
+        setCount,
+      ) ||
+      setCount <= 0 ||
+      !Number.isFinite(
+        setPrice,
+      ) ||
+      setPrice <= 0
+    ) {
+      return null;
+    }
+
+    const valid =
+      cart.every(
+        (item) =>
+          item.mode ===
+            "RESELLER" &&
+          item.resellerSetId ===
+            setId &&
+          Number(
+            item.resellerSetCount,
+          ) ===
+            setCount &&
+          Number(
+            item.resellerSetPrice,
+          ) ===
+            setPrice,
+      );
+
+    if (!valid) {
+      return null;
+    }
+
+    return {
+      id: setId,
+      slug:
+        first.resellerSetSlug ??
+        "",
+      name:
+        first.resellerSetName ??
+        "Reseller Set",
+      count:
+        setCount,
+      price:
+        setPrice,
+    };
+  }, [cart]);
+
+  const invalidCuratedCart =
+    hasCuratedSetItems &&
+    !curatedSet;
+
+  const subtotal =
+    curatedSet
+      ? curatedSet.price *
+        curatedSet.count
+      : rawSubtotal;
+
+  const curatedSetSaving =
+    curatedSet
+      ? Math.max(
+          0,
+          rawSubtotal -
+            subtotal,
+        )
+      : 0;
 
   const hasResellerItems = cart.some(
     (item) => item.mode === "RESELLER",
@@ -267,6 +376,10 @@ export default function CheckoutPage() {
     for (const item of cart) {
       if (item.mode !== "RESELLER") continue;
 
+      if (item.resellerSetId) {
+        continue;
+      }
+
       const existing = groups.get(item.productId);
 
       if (existing) {
@@ -291,6 +404,7 @@ export default function CheckoutPage() {
 
   const canPlaceOrder =
     !isMixedCart &&
+    !invalidCuratedCart &&
     invalidResellerGroups.length === 0;
 
   const deliveryCharge =
@@ -479,6 +593,13 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (invalidCuratedCart) {
+      alert(
+        "Curated reseller set cart is invalid. Please rebuild the set.",
+      );
+      return;
+    }
+
     if (invalidResellerGroups.length > 0) {
       alert(
         "Reseller MOQ is not reached. Please return to cart.",
@@ -538,6 +659,15 @@ export default function CheckoutPage() {
           couponCode:
             appliedCoupon?.code ??
             null,
+
+          resellerSetId:
+            curatedSet?.id ??
+            null,
+
+          resellerSetCount:
+            curatedSet?.count ??
+            null,
+
           addressId:
             activeSavedAddressId,
           customer: {
@@ -924,11 +1054,17 @@ export default function CheckoutPage() {
                     {item.quantity}
                   </p>
 
-                  <p className="mt-1 text-sm font-black">
-                    {money(
-                      item.price * item.quantity,
-                    )}
-                  </p>
+                  {item.resellerSetId ? (
+                    <p className="mt-1 text-[11px] font-bold text-emerald-700">
+                      Included in curated set
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-sm font-black">
+                      {money(
+                        item.price * item.quantity,
+                      )}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
@@ -936,7 +1072,50 @@ export default function CheckoutPage() {
 
           <div className="my-6 border-t border-black/10" />
 
+          {curatedSet && (
+            <div className="mb-5 rounded-2xl bg-emerald-50 p-4">
+              <p className="text-[10px] font-black uppercase tracking-wider text-emerald-700">
+                Curated Reseller Set
+              </p>
+
+              <p className="mt-1 text-sm font-black">
+                {curatedSet.name}
+              </p>
+
+              <p className="mt-1 text-xs text-emerald-700">
+                {curatedSet.count} set
+                {curatedSet.count === 1
+                  ? ""
+                  : "s"}
+              </p>
+            </div>
+          )}
+
           <div className="space-y-3 text-sm">
+            {curatedSet && curatedSetSaving > 0 && (
+              <>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">
+                    Normal Reseller Value
+                  </span>
+
+                  <span className="font-bold">
+                    {money(rawSubtotal)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-emerald-700">
+                  <span>
+                    Set Saving
+                  </span>
+
+                  <span className="font-black">
+                    -{money(curatedSetSaving)}
+                  </span>
+                </div>
+              </>
+            )}
+
             <div className="flex justify-between">
               <span className="text-zinc-500">
                 Subtotal

@@ -455,6 +455,18 @@ export async function POST(request: Request) {
         body.couponCode,
       ).toUpperCase();
 
+    const requestedResellerSetId =
+      cleanString(
+        body.resellerSetId,
+      );
+
+    const requestedResellerSetCount =
+      requestedResellerSetId
+        ? validQuantity(
+            body.resellerSetCount ?? 1,
+          )
+        : null;
+
     if (
       type !== "RETAIL" &&
       type !== "RESELLER"
@@ -472,6 +484,32 @@ export async function POST(request: Request) {
         {
           error:
             "Only Cash on Delivery is available right now.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (
+      requestedResellerSetId &&
+      type !== "RESELLER"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Curated reseller sets can only be purchased in reseller mode.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (
+      requestedResellerSetId &&
+      !requestedResellerSetCount
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid reseller set quantity.",
         },
         { status: 400 },
       );
@@ -672,8 +710,80 @@ export async function POST(request: Request) {
         }
 
         /*
-         * 3. Validate products and calculate
-         *    prices directly from database.
+         * 3. Resolve curated reseller set.
+         *
+         * Set identity, price, MOQ and
+         * product allocation always come
+         * from the database.
+         */
+        const resellerSet =
+          requestedResellerSetId
+            ? await tx.resellerSet.findUnique({
+                where: {
+                  id: requestedResellerSetId,
+                },
+                include: {
+                  items: true,
+                },
+              })
+            : null;
+
+        if (
+          requestedResellerSetId &&
+          !resellerSet
+        ) {
+          throw new Error(
+            "Reseller set was not found.",
+          );
+        }
+
+        if (
+          resellerSet &&
+          resellerSet.status !== "ACTIVE"
+        ) {
+          throw new Error(
+            `${resellerSet.name} is not currently available.`,
+          );
+        }
+
+        const resellerSetCount =
+          resellerSet
+            ? requestedResellerSetCount!
+            : 0;
+
+        if (
+          resellerSet &&
+          resellerSetCount <
+            Math.max(1, resellerSet.moq)
+        ) {
+          throw new Error(
+            `Minimum ${resellerSet.moq} set${resellerSet.moq === 1 ? "" : "s"} required for ${resellerSet.name}.`,
+          );
+        }
+
+        const expectedSetProductTotals =
+          new Map<string, number>();
+
+        if (resellerSet) {
+          for (
+            const setItem of
+            resellerSet.items
+          ) {
+            expectedSetProductTotals.set(
+              setItem.productId,
+              setItem.quantity *
+                resellerSetCount,
+            );
+          }
+        }
+
+        const actualSetProductTotals =
+          new Map<string, number>();
+
+        /*
+         * 4. Validate products and calculate
+         *    normal reseller prices directly
+         *    from database.
          */
         const orderItems: Array<{
           productId: string;
@@ -829,7 +939,26 @@ export async function POST(request: Request) {
             );
           }
 
-          if (type === "RESELLER") {
+          if (resellerSet) {
+            actualSetProductTotals.set(
+              productId,
+              (actualSetProductTotals.get(
+                productId,
+              ) ?? 0) + quantity,
+            );
+          }
+
+          /*
+           * Normal reseller purchases use
+           * product-level MOQ.
+           *
+           * Curated sets use their own exact
+           * allocation + set-level MOQ instead.
+           */
+          if (
+            type === "RESELLER" &&
+            !resellerSet
+          ) {
             const moq = Math.max(
               1,
               variant.product.resellerMOQ ?? 1,
@@ -877,7 +1006,10 @@ export async function POST(request: Request) {
           });
         }
 
-        if (type === "RESELLER") {
+        if (
+          type === "RESELLER" &&
+          !resellerSet
+        ) {
           for (const group of resellerProductTotals.values()) {
             if (group.quantity < group.moq) {
               throw new Error(
@@ -887,14 +1019,106 @@ export async function POST(request: Request) {
           }
         }
 
+        if (resellerSet) {
+          if (
+            actualSetProductTotals.size !==
+            expectedSetProductTotals.size
+          ) {
+            throw new Error(
+              "Selected products do not match this reseller set.",
+            );
+          }
+
+          for (
+            const [
+              productId,
+              expectedQuantity,
+            ] of
+            expectedSetProductTotals.entries()
+          ) {
+            const actualQuantity =
+              actualSetProductTotals.get(
+                productId,
+              ) ?? 0;
+
+            if (
+              actualQuantity !==
+              expectedQuantity
+            ) {
+              throw new Error(
+                `Reseller set quantity mismatch. Expected ${expectedQuantity} pieces for one of the set products, received ${actualQuantity}.`,
+              );
+            }
+          }
+        }
+
         /*
-         * 4. Validate coupon using
+         * Curated-set pricing is treated as
+         * an order-level wholesale saving.
+         *
+         * Order item prices remain the real
+         * DB reseller prices, while payable
+         * merchandise value becomes the
+         * database set price.
+         */
+        let curatedSetDiscount = 0;
+        let couponBaseSubtotal =
+          subtotal;
+
+        if (resellerSet) {
+          const curatedSetTotal =
+            Math.round(
+              Number(
+                resellerSet.setPrice,
+              ) *
+                resellerSetCount *
+                100,
+            ) / 100;
+
+          if (
+            !Number.isFinite(
+              curatedSetTotal,
+            ) ||
+            curatedSetTotal <= 0
+          ) {
+            throw new Error(
+              "Reseller set price is invalid.",
+            );
+          }
+
+          /*
+           * Curated wholesale sets should
+           * never cost more than their
+           * current normal reseller value.
+           */
+          if (
+            curatedSetTotal >
+            subtotal + 0.009
+          ) {
+            throw new Error(
+              "This reseller set price is above the current reseller value. Please contact support.",
+            );
+          }
+
+          curatedSetDiscount =
+            Math.round(
+              (subtotal -
+                curatedSetTotal) *
+                100,
+            ) / 100;
+
+          couponBaseSubtotal =
+            curatedSetTotal;
+        }
+
+        /*
+         * 5. Validate coupon using
          *    server-side DB values only.
          */
         let appliedCouponCode:
           string | null = null;
 
-        let discountAmount = 0;
+        let couponDiscountAmount = 0;
 
         if (requestedCouponCode) {
           const coupon =
@@ -914,7 +1138,7 @@ export async function POST(request: Request) {
           const couponResult =
             evaluateCoupon(
               coupon,
-              subtotal,
+              couponBaseSubtotal,
               type as CouponOrderType,
             );
 
@@ -927,27 +1151,37 @@ export async function POST(request: Request) {
           appliedCouponCode =
             couponResult.code;
 
-          discountAmount =
+          couponDiscountAmount =
             couponResult.discountAmount;
         }
 
+        const discountAmount =
+          Math.round(
+            (
+              curatedSetDiscount +
+              couponDiscountAmount
+            ) * 100,
+          ) / 100;
+
         /*
-         * 5. Delivery charge.
+         * 6. Delivery charge.
          *
          * Free delivery is based on
          * original merchandise subtotal,
          * before coupon discount.
          */
         const deliveryCharge =
-          subtotal >= 999 ? 0 : 79;
+          couponBaseSubtotal >= 999
+            ? 0
+            : 79;
 
         const totalAmount =
           Math.max(
             0,
             Math.round(
               (
-                subtotal -
-                discountAmount +
+                couponBaseSubtotal -
+                couponDiscountAmount +
                 deliveryCharge
               ) * 100,
             ) / 100,
@@ -1058,7 +1292,25 @@ export async function POST(request: Request) {
         }
 
         /*
-         * 8. Create pending COD payment record.
+         * Link curated-set orders through
+         * the existing ResellerContent
+         * relation.
+         */
+        if (resellerSet) {
+          await tx.resellerContent.create({
+            data: {
+              userId: user.id,
+              orderId: order.id,
+              setId: resellerSet.id,
+              title: resellerSet.name,
+              description:
+                `${resellerSetCount} × ${resellerSet.name}`,
+            },
+          });
+        }
+
+        /*
+         * 9. Create pending COD payment record.
          */
         await tx.payment.create({
           data: {

@@ -17,6 +17,12 @@ type CartItem = {
   quantity: number;
   mode?: "RETAIL" | "RESELLER";
   resellerMOQ?: number;
+
+  resellerSetId?: string;
+  resellerSetSlug?: string;
+  resellerSetCount?: number;
+  resellerSetName?: string;
+  resellerSetPrice?: number;
 };
 
 function money(value: number) {
@@ -105,7 +111,7 @@ export default function CartPage() {
     [cart],
   );
 
-  const subtotal = useMemo(
+  const rawSubtotal = useMemo(
     () =>
       cart.reduce(
         (total, item) =>
@@ -114,6 +120,79 @@ export default function CartPage() {
       ),
     [cart],
   );
+
+  const curatedSet = useMemo(() => {
+    if (cart.length === 0) {
+      return null;
+    }
+
+    const first = cart[0];
+
+    if (
+      first.mode !== "RESELLER" ||
+      !first.resellerSetId
+    ) {
+      return null;
+    }
+
+    const setId = first.resellerSetId;
+
+    const setCount = Number(
+      first.resellerSetCount,
+    );
+
+    const setPrice = Number(
+      first.resellerSetPrice,
+    );
+
+    if (
+      !Number.isInteger(setCount) ||
+      setCount <= 0 ||
+      !Number.isFinite(setPrice) ||
+      setPrice <= 0
+    ) {
+      return null;
+    }
+
+    const valid = cart.every(
+      (item) =>
+        item.mode === "RESELLER" &&
+        item.resellerSetId === setId &&
+        Number(item.resellerSetCount) ===
+          setCount &&
+        Number(item.resellerSetPrice) ===
+          setPrice,
+    );
+
+    if (!valid) {
+      return null;
+    }
+
+    return {
+      id: setId,
+      slug:
+        first.resellerSetSlug ?? "",
+      name:
+        first.resellerSetName ??
+        "Reseller Set",
+      count: setCount,
+      price: setPrice,
+    };
+  }, [cart]);
+
+  const subtotal =
+    curatedSet
+      ? curatedSet.price *
+        curatedSet.count
+      : rawSubtotal;
+
+  const curatedSetSaving =
+    curatedSet
+      ? Math.max(
+          0,
+          rawSubtotal - subtotal,
+        )
+      : 0;
 
   const resellerGroups = useMemo(() => {
     const groups = new Map<
@@ -128,6 +207,10 @@ export default function CartPage() {
 
     for (const item of cart) {
       if (item.mode !== "RESELLER") continue;
+
+      if (item.resellerSetId) {
+        continue;
+      }
 
       const existing = groups.get(item.productId);
 
@@ -292,51 +375,71 @@ export default function CartPage() {
                           )}
                         </div>
 
-                        <button
-                          onClick={() =>
-                            removeItem(item.id)
-                          }
-                          className="text-xs font-bold text-red-500"
-                        >
-                          Remove
-                        </button>
+                        {!item.resellerSetId ? (
+                          <button
+                            onClick={() =>
+                              removeItem(item.id)
+                            }
+                            className="text-xs font-bold text-red-500"
+                          >
+                            Remove
+                          </button>
+                        ) : (
+                          <span className="rounded-full bg-zinc-100 px-2 py-1 text-[9px] font-black uppercase text-zinc-500">
+                            Set Item
+                          </span>
+                        )}
                       </div>
 
                       <div className="mt-4 flex items-center justify-between">
-                        <p className="text-base font-black">
-                          {money(item.price)}
-                        </p>
+                        {item.resellerSetId ? (
+                          <p className="text-xs font-bold text-emerald-700">
+                            Included in curated set
+                          </p>
+                        ) : (
+                          <p className="text-base font-black">
+                            {money(item.price)}
+                          </p>
+                        )}
 
-                        <div className="flex items-center overflow-hidden rounded-xl border border-black/10">
-                          <button
-                            onClick={() =>
-                              decrease(item.id)
-                            }
-                            className="px-3 py-2 font-bold"
-                          >
-                            −
-                          </button>
+                        {item.resellerSetId ? (
+                          <div className="rounded-xl border border-black/10 bg-zinc-50 px-4 py-2 text-sm font-black">
+                            Qty {item.quantity}
+                          </div>
+                        ) : (
+                          <div className="flex items-center overflow-hidden rounded-xl border border-black/10">
+                            <button
+                              onClick={() =>
+                                decrease(item.id)
+                              }
+                              className="px-3 py-2 font-bold"
+                            >
+                              −
+                            </button>
 
-                          <span className="min-w-9 text-center text-sm font-bold">
-                            {item.quantity}
-                          </span>
+                            <span className="min-w-9 text-center text-sm font-bold">
+                              {item.quantity}
+                            </span>
 
-                          <button
-                            onClick={() =>
-                              increase(item.id)
-                            }
-                            className="px-3 py-2 font-bold"
-                          >
-                            +
-                          </button>
-                        </div>
+                            <button
+                              onClick={() =>
+                                increase(item.id)
+                              }
+                              className="px-3 py-2 font-bold"
+                            >
+                              +
+                            </button>
+                          </div>
+                        )}
                       </div>
 
-                      <p className="mt-2 text-right text-sm font-black">
-                        {money(
-                          item.price * item.quantity,
-                        )}
-                      </p>
+                      {!item.resellerSetId && (
+                        <p className="mt-2 text-right text-sm font-black">
+                          {money(
+                            item.price * item.quantity,
+                          )}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </article>
@@ -348,7 +451,66 @@ export default function CartPage() {
                 Order Summary
               </h2>
 
+              {curatedSet && (
+                <div className="mt-5 rounded-2xl bg-emerald-50 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-emerald-700">
+                    Curated Reseller Set
+                  </p>
+
+                  <p className="mt-1 text-sm font-black">
+                    {curatedSet.name}
+                  </p>
+
+                  <div className="mt-3 flex items-center justify-between text-xs">
+                    <span className="text-emerald-700">
+                      {curatedSet.count} set
+                      {curatedSet.count === 1
+                        ? ""
+                        : "s"}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        router.push(
+                          curatedSet.slug
+                            ? `/reseller-sets/${curatedSet.slug}`
+                            : "/reseller-sets",
+                        )
+                      }
+                      className="font-black text-emerald-800"
+                    >
+                      Edit Selection
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="mt-6 space-y-4 text-sm">
+                {curatedSet && curatedSetSaving > 0 && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">
+                        Normal Reseller Value
+                      </span>
+
+                      <span className="font-bold">
+                        {money(rawSubtotal)}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between text-emerald-700">
+                      <span>
+                        Set Saving
+                      </span>
+
+                      <span className="font-black">
+                        -{money(curatedSetSaving)}
+                      </span>
+                    </div>
+                  </>
+                )}
+
                 <div className="flex justify-between">
                   <span className="text-zinc-500">
                     Subtotal
