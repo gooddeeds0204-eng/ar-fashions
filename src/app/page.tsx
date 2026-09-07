@@ -39,6 +39,17 @@ type Product = {
   media: Media[];
 };
 
+type Banner = {
+  id: string;
+  title: string | null;
+  subtitle: string | null;
+  imageUrl: string | null;
+  videoUrl: string | null;
+  buttonText: string | null;
+  buttonUrl: string | null;
+  sortOrder: number;
+};
+
 type Mode = "RETAIL" | "RESELLER";
 
 function money(value: string | number | null) {
@@ -345,6 +356,13 @@ export default function Home() {
   const router = useRouter();
 
   const [products, setProducts] = useState<Product[]>([]);
+
+  const [banners, setBanners] =
+    useState<Banner[]>([]);
+
+  const [bannerIndex, setBannerIndex] =
+    useState(0);
+
   const [mode, setMode] = useState<Mode>("RETAIL");
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -381,7 +399,69 @@ export default function Home() {
     }
 
     loadProducts();
+
+    async function loadBanners() {
+      try {
+        const response =
+          await fetch(
+            "/api/banners",
+            {
+              cache: "no-store",
+            },
+          );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        setBanners(
+          Array.isArray(
+            data.banners,
+          )
+            ? data.banners
+            : [],
+        );
+      } catch (error) {
+        console.error(
+          "Homepage banners failed:",
+          error,
+        );
+      }
+    }
+
+    loadBanners();
   }, []);
+
+  useEffect(() => {
+    if (banners.length <= 1) {
+      return;
+    }
+
+    const timer = window.setInterval(
+      () => {
+        setBannerIndex(
+          (current) =>
+            (current + 1) %
+            banners.length,
+        );
+      },
+      5000,
+    );
+
+    return () =>
+      window.clearInterval(timer);
+  }, [banners.length]);
+
+  const activeBanner =
+    banners.length > 0
+      ? banners[
+          bannerIndex %
+            banners.length
+        ]
+      : null;
 
   const visibleProducts = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -544,24 +624,41 @@ export default function Home() {
               </p>
 
               <h1 className="text-5xl font-black leading-[0.95] tracking-[-0.06em] sm:text-6xl lg:text-7xl">
-                Fashion that
-                <br />
-                <span className="text-emerald-400">
-                  sells itself.
-                </span>
+                {activeBanner?.title ? (
+                  activeBanner.title
+                ) : (
+                  <>
+                    Fashion that
+                    <br />
+                    <span className="text-emerald-400">
+                      sells itself.
+                    </span>
+                  </>
+                )}
               </h1>
 
               <p className="mt-6 max-w-md text-sm leading-6 text-zinc-400 sm:text-base">
-                Discover ready-to-wear fashion for women,
-                men and kids. Retail shopping and reseller
-                bulk pricing in one place.
+                {activeBanner?.subtitle ??
+                  "Discover ready-to-wear fashion for women, men and kids. Retail shopping and reseller bulk pricing in one place."}
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
                 <button
                   type="button"
                   onClick={() => {
+                    const url =
+                      activeBanner?.buttonUrl?.trim();
+
+                    if (
+                      url &&
+                      url.startsWith("/")
+                    ) {
+                      router.push(url);
+                      return;
+                    }
+
                     setCategory("ALL");
+
                     window.scrollTo({
                       top: 650,
                       behavior: "smooth",
@@ -569,12 +666,16 @@ export default function Home() {
                   }}
                   className="rounded-full bg-white px-6 py-3 text-xs font-black text-zinc-950"
                 >
-                  Shop Collection →
+                  {activeBanner?.buttonText ||
+                    "Shop Collection"}{" "}
+                  →
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setMode("RESELLER")}
+                  onClick={() =>
+                    setMode("RESELLER")
+                  }
                   className="rounded-full border border-white/20 px-6 py-3 text-xs font-bold text-white"
                 >
                   Become a Reseller
@@ -584,10 +685,38 @@ export default function Home() {
           </div>
 
           <div className="relative min-h-[360px] bg-zinc-900">
-            {heroProduct?.media?.[0] ? (
-              heroProduct.media[0].type === "VIDEO" ? (
+            {activeBanner?.videoUrl ? (
+              <video
+                key={activeBanner.id}
+                src={
+                  activeBanner.videoUrl
+                }
+                muted
+                autoPlay
+                loop
+                playsInline
+                className="absolute inset-0 h-full w-full object-cover opacity-90"
+              />
+            ) : activeBanner?.imageUrl ? (
+              <img
+                key={activeBanner.id}
+                src={
+                  activeBanner.imageUrl
+                }
+                alt={
+                  activeBanner.title ??
+                  "AR Fashions banner"
+                }
+                className="absolute inset-0 h-full w-full object-cover opacity-90"
+              />
+            ) : heroProduct?.media?.[0] ? (
+              heroProduct.media[0].type ===
+              "VIDEO" ? (
                 <video
-                  src={heroProduct.media[0].url}
+                  src={
+                    heroProduct
+                      .media[0].url
+                  }
                   muted
                   autoPlay
                   loop
@@ -596,8 +725,13 @@ export default function Home() {
                 />
               ) : (
                 <img
-                  src={heroProduct.media[0].url}
-                  alt={heroProduct.name}
+                  src={
+                    heroProduct
+                      .media[0].url
+                  }
+                  alt={
+                    heroProduct.name
+                  }
                   className="absolute inset-0 h-full w-full object-cover opacity-80"
                 />
               )
@@ -609,24 +743,54 @@ export default function Home() {
 
             <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-transparent to-transparent" />
 
-            {heroProduct && (
-              <div className="absolute bottom-6 left-5 right-5 rounded-2xl border border-white/10 bg-black/40 p-4 text-white backdrop-blur-xl sm:left-auto sm:w-72">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">
-                  Featured
-                </p>
+            {!activeBanner &&
+              heroProduct && (
+                <div className="absolute bottom-6 left-5 right-5 rounded-2xl border border-white/10 bg-black/40 p-4 text-white backdrop-blur-xl sm:left-auto sm:w-72">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">
+                    Featured
+                  </p>
 
-                <p className="mt-1 font-bold">
-                  {heroProduct.name}
-                </p>
+                  <p className="mt-1 font-bold">
+                    {heroProduct.name}
+                  </p>
 
-                <p className="mt-1 text-sm text-zinc-300">
-                  {money(
-                    mode === "RESELLER" &&
-                      heroProduct.resellerPrice !== null
-                      ? heroProduct.resellerPrice
-                      : heroProduct.retailPrice,
-                  )}
-                </p>
+                  <p className="mt-1 text-sm text-zinc-300">
+                    {money(
+                      mode ===
+                        "RESELLER" &&
+                        heroProduct.resellerPrice !==
+                          null
+                        ? heroProduct.resellerPrice
+                        : heroProduct.retailPrice,
+                    )}
+                  </p>
+                </div>
+              )}
+
+            {banners.length > 1 && (
+              <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+                {banners.map(
+                  (banner, index) => (
+                    <button
+                      key={banner.id}
+                      type="button"
+                      onClick={() =>
+                        setBannerIndex(
+                          index,
+                        )
+                      }
+                      aria-label={`Show banner ${
+                        index + 1
+                      }`}
+                      className={`h-2.5 rounded-full transition-all ${
+                        index ===
+                        bannerIndex
+                          ? "w-7 bg-white"
+                          : "w-2.5 bg-white/40"
+                      }`}
+                    />
+                  ),
+                )}
               </div>
             )}
           </div>

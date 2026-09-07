@@ -14,12 +14,12 @@ const menu = [
   { label: "Customers", href: "/admin/customers", icon: "◎" },
   { label: "Inventory", href: "/admin/inventory", icon: "▥" },
   { label: "Coupons", href: "/admin/coupons", icon: "%" },
+  { label: "Banners", href: "/admin/banners", icon: "▱" },
 ];
 
 const comingSoon = [
   { label: "Inventory", icon: "◈" },
   { label: "Reseller Sets", icon: "◆" },
-  { label: "Banners", icon: "▱" },
   { label: "Settings", icon: "⚙" },
 ];
 
