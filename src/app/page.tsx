@@ -485,7 +485,7 @@ export default function Home() {
 
           <button
             type="button"
-            onClick={() => alert("Account section will be connected next.")}
+            onClick={() => router.push("/account")}
             className="hidden rounded-full bg-zinc-950 px-4 py-2 text-xs font-bold text-white sm:block"
           >
             Account
@@ -946,7 +946,7 @@ export default function Home() {
 
       {/* MOBILE NAV */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/5 bg-white/95 px-2 py-2 backdrop-blur-xl sm:hidden">
-        <div className="grid grid-cols-5 text-center">
+        <div className="grid grid-cols-6 text-center">
           {[
             ["⌂", "Home", () => router.push("/")],
             [
@@ -979,6 +979,7 @@ export default function Home() {
               () => router.push("/wishlist"),
             ],
             ["🛍", "Cart", () => router.push("/cart")],
+            ["👤", "Account", () => router.push("/account")],
           ].map(([icon, label, action]) => (
             <button
               key={label as string}
