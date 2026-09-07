@@ -10,6 +10,7 @@ const menu = [
   { label: "Colors", href: "/admin/colors", icon: "●" },
   { label: "Sizes", href: "/admin/sizes", icon: "□" },
   { label: "Orders", href: "/admin/orders", icon: "⌁" },
+  { label: "Reviews", href: "/admin/reviews", icon: "★" },
   { label: "Inventory", href: "/admin/inventory", icon: "▥" },
 ];
 
