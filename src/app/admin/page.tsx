@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const menu = [
   { label: "Dashboard", href: "/admin", icon: "▦" },
@@ -51,6 +51,19 @@ const stats = [
 
 export default function AdminDashboard() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function logout() {
+    try {
+      await fetch("/api/admin/logout", {
+        method: "POST",
+        credentials: "same-origin",
+      });
+    } finally {
+      router.replace("/admin/login");
+      router.refresh();
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#f6f7f9] text-[#172033]">
@@ -157,6 +170,14 @@ export default function AdminDashboard() {
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#111827] text-sm font-semibold text-white">
                 AR
               </div>
+
+              <button
+                type="button"
+                onClick={logout}
+                className="rounded-xl border border-black/10 bg-white px-4 py-2 text-xs font-semibold text-[#172033]"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </header>

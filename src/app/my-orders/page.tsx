@@ -18,6 +18,15 @@ type OrderItem = {
   totalPrice: number;
 };
 
+type CustomerReview = {
+  id: string;
+  productId: string;
+  rating: number;
+  title: string | null;
+  comment: string | null;
+  status: string;
+};
+
 type Order = {
   id: string;
   orderNumber: string;
@@ -85,6 +94,33 @@ export default function MyOrdersPage() {
   const [error, setError] =
     useState("");
 
+  const [
+    reviewsByProduct,
+    setReviewsByProduct,
+  ] = useState<
+    Record<string, CustomerReview>
+  >({});
+
+  const [
+    reviewProduct,
+    setReviewProduct,
+  ] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
+  const [reviewRating, setReviewRating] =
+    useState(5);
+
+  const [reviewTitle, setReviewTitle] =
+    useState("");
+
+  const [reviewComment, setReviewComment] =
+    useState("");
+
+  const [reviewSaving, setReviewSaving] =
+    useState(false);
+
   useEffect(() => {
     async function loadOrders() {
       try {
@@ -115,6 +151,44 @@ export default function MyOrdersPage() {
             ? data.orders
             : [],
         );
+
+        const reviewsResponse =
+          await fetch(
+            "/api/reviews?mine=1",
+            {
+              cache: "no-store",
+              credentials:
+                "same-origin",
+            },
+          );
+
+        if (reviewsResponse.ok) {
+          const reviewsData =
+            await reviewsResponse.json();
+
+          const reviewMap:
+            Record<
+              string,
+              CustomerReview
+            > = {};
+
+          for (
+            const review of
+            Array.isArray(
+              reviewsData.reviews,
+            )
+              ? reviewsData.reviews
+              : []
+          ) {
+            reviewMap[
+              review.productId
+            ] = review;
+          }
+
+          setReviewsByProduct(
+            reviewMap,
+          );
+        }
       } catch (error) {
         setError(
           error instanceof Error
@@ -128,6 +202,105 @@ export default function MyOrdersPage() {
 
     loadOrders();
   }, []);
+
+  function openReview(
+    item: OrderItem,
+  ) {
+    const existing =
+      reviewsByProduct[
+        item.productId
+      ];
+
+    setReviewProduct({
+      id: item.productId,
+      name: item.productName,
+    });
+
+    setReviewRating(
+      existing?.rating ?? 5,
+    );
+
+    setReviewTitle(
+      existing?.title ?? "",
+    );
+
+    setReviewComment(
+      existing?.comment ?? "",
+    );
+  }
+
+  async function submitReview() {
+    if (!reviewProduct) {
+      return;
+    }
+
+    if (!reviewComment.trim()) {
+      alert(
+        "Please write your review.",
+      );
+      return;
+    }
+
+    try {
+      setReviewSaving(true);
+
+      const response =
+        await fetch(
+          "/api/reviews",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            credentials:
+              "same-origin",
+            body: JSON.stringify({
+              productId:
+                reviewProduct.id,
+              rating:
+                reviewRating,
+              title:
+                reviewTitle.trim(),
+              comment:
+                reviewComment.trim(),
+            }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Failed to submit review.",
+        );
+      }
+
+      setReviewsByProduct(
+        (current) => ({
+          ...current,
+          [reviewProduct.id]:
+            data.review,
+        }),
+      );
+
+      setReviewProduct(null);
+
+      alert(
+        "Review submitted for approval.",
+      );
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to submit review.",
+      );
+    } finally {
+      setReviewSaving(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-zinc-50 text-zinc-950">
@@ -289,6 +462,38 @@ export default function MyOrdersPage() {
                                 item.quantity
                               }
                             </p>
+
+                            {order.status ===
+                              "DELIVERED" && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openReview(
+                                    item,
+                                  )
+                                }
+                                className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700"
+                              >
+                                {reviewsByProduct[
+                                  item.productId
+                                ]
+                                  ? "Edit Review"
+                                  : "Write Review"}
+                              </button>
+                            )}
+
+                            {reviewsByProduct[
+                              item.productId
+                            ] && (
+                              <p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                                Review:{" "}
+                                {
+                                  reviewsByProduct[
+                                    item.productId
+                                  ].status
+                                }
+                              </p>
+                            )}
                           </div>
 
                           <p className="font-semibold">
@@ -363,6 +568,131 @@ export default function MyOrdersPage() {
           </div>
         )}
       </div>
+
+      {reviewProduct && (
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 p-4">
+          <div className="mx-auto my-10 max-w-lg rounded-3xl bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                  Verified Purchase
+                </p>
+
+                <h2 className="mt-1 text-xl font-black">
+                  Write a Review
+                </h2>
+
+                <p className="mt-1 text-sm text-zinc-500">
+                  {
+                    reviewProduct.name
+                  }
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setReviewProduct(
+                    null,
+                  )
+                }
+                className="rounded-full bg-zinc-100 px-3 py-2 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-6">
+              <p className="text-xs font-bold">
+                Your Rating
+              </p>
+
+              <div className="mt-2 flex gap-2">
+                {[1, 2, 3, 4, 5].map(
+                  (star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() =>
+                        setReviewRating(
+                          star,
+                        )
+                      }
+                      className="text-3xl"
+                    >
+                      {star <=
+                      reviewRating
+                        ? "★"
+                        : "☆"}
+                    </button>
+                  ),
+                )}
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <label className="text-xs font-bold">
+                Review Title
+              </label>
+
+              <input
+                value={
+                  reviewTitle
+                }
+                onChange={(event) =>
+                  setReviewTitle(
+                    event.target.value,
+                  )
+                }
+                maxLength={100}
+                placeholder="Example: Great quality"
+                className="mt-2 w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-emerald-600"
+              />
+            </div>
+
+            <div className="mt-5">
+              <label className="text-xs font-bold">
+                Your Review
+              </label>
+
+              <textarea
+                value={
+                  reviewComment
+                }
+                onChange={(event) =>
+                  setReviewComment(
+                    event.target.value,
+                  )
+                }
+                maxLength={1000}
+                rows={5}
+                placeholder="Tell other customers about the product..."
+                className="mt-2 w-full resize-none rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-emerald-600"
+              />
+            </div>
+
+            <button
+              type="button"
+              disabled={
+                reviewSaving
+              }
+              onClick={
+                submitReview
+              }
+              className="mt-6 w-full rounded-2xl bg-zinc-950 py-4 text-sm font-black text-white disabled:bg-zinc-300"
+            >
+              {reviewSaving
+                ? "Submitting..."
+                : "Submit Review"}
+            </button>
+
+            <p className="mt-3 text-center text-[10px] leading-5 text-zinc-400">
+              Reviews are published
+              after moderation.
+            </p>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

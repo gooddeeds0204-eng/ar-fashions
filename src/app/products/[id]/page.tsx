@@ -53,6 +53,15 @@ type Product = {
   media: Media[];
 };
 
+type ProductReview = {
+  id: string;
+  rating: number;
+  title: string | null;
+  comment: string | null;
+  createdAt: string;
+  customerName: string;
+};
+
 type CartItem = {
   id: string;
   productId: string;
@@ -112,6 +121,14 @@ export default function ProductDetailPage() {
 
   const [wishlisted, setWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  const [reviews, setReviews] =
+    useState<ProductReview[]>([]);
+
+  const [
+    averageRating,
+    setAverageRating,
+  ] = useState(0);
 
   useEffect(() => {
     const mode = new URLSearchParams(window.location.search).get("mode");
@@ -203,6 +220,53 @@ export default function ProductDetailPage() {
     }
 
     loadWishlistState();
+  }, [productId]);
+
+  useEffect(() => {
+    async function loadReviews() {
+      try {
+        const response =
+          await fetch(
+            `/api/reviews?productId=${encodeURIComponent(
+              productId,
+            )}`,
+            {
+              cache: "no-store",
+            },
+          );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        setReviews(
+          Array.isArray(
+            data.reviews,
+          )
+            ? data.reviews
+            : [],
+        );
+
+        setAverageRating(
+          Number(
+            data.averageRating ??
+              0,
+          ) || 0,
+        );
+      } catch (error) {
+        console.error(
+          "Product reviews load failed:",
+          error,
+        );
+      }
+    }
+
+    if (productId) {
+      loadReviews();
+    }
   }, [productId]);
 
   async function toggleWishlist() {
@@ -1170,6 +1234,113 @@ export default function ProductDetailPage() {
               </p>
             </div>
           )}
+
+          <div className="mt-8 border-t border-black/10 pt-6">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                  Verified Buyers
+                </p>
+
+                <h2 className="mt-1 text-lg font-black">
+                  Customer Reviews
+                </h2>
+              </div>
+
+              {reviews.length > 0 && (
+                <div className="text-right">
+                  <p className="text-xl font-black">
+                    ★{" "}
+                    {averageRating.toFixed(
+                      1,
+                    )}
+                  </p>
+
+                  <p className="text-[10px] font-bold text-zinc-400">
+                    {reviews.length}{" "}
+                    review
+                    {reviews.length === 1
+                      ? ""
+                      : "s"}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {reviews.length === 0 ? (
+              <div className="mt-4 rounded-2xl bg-zinc-50 p-5 text-sm text-zinc-500">
+                No approved reviews
+                yet.
+              </div>
+            ) : (
+              <div className="mt-5 space-y-4">
+                {reviews.map(
+                  (review) => (
+                    <article
+                      key={
+                        review.id
+                      }
+                      className="rounded-2xl border border-black/10 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-black">
+                            {
+                              review.customerName
+                            }
+                          </p>
+
+                          <p className="mt-1 text-sm text-amber-500">
+                            {"★".repeat(
+                              review.rating,
+                            )}
+                            <span className="text-zinc-200">
+                              {"★".repeat(
+                                5 -
+                                  review.rating,
+                              )}
+                            </span>
+                          </p>
+                        </div>
+
+                        <span className="rounded-full bg-emerald-50 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-emerald-700">
+                          Verified
+                        </span>
+                      </div>
+
+                      {review.title && (
+                        <h3 className="mt-4 text-sm font-black">
+                          {
+                            review.title
+                          }
+                        </h3>
+                      )}
+
+                      {review.comment && (
+                        <p className="mt-2 text-sm leading-6 text-zinc-600">
+                          {
+                            review.comment
+                          }
+                        </p>
+                      )}
+
+                      <p className="mt-3 text-[10px] font-semibold text-zinc-400">
+                        {new Date(
+                          review.createdAt,
+                        ).toLocaleDateString(
+                          "en-IN",
+                          {
+                            dateStyle:
+                              "medium",
+                          },
+                        )}
+                      </p>
+                    </article>
+                  ),
+                )}
+              </div>
+            )}
+          </div>
         </section>
       </div>
     </main>
