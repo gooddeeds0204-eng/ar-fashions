@@ -19,6 +19,19 @@ type CartItem = {
   resellerMOQ?: number;
 };
 
+type SavedAddress = {
+  id: string;
+  name: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2: string | null;
+  city: string;
+  state: string;
+  pincode: string;
+  landmark: string | null;
+  isDefault: boolean;
+};
+
 function money(value: number) {
   return `₹${value.toLocaleString("en-IN")}`;
 }
@@ -50,6 +63,16 @@ export default function CheckoutPage() {
   const [pincode, setPincode] = useState("");
   const [landmark, setLandmark] = useState("");
 
+  const [
+    savedAddresses,
+    setSavedAddresses,
+  ] = useState<SavedAddress[]>([]);
+
+  const [
+    selectedAddressId,
+    setSelectedAddressId,
+  ] = useState("");
+
   useEffect(() => {
     const items = getCart();
     setCart(items);
@@ -58,6 +81,122 @@ export default function CheckoutPage() {
       router.replace("/cart");
     }
   }, [router]);
+
+  useEffect(() => {
+    async function loadSavedAddresses() {
+      try {
+        const response =
+          await fetch(
+            "/api/addresses",
+            {
+              cache: "no-store",
+              credentials:
+                "same-origin",
+            },
+          );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        const addresses:
+          SavedAddress[] =
+          Array.isArray(
+            data.addresses,
+          )
+            ? data.addresses
+            : [];
+
+        setSavedAddresses(
+          addresses,
+        );
+
+        const preferred =
+          addresses.find(
+            (address) =>
+              address.isDefault,
+          ) ?? addresses[0];
+
+        if (preferred) {
+          setSelectedAddressId(
+            preferred.id,
+          );
+
+          setName(
+            preferred.name,
+          );
+
+          setPhone(
+            preferred.phone,
+          );
+
+          setAddressLine1(
+            preferred.addressLine1,
+          );
+
+          setAddressLine2(
+            preferred.addressLine2 ??
+              "",
+          );
+
+          setCity(
+            preferred.city,
+          );
+
+          setState(
+            preferred.state,
+          );
+
+          setPincode(
+            preferred.pincode,
+          );
+
+          setLandmark(
+            preferred.landmark ??
+              "",
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Saved addresses load failed:",
+          error,
+        );
+      }
+    }
+
+    loadSavedAddresses();
+  }, []);
+
+  function useSavedAddress(
+    address: SavedAddress,
+  ) {
+    setSelectedAddressId(
+      address.id,
+    );
+
+    setName(address.name);
+    setPhone(address.phone);
+
+    setAddressLine1(
+      address.addressLine1,
+    );
+
+    setAddressLine2(
+      address.addressLine2 ??
+        "",
+    );
+
+    setCity(address.city);
+    setState(address.state);
+    setPincode(address.pincode);
+
+    setLandmark(
+      address.landmark ?? "",
+    );
+  }
 
   const subtotal = useMemo(
     () =>
@@ -126,6 +265,62 @@ export default function CheckoutPage() {
 
   const total = subtotal + deliveryCharge;
 
+  /*
+   * If the customer edits a saved
+   * address after selecting it,
+   * checkout treats it as a new/manual
+   * address instead of silently using
+   * the old saved values.
+   */
+  const activeSavedAddressId =
+    useMemo(() => {
+      const address =
+        savedAddresses.find(
+          (item) =>
+            item.id ===
+            selectedAddressId,
+        );
+
+      if (!address) {
+        return null;
+      }
+
+      const same =
+        address.name.trim() ===
+          name.trim() &&
+        address.phone.trim() ===
+          phone.trim() &&
+        address.addressLine1.trim() ===
+          addressLine1.trim() &&
+        (address.addressLine2 ??
+          "").trim() ===
+          addressLine2.trim() &&
+        address.city.trim() ===
+          city.trim() &&
+        address.state.trim() ===
+          state.trim() &&
+        address.pincode.trim() ===
+          pincode.trim() &&
+        (address.landmark ??
+          "").trim() ===
+          landmark.trim();
+
+      return same
+        ? address.id
+        : null;
+    }, [
+      savedAddresses,
+      selectedAddressId,
+      name,
+      phone,
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      pincode,
+      landmark,
+    ]);
+
   async function placeOrder() {
     if (isMixedCart) {
       alert(
@@ -190,6 +385,8 @@ export default function CheckoutPage() {
             ? "RESELLER"
             : "RETAIL",
           paymentMethod: "COD",
+          addressId:
+            activeSavedAddressId,
           customer: {
             name: name.trim(),
             phone: phone.trim(),
@@ -301,6 +498,105 @@ export default function CheckoutPage() {
           <p className="mt-1 text-sm text-zinc-500">
             Enter your delivery information.
           </p>
+
+          {savedAddresses.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-black uppercase tracking-wider text-zinc-500">
+                  Saved Addresses
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(
+                      "/addresses",
+                    )
+                  }
+                  className="text-xs font-bold text-emerald-700"
+                >
+                  Manage
+                </button>
+              </div>
+
+              <div className="mt-3 grid gap-3">
+                {savedAddresses.map(
+                  (address) => (
+                    <button
+                      key={
+                        address.id
+                      }
+                      type="button"
+                      onClick={() =>
+                        useSavedAddress(
+                          address,
+                        )
+                      }
+                      className={`rounded-2xl border p-4 text-left transition ${
+                        activeSavedAddressId ===
+                        address.id
+                          ? "border-emerald-500 bg-emerald-50"
+                          : "border-black/10 bg-zinc-50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-black">
+                          {
+                            address.name
+                          }
+                        </p>
+
+                        {address.isDefault && (
+                          <span className="rounded-full bg-white px-2 py-1 text-[9px] font-black uppercase tracking-wider text-emerald-700">
+                            Default
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="mt-1 text-xs leading-5 text-zinc-600">
+                        {
+                          address.addressLine1
+                        }
+                        {address.addressLine2
+                          ? `, ${address.addressLine2}`
+                          : ""}
+                        ,{" "}
+                        {
+                          address.city
+                        }{" "}
+                        -{" "}
+                        {
+                          address.pincode
+                        }
+                      </p>
+                    </button>
+                  ),
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedAddressId(
+                    "",
+                  );
+                  setName("");
+                  setPhone("");
+                  setAddressLine1("");
+                  setAddressLine2("");
+                  setCity("");
+                  setState(
+                    "Andhra Pradesh",
+                  );
+                  setPincode("");
+                  setLandmark("");
+                }}
+                className="mt-3 text-xs font-bold text-zinc-600 underline"
+              >
+                Use a new address
+              </button>
+            </div>
+          )}
 
           <div className="mt-7 grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import {
   CUSTOMER_SESSION_COOKIE,
   CUSTOMER_SESSION_OPTIONS,
   createCustomerSessionToken,
+  verifyCustomerSessionToken,
 } from "@/lib/customer-session";
 
 type OrderItemInput = {
@@ -453,6 +455,9 @@ export async function POST(request: Request) {
 
     const customer = body.customer ?? {};
 
+    const selectedAddressId =
+      cleanString(body.addressId);
+
     const name = cleanString(customer.name);
     const phone = cleanString(customer.phone);
     const addressLine1 = cleanString(
@@ -521,6 +526,21 @@ export async function POST(request: Request) {
 
     const items: OrderItemInput[] = rawItems;
 
+    /*
+     * Saved addresses are only accepted
+     * when the signed customer cookie
+     * belongs to the same customer.
+     */
+    const cookieStore =
+      await cookies();
+
+    const sessionUserId =
+      verifyCustomerSessionToken(
+        cookieStore.get(
+          CUSTOMER_SESSION_COOKIE,
+        )?.value,
+      );
+
     const result = await prisma.$transaction(
       async (tx) => {
         /*
@@ -543,24 +563,89 @@ export async function POST(request: Request) {
         });
 
         /*
-         * 2. Create delivery address.
+         * 2. Resolve delivery address.
+         *
+         * A selected saved address must
+         * belong to the signed customer.
+         * Otherwise we reuse an identical
+         * saved address or create a new one.
          */
-        const address = await tx.address.create({
-          data: {
-            userId: user.id,
-            name,
-            phone,
-            addressLine1,
-            addressLine2:
-              addressLine2 || null,
-            city,
-            state,
-            pincode,
-            landmark:
-              landmark || null,
-            isDefault: true,
-          },
-        });
+        let address;
+
+        if (selectedAddressId) {
+          if (
+            !sessionUserId ||
+            sessionUserId !== user.id
+          ) {
+            throw new Error(
+              "Saved address session is invalid. Please choose the address again.",
+            );
+          }
+
+          address =
+            await tx.address.findFirst({
+              where: {
+                id: selectedAddressId,
+                userId: user.id,
+              },
+            });
+
+          if (!address) {
+            throw new Error(
+              "Saved address was not found.",
+            );
+          }
+        } else {
+          const existingAddress =
+            await tx.address.findFirst({
+              where: {
+                userId: user.id,
+                name,
+                phone,
+                addressLine1,
+                addressLine2:
+                  addressLine2 || null,
+                city,
+                state,
+                pincode,
+                landmark:
+                  landmark || null,
+              },
+            });
+
+          if (existingAddress) {
+            address =
+              existingAddress;
+          } else {
+            const addressCount =
+              await tx.address.count({
+                where: {
+                  userId: user.id,
+                },
+              });
+
+            address =
+              await tx.address.create({
+                data: {
+                  userId: user.id,
+                  name,
+                  phone,
+                  addressLine1,
+                  addressLine2:
+                    addressLine2 ||
+                    null,
+                  city,
+                  state,
+                  pincode,
+                  landmark:
+                    landmark ||
+                    null,
+                  isDefault:
+                    addressCount === 0,
+                },
+              });
+          }
+        }
 
         /*
          * 3. Validate products and calculate
