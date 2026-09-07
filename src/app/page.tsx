@@ -269,7 +269,10 @@ function ProductCard({
 
         <button
           type="button"
-          onClick={() => router.push(`/products/${product.id}`)}
+          onClick={(event) => {
+            event.stopPropagation();
+            router.push(`/products/${product.id}`);
+          }}
           className="mt-4 w-full rounded-xl bg-zinc-950 py-3 text-xs font-bold text-white transition hover:bg-emerald-600"
         >
           {mode === "RESELLER" ? "Add to Bulk Set" : "View Product"}
