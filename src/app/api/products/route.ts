@@ -43,6 +43,9 @@ export async function GET() {
           },
         },
         media: {
+          where: {
+            isActive: true,
+          },
           orderBy: {
             sortOrder: "asc",
           },
@@ -67,12 +70,128 @@ export async function GET() {
   }
 }
 
+function getGenderSkuCode(gender: string) {
+  switch (gender) {
+    case "WOMEN":
+      return "W";
+    case "MEN":
+      return "M";
+    case "KIDS":
+      return "K";
+    default:
+      return "U";
+  }
+}
+
+function getSkuToken(value: string, fallback: string) {
+  const cleaned = String(value ?? "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "");
+
+  return cleaned.slice(0, 4) || fallback;
+}
+
+function getColorSkuCode(colorName: string) {
+  const known: Record<string, string> = {
+    BLACK: "BLK",
+    WHITE: "WHT",
+    BLUE: "BLU",
+    RED: "RED",
+    GREEN: "GRN",
+    YELLOW: "YLW",
+    PINK: "PNK",
+    PURPLE: "PUR",
+    ORANGE: "ORG",
+    BROWN: "BRN",
+    GREY: "GRY",
+    GRAY: "GRY",
+    NAVY: "NVY",
+    MAROON: "MRN",
+    BEIGE: "BEG",
+    CREAM: "CRM",
+  };
+
+  const normalized = String(colorName ?? "")
+    .trim()
+    .toUpperCase();
+
+  return known[normalized] ?? getSkuToken(normalized, "COL");
+}
+
+function getSizeSkuCode(sizeName: string) {
+  const normalized = String(sizeName ?? "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "");
+
+  const known: Record<string, string> = {
+    XS: "XS",
+    S: "S",
+    M: "M",
+    L: "L",
+    XL: "XL",
+    XXL: "XXL",
+    XXXL: "3XL",
+    "2XL": "2XL",
+    "3XL": "3XL",
+    "4XL": "4XL",
+    FREE: "FS",
+    FREESIZE: "FS",
+  };
+
+  return known[normalized] ?? getSkuToken(normalized, "SZ");
+}
+
+async function generateProductSku(
+  tx: any,
+  gender: string,
+) {
+  const prefix = `AR-${getGenderSkuCode(gender)}-`;
+
+  const products = await tx.product.findMany({
+    where: {
+      sku: {
+        startsWith: prefix,
+      },
+    },
+    select: {
+      sku: true,
+    },
+  });
+
+  let maxNumber = 0;
+
+  for (const product of products) {
+    const match = product.sku?.match(
+      new RegExp(`^${prefix}(\\d+)$`),
+    );
+
+    if (match) {
+      maxNumber = Math.max(
+        maxNumber,
+        Number(match[1]),
+      );
+    }
+  }
+
+  return `${prefix}${String(maxNumber + 1).padStart(3, "0")}`;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
     const name = String(body.name ?? "").trim();
     const categoryId = String(body.categoryId ?? "").trim();
+
+    const gender =
+      body.gender === "WOMEN" ||
+      body.gender === "MEN" ||
+      body.gender === "KIDS" ||
+      body.gender === "UNISEX"
+        ? body.gender
+        : "UNISEX";
 
     if (!name) {
       return NextResponse.json(
@@ -144,6 +263,21 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json(
         { error: "Invalid reseller MOQ" },
+        { status: 400 },
+      );
+    }
+
+    const salesMode = body.salesMode ?? "BOTH";
+
+    const PRODUCT_SALES_MODES = [
+      "RETAIL",
+      "BULK",
+      "BOTH",
+    ] as const;
+
+    if (!PRODUCT_SALES_MODES.includes(salesMode)) {
+      return NextResponse.json(
+        { error: "Invalid sales mode" },
         { status: 400 },
       );
     }
@@ -394,10 +528,15 @@ export async function POST(request: Request) {
         data: {
           name,
           slug,
+          gender,
 
-          sku: body.sku
-            ? String(body.sku).trim()
-            : null,
+          sku:
+            body.sku && String(body.sku).trim()
+              ? String(body.sku).trim()
+              : await generateProductSku(
+                  tx,
+                  gender,
+                ),
 
           description: body.description
             ? String(body.description).trim()
@@ -418,6 +557,8 @@ export async function POST(request: Request) {
               ? null
               : Math.floor(resellerMOQ),
 
+          salesMode,
+
           status,
 
           isFeatured: Boolean(body.isFeatured),
@@ -429,21 +570,23 @@ export async function POST(request: Request) {
       });
 
       if (variants.length > 0) {
-        await tx.productVariant.createMany({
-          data: variants.map((variant) => ({
+        const variantRows = variants.map((variant) => {
+          const colorId = String(
+            variant.colorId,
+          ).trim();
+
+          const sizeId = String(
+            variant.sizeId,
+          ).trim();
+
+          return {
             productId: createdProduct.id,
 
-            colorId: String(
-              variant.colorId,
-            ).trim(),
+            colorId,
 
-            sizeId: String(
-              variant.sizeId,
-            ).trim(),
+            sizeId,
 
-            sku: variant.sku
-              ? String(variant.sku).trim()
-              : null,
+            sku: null as string | null,
 
             stock: Math.floor(
               Number(variant.stock ?? 0),
@@ -465,7 +608,81 @@ export async function POST(request: Request) {
 
             isActive:
               variant.isActive !== false,
-          })),
+          };
+        });
+
+        const variantReferences = await Promise.all(
+          variantRows.map(async (row) => {
+            const [color, size] = await Promise.all([
+              tx.color.findUnique({
+                where: {
+                  id: row.colorId,
+                },
+                select: {
+                  name: true,
+                },
+              }),
+
+              tx.size.findUnique({
+                where: {
+                  id: row.sizeId,
+                },
+                select: {
+                  name: true,
+                },
+              }),
+            ]);
+
+            if (!color || !size) {
+              throw new Error(
+                "Unable to resolve variant color or size",
+              );
+            }
+
+            return {
+              row,
+              colorCode: getColorSkuCode(
+                color.name,
+              ),
+              sizeCode: getSizeSkuCode(
+                size.name,
+              ),
+            };
+          }),
+        );
+
+        const generatedSkus = new Set<string>();
+
+        for (const item of variantReferences) {
+          const baseSku =
+            `${createdProduct.sku}-${item.colorCode}-${item.sizeCode}`;
+
+          let sku = baseSku;
+          let suffix = 2;
+
+          while (
+            generatedSkus.has(sku) ||
+            (await tx.productVariant.findUnique({
+              where: {
+                sku,
+              },
+              select: {
+                id: true,
+              },
+            }))
+          ) {
+            sku = `${baseSku}-${suffix}`;
+            suffix += 1;
+          }
+
+          generatedSkus.add(sku);
+          item.row.sku = sku;
+        }
+
+        await tx.productVariant.createMany({
+          data: variantReferences.map(
+            ({ row }) => row,
+          ),
         });
       }
 

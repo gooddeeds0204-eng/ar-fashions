@@ -11,7 +11,9 @@ type Category = {
 type Color = {
   id: string;
   name: string;
+  family?: string | null;
   hexCode?: string | null;
+  imageUrl?: string | null;
   isActive: boolean;
 };
 
@@ -82,6 +84,9 @@ export default function ProductsPage() {
 
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [gender, setGender] = useState<
+    "WOMEN" | "MEN" | "KIDS" | "UNISEX"
+  >("UNISEX");
   const [sku, setSku] = useState("");
   const [fabric, setFabric] = useState("");
   const [description, setDescription] = useState("");
@@ -91,9 +96,14 @@ export default function ProductsPage() {
   const [resellerPrice, setResellerPrice] = useState("");
   const [resellerMOQ, setResellerMOQ] = useState("");
 
+  const [salesMode, setSalesMode] = useState<
+    "RETAIL" | "BULK" | "BOTH"
+  >("BOTH");
+
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [sizeSearch, setSizeSearch] = useState("");
+  const [expandedColorFamily, setExpandedColorFamily] = useState<string | null>(null);
 
   const [variants, setVariants] = useState<Variant[]>([]);
   const [media, setMedia] = useState<ProductMedia[]>([]);
@@ -101,6 +111,10 @@ export default function ProductsPage() {
   const [mediaType, setMediaType] = useState<"IMAGE" | "VIDEO">("IMAGE");
   const [mediaAltText, setMediaAltText] = useState("");
   const [addingMedia, setAddingMedia] = useState(false);
+  const [selectedMediaFile, setSelectedMediaFile] = useState<File | null>(null);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [mediaError, setMediaError] = useState("");
 
 
 
@@ -184,17 +198,126 @@ export default function ProductsPage() {
     loadData();
   }, []);
 
+  function getApplicableSizeIds(categoryName: string) {
+    const name = categoryName.toLowerCase();
+
+    if (
+      name.includes("kids") ||
+      name.includes("boys") ||
+      name.includes("girls") ||
+      name.includes("baby")
+    ) {
+      return sizes
+        .filter((size) => size.category === "Kids")
+        .map((size) => size.id);
+    }
+
+    if (
+      name.includes("saree") ||
+      name.includes("dupatta") ||
+      name.includes("scarf") ||
+      name.includes("shawl") ||
+      name.includes("handbag") ||
+      name.includes("bag") ||
+      name.includes("belt") ||
+      name.includes("cap") ||
+      name.includes("hat") ||
+      name.includes("sunglass") ||
+      name.includes("jewellery") ||
+      name.includes("watch") ||
+      name.includes("sock")
+    ) {
+      return sizes
+        .filter(
+          (size) =>
+            size.name === "Free Size" ||
+            size.category === "Clothing"
+        )
+        .map((size) => size.id);
+    }
+
+    if (
+      name.includes("jeans") ||
+      name.includes("pants") ||
+      name.includes("trouser") ||
+      name.includes("cargo") ||
+      name.includes("jogger") ||
+      name.includes("legging") ||
+      name.includes("jeggings") ||
+      name.includes("palazzo") ||
+      name.includes("shorts")
+    ) {
+      return sizes
+        .filter(
+          (size) =>
+            size.category === "Adult" &&
+            size.sizeType === "NUMERIC"
+        )
+        .map((size) => size.id);
+    }
+
+    return sizes
+      .filter(
+        (size) =>
+          size.category === "Adult" &&
+          size.sizeType === "LETTER"
+      )
+      .map((size) => size.id);
+  }
+
+  const colorFamilies = useMemo(() => {
+    const groups: Record<string, Color[]> = {};
+
+    for (const color of colors) {
+      const family = color.family?.trim() || "Other";
+
+      if (!groups[family]) {
+        groups[family] = [];
+      }
+
+      groups[family].push(color);
+    }
+
+    return Object.entries(groups).sort(([a], [b]) =>
+      a.localeCompare(b),
+    );
+  }, [colors]);
+
+  function toggleColorFamily(family: string) {
+    setExpandedColorFamily((current) =>
+      current === family ? null : family,
+    );
+  }
+
+  const applicableSizes = useMemo(() => {
+    const selectedCategory = categories.find(
+      (category) => category.id === categoryId,
+    );
+
+    if (!selectedCategory) {
+      return sizes;
+    }
+
+    const applicableIds = getApplicableSizeIds(
+      selectedCategory.name,
+    );
+
+    return sizes.filter((size) =>
+      applicableIds.includes(size.id),
+    );
+  }, [categories, categoryId, sizes]);
+
   const filteredSizes = useMemo(() => {
     const query = sizeSearch.trim().toLowerCase();
 
     if (!query) {
-      return sizes;
+      return applicableSizes;
     }
 
-    return sizes.filter((size) =>
+    return applicableSizes.filter((size) =>
       size.name.toLowerCase().includes(query),
     );
-  }, [sizes, sizeSearch]);
+  }, [applicableSizes, sizeSearch]);
 
   function toggleColor(colorId: string) {
     setSelectedColors((current) =>
@@ -213,7 +336,9 @@ export default function ProductsPage() {
   }
 
   function selectAllSizes() {
-    setSelectedSizes(sizes.map((size) => size.id));
+    setSelectedSizes(
+      applicableSizes.map((size) => size.id),
+    );
   }
 
   function clearAllSizes() {
@@ -304,6 +429,79 @@ export default function ProductsPage() {
     setStatus("DRAFT");
   }
 
+  async function uploadMediaFile(file: File) {
+    setMediaError("");
+    setUploadingMedia(true);
+    setUploadProgress(0);
+
+    try {
+      const isImage = file.type.startsWith("image/");
+      const isVideo = file.type.startsWith("video/");
+
+      if (!isImage && !isVideo) {
+        throw new Error("Only image and video files are allowed");
+      }
+
+      const maxSize = isVideo
+        ? 50 * 1024 * 1024
+        : 10 * 1024 * 1024;
+
+      if (file.size > maxSize) {
+        throw new Error(
+          isVideo
+            ? "Video must be 50MB or smaller"
+            : "Image must be 10MB or smaller",
+        );
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      setUploadProgress(25);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      setUploadProgress(75);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "Upload failed");
+      }
+
+      setMedia((current) => [
+        ...current,
+        {
+          id: `temp-${Date.now()}-${Math.random()}`,
+          type: data.type,
+          url: data.url,
+          thumbnailUrl: null,
+          altText: file.name,
+          sortOrder: current.length,
+          isActive: true,
+        },
+      ]);
+
+      setUploadProgress(100);
+    } catch (error) {
+      console.error("Media upload failed:", error);
+
+      setMediaError(
+        error instanceof Error
+          ? error.message
+          : "Upload failed",
+      );
+    } finally {
+      setTimeout(() => {
+        setUploadingMedia(false);
+        setUploadProgress(0);
+      }, 500);
+    }
+  }
+
   async function createProduct(event: React.FormEvent) {
     event.preventDefault();
 
@@ -317,8 +515,19 @@ export default function ProductsPage() {
       return;
     }
 
-    if (!retailPrice) {
+    if (
+      (salesMode === "RETAIL" || salesMode === "BOTH") &&
+      !retailPrice
+    ) {
       alert("Retail price is required");
+      return;
+    }
+
+    if (
+      (salesMode === "BULK" || salesMode === "BOTH") &&
+      !resellerPrice
+    ) {
+      alert("Reseller price is required for bulk sales");
       return;
     }
 
@@ -342,13 +551,18 @@ export default function ProductsPage() {
         body: JSON.stringify({
           name,
           categoryId,
+          gender,
           sku,
           fabric,
           description,
           mrp,
-          retailPrice,
-          resellerPrice,
-          resellerMOQ,
+          retailPrice:
+            salesMode === "BULK" ? "" : retailPrice,
+          resellerPrice:
+            salesMode === "RETAIL" ? "" : resellerPrice,
+          resellerMOQ:
+            salesMode === "RETAIL" ? "" : resellerMOQ,
+          salesMode,
           status,
           isFeatured,
           isTrending,
@@ -417,6 +631,9 @@ export default function ProductsPage() {
       setMediaUrl("");
       setMediaAltText("");
       setMediaType("IMAGE");
+      setSelectedMediaFile(null);
+      setMediaError("");
+      setUploadProgress(0);
       await loadData();
     } catch (error) {
       console.error(error);
@@ -532,12 +749,71 @@ export default function ProductsPage() {
                 </select>
               </div>
 
-              <Field
-                label="SKU"
-                value={sku}
-                onChange={setSku}
-                placeholder="Optional product SKU"
-              />
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-300">
+                  Gender *
+                </label>
+
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {[
+                    { value: "WOMEN", label: "Women" },
+                    { value: "MEN", label: "Men" },
+                    { value: "KIDS", label: "Kids" },
+                    { value: "UNISEX", label: "Unisex" },
+                  ].map((option) => {
+                    const selected = gender === option.value;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() =>
+                          setGender(
+                            option.value as
+                              | "WOMEN"
+                              | "MEN"
+                              | "KIDS"
+                              | "UNISEX",
+                          )
+                        }
+                        className={`rounded-2xl border px-4 py-3.5 text-sm font-bold transition ${
+                          selected
+                            ? "border-emerald-400 bg-emerald-400/15 text-emerald-300"
+                            : "border-white/10 bg-slate-900 text-slate-400 hover:border-white/20"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-300">
+                  Product SKU
+                </label>
+
+                <div className="flex items-center justify-between rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.06] px-4 py-3.5">
+                  <div>
+                    <p className="text-sm font-bold text-emerald-300">
+                      Auto Generated
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      SKU will be assigned automatically after saving
+                    </p>
+                  </div>
+
+                  <span className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 font-mono text-sm font-bold text-white">
+                    AR-{{
+                      WOMEN: "W",
+                      MEN: "M",
+                      KIDS: "K",
+                      UNISEX: "U",
+                    }[gender]}-XXX
+                  </span>
+                </div>
+              </div>
 
               <Field
                 label="Fabric"
@@ -572,98 +848,252 @@ export default function ProductsPage() {
               </p>
 
               <h2 className="mt-1 text-xl font-bold">
-                Pricing
+                Pricing & Sales
               </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Choose how this product will be sold.
+              </p>
             </div>
 
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              <PriceField
-                label="MRP"
-                value={mrp}
-                onChange={setMrp}
-              />
+            {/* SALES MODE */}
+            <div className="mb-6">
+              <label className="mb-3 block text-sm font-semibold text-slate-300">
+                Sales Mode
+              </label>
 
-              <PriceField
-                label="Retail Price *"
-                value={retailPrice}
-                onChange={setRetailPrice}
-              />
-
-              <PriceField
-                label="Reseller Price"
-                value={resellerPrice}
-                onChange={setResellerPrice}
-              />
-
-              <PriceField
-                label="Reseller MOQ"
-                value={resellerMOQ}
-                onChange={setResellerMOQ}
-              />
-            </div>
-          </section>
-
-          {/* COLORS */}
-          <section className="mb-6 rounded-3xl border border-white/10 bg-white/[0.04] p-5 sm:p-7">
-            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
-                  03
-                </p>
-
-                <h2 className="mt-1 text-xl font-bold">
-                  Product Colors
-                </h2>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  {selectedColors.length} colors selected
-                </p>
-              </div>
-            </div>
-
-            {colors.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-slate-500">
-                No active colors found.
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-                {colors.map((color) => {
-                  const selected =
-                    selectedColors.includes(color.id);
+              <div className="grid gap-3 sm:grid-cols-3">
+                {[
+                  {
+                    value: "RETAIL" as const,
+                    title: "Retail",
+                    description: "Individual customer sales",
+                  },
+                  {
+                    value: "BULK" as const,
+                    title: "Bulk",
+                    description: "Reseller / wholesale sales",
+                  },
+                  {
+                    value: "BOTH" as const,
+                    title: "Both",
+                    description: "Retail + bulk sales",
+                  },
+                ].map((mode) => {
+                  const selected = salesMode === mode.value;
 
                   return (
                     <button
-                      key={color.id}
+                      key={mode.value}
                       type="button"
-                      onClick={() => toggleColor(color.id)}
-                      className={`flex items-center gap-3 rounded-2xl border p-3 text-left transition ${
+                      onClick={() => setSalesMode(mode.value)}
+                      className={`rounded-2xl border p-4 text-left transition ${
                         selected
                           ? "border-emerald-400 bg-emerald-400/10"
                           : "border-white/10 bg-slate-900 hover:border-white/20"
                       }`}
                     >
-                      <span
-                        className="h-7 w-7 shrink-0 rounded-full border border-white/20"
-                        style={{
-                          backgroundColor:
-                            color.hexCode ?? "#64748b",
-                        }}
-                      />
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-white">
+                          {mode.title}
+                        </span>
 
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                        {color.name}
-                      </span>
+                        <span
+                          className={`flex h-5 w-5 items-center justify-center rounded-full border text-xs ${
+                            selected
+                              ? "border-emerald-400 bg-emerald-400 text-slate-950"
+                              : "border-white/20"
+                          }`}
+                        >
+                          {selected ? "✓" : ""}
+                        </span>
+                      </div>
 
-                      <span
-                        className={`flex h-5 w-5 items-center justify-center rounded-md border text-xs ${
-                          selected
-                            ? "border-emerald-400 bg-emerald-400 text-slate-950"
-                            : "border-white/20"
-                        }`}
-                      >
-                        {selected ? "✓" : ""}
-                      </span>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {mode.description}
+                      </p>
                     </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* PRICES */}
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+
+              {(salesMode === "RETAIL" || salesMode === "BOTH") && (
+                <>
+                  <PriceField
+                    label="MRP"
+                    value={mrp}
+                    onChange={setMrp}
+                  />
+
+                  <PriceField
+                    label="Retail Price *"
+                    value={retailPrice}
+                    onChange={setRetailPrice}
+                  />
+                </>
+              )}
+
+              {(salesMode === "BULK" || salesMode === "BOTH") && (
+                <>
+                  <PriceField
+                    label="Reseller Price"
+                    value={resellerPrice}
+                    onChange={setResellerPrice}
+                  />
+
+                  <PriceField
+                    label="Reseller MOQ"
+                    value={resellerMOQ}
+                    onChange={setResellerMOQ}
+                  />
+                </>
+              )}
+
+            </div>
+          </section>
+
+          {/* COLORS */}
+          <section className="mb-6 rounded-3xl border border-white/10 bg-white/[0.04] p-5 sm:p-7">
+            <div className="mb-6">
+              <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
+                03
+              </p>
+
+              <h2 className="mt-1 text-xl font-bold">
+                Product Colors
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                {selectedColors.length} shades selected
+              </p>
+            </div>
+
+            {colorFamilies.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-slate-500">
+                No active colors found.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {colorFamilies.map(([family, familyColors]) => {
+                  const expanded =
+                    expandedColorFamily === family;
+
+                  const selectedCount = familyColors.filter(
+                    (color) =>
+                      selectedColors.includes(color.id),
+                  ).length;
+
+                  return (
+                    <div
+                      key={family}
+                      className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/70"
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          toggleColorFamily(family)
+                        }
+                        className="flex w-full items-center justify-between gap-4 p-4 text-left transition hover:bg-white/[0.04]"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex -space-x-2">
+                            {familyColors
+                              .slice(0, 5)
+                              .map((color) => (
+                                <span
+                                  key={color.id}
+                                  className="h-7 w-7 rounded-full border-2 border-slate-900"
+                                  style={{
+                                    backgroundColor:
+                                      color.hexCode ??
+                                      "#64748b",
+                                  }}
+                                />
+                              ))}
+                          </div>
+
+                          <div>
+                            <p className="font-semibold text-white">
+                              {family}
+                            </p>
+
+                            <p className="text-xs text-slate-500">
+                              {familyColors.length} shades
+                              {selectedCount > 0
+                                ? ` · ${selectedCount} selected`
+                                : ""}
+                            </p>
+                          </div>
+                        </div>
+
+                        <span className="text-lg text-slate-400">
+                          {expanded ? "−" : "+"}
+                        </span>
+                      </button>
+
+                      {expanded && (
+                        <div className="border-t border-white/10 p-4">
+                          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                            {familyColors.map((color) => {
+                              const selected =
+                                selectedColors.includes(
+                                  color.id,
+                                );
+
+                              return (
+                                <button
+                                  key={color.id}
+                                  type="button"
+                                  onClick={() =>
+                                    toggleColor(color.id)
+                                  }
+                                  className={`flex items-center gap-3 rounded-2xl border p-3 text-left transition ${
+                                    selected
+                                      ? "border-emerald-400 bg-emerald-400/10"
+                                      : "border-white/10 bg-slate-950 hover:border-white/20"
+                                  }`}
+                                >
+                                  <span
+                                    className="h-8 w-8 shrink-0 rounded-full border border-white/20 shadow-inner"
+                                    style={{
+                                      backgroundColor:
+                                        color.hexCode ??
+                                        "#64748b",
+                                    }}
+                                  />
+
+                                  <span className="min-w-0 flex-1">
+                                    <span className="block truncate text-sm font-medium text-white">
+                                      {color.name}
+                                    </span>
+
+                                    {color.hexCode && (
+                                      <span className="block text-[10px] uppercase text-slate-500">
+                                        {color.hexCode}
+                                      </span>
+                                    )}
+                                  </span>
+
+                                  <span
+                                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-xs ${
+                                      selected
+                                        ? "border-emerald-400 bg-emerald-400 text-slate-950"
+                                        : "border-white/20"
+                                    }`}
+                                  >
+                                    {selected ? "✓" : ""}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -882,19 +1312,9 @@ export default function ProductsPage() {
                         </td>
 
                         <td className="px-4 py-3">
-                          <input
-                            value={variant.sku}
-                            onChange={(event) =>
-                              updateVariant(
-                                variant.colorId,
-                                variant.sizeId,
-                                "sku",
-                                event.target.value,
-                              )
-                            }
-                            placeholder="SKU"
-                            className="w-32 rounded-xl border border-white/10 bg-slate-900 px-3 py-2 outline-none focus:border-emerald-400"
-                          />
+                          <span className="inline-flex min-w-[150px] items-center rounded-xl border border-emerald-400/20 bg-emerald-400/[0.06] px-3 py-2 font-mono text-xs font-bold text-emerald-300">
+                            Auto Generated
+                          </span>
                         </td>
                       </tr>
                     ))}
@@ -916,123 +1336,146 @@ export default function ProductsPage() {
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Add product images and videos for your product gallery.
+                Upload product images and videos directly from your device.
               </p>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-[150px_1fr_auto]">
-              <select
-                value={mediaType}
-                onChange={(event) =>
-                  setMediaType(
-                    event.target.value as "IMAGE" | "VIDEO"
-                  )
-                }
-                className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3.5 outline-none focus:border-purple-400"
-              >
-                <option value="IMAGE">Image</option>
-                <option value="VIDEO">Video</option>
-              </select>
-
+            {/* UPLOAD BOX */}
+            <div className="rounded-3xl border border-dashed border-purple-400/30 bg-purple-400/[0.04] p-6 text-center">
               <input
-                value={mediaUrl}
-                onChange={(event) =>
-                  setMediaUrl(event.target.value)
-                }
-                placeholder={
-                  mediaType === "IMAGE"
-                    ? "https://example.com/product-image.jpg"
-                    : "https://example.com/product-video.mp4"
-                }
-                className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3.5 outline-none focus:border-purple-400"
+                id="product-media-upload"
+                type="file"
+                accept="image/*,video/*"
+                multiple
+                className="hidden"
+                disabled={uploadingMedia}
+                onChange={async (event) => {
+                  const files = Array.from(
+                    event.target.files ?? [],
+                  );
+
+                  for (const file of files) {
+                    await uploadMediaFile(file);
+                  }
+
+                  event.target.value = "";
+                }}
               />
 
-              <button
-                type="button"
-                disabled={!mediaUrl.trim()}
-                onClick={() => {
-                  if (!mediaUrl.trim()) return;
-
-                  setMedia((current) => [
-                    ...current,
-                    {
-                      id: `temp-${Date.now()}`,
-                      type: mediaType,
-                      url: mediaUrl.trim(),
-                      thumbnailUrl: null,
-                      altText: mediaAltText.trim() || null,
-                      sortOrder: current.length,
-                      isActive: true,
-                    },
-                  ]);
-
-                  setMediaUrl("");
-                  setMediaAltText("");
-                }}
-                className="rounded-2xl bg-purple-400 px-6 py-3.5 font-bold text-slate-950 transition hover:bg-purple-300 disabled:opacity-50"
+              <label
+                htmlFor="product-media-upload"
+                className="mx-auto flex max-w-xl cursor-pointer flex-col items-center rounded-2xl border border-white/10 bg-slate-900 p-8 transition hover:border-purple-400/50 hover:bg-purple-400/5"
               >
-                + Add Media
-              </button>
+                <span className="text-4xl">📷</span>
+
+                <span className="mt-3 text-lg font-bold">
+                  Upload Product Media
+                </span>
+
+                <span className="mt-1 text-sm text-slate-500">
+                  Select multiple images or videos
+                </span>
+
+                <span className="mt-3 rounded-xl bg-purple-400 px-5 py-2.5 text-sm font-bold text-slate-950">
+                  {uploadingMedia ? "Uploading..." : "Choose Files"}
+                </span>
+              </label>
+
+              <p className="mt-4 text-xs text-slate-500">
+                Images up to 10MB · Videos up to 50MB
+              </p>
+
+              {uploadingMedia && (
+                <div className="mx-auto mt-5 max-w-xl">
+                  <div className="mb-2 flex justify-between text-xs text-slate-400">
+                    <span>Uploading...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+                    <div
+                      className="h-full rounded-full bg-purple-400 transition-all duration-300"
+                      style={{
+                        width: `${uploadProgress}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {mediaError && (
+                <p className="mt-4 text-sm font-medium text-red-400">
+                  {mediaError}
+                </p>
+              )}
             </div>
 
+            {/* ALT TEXT */}
             <div className="mt-4">
               <input
                 value={mediaAltText}
                 onChange={(event) =>
                   setMediaAltText(event.target.value)
                 }
-                placeholder="Alt text / media description"
+                placeholder="Alt text / media description (optional)"
                 className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3.5 text-sm outline-none focus:border-purple-400"
               />
             </div>
 
+            {/* MEDIA PREVIEW */}
             {media.length === 0 ? (
-              <div className="mt-5 rounded-2xl border border-dashed border-white/10 p-8 text-center">
+              <div className="mt-6 rounded-2xl border border-dashed border-white/10 p-8 text-center">
                 <p className="font-semibold text-slate-300">
                   No product media added
                 </p>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Add product images or videos above.
+                  Choose images or videos above to add them to the product.
                 </p>
               </div>
             ) : (
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {media.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900"
-                  >
-                    <div className="aspect-square bg-slate-950">
-                      {item.type === "IMAGE" ? (
-                        <img
-                          src={item.url}
-                          alt={item.altText ?? "Product image"}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <video
-                          src={item.url}
-                          controls
-                          className="h-full w-full object-cover"
-                        />
-                      )}
-                    </div>
+              <div className="mt-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold">
+                      Selected Media
+                    </h3>
 
-                    <div className="p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="rounded-full bg-purple-400/10 px-2.5 py-1 text-[10px] font-bold uppercase text-purple-400">
-                          {item.type}
-                        </span>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {media.length} media item{media.length === 1 ? "" : "s"} selected
+                    </p>
+                  </div>
+                </div>
 
-                        <span className="text-xs text-slate-500">
-                          #{index + 1}
-                        </span>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                  {media.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900"
+                    >
+                      <div className="aspect-square bg-slate-950">
+                        {item.type === "IMAGE" ? (
+                          <img
+                            src={item.url}
+                            alt={item.altText ?? "Product image"}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <video
+                            src={item.url}
+                            controls
+                            className="h-full w-full object-cover"
+                          />
+                        )}
                       </div>
 
-                      <p className="mt-2 truncate text-xs text-slate-500">
-                        {item.url}
-                      </p>
+                      <div className="absolute left-2 top-2 rounded-lg bg-black/70 px-2 py-1 text-[10px] font-bold text-white">
+                        {item.type}
+                      </div>
+
+                      <div className="absolute right-2 top-2 rounded-lg bg-black/70 px-2 py-1 text-[10px] font-bold text-white">
+                        #{index + 1}
+                      </div>
 
                       <button
                         type="button"
@@ -1040,17 +1483,17 @@ export default function ProductsPage() {
                           setMedia((current) =>
                             current.filter(
                               (mediaItem) =>
-                                mediaItem.id !== item.id
-                            )
+                                mediaItem.id !== item.id,
+                            ),
                           )
                         }
-                        className="mt-3 w-full rounded-xl border border-red-400/20 bg-red-400/5 py-2 text-xs font-semibold text-red-400 hover:bg-red-400/10"
+                        className="absolute bottom-2 left-2 right-2 rounded-xl bg-red-500 px-3 py-2 text-xs font-bold text-white opacity-90 transition hover:bg-red-600"
                       >
                         Remove
                       </button>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </section>
@@ -1199,22 +1642,31 @@ export default function ProductsPage() {
                     </p>
                   </div>
 
-                  <div className="text-left md:text-right">
-                    <p className="font-bold">
-                      ₹
-                      {Number(
-                        product.retailPrice,
-                      ).toLocaleString("en-IN")}
-                    </p>
-
-                    {product.resellerPrice !== null && (
-                      <p className="text-sm text-emerald-400">
-                        Reseller ₹
+                  <div className="flex flex-col items-start gap-3 md:items-end">
+                    <div className="text-left md:text-right">
+                      <p className="font-bold">
+                        ₹
                         {Number(
-                          product.resellerPrice,
+                          product.retailPrice,
                         ).toLocaleString("en-IN")}
                       </p>
-                    )}
+
+                      {product.resellerPrice !== null && (
+                        <p className="text-sm text-emerald-400">
+                          Reseller ₹
+                          {Number(
+                            product.resellerPrice,
+                          ).toLocaleString("en-IN")}
+                        </p>
+                      )}
+                    </div>
+
+                    <a
+                      href={`/admin/products/${product.id}`}
+                      className="inline-flex items-center justify-center rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-400 transition hover:bg-emerald-400 hover:text-slate-950"
+                    >
+                      ✏️ Edit
+                    </a>
                   </div>
                 </div>
               ))}

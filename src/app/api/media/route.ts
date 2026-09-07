@@ -121,29 +121,87 @@ export async function PATCH(request: Request) {
       );
     }
 
+    const updateData: {
+      url?: string;
+      type?: "IMAGE" | "VIDEO";
+      thumbnailUrl?: string | null;
+      altText?: string | null;
+      sortOrder?: number;
+      isActive?: boolean;
+    } = {};
+
+    if (body.url !== undefined) {
+      const url = String(body.url ?? "").trim();
+
+      if (!url) {
+        return NextResponse.json(
+          { error: "Media URL cannot be empty" },
+          { status: 400 },
+        );
+      }
+
+      updateData.url = url;
+    }
+
+    if (body.type !== undefined) {
+      const type = String(body.type ?? "")
+        .trim()
+        .toUpperCase();
+
+      if (type !== "IMAGE" && type !== "VIDEO") {
+        return NextResponse.json(
+          { error: "Media type must be IMAGE or VIDEO" },
+          { status: 400 },
+        );
+      }
+
+      updateData.type = type;
+    }
+
+    if (body.thumbnailUrl !== undefined) {
+      updateData.thumbnailUrl = body.thumbnailUrl
+        ? String(body.thumbnailUrl).trim()
+        : null;
+    }
+
+    if (body.altText !== undefined) {
+      updateData.altText = body.altText
+        ? String(body.altText).trim()
+        : null;
+    }
+
+    if (body.sortOrder !== undefined) {
+      const sortOrder = Number(body.sortOrder);
+
+      if (!Number.isInteger(sortOrder) || sortOrder < 0) {
+        return NextResponse.json(
+          { error: "sortOrder must be a non-negative integer" },
+          { status: 400 },
+        );
+      }
+
+      updateData.sortOrder = sortOrder;
+    }
+
+    if (body.isActive !== undefined) {
+      updateData.isActive = Boolean(body.isActive);
+    }
+
+    const existingMedia = await prisma.productMedia.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!existingMedia) {
+      return NextResponse.json(
+        { error: "Media not found" },
+        { status: 404 },
+      );
+    }
+
     const media = await prisma.productMedia.update({
       where: { id },
-      data: {
-        ...(body.url !== undefined && {
-          url: String(body.url).trim(),
-        }),
-        ...(body.thumbnailUrl !== undefined && {
-          thumbnailUrl: body.thumbnailUrl
-            ? String(body.thumbnailUrl).trim()
-            : null,
-        }),
-        ...(body.altText !== undefined && {
-          altText: body.altText
-            ? String(body.altText).trim()
-            : null,
-        }),
-        ...(body.sortOrder !== undefined && {
-          sortOrder: Number(body.sortOrder),
-        }),
-        ...(body.isActive !== undefined && {
-          isActive: Boolean(body.isActive),
-        }),
-      },
+      data: updateData,
     });
 
     return NextResponse.json(media);
@@ -166,6 +224,18 @@ export async function DELETE(request: Request) {
       return NextResponse.json(
         { error: "Media id is required" },
         { status: 400 },
+      );
+    }
+
+    const existingMedia = await prisma.productMedia.findUnique({
+      where: { id },
+      select: { id: true, isActive: true },
+    });
+
+    if (!existingMedia) {
+      return NextResponse.json(
+        { error: "Media not found" },
+        { status: 404 },
       );
     }
 

@@ -1,3 +1,4 @@
+import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -17,7 +18,9 @@ export async function POST(request: Request) {
 
     if (!isImage && !isVideo) {
       return NextResponse.json(
-        { error: "Only image and video files are allowed" },
+        {
+          error: "Only image and video files are allowed",
+        },
         { status: 400 },
       );
     }
@@ -37,23 +40,38 @@ export async function POST(request: Request) {
       );
     }
 
-    /*
-     * Temporary upload response.
-     * Actual cloud/storage integration will be connected next.
-     */
+    const safeName = file.name
+      .replace(/[^a-zA-Z0-9._-]/g, "-")
+      .toLowerCase();
+
+    const folder = isImage
+      ? "products/images"
+      : "products/videos";
+
+    const pathname = `${folder}/${Date.now()}-${safeName}`;
+
+    const blob = await put(pathname, file, {
+      access: "public",
+      addRandomSuffix: true,
+      contentType: file.type,
+    });
+
     return NextResponse.json({
       success: true,
       type: isImage ? "IMAGE" : "VIDEO",
       fileName: file.name,
       size: file.size,
       mimeType: file.type,
-      message: "File received successfully",
+      url: blob.url,
+      pathname: blob.pathname,
     });
   } catch (error) {
     console.error("POST /api/upload failed:", error);
 
     return NextResponse.json(
-      { error: "Failed to upload file" },
+      {
+        error: "Failed to upload file",
+      },
       { status: 500 },
     );
   }

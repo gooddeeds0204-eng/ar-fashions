@@ -33,6 +33,10 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     const name = String(body.name ?? "").trim();
+    const family = body.family
+      ? String(body.family).trim()
+      : null;
+
     const hexCode = body.hexCode
       ? String(body.hexCode).trim()
       : null;
@@ -61,6 +65,7 @@ export async function POST(request: Request) {
     const color = await prisma.color.create({
       data: {
         name,
+        family,
         hexCode,
         imageUrl,
         isActive: body.isActive !== false,
@@ -96,6 +101,11 @@ export async function PATCH(request: Request) {
       data: {
         ...(body.name !== undefined && {
           name: String(body.name).trim(),
+        }),
+        ...(body.family !== undefined && {
+          family: body.family
+            ? String(body.family).trim()
+            : null,
         }),
         ...(body.hexCode !== undefined && {
           hexCode: body.hexCode
