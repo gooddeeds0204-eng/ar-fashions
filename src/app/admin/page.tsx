@@ -11,13 +11,13 @@ const menu = [
   { label: "Sizes", href: "/admin/sizes", icon: "□" },
   { label: "Orders", href: "/admin/orders", icon: "⌁" },
   { label: "Reviews", href: "/admin/reviews", icon: "★" },
+  { label: "Customers", href: "/admin/customers", icon: "◎" },
   { label: "Inventory", href: "/admin/inventory", icon: "▥" },
 ];
 
 const comingSoon = [
   { label: "Inventory", icon: "◈" },
   { label: "Reseller Sets", icon: "◆" },
-  { label: "Customers", icon: "◎" },
   { label: "Banners", icon: "▱" },
   { label: "Coupons", icon: "%" },
   { label: "Settings", icon: "⚙" },
