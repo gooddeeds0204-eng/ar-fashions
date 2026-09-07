@@ -19,6 +19,15 @@ type CartItem = {
   resellerMOQ?: number;
 };
 
+type AppliedCoupon = {
+  code: string;
+  discountAmount: number;
+  discountType:
+    | "PERCENTAGE"
+    | "FIXED";
+  discountValue: number;
+};
+
 type SavedAddress = {
   id: string;
   name: string;
@@ -53,6 +62,29 @@ export default function CheckoutPage() {
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const [
+    couponInput,
+    setCouponInput,
+  ] = useState("");
+
+  const [
+    appliedCoupon,
+    setAppliedCoupon,
+  ] =
+    useState<AppliedCoupon | null>(
+      null,
+    );
+
+  const [
+    couponLoading,
+    setCouponLoading,
+  ] = useState(false);
+
+  const [
+    couponError,
+    setCouponError,
+  ] = useState("");
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -261,9 +293,33 @@ export default function CheckoutPage() {
     !isMixedCart &&
     invalidResellerGroups.length === 0;
 
-  const deliveryCharge = subtotal >= 999 ? 0 : 79;
+  const deliveryCharge =
+    subtotal >= 999 ? 0 : 79;
 
-  const total = subtotal + deliveryCharge;
+  const discountAmount =
+    appliedCoupon?.discountAmount ??
+    0;
+
+  const total = Math.max(
+    0,
+    subtotal -
+      discountAmount +
+      deliveryCharge,
+  );
+
+  /*
+   * If cart value or order mode changes,
+   * previously validated coupon preview
+   * is cleared. Final validation also
+   * happens again on the server.
+   */
+  useEffect(() => {
+    setAppliedCoupon(null);
+    setCouponError("");
+  }, [
+    subtotal,
+    isResellerOrder,
+  ]);
 
   /*
    * If the customer edits a saved
@@ -320,6 +376,100 @@ export default function CheckoutPage() {
       pincode,
       landmark,
     ]);
+
+  async function applyCoupon() {
+    const code =
+      couponInput
+        .trim()
+        .toUpperCase();
+
+    if (!code) {
+      setCouponError(
+        "Enter a coupon code.",
+      );
+      return;
+    }
+
+    if (subtotal <= 0) {
+      setCouponError(
+        "Cart subtotal is invalid.",
+      );
+      return;
+    }
+
+    try {
+      setCouponLoading(true);
+      setCouponError("");
+
+      const response =
+        await fetch(
+          "/api/coupons/validate",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              code,
+              subtotal,
+              type:
+                isResellerOrder
+                  ? "RESELLER"
+                  : "RETAIL",
+            }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Coupon could not be applied.",
+        );
+      }
+
+      setAppliedCoupon({
+        code:
+          data.coupon.code,
+        discountAmount:
+          Number(
+            data.coupon
+              .discountAmount,
+          ),
+        discountType:
+          data.coupon
+            .discountType,
+        discountValue:
+          Number(
+            data.coupon
+              .discountValue,
+          ),
+      });
+
+      setCouponInput(
+        data.coupon.code,
+      );
+    } catch (error) {
+      setAppliedCoupon(null);
+
+      setCouponError(
+        error instanceof Error
+          ? error.message
+          : "Coupon could not be applied.",
+      );
+    } finally {
+      setCouponLoading(false);
+    }
+  }
+
+  function removeCoupon() {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponError("");
+  }
 
   async function placeOrder() {
     if (isMixedCart) {
@@ -385,6 +535,9 @@ export default function CheckoutPage() {
             ? "RESELLER"
             : "RETAIL",
           paymentMethod: "COD",
+          couponCode:
+            appliedCoupon?.code ??
+            null,
           addressId:
             activeSavedAddressId,
           customer: {
@@ -805,6 +958,98 @@ export default function CheckoutPage() {
                   : money(deliveryCharge)}
               </span>
             </div>
+
+            {appliedCoupon && (
+              <div className="flex justify-between text-emerald-700">
+                <span>
+                  Coupon · {
+                    appliedCoupon.code
+                  }
+                </span>
+
+                <span className="font-black">
+                  -{money(
+                    discountAmount,
+                  )}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-black/10 p-4">
+            <p className="text-xs font-black">
+              Coupon Code
+            </p>
+
+            {appliedCoupon ? (
+              <div className="mt-3 flex items-center justify-between rounded-xl bg-emerald-50 px-4 py-3">
+                <div>
+                  <p className="text-sm font-black text-emerald-700">
+                    {
+                      appliedCoupon.code
+                    } applied
+                  </p>
+
+                  <p className="mt-1 text-[11px] text-emerald-700/80">
+                    You save {
+                      money(
+                        discountAmount,
+                      )
+                    }
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={
+                    removeCoupon
+                  }
+                  className="text-xs font-black text-red-600"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="mt-3 flex gap-2">
+                <input
+                  value={
+                    couponInput
+                  }
+                  onChange={(event) => {
+                    setCouponInput(
+                      event.target.value
+                        .toUpperCase(),
+                    );
+                    setCouponError(
+                      "",
+                    );
+                  }}
+                  placeholder="Enter coupon"
+                  className="min-w-0 flex-1 rounded-xl border border-black/10 px-4 py-3 text-sm font-bold uppercase outline-none focus:border-emerald-600"
+                />
+
+                <button
+                  type="button"
+                  disabled={
+                    couponLoading
+                  }
+                  onClick={
+                    applyCoupon
+                  }
+                  className="rounded-xl bg-zinc-950 px-5 text-xs font-black text-white disabled:bg-zinc-300"
+                >
+                  {couponLoading
+                    ? "..."
+                    : "Apply"}
+                </button>
+              </div>
+            )}
+
+            {couponError && (
+              <p className="mt-2 text-xs font-bold text-red-600">
+                {couponError}
+              </p>
+            )}
           </div>
 
           <div className="my-5 border-t border-black/10" />

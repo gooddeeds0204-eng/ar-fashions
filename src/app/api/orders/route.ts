@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import {
+  evaluateCoupon,
+  type CouponOrderType,
+} from "@/lib/coupon";
+import {
   CUSTOMER_SESSION_COOKIE,
   CUSTOMER_SESSION_OPTIONS,
   createCustomerSessionToken,
@@ -446,6 +450,11 @@ export async function POST(request: Request) {
       body.paymentMethod,
     );
 
+    const requestedCouponCode =
+      cleanString(
+        body.couponCode,
+      ).toUpperCase();
+
     if (
       type !== "RETAIL" &&
       type !== "RESELLER"
@@ -879,16 +888,73 @@ export async function POST(request: Request) {
         }
 
         /*
-         * 4. Delivery charge.
+         * 4. Validate coupon using
+         *    server-side DB values only.
+         */
+        let appliedCouponCode:
+          string | null = null;
+
+        let discountAmount = 0;
+
+        if (requestedCouponCode) {
+          const coupon =
+            await tx.coupon.findUnique({
+              where: {
+                code:
+                  requestedCouponCode,
+              },
+            });
+
+          if (!coupon) {
+            throw new Error(
+              "Coupon code not found.",
+            );
+          }
+
+          const couponResult =
+            evaluateCoupon(
+              coupon,
+              subtotal,
+              type as CouponOrderType,
+            );
+
+          if (!couponResult.valid) {
+            throw new Error(
+              couponResult.error,
+            );
+          }
+
+          appliedCouponCode =
+            couponResult.code;
+
+          discountAmount =
+            couponResult.discountAmount;
+        }
+
+        /*
+         * 5. Delivery charge.
+         *
+         * Free delivery is based on
+         * original merchandise subtotal,
+         * before coupon discount.
          */
         const deliveryCharge =
           subtotal >= 999 ? 0 : 79;
 
         const totalAmount =
-          subtotal + deliveryCharge;
+          Math.max(
+            0,
+            Math.round(
+              (
+                subtotal -
+                discountAmount +
+                deliveryCharge
+              ) * 100,
+            ) / 100,
+          );
 
         /*
-         * 5. Generate order number.
+         * 6. Generate order number.
          */
         let orderNumber =
           generateOrderNumber();
@@ -926,9 +992,11 @@ export async function POST(request: Request) {
             paymentStatus: "PENDING",
             paymentMethod: "COD",
             subtotal,
-            discountAmount: 0,
+            discountAmount,
             deliveryCharge,
             totalAmount,
+            couponCode:
+              appliedCouponCode,
             items: {
               create: orderItems.map(
                 (item) => ({
@@ -1007,8 +1075,11 @@ export async function POST(request: Request) {
           orderNumber:
             order.orderNumber,
           subtotal,
+          discountAmount,
           deliveryCharge,
           totalAmount,
+          couponCode:
+            appliedCouponCode,
         };
       },
       {
