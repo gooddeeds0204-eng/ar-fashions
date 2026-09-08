@@ -19,6 +19,7 @@ const menu = [
   { label: "Video Content", href: "/admin/video-content", icon: "▶" },
   { label: "Reseller Sets", href: "/admin/reseller-sets", icon: "◆" },
   { label: "Notifications", href: "/admin/notifications", icon: "♢" },
+  { label: "Delivery", href: "/admin/delivery", icon: "⌖" },
 ];
 
 const comingSoon = [

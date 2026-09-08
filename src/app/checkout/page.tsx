@@ -47,6 +47,47 @@ type SavedAddress = {
   isDefault: boolean;
 };
 
+type DeliverySettings = {
+  retailDeliveryCharge: number;
+  retailFreeDeliveryThreshold: number;
+
+  resellerDeliveryMode:
+    | "ACTUAL_FREIGHT"
+    | "FLAT";
+
+  resellerFlatDeliveryCharge: number;
+
+  estimatedMinDays: number;
+  estimatedMaxDays: number;
+
+  bulkFreightMessage: string;
+
+  restrictServiceability: boolean;
+  allowedStates: string[];
+  allowedPincodes: string[];
+};
+
+const DEFAULT_DELIVERY_SETTINGS:
+  DeliverySettings = {
+    retailDeliveryCharge: 79,
+    retailFreeDeliveryThreshold: 999,
+
+    resellerDeliveryMode:
+      "ACTUAL_FREIGHT",
+
+    resellerFlatDeliveryCharge: 0,
+
+    estimatedMinDays: 3,
+    estimatedMaxDays: 7,
+
+    bulkFreightMessage:
+      "Bulk shipping charge will be calculated after packing based on parcel weight and destination.",
+
+    restrictServiceability: false,
+    allowedStates: [],
+    allowedPincodes: [],
+  };
+
 function money(value: number) {
   return `₹${value.toLocaleString("en-IN")}`;
 }
@@ -111,6 +152,14 @@ export default function CheckoutPage() {
     setSelectedAddressId,
   ] = useState("");
 
+  const [
+    deliverySettings,
+    setDeliverySettings,
+  ] =
+    useState<DeliverySettings>(
+      DEFAULT_DELIVERY_SETTINGS,
+    );
+
   useEffect(() => {
     const items = getCart();
     setCart(items);
@@ -119,6 +168,45 @@ export default function CheckoutPage() {
       router.replace("/cart");
     }
   }, [router]);
+
+  useEffect(() => {
+    async function loadDeliverySettings() {
+      try {
+        const response =
+          await fetch(
+            "/api/delivery-settings",
+            {
+              cache: "no-store",
+            },
+          );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        if (
+          data.settings &&
+          typeof data.settings ===
+            "object"
+        ) {
+          setDeliverySettings({
+            ...DEFAULT_DELIVERY_SETTINGS,
+            ...data.settings,
+          });
+        }
+      } catch (error) {
+        console.error(
+          "Delivery settings load failed:",
+          error,
+        );
+      }
+    }
+
+    loadDeliverySettings();
+  }, []);
 
   useEffect(() => {
     async function loadSavedAddresses() {
@@ -407,8 +495,35 @@ export default function CheckoutPage() {
     !invalidCuratedCart &&
     invalidResellerGroups.length === 0;
 
+  const resellerFreightPending =
+    isResellerOrder &&
+    deliverySettings.resellerDeliveryMode ===
+      "ACTUAL_FREIGHT";
+
   const deliveryCharge =
-    subtotal >= 999 ? 0 : 79;
+    isResellerOrder
+      ? resellerFreightPending
+        ? 0
+        : Math.max(
+            0,
+            Number(
+              deliverySettings.resellerFlatDeliveryCharge,
+            ) || 0,
+          )
+      : subtotal >=
+          Math.max(
+            0,
+            Number(
+              deliverySettings.retailFreeDeliveryThreshold,
+            ) || 0,
+          )
+        ? 0
+        : Math.max(
+            0,
+            Number(
+              deliverySettings.retailDeliveryCharge,
+            ) || 0,
+          );
 
   const discountAmount =
     appliedCoupon?.discountAmount ??
@@ -635,6 +750,48 @@ export default function CheckoutPage() {
     if (!/^\d{6}$/.test(pincode.trim())) {
       alert("Please enter a valid 6-digit pincode.");
       return;
+    }
+
+    if (
+      deliverySettings.restrictServiceability
+    ) {
+      const normalizedState =
+        state
+          .trim()
+          .toLowerCase();
+
+      const normalizedPincode =
+        pincode.trim();
+
+      const stateAllowed =
+        deliverySettings.allowedStates
+          .map((value) =>
+            String(value)
+              .trim()
+              .toLowerCase(),
+          )
+          .includes(
+            normalizedState,
+          );
+
+      const pincodeAllowed =
+        deliverySettings.allowedPincodes
+          .map((value) =>
+            String(value).trim(),
+          )
+          .includes(
+            normalizedPincode,
+          );
+
+      if (
+        !stateAllowed &&
+        !pincodeAllowed
+      ) {
+        alert(
+          "Sorry, delivery is not available for this address.",
+        );
+        return;
+      }
     }
 
     if (cart.length === 0) {
@@ -1126,17 +1283,45 @@ export default function CheckoutPage() {
               </span>
             </div>
 
-            <div className="flex justify-between">
+            <div className="flex items-start justify-between gap-4">
               <span className="text-zinc-500">
                 Delivery
               </span>
 
-              <span className="font-bold">
-                {deliveryCharge === 0
-                  ? "FREE"
-                  : money(deliveryCharge)}
+              <span className="text-right font-bold">
+                {resellerFreightPending
+                  ? "Calculated after packing"
+                  : deliveryCharge === 0
+                    ? "FREE"
+                    : money(deliveryCharge)}
               </span>
             </div>
+
+            {resellerFreightPending && (
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4">
+                <p className="text-xs font-black text-violet-800">
+                  Bulk Freight Pending
+                </p>
+
+                <p className="mt-1 text-[11px] leading-5 text-violet-700">
+                  {
+                    deliverySettings.bulkFreightMessage
+                  }
+                </p>
+
+                <p className="mt-2 text-[10px] font-bold text-violet-600">
+                  Estimated delivery:{" "}
+                  {
+                    deliverySettings.estimatedMinDays
+                  }
+                  –
+                  {
+                    deliverySettings.estimatedMaxDays
+                  }{" "}
+                  days
+                </p>
+              </div>
+            )}
 
             {appliedCoupon && (
               <div className="flex justify-between text-emerald-700">

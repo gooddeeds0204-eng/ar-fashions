@@ -22,6 +22,7 @@ type Order = {
   paymentMethod: string | null;
   subtotal: number;
   deliveryCharge: number;
+  deliveryChargePending: boolean;
   totalAmount: number;
   createdAt: string;
   customer: {
@@ -154,6 +155,35 @@ export default function AdminOrdersPage() {
   const [selectedOrder, setSelectedOrder] =
     useState<Order | null>(null);
 
+  const [
+    freightCharge,
+    setFreightCharge,
+  ] = useState("");
+
+  const [
+    freightUpdating,
+    setFreightUpdating,
+  ] = useState(false);
+
+  useEffect(() => {
+    if (!selectedOrder) {
+      setFreightCharge("");
+      return;
+    }
+
+    setFreightCharge(
+      selectedOrder.deliveryChargePending
+        ? ""
+        : String(
+            selectedOrder.deliveryCharge,
+          ),
+    );
+  }, [
+    selectedOrder?.id,
+    selectedOrder?.deliveryCharge,
+    selectedOrder?.deliveryChargePending,
+  ]);
+
   async function loadOrders() {
     try {
       setLoading(true);
@@ -238,6 +268,118 @@ export default function AdminOrdersPage() {
       );
     } finally {
       setUpdating(null);
+    }
+  }
+
+  async function updateFreight() {
+    if (!selectedOrder) {
+      return;
+    }
+
+    const amount =
+      Number(freightCharge);
+
+    if (
+      !Number.isFinite(amount) ||
+      amount < 0
+    ) {
+      alert(
+        "Enter a valid freight charge.",
+      );
+      return;
+    }
+
+    try {
+      setFreightUpdating(true);
+
+      const response =
+        await fetch(
+          "/api/orders",
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body:
+              JSON.stringify({
+                action:
+                  "SET_FREIGHT",
+                orderId:
+                  selectedOrder.id,
+                deliveryCharge:
+                  amount,
+              }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "Failed to update freight.",
+        );
+      }
+
+      const update = {
+        deliveryCharge:
+          Number(
+            data.order
+              .deliveryCharge,
+          ),
+        deliveryChargePending:
+          Boolean(
+            data.order
+              .deliveryChargePending,
+          ),
+        totalAmount:
+          Number(
+            data.order
+              .totalAmount,
+          ),
+      };
+
+      setOrders(
+        (current) =>
+          current.map(
+            (order) =>
+              order.id ===
+              selectedOrder.id
+                ? {
+                    ...order,
+                    ...update,
+                  }
+                : order,
+          ),
+      );
+
+      setSelectedOrder(
+        (current) =>
+          current
+            ? {
+                ...current,
+                ...update,
+              }
+            : current,
+      );
+
+      setFreightCharge(
+        String(
+          update.deliveryCharge,
+        ),
+      );
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to update freight.",
+      );
+    } finally {
+      setFreightUpdating(
+        false,
+      );
     }
   }
 
@@ -712,14 +854,19 @@ export default function AdminOrdersPage() {
                 <b>{money(selectedOrder.subtotal)}</b>
               </div>
 
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-4">
                 <span className="text-zinc-500">
                   Delivery
                 </span>
-                <b>
-                  {selectedOrder.deliveryCharge === 0
-                    ? "FREE"
-                    : money(selectedOrder.deliveryCharge)}
+
+                <b className="text-right">
+                  {selectedOrder.deliveryChargePending
+                    ? "Freight Pending"
+                    : selectedOrder.deliveryCharge === 0
+                      ? "FREE"
+                      : money(
+                          selectedOrder.deliveryCharge,
+                        )}
                 </b>
               </div>
 
@@ -734,6 +881,86 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
             </div>
+
+            {selectedOrder.type ===
+              "RESELLER" &&
+              [
+                "PENDING",
+                "CONFIRMED",
+                "PACKED",
+              ].includes(
+                selectedOrder.status,
+              ) && (
+                <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-wider text-violet-800">
+                        {selectedOrder.deliveryChargePending
+                          ? "Freight Pending"
+                          : "Bulk Freight"}
+                      </p>
+
+                      <p className="mt-1 text-[11px] leading-5 text-violet-700">
+                        Enter the actual courier /
+                        transport charge after packing.
+                      </p>
+                    </div>
+
+                    {selectedOrder.deliveryChargePending && (
+                      <span className="rounded-full bg-violet-700 px-3 py-1 text-[9px] font-black uppercase text-white">
+                        Action Required
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-4 flex gap-2">
+                    <div className="flex flex-1 items-center rounded-xl border border-violet-200 bg-white px-3">
+                      <span className="text-sm font-black text-zinc-500">
+                        ₹
+                      </span>
+
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={
+                          freightCharge
+                        }
+                        onChange={(event) =>
+                          setFreightCharge(
+                            event.target.value,
+                          )
+                        }
+                        placeholder="Actual freight"
+                        className="w-full bg-transparent px-2 py-3 text-sm font-bold outline-none"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={
+                        freightUpdating
+                      }
+                      onClick={
+                        updateFreight
+                      }
+                      className="rounded-xl bg-violet-700 px-4 py-3 text-xs font-black text-white disabled:opacity-50"
+                    >
+                      {freightUpdating
+                        ? "Saving..."
+                        : selectedOrder.deliveryChargePending
+                          ? "Set Freight"
+                          : "Update Freight"}
+                    </button>
+                  </div>
+
+                  {selectedOrder.deliveryChargePending && (
+                    <p className="mt-3 text-[10px] font-bold text-violet-700">
+                      This order cannot be marked SHIPPED until freight is finalized.
+                    </p>
+                  )}
+                </div>
+              )}
 
             <div className="mt-5 flex gap-2">
               <select

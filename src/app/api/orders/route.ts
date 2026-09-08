@@ -117,6 +117,8 @@ export async function GET(request: Request) {
       subtotal: Number(order.subtotal),
       discountAmount: Number(order.discountAmount),
       deliveryCharge: Number(order.deliveryCharge),
+      deliveryChargePending:
+        order.deliveryChargePending,
       totalAmount: Number(order.totalAmount),
       couponCode: order.couponCode,
       notes: order.notes,
@@ -196,6 +198,8 @@ export async function PATCH(request: Request) {
 
     const orderId = cleanString(body.orderId);
     const status = cleanString(body.status);
+    const action =
+      cleanString(body.action).toUpperCase();
 
     const validStatuses = [
       "PENDING",
@@ -214,6 +218,150 @@ export async function PATCH(request: Request) {
         { error: "Order ID is required." },
         { status: 400 },
       );
+    }
+
+    /*
+     * Finalize actual freight for reseller /
+     * bulk orders after parcel packing.
+     */
+    if (action === "SET_FREIGHT") {
+      const freight =
+        Number(body.deliveryCharge);
+
+      if (
+        !Number.isFinite(freight) ||
+        freight < 0
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Enter a valid freight charge.",
+          },
+          { status: 400 },
+        );
+      }
+
+      const roundedFreight =
+        Math.round(freight * 100) /
+        100;
+
+      const freightResult =
+        await prisma.$transaction(
+          async (tx) => {
+            const order =
+              await tx.order.findUnique({
+                where: {
+                  id: orderId,
+                },
+                include: {
+                  payment: true,
+                },
+              });
+
+            if (!order) {
+              throw new Error(
+                "Order not found.",
+              );
+            }
+
+            if (
+              order.type !==
+              "RESELLER"
+            ) {
+              throw new Error(
+                "Freight can be set only for reseller orders.",
+              );
+            }
+
+            if (
+              ![
+                "PENDING",
+                "CONFIRMED",
+                "PACKED",
+              ].includes(
+                order.status,
+              )
+            ) {
+              throw new Error(
+                "Freight cannot be changed after the order is shipped.",
+              );
+            }
+
+            /*
+             * Preserve all merchandise /
+             * coupon / curated-set pricing.
+             * Only replace old delivery amount.
+             */
+            const newTotal =
+              Math.max(
+                0,
+                Math.round(
+                  (
+                    Number(
+                      order.totalAmount,
+                    ) -
+                    Number(
+                      order.deliveryCharge,
+                    ) +
+                    roundedFreight
+                  ) *
+                    100,
+                ) / 100,
+              );
+
+            const updated =
+              await tx.order.update({
+                where: {
+                  id: orderId,
+                },
+                data: {
+                  deliveryCharge:
+                    roundedFreight,
+                  deliveryChargePending:
+                    false,
+                  totalAmount:
+                    newTotal,
+                },
+              });
+
+            /*
+             * COD payment must always equal
+             * the final order payable amount.
+             */
+            if (order.payment) {
+              await tx.payment.update({
+                where: {
+                  orderId,
+                },
+                data: {
+                  amount:
+                    newTotal,
+                },
+              });
+            }
+
+            return {
+              id: updated.id,
+              deliveryCharge:
+                Number(
+                  updated.deliveryCharge,
+                ),
+              deliveryChargePending:
+                updated.deliveryChargePending,
+              totalAmount:
+                Number(
+                  updated.totalAmount,
+                ),
+            };
+          },
+        );
+
+      return NextResponse.json({
+        success: true,
+        message:
+          "Freight charge updated successfully.",
+        order: freightResult,
+      });
     }
 
     if (!validStatuses.includes(status)) {
@@ -239,6 +387,19 @@ export async function PATCH(request: Request) {
       }
 
       const oldStatus = order.status;
+
+      /*
+       * Bulk reseller orders must have the
+       * actual freight finalized before shipping.
+       */
+      if (
+        status === "SHIPPED" &&
+        order.deliveryChargePending
+      ) {
+        throw new Error(
+          "Set the bulk freight charge before shipping this order.",
+        );
+      }
 
       /*
        * Prevent meaningless status updates.
@@ -1176,16 +1337,175 @@ export async function POST(request: Request) {
           ) / 100;
 
         /*
-         * 6. Delivery charge.
+         * 6. Delivery settings.
          *
-         * Free delivery is based on
-         * original merchandise subtotal,
-         * before coupon discount.
+         * Retail:
+         * configurable charge + free threshold.
+         *
+         * Reseller / bulk:
+         * either flat freight or actual freight
+         * calculated after packing.
          */
-        const deliveryCharge =
-          couponBaseSubtotal >= 999
-            ? 0
-            : 79;
+        const deliverySettingRow =
+          await tx.siteSetting.findUnique({
+            where: {
+              key: "delivery_settings_v1",
+            },
+          });
+
+        const deliveryDefaults = {
+          retailDeliveryCharge: 79,
+          retailFreeDeliveryThreshold: 999,
+          resellerDeliveryMode:
+            "ACTUAL_FREIGHT",
+          resellerFlatDeliveryCharge: 0,
+          estimatedMinDays: 3,
+          estimatedMaxDays: 7,
+          restrictServiceability: false,
+          allowedStates: [] as string[],
+          allowedPincodes: [] as string[],
+        };
+
+        let deliverySettings =
+          deliveryDefaults;
+
+        if (deliverySettingRow) {
+          try {
+            const parsed =
+              JSON.parse(
+                deliverySettingRow.value,
+              );
+
+            deliverySettings = {
+              ...deliveryDefaults,
+              ...(parsed &&
+              typeof parsed === "object"
+                ? parsed
+                : {}),
+            };
+          } catch {
+            deliverySettings =
+              deliveryDefaults;
+          }
+        }
+
+        /*
+         * Server-side serviceability check.
+         * A matching state OR matching pincode
+         * is enough when restriction is enabled.
+         */
+        if (
+          deliverySettings.restrictServiceability
+        ) {
+          const normalizedState =
+            String(
+              address.state ?? "",
+            )
+              .trim()
+              .toLowerCase();
+
+          const normalizedPincode =
+            String(
+              address.pincode ?? "",
+            ).trim();
+
+          const allowedStates =
+            Array.isArray(
+              deliverySettings.allowedStates,
+            )
+              ? deliverySettings.allowedStates
+                  .map((value: unknown) =>
+                    String(value)
+                      .trim()
+                      .toLowerCase(),
+                  )
+                  .filter(Boolean)
+              : [];
+
+          const allowedPincodes =
+            Array.isArray(
+              deliverySettings.allowedPincodes,
+            )
+              ? deliverySettings.allowedPincodes
+                  .map((value: unknown) =>
+                    String(value).trim(),
+                  )
+                  .filter(Boolean)
+              : [];
+
+          const stateAllowed =
+            allowedStates.includes(
+              normalizedState,
+            );
+
+          const pincodeAllowed =
+            allowedPincodes.includes(
+              normalizedPincode,
+            );
+
+          if (
+            !stateAllowed &&
+            !pincodeAllowed
+          ) {
+            throw new Error(
+              "Delivery is not available for this address.",
+            );
+          }
+        }
+
+        const safeDeliveryNumber = (
+          value: unknown,
+          fallback: number,
+        ) => {
+          const number =
+            Number(value);
+
+          return Number.isFinite(number) &&
+            number >= 0
+            ? number
+            : fallback;
+        };
+
+        const isResellerDelivery =
+          type === "RESELLER";
+
+        const resellerActualFreight =
+          isResellerDelivery &&
+          deliverySettings.resellerDeliveryMode ===
+            "ACTUAL_FREIGHT";
+
+        const deliveryChargePending =
+          resellerActualFreight;
+
+        let deliveryCharge = 0;
+
+        if (isResellerDelivery) {
+          deliveryCharge =
+            resellerActualFreight
+              ? 0
+              : safeDeliveryNumber(
+                  deliverySettings.resellerFlatDeliveryCharge,
+                  0,
+                );
+        } else {
+          const retailCharge =
+            safeDeliveryNumber(
+              deliverySettings.retailDeliveryCharge,
+              79,
+            );
+
+          const freeThreshold =
+            safeDeliveryNumber(
+              deliverySettings.retailFreeDeliveryThreshold,
+              999,
+            );
+
+          deliveryCharge =
+            couponBaseSubtotal >=
+            freeThreshold
+              ? 0
+              : retailCharge;
+        }
 
         const totalAmount =
           Math.max(
@@ -1240,6 +1560,7 @@ export async function POST(request: Request) {
             subtotal,
             discountAmount,
             deliveryCharge,
+            deliveryChargePending,
             totalAmount,
             couponCode:
               appliedCouponCode,
@@ -1341,6 +1662,7 @@ export async function POST(request: Request) {
           subtotal,
           discountAmount,
           deliveryCharge,
+          deliveryChargePending,
           totalAmount,
           couponCode:
             appliedCouponCode,
