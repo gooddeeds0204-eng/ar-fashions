@@ -84,6 +84,55 @@ type Reel = {
 
 type Mode = "RETAIL" | "RESELLER";
 
+type PublicSiteSettings = {
+  storeName: string;
+  supportPhone: string;
+  whatsappNumber: string;
+  supportEmail: string;
+  storeNotice: string;
+  codEnabled: boolean;
+  minimumRetailOrder: number;
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
+};
+
+type PublicSalesMode = {
+  retailStatus:
+    | "OPEN"
+    | "CLOSED";
+  resellerStatus:
+    | "OPEN"
+    | "CLOSED";
+  retailMessage: string;
+  resellerMessage: string;
+};
+
+const DEFAULT_PUBLIC_SITE_SETTINGS:
+  PublicSiteSettings = {
+    storeName:
+      "AR FASHIONS",
+    supportPhone: "",
+    whatsappNumber: "",
+    supportEmail: "",
+    storeNotice: "",
+    codEnabled: true,
+    minimumRetailOrder: 0,
+    maintenanceMode:
+      false,
+    maintenanceMessage:
+      "We are currently updating the store. Please check back shortly.",
+  };
+
+const DEFAULT_PUBLIC_SALES_MODE:
+  PublicSalesMode = {
+    retailStatus: "OPEN",
+    resellerStatus: "OPEN",
+    retailMessage:
+      "Retail shopping is open.",
+    resellerMessage:
+      "Reseller orders are open.",
+  };
+
 function money(value: string | number | null) {
   if (value === null || value === undefined || value === "") {
     return "₹0";
@@ -759,9 +808,86 @@ export default function Home() {
     useState(0);
 
   const [mode, setMode] = useState<Mode>("RETAIL");
+
+  const [
+    siteSettings,
+    setSiteSettings,
+  ] =
+    useState<PublicSiteSettings>(
+      DEFAULT_PUBLIC_SITE_SETTINGS,
+    );
+
+  const [
+    salesMode,
+    setSalesMode,
+  ] =
+    useState<PublicSalesMode>(
+      DEFAULT_PUBLIC_SALES_MODE,
+    );
+
+  const [
+    siteSettingsLoaded,
+    setSiteSettingsLoaded,
+  ] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("ALL");
+
+  useEffect(() => {
+    async function loadSiteSettings() {
+      try {
+        const response =
+          await fetch(
+            "/api/site-settings",
+            {
+              cache:
+                "no-store",
+            },
+          );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        if (
+          data.settings &&
+          typeof data.settings ===
+            "object"
+        ) {
+          setSiteSettings({
+            ...DEFAULT_PUBLIC_SITE_SETTINGS,
+            ...data.settings,
+          });
+        }
+
+        if (
+          data.salesMode &&
+          typeof data.salesMode ===
+            "object"
+        ) {
+          setSalesMode({
+            ...DEFAULT_PUBLIC_SALES_MODE,
+            ...data.salesMode,
+          });
+        }
+      } catch (error) {
+        console.error(
+          "Homepage site settings failed:",
+          error,
+        );
+      } finally {
+        setSiteSettingsLoaded(
+          true,
+        );
+      }
+    }
+
+    loadSiteSettings();
+  }, []);
 
   useEffect(() => {
     async function loadReels() {
@@ -1018,6 +1144,57 @@ export default function Home() {
       ? homeSections
       : defaultHomeSections;
 
+  const activeModeStatus =
+    mode === "RESELLER"
+      ? salesMode.resellerStatus
+      : salesMode.retailStatus;
+
+  const activeModeMessage =
+    mode === "RESELLER"
+      ? salesMode.resellerMessage
+      : salesMode.retailMessage;
+
+  const activeModeClosed =
+    activeModeStatus ===
+    "CLOSED";
+
+  if (
+    siteSettingsLoaded &&
+    siteSettings.maintenanceMode
+  ) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-5 text-white">
+        <div className="w-full max-w-xl rounded-[2rem] border border-white/10 bg-white/5 p-8 text-center shadow-2xl backdrop-blur sm:p-12">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400">
+            {siteSettings.storeName ||
+              "AR FASHIONS"}
+          </p>
+
+          <div className="mx-auto mt-6 flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-2xl">
+            ⚙
+          </div>
+
+          <h1 className="mt-6 text-3xl font-black tracking-tight sm:text-4xl">
+            Store temporarily unavailable
+          </h1>
+
+          <p className="mx-auto mt-4 max-w-md text-sm leading-7 text-zinc-300">
+            {siteSettings.maintenanceMessage}
+          </p>
+
+          {siteSettings.supportPhone ? (
+            <p className="mt-6 text-xs text-zinc-400">
+              Support:{" "}
+              <span className="font-bold text-white">
+                {siteSettings.supportPhone}
+              </span>
+            </p>
+          ) : null}
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#f7f7f5] text-zinc-950">
       {/* HEADER */}
@@ -1065,6 +1242,12 @@ export default function Home() {
         </div>
       </header>
 
+      {siteSettings.storeNotice ? (
+        <div className="border-b border-emerald-700/20 bg-emerald-600 px-4 py-2.5 text-center text-[11px] font-bold text-white">
+          {siteSettings.storeNotice}
+        </div>
+      ) : null}
+
       {/* MODE SWITCH */}
       <div className="border-b border-black/5 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
@@ -1081,31 +1264,83 @@ export default function Home() {
           <div className="flex rounded-full bg-zinc-100 p-1">
             <button
               type="button"
-              onClick={() => setMode("RETAIL")}
+              onClick={() =>
+                setMode("RETAIL")
+              }
               className={`rounded-full px-4 py-2 text-[11px] font-bold transition ${
                 mode === "RETAIL"
-                  ? "bg-white shadow-sm"
-                  : "text-zinc-500"
+                  ? salesMode.retailStatus ===
+                    "CLOSED"
+                    ? "bg-red-600 text-white shadow-sm"
+                    : "bg-white shadow-sm"
+                  : salesMode.retailStatus ===
+                      "CLOSED"
+                    ? "text-red-600"
+                    : "text-zinc-500"
               }`}
             >
               Retail
+              {salesMode.retailStatus ===
+              "CLOSED"
+                ? " · Closed"
+                : ""}
             </button>
 
             <button
               type="button"
-              onClick={() => setMode("RESELLER")}
+              onClick={() =>
+                setMode("RESELLER")
+              }
               className={`rounded-full px-4 py-2 text-[11px] font-bold transition ${
                 mode === "RESELLER"
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "text-zinc-500"
+                  ? salesMode.resellerStatus ===
+                    "CLOSED"
+                    ? "bg-red-600 text-white shadow-sm"
+                    : "bg-emerald-600 text-white shadow-sm"
+                  : salesMode.resellerStatus ===
+                      "CLOSED"
+                    ? "text-red-600"
+                    : "text-zinc-500"
               }`}
             >
               Reseller
+              {salesMode.resellerStatus ===
+              "CLOSED"
+                ? " · Closed"
+                : ""}
             </button>
           </div>
         </div>
       </div>
 
+      {activeModeClosed ? (
+        <section className="mx-auto flex min-h-[58vh] max-w-7xl items-center justify-center px-4 py-14 sm:px-6 lg:px-8">
+          <div className="w-full max-w-2xl rounded-[2rem] border border-red-200 bg-white p-8 text-center shadow-sm sm:p-12">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-xl">
+              ⏸
+            </div>
+
+            <p className="mt-5 text-[10px] font-black uppercase tracking-[0.25em] text-red-600">
+              {mode === "RESELLER"
+                ? "Reseller Orders"
+                : "Retail Shopping"}
+            </p>
+
+            <h2 className="mt-2 text-3xl font-black tracking-tight">
+              Temporarily closed
+            </h2>
+
+            <p className="mx-auto mt-4 max-w-lg text-sm leading-7 text-zinc-500">
+              {activeModeMessage}
+            </p>
+
+            <p className="mt-6 text-xs text-zinc-400">
+              You can switch to another available shopping mode above.
+            </p>
+          </div>
+        </section>
+      ) : (
+        <>
       {/* HERO */}
       <section className="relative overflow-hidden bg-zinc-950">
         <div className="mx-auto grid min-h-[500px] max-w-7xl lg:grid-cols-2">
@@ -1640,6 +1875,9 @@ export default function Home() {
           ))}
         </div>
       </nav>
+        {/* SHOP CONTENT CLOSED CONDITIONAL END */}
+        </>
+      )}
     </main>
   );
 }

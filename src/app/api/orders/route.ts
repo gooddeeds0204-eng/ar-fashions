@@ -61,6 +61,59 @@ function generateOrderNumber() {
 }
 
 
+const DEFAULT_ORDER_SITE_SETTINGS = {
+  codEnabled: true,
+  minimumRetailOrder: 0,
+  maintenanceMode: false,
+  maintenanceMessage:
+    "We are currently updating the store. Please check back shortly.",
+};
+
+function parseOrderSiteSettings(
+  value?: string | null,
+) {
+  if (!value) {
+    return DEFAULT_ORDER_SITE_SETTINGS;
+  }
+
+  try {
+    const source =
+      JSON.parse(value) as Record<
+        string,
+        unknown
+      >;
+
+    const minimumRetailOrder =
+      Number(
+        source.minimumRetailOrder,
+      );
+
+    return {
+      codEnabled:
+        source.codEnabled !== false,
+
+      minimumRetailOrder:
+        Number.isFinite(
+          minimumRetailOrder,
+        ) &&
+        minimumRetailOrder >= 0
+          ? minimumRetailOrder
+          : 0,
+
+      maintenanceMode:
+        source.maintenanceMode === true,
+
+      maintenanceMessage:
+        cleanString(
+          source.maintenanceMessage,
+        ) ||
+        DEFAULT_ORDER_SITE_SETTINGS.maintenanceMessage,
+    };
+  } catch {
+    return DEFAULT_ORDER_SITE_SETTINGS;
+  }
+}
+
 export async function GET(request: Request) {
   /* ADMIN_GUARD_GET */
   const adminError = await requireAdmin();
@@ -776,6 +829,74 @@ export async function POST(request: Request) {
     const result = await prisma.$transaction(
       async (tx) => {
         /*
+         * Store-wide settings are always
+         * validated on the server.
+         */
+        const [
+          siteSettingsRow,
+          salesModeRow,
+        ] =
+          await Promise.all([
+            tx.siteSetting.findUnique({
+              where: {
+                key:
+                  "site_settings_v1",
+              },
+            }),
+
+            tx.salesMode.findFirst({
+              orderBy: {
+                updatedAt:
+                  "desc",
+              },
+            }),
+          ]);
+
+        const siteSettings =
+          parseOrderSiteSettings(
+            siteSettingsRow?.value,
+          );
+
+        if (
+          siteSettings.maintenanceMode
+        ) {
+          throw new Error(
+            siteSettings.maintenanceMessage,
+          );
+        }
+
+        if (
+          type === "RETAIL" &&
+          salesModeRow?.retailStatus ===
+            "CLOSED"
+        ) {
+          throw new Error(
+            salesModeRow.retailMessage ||
+              "Retail shopping is currently closed.",
+          );
+        }
+
+        if (
+          type === "RESELLER" &&
+          salesModeRow?.resellerStatus ===
+            "CLOSED"
+        ) {
+          throw new Error(
+            salesModeRow.resellerMessage ||
+              "Reseller orders are currently closed.",
+          );
+        }
+
+        if (
+          paymentMethod === "COD" &&
+          !siteSettings.codEnabled
+        ) {
+          throw new Error(
+            "Cash on Delivery is currently unavailable.",
+          );
+        }
+
+        /*
          * 1. Find existing customer by phone
          *    or create a new customer.
          */
@@ -1335,6 +1456,25 @@ export async function POST(request: Request) {
               couponDiscountAmount
             ) * 100,
           ) / 100;
+
+        /*
+         * Minimum retail order uses
+         * server-calculated merchandise
+         * value before coupon discount.
+         */
+        if (
+          type === "RETAIL" &&
+          siteSettings.minimumRetailOrder >
+            0 &&
+          couponBaseSubtotal <
+            siteSettings.minimumRetailOrder
+        ) {
+          throw new Error(
+            `Minimum retail order is ₹${siteSettings.minimumRetailOrder.toLocaleString(
+              "en-IN",
+            )}.`,
+          );
+        }
 
         /*
          * 6. Delivery settings.

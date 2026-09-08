@@ -88,6 +88,55 @@ const DEFAULT_DELIVERY_SETTINGS:
     allowedPincodes: [],
   };
 
+type SiteSettings = {
+  storeName: string;
+  supportPhone: string;
+  whatsappNumber: string;
+  supportEmail: string;
+  storeNotice: string;
+  codEnabled: boolean;
+  minimumRetailOrder: number;
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
+};
+
+type SalesModeSettings = {
+  retailStatus:
+    | "OPEN"
+    | "CLOSED";
+  resellerStatus:
+    | "OPEN"
+    | "CLOSED";
+  retailMessage: string;
+  resellerMessage: string;
+};
+
+const DEFAULT_SITE_SETTINGS:
+  SiteSettings = {
+    storeName:
+      "AR FASHIONS",
+    supportPhone: "",
+    whatsappNumber: "",
+    supportEmail: "",
+    storeNotice: "",
+    codEnabled: true,
+    minimumRetailOrder: 0,
+    maintenanceMode:
+      false,
+    maintenanceMessage:
+      "We are currently updating the store. Please check back shortly.",
+  };
+
+const DEFAULT_SALES_MODE:
+  SalesModeSettings = {
+    retailStatus: "OPEN",
+    resellerStatus: "OPEN",
+    retailMessage:
+      "Retail shopping is open.",
+    resellerMessage:
+      "Reseller orders are open.",
+  };
+
 function money(value: number) {
   return `₹${value.toLocaleString("en-IN")}`;
 }
@@ -160,6 +209,22 @@ export default function CheckoutPage() {
       DEFAULT_DELIVERY_SETTINGS,
     );
 
+  const [
+    siteSettings,
+    setSiteSettings,
+  ] =
+    useState<SiteSettings>(
+      DEFAULT_SITE_SETTINGS,
+    );
+
+  const [
+    salesMode,
+    setSalesMode,
+  ] =
+    useState<SalesModeSettings>(
+      DEFAULT_SALES_MODE,
+    );
+
   useEffect(() => {
     const items = getCart();
     setCart(items);
@@ -206,6 +271,57 @@ export default function CheckoutPage() {
     }
 
     loadDeliverySettings();
+  }, []);
+
+  useEffect(() => {
+    async function loadSiteSettings() {
+      try {
+        const response =
+          await fetch(
+            "/api/site-settings",
+            {
+              cache:
+                "no-store",
+            },
+          );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        if (
+          data.settings &&
+          typeof data.settings ===
+            "object"
+        ) {
+          setSiteSettings({
+            ...DEFAULT_SITE_SETTINGS,
+            ...data.settings,
+          });
+        }
+
+        if (
+          data.salesMode &&
+          typeof data.salesMode ===
+            "object"
+        ) {
+          setSalesMode({
+            ...DEFAULT_SALES_MODE,
+            ...data.salesMode,
+          });
+        }
+      } catch (error) {
+        console.error(
+          "Site settings load failed:",
+          error,
+        );
+      }
+    }
+
+    loadSiteSettings();
   }, []);
 
   useEffect(() => {
@@ -490,10 +606,58 @@ export default function CheckoutPage() {
     );
   }, [cart]);
 
+  const activeSalesStatus =
+    isResellerOrder
+      ? salesMode.resellerStatus
+      : salesMode.retailStatus;
+
+  const activeSalesMessage =
+    isResellerOrder
+      ? salesMode.resellerMessage
+      : salesMode.retailMessage;
+
+  const salesClosed =
+    activeSalesStatus ===
+    "CLOSED";
+
+  const minimumRetailOrder =
+    Math.max(
+      0,
+      Number(
+        siteSettings.minimumRetailOrder,
+      ) || 0,
+    );
+
+  const retailMinimumNotMet =
+    !isResellerOrder &&
+    minimumRetailOrder > 0 &&
+    subtotal <
+      minimumRetailOrder;
+
+  const checkoutBlocked =
+    siteSettings.maintenanceMode ||
+    salesClosed ||
+    !siteSettings.codEnabled ||
+    retailMinimumNotMet;
+
+  const checkoutBlockMessage =
+    siteSettings.maintenanceMode
+      ? siteSettings.maintenanceMessage
+      : salesClosed
+        ? activeSalesMessage
+        : !siteSettings.codEnabled
+          ? "Cash on Delivery is currently unavailable."
+          : retailMinimumNotMet
+            ? `Minimum retail order is ${money(
+                minimumRetailOrder,
+              )}.`
+            : "";
+
   const canPlaceOrder =
     !isMixedCart &&
     !invalidCuratedCart &&
-    invalidResellerGroups.length === 0;
+    invalidResellerGroups.length === 0 &&
+    !checkoutBlocked;
 
   const resellerFreightPending =
     isResellerOrder &&
@@ -722,6 +886,38 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (
+      siteSettings.maintenanceMode
+    ) {
+      alert(
+        siteSettings.maintenanceMessage,
+      );
+      return;
+    }
+
+    if (salesClosed) {
+      alert(
+        activeSalesMessage,
+      );
+      return;
+    }
+
+    if (!siteSettings.codEnabled) {
+      alert(
+        "Cash on Delivery is currently unavailable.",
+      );
+      return;
+    }
+
+    if (retailMinimumNotMet) {
+      alert(
+        `Minimum retail order is ${money(
+          minimumRetailOrder,
+        )}.`,
+      );
+      return;
+    }
+
     if (!name.trim()) {
       alert("Please enter your name.");
       return;
@@ -877,8 +1073,6 @@ export default function CheckoutPage() {
         )}`,
       );
     } catch (error) {
-      console.error("Checkout failed:", error);
-
       alert(
         error instanceof Error
           ? error.message
@@ -1428,15 +1622,35 @@ export default function CheckoutPage() {
             </span>
           </div>
 
-          <div className="mt-5 rounded-2xl bg-emerald-50 p-4">
-            <p className="text-xs font-black text-emerald-700">
-              CASH ON DELIVERY
-            </p>
+          {checkoutBlocked && (
+            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-xs font-black text-amber-800">
+                CHECKOUT NOTICE
+              </p>
 
-            <p className="mt-1 text-[11px] leading-5 text-emerald-700/80">
-              Pay when your order is delivered.
-            </p>
-          </div>
+              <p className="mt-1 text-[11px] leading-5 text-amber-700">
+                {checkoutBlockMessage}
+              </p>
+            </div>
+          )}
+
+          {siteSettings.codEnabled ? (
+            <div className="mt-5 rounded-2xl bg-emerald-50 p-4">
+              <p className="text-xs font-black text-emerald-700">
+                CASH ON DELIVERY
+              </p>
+
+              <p className="mt-1 text-[11px] leading-5 text-emerald-700/80">
+                Pay when your order is delivered.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-5 rounded-2xl bg-zinc-100 p-4">
+              <p className="text-xs font-black text-zinc-600">
+                CASH ON DELIVERY UNAVAILABLE
+              </p>
+            </div>
+          )}
 
           {isMixedCart && (
             <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-bold text-red-700">

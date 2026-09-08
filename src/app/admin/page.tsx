@@ -21,11 +21,10 @@ const menu = [
   { label: "Notifications", href: "/admin/notifications", icon: "♢" },
   { label: "Delivery", href: "/admin/delivery", icon: "⌖" },
   { label: "Reports", href: "/admin/reports", icon: "▥" },
+  { label: "Settings", href: "/admin/settings", icon: "⚙" },
 ];
 
-const comingSoon = [
-  { label: "Settings", icon: "⚙" },
-];
+const comingSoon: { label: string; icon: string }[] = [];
 
 const stats = [
   {
