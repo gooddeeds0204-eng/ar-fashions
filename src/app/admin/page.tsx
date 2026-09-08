@@ -20,6 +20,7 @@ const menu = [
   { label: "Reseller Sets", href: "/admin/reseller-sets", icon: "◆" },
   { label: "Notifications", href: "/admin/notifications", icon: "♢" },
   { label: "Delivery", href: "/admin/delivery", icon: "⌖" },
+  { label: "Reports", href: "/admin/reports", icon: "▥" },
 ];
 
 const comingSoon = [
