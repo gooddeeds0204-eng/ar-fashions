@@ -23,11 +23,15 @@ type InventoryVariant = {
     name: string;
     category: string | null;
     sizeType: string | null;
+    inches: string | null;
   };
   sku: string | null;
   stock: number;
   reservedStock: number;
   availableStock: number;
+  recentSalesQty: number;
+  isSlowStock: boolean;
+  slowStockDays: number;
   costPrice: number | null;
   retailPrice: number | null;
   resellerPrice: number | null;
@@ -44,6 +48,7 @@ type InventoryResponse = {
     totalAvailable: number;
     lowStock: number;
     outOfStock: number;
+    slowStock: number;
   };
 };
 
@@ -52,6 +57,7 @@ const FILTERS = [
   { value: "IN_STOCK", label: "In Stock" },
   { value: "LOW_STOCK", label: "Low Stock" },
   { value: "OUT_OF_STOCK", label: "Out of Stock" },
+  { value: "SLOW_STOCK", label: "Slow Stock" },
 ];
 
 function money(value: number | null) {
@@ -87,6 +93,7 @@ export default function InventoryPage() {
       totalAvailable: 0,
       lowStock: 0,
       outOfStock: 0,
+      slowStock: 0,
     },
   });
 
@@ -253,7 +260,7 @@ export default function InventoryPage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
           <SummaryCard
             label="Variants"
             value={data.summary.totalVariants}
@@ -282,6 +289,11 @@ export default function InventoryPage() {
           <SummaryCard
             label="Out of Stock"
             value={data.summary.outOfStock}
+          />
+
+          <SummaryCard
+            label="Slow Stock"
+            value={data.summary.slowStock}
           />
         </div>
 
@@ -407,8 +419,18 @@ export default function InventoryPage() {
 
                             <p className="text-xs font-semibold text-slate-400">
                               {item.size.name}
+                              {item.size.inches
+                                ? ` · Height ${item.size.inches}`
+                                : ""}
                               {item.sku
                                 ? ` • ${item.sku}`
+                                : ""}
+                            </p>
+
+                            <p className="mt-1 text-[10px] font-semibold text-slate-400">
+                              30d sales: {item.recentSalesQty}
+                              {item.isSlowStock
+                                ? " • Slow moving"
                                 : ""}
                             </p>
                           </div>
@@ -441,6 +463,12 @@ export default function InventoryPage() {
                         >
                           {stockLabel(item)}
                         </span>
+
+                        {item.isSlowStock ? (
+                          <span className="ml-2 rounded-full bg-violet-50 px-3 py-1 text-[10px] font-black uppercase text-violet-700">
+                            SLOW
+                          </span>
+                        ) : null}
                       </td>
 
                       <td className="px-5 py-5 text-right">
@@ -478,6 +506,17 @@ export default function InventoryPage() {
                   <p className="mt-1 text-sm font-semibold text-slate-500">
                     {selected.color.name} •{" "}
                     {selected.size.name}
+                    {selected.size.inches
+                      ? ` · Height ${selected.size.inches}`
+                      : ""}
+                  </p>
+
+                  <p className="mt-1 text-xs font-semibold text-slate-400">
+                    Last 30 days sold:{" "}
+                    {selected.recentSalesQty}
+                    {selected.isSlowStock
+                      ? " • Slow stock"
+                      : ""}
                   </p>
                 </div>
 

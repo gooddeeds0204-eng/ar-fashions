@@ -7,6 +7,7 @@ type Size = {
   name: string;
   category: string | null;
   sizeType: string | null;
+  inches: string | null;
   isActive: boolean;
   sortOrder: number;
   _count?: {
@@ -18,8 +19,26 @@ const emptyForm = {
   name: "",
   category: "Clothing",
   sizeType: "",
+  inches: "",
   sortOrder: "0",
   isActive: true,
+};
+
+const KIDS_STANDARD_HEIGHTS: Record<string, string> = {
+  "1-2Y": "30-36 in",
+  "2-3Y": "36-39 in",
+  "3-4Y": "39-41 in",
+  "4-5Y": "41-43 in",
+  "5-6Y": "43-46 in",
+  "6-7Y": "46-48 in",
+  "7-8Y": "48-50 in",
+  "8-9Y": "50-53 in",
+  "9-10Y": "53-55 in",
+  "10-11Y": "55-57 in",
+  "11-12Y": "57-60 in",
+  "12-13Y": "60-62 in",
+  "13-14Y": "62-65 in",
+  "14-15Y": "65-68 in",
 };
 
 export default function SizesPage() {
@@ -29,6 +48,21 @@ export default function SizesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const [
+    kidsHeightDrafts,
+    setKidsHeightDrafts,
+  ] = useState<Record<string, string>>({});
+
+  const [
+    kidsHeightSavingId,
+    setKidsHeightSavingId,
+  ] = useState<string | null>(null);
+
+  const [
+    applyingStandardHeights,
+    setApplyingStandardHeights,
+  ] = useState(false);
 
   async function loadSizes() {
     setLoading(true);
@@ -44,7 +78,27 @@ export default function SizesPage() {
         throw new Error(data.error ?? "Failed to load sizes");
       }
 
-      setSizes(Array.isArray(data) ? data : []);
+      const loadedSizes =
+        Array.isArray(data) ? data : [];
+
+      setSizes(loadedSizes);
+
+      setKidsHeightDrafts(
+        Object.fromEntries(
+          loadedSizes
+            .filter(
+              (size: Size) =>
+                size.category?.toLowerCase() === "kids" &&
+                /Y$/i.test(size.name),
+            )
+            .map(
+              (size: Size) => [
+                size.id,
+                size.inches ?? "",
+              ],
+            ),
+        ),
+      );
     } catch (error) {
       console.error(error);
       alert("Sizes load కాలేదు");
@@ -67,6 +121,7 @@ export default function SizesPage() {
         size.name,
         size.category ?? "",
         size.sizeType ?? "",
+        size.inches ?? "",
       ]
         .join(" ")
         .toLowerCase()
@@ -74,9 +129,126 @@ export default function SizesPage() {
     );
   }, [sizes, search]);
 
+  const kidsYearSizes = useMemo(
+    () =>
+      sizes
+        .filter(
+          (size) =>
+            size.category?.toLowerCase() === "kids" &&
+            /Y$/i.test(size.name),
+        )
+        .sort(
+          (a, b) =>
+            a.sortOrder - b.sortOrder,
+        ),
+    [sizes],
+  );
+
   function resetForm() {
     setForm(emptyForm);
     setEditingId(null);
+  }
+
+  async function saveKidsHeight(
+    size: Size,
+  ) {
+    const value =
+      kidsHeightDrafts[size.id]?.trim() ?? "";
+
+    setKidsHeightSavingId(size.id);
+
+    try {
+      const response = await fetch("/api/sizes", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: size.id,
+          inches: value || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(
+          data.error ??
+            "Height range update failed",
+        );
+        return;
+      }
+
+      await loadSizes();
+
+      alert(
+        `${size.name} height updated successfully`,
+      );
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong");
+    } finally {
+      setKidsHeightSavingId(null);
+    }
+  }
+
+  async function applyStandardKidsHeights() {
+    const confirmed = window.confirm(
+      "Apply AR Fashions standard height chart to all Kids year sizes?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setApplyingStandardHeights(true);
+
+    try {
+      for (const size of kidsYearSizes) {
+        const inches =
+          KIDS_STANDARD_HEIGHTS[size.name];
+
+        if (!inches) {
+          continue;
+        }
+
+        const response = await fetch("/api/sizes", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: size.id,
+            inches,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error ??
+              `Failed at ${size.name}`,
+          );
+        }
+      }
+
+      await loadSizes();
+
+      alert(
+        "Kids standard height chart applied successfully",
+      );
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to apply standard chart",
+      );
+    } finally {
+      setApplyingStandardHeights(false);
+    }
   }
 
   function startEdit(size: Size) {
@@ -86,6 +258,7 @@ export default function SizesPage() {
       name: size.name,
       category: size.category ?? "",
       sizeType: size.sizeType ?? "",
+      inches: size.inches ?? "",
       sortOrder: String(size.sortOrder),
       isActive: size.isActive,
     });
@@ -117,6 +290,7 @@ export default function SizesPage() {
           name: form.name.trim(),
           category: form.category.trim() || null,
           sizeType: form.sizeType.trim() || null,
+          inches: form.inches.trim() || null,
           sortOrder: Number(form.sortOrder || 0),
           isActive: form.isActive,
         }),
@@ -250,7 +424,7 @@ export default function SizesPage() {
             )}
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
 
             <div>
               <label className="mb-2 block text-sm text-slate-300">
@@ -308,6 +482,28 @@ export default function SizesPage() {
 
             <div>
               <label className="mb-2 block text-sm text-slate-300">
+                Inches / Height Range
+              </label>
+
+              <input
+                value={form.inches}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    inches: e.target.value,
+                  })
+                }
+                placeholder="32-36 in"
+                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none placeholder:text-slate-500 focus:border-emerald-400"
+              />
+
+              <p className="mt-1 text-[10px] text-slate-500">
+                Mainly for Kids sizes
+              </p>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm text-slate-300">
                 Sort Order
               </label>
 
@@ -353,6 +549,119 @@ export default function SizesPage() {
                 : "Add Size"}
           </button>
         </form>
+
+        <section className="mb-8 overflow-hidden rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.04]">
+          <div className="flex flex-col gap-4 border-b border-white/10 px-6 py-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">
+                Kids Size Guide
+              </p>
+
+              <h2 className="mt-1 text-xl font-semibold">
+                Kids Years · Height in Inches
+              </h2>
+
+              <p className="mt-1 text-xs leading-5 text-slate-400">
+                Height means child body height, not garment length.
+                You can manually change any range below.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={applyStandardKidsHeights}
+              disabled={
+                applyingStandardHeights ||
+                kidsYearSizes.length === 0
+              }
+              className="rounded-xl bg-emerald-500 px-4 py-3 text-xs font-black text-slate-950 hover:bg-emerald-400 disabled:opacity-50"
+            >
+              {applyingStandardHeights
+                ? "Applying..."
+                : "Apply Standard Chart"}
+            </button>
+          </div>
+
+          {kidsYearSizes.length === 0 ? (
+            <div className="px-6 py-8 text-sm text-slate-400">
+              No Kids year sizes found.
+            </div>
+          ) : (
+            <div className="divide-y divide-white/10">
+              {kidsYearSizes.map((size) => (
+                <div
+                  key={size.id}
+                  className="grid gap-3 px-6 py-4 md:grid-cols-[130px_1fr_120px] md:items-center"
+                >
+                  <div>
+                    <p className="text-lg font-black text-white">
+                      {size.name}
+                    </p>
+
+                    <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Kids Age
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                      Child Height
+                    </label>
+
+                    <input
+                      value={
+                        kidsHeightDrafts[size.id] ?? ""
+                      }
+                      onChange={(event) =>
+                        setKidsHeightDrafts(
+                          (current) => ({
+                            ...current,
+                            [size.id]:
+                              event.target.value,
+                          }),
+                        )
+                      }
+                      placeholder={
+                        KIDS_STANDARD_HEIGHTS[
+                          size.name
+                        ] ?? "Example: 30-36 in"
+                      }
+                      className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm font-bold outline-none placeholder:text-slate-600 focus:border-emerald-400"
+                    />
+
+                    {KIDS_STANDARD_HEIGHTS[
+                      size.name
+                    ] ? (
+                      <p className="mt-1 text-[10px] text-slate-500">
+                        Standard:{" "}
+                        {
+                          KIDS_STANDARD_HEIGHTS[
+                            size.name
+                          ]
+                        }
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      saveKidsHeight(size)
+                    }
+                    disabled={
+                      kidsHeightSavingId === size.id
+                    }
+                    className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-xs font-black text-emerald-300 hover:bg-emerald-400/20 disabled:opacity-50"
+                  >
+                    {kidsHeightSavingId === size.id
+                      ? "Saving..."
+                      : "Save Height"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.05]">
 
@@ -400,6 +709,9 @@ export default function SizesPage() {
                       <div>
                         <h3 className="font-semibold">
                           {size.name}
+                          {size.inches
+                            ? ` · ${size.inches}`
+                            : ""}
                         </h3>
 
                         <p className="mt-1 text-xs text-slate-500">

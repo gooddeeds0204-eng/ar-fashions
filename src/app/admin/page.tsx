@@ -20,7 +20,6 @@ const menu = [
 ];
 
 const comingSoon = [
-  { label: "Inventory", icon: "◈" },
   { label: "Reseller Sets", href: "/admin/reseller-sets", icon: "◆" },
   { label: "Settings", icon: "⚙" },
 ];

@@ -48,6 +48,10 @@ export async function POST(request: Request) {
       ? String(body.sizeType).trim()
       : null;
 
+    const inches = body.inches
+      ? String(body.inches).trim()
+      : null;
+
     if (!name) {
       return NextResponse.json(
         { error: "Size name is required" },
@@ -71,6 +75,7 @@ export async function POST(request: Request) {
         name,
         category,
         sizeType,
+        inches,
         isActive: body.isActive !== false,
         sortOrder: Number(body.sortOrder ?? 0),
       },
@@ -120,6 +125,11 @@ export async function PATCH(request: Request) {
         ...(body.sizeType !== undefined && {
           sizeType: body.sizeType
             ? String(body.sizeType).trim()
+            : null,
+        }),
+        ...(body.inches !== undefined && {
+          inches: body.inches
+            ? String(body.inches).trim()
             : null,
         }),
         ...(body.isActive !== undefined && {

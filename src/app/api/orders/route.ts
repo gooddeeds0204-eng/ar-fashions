@@ -20,6 +20,15 @@ type OrderItemInput = {
   mode?: unknown;
 };
 
+function sizeLabel(
+  name: string,
+  inches?: string | null,
+) {
+  return inches
+    ? `${name} · Height ${inches}`
+    : name;
+}
+
 function cleanString(value: unknown) {
   return String(value ?? "").trim();
 }
@@ -999,7 +1008,10 @@ export async function POST(request: Request) {
             colorName:
               variant.color.name,
             sizeName:
-              variant.size.name,
+              sizeLabel(
+                variant.size.name,
+                variant.size.inches,
+              ),
             quantity,
             unitPrice: price,
             totalPrice,

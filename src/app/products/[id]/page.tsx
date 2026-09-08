@@ -28,6 +28,7 @@ type Variant = {
   size: {
     id: string;
     name: string;
+    inches?: string | null;
   };
 };
 
@@ -84,6 +85,15 @@ function money(value: string | number | null) {
   }
 
   return `₹${Number(value).toLocaleString("en-IN")}`;
+}
+
+function sizeLabel(
+  name: string,
+  inches?: string | null,
+) {
+  return inches
+    ? `${name} · Height ${inches}`
+    : name;
 }
 
 function getCart(): CartItem[] {
@@ -513,7 +523,10 @@ export default function ProductDetailPage() {
         variant.stock
       ) {
         alert(
-          `Only ${variant.stock} pieces available for ${variant.color.name} / ${variant.size.name}.`,
+          `Only ${variant.stock} pieces available for ${variant.color.name} / ${sizeLabel(
+            variant.size.name,
+            variant.size.inches,
+          )}.`,
         );
         return;
       }
@@ -544,6 +557,12 @@ export default function ProductDetailPage() {
 
       if (existingIndex >= 0) {
         cart[existingIndex].quantity += selectedQuantity;
+
+        cart[existingIndex].sizeName =
+          sizeLabel(
+            variant.size.name,
+            variant.size.inches,
+          );
       } else {
         cart.push({
           id: `${product.id}-${variant.id}-RESELLER`,
@@ -559,7 +578,10 @@ export default function ProductDetailPage() {
           colorId: variant.color.id,
           colorName: variant.color.name,
           sizeId: variant.size.id,
-          sizeName: variant.size.name,
+          sizeName: sizeLabel(
+            variant.size.name,
+            variant.size.inches,
+          ),
           price,
           quantity: selectedQuantity,
           mode: "RESELLER",
@@ -643,6 +665,12 @@ export default function ProductDetailPage() {
         newQuantity,
         selectedVariant.stock,
       );
+
+      cart[existingIndex].sizeName =
+        sizeLabel(
+          selectedVariant.size.name,
+          selectedVariant.size.inches,
+        );
     } else {
       cart.push({
         id: `${product.id}-${selectedVariant.id}-${isReseller ? "RESELLER" : "RETAIL"}`,
@@ -658,7 +686,10 @@ export default function ProductDetailPage() {
         colorId: selectedVariant.color.id,
         colorName: selectedVariant.color.name,
         sizeId: selectedVariant.size.id,
-        sizeName: selectedVariant.size.name,
+        sizeName: sizeLabel(
+          selectedVariant.size.name,
+          selectedVariant.size.inches,
+        ),
         price: currentPrice,
         quantity,
         mode: isReseller ? "RESELLER" : "RETAIL",
@@ -949,7 +980,15 @@ export default function ProductDetailPage() {
                           : "border-black/10 bg-white"
                     }`}
                   >
-                    {size.name}
+                    <span className="block">
+                      {size.name}
+                    </span>
+
+                    {size.inches ? (
+                      <span className="mt-1 block text-[9px] font-semibold opacity-80">
+                        Height {size.inches}
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}
@@ -1116,7 +1155,11 @@ export default function ProductDetailPage() {
                             >
                               <div>
                                 <p className="text-sm font-black">
-                                  Size {variant.size.name}
+                                  Size{" "}
+                                  {sizeLabel(
+                                    variant.size.name,
+                                    variant.size.inches,
+                                  )}
                                 </p>
 
                                 <p className="mt-1 text-xs text-zinc-500">

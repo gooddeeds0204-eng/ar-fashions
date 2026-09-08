@@ -87,6 +87,7 @@ model Size {
   name      String            @unique
   category  String?
   sizeType  String?
+  inches    String?
   isActive  Boolean           @default(true)
   sortOrder Int               @default(0)
   createdAt DateTime          @default(now())

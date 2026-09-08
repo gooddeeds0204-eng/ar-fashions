@@ -31,6 +31,7 @@ type Variant = {
   size: {
     id: string;
     name: string;
+    inches: string | null;
   };
 };
 
@@ -121,6 +122,15 @@ type CartItem = {
   resellerSetName: string;
   resellerSetPrice: number;
 };
+
+function sizeLabel(
+  name: string,
+  inches?: string | null,
+) {
+  return inches
+    ? `${name} · Height ${inches}`
+    : name;
+}
 
 function money(
   value: number,
@@ -451,7 +461,10 @@ export default function ResellerSetDetailPage() {
           variant.stock
         ) {
           alert(
-            `Only ${variant.stock} pieces available for ${item.product.name} (${variant.color.name} / ${variant.size.name}).`,
+            `Only ${variant.stock} pieces available for ${item.product.name} (${variant.color.name} / ${sizeLabel(
+              variant.size.name,
+              variant.size.inches,
+            )}).`,
           );
 
           return;
@@ -490,7 +503,10 @@ export default function ResellerSetDetailPage() {
             variant.size.id,
 
           sizeName:
-            variant.size.name,
+            sizeLabel(
+              variant.size.name,
+              variant.size.inches,
+            ),
 
           price,
 

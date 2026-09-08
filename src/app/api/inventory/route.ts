@@ -16,6 +16,16 @@ function toInt(value: unknown) {
   return number;
 }
 
+const SLOW_STOCK_DAYS = 30;
+const SLOW_STOCK_MAX_SALES = 1;
+
+const SALES_MOVEMENT_STATUSES = [
+  "CONFIRMED",
+  "PACKED",
+  "SHIPPED",
+  "DELIVERED",
+] as const;
+
 /**
  * GET /api/inventory
  *
@@ -35,6 +45,16 @@ export async function GET(request: Request) {
 
     const search = cleanString(searchParams.get("search"));
     const filter = cleanString(searchParams.get("filter"));
+
+    const slowStockCutoff =
+      new Date(
+        Date.now() -
+          SLOW_STOCK_DAYS *
+            24 *
+            60 *
+            60 *
+            1000,
+      );
 
     const variants = await prisma.productVariant.findMany({
       where: {
@@ -73,6 +93,14 @@ export async function GET(request: Request) {
                     },
                   },
                 },
+                {
+                  size: {
+                    inches: {
+                      contains: search,
+                      mode: "insensitive",
+                    },
+                  },
+                },
               ],
             }
           : {}),
@@ -104,6 +132,28 @@ export async function GET(request: Request) {
             name: true,
             category: true,
             sizeType: true,
+            inches: true,
+          },
+        },
+
+        orderItems: {
+          where: {
+            order: {
+              createdAt: {
+                gte: slowStockCutoff,
+              },
+              status: {
+                in: [
+                  "CONFIRMED",
+                  "PACKED",
+                  "SHIPPED",
+                  "DELIVERED",
+                ],
+              },
+            },
+          },
+          select: {
+            quantity: true,
           },
         },
       },
@@ -120,6 +170,37 @@ export async function GET(request: Request) {
       ],
     });
 
+    function recentSalesQty(
+      variant: (typeof variants)[number],
+    ) {
+      return variant.orderItems.reduce(
+        (sum, item) =>
+          sum + item.quantity,
+        0,
+      );
+    }
+
+    function isSlowStock(
+      variant: (typeof variants)[number],
+    ) {
+      const availableStock =
+        variant.stock -
+        variant.reservedStock;
+
+      const sold =
+        recentSalesQty(
+          variant,
+        );
+
+      return (
+        availableStock > 5 &&
+        variant.createdAt <=
+          slowStockCutoff &&
+        sold <=
+          SLOW_STOCK_MAX_SALES
+      );
+    }
+
     const filtered = variants.filter((variant) => {
       const availableStock =
         variant.stock - variant.reservedStock;
@@ -134,6 +215,12 @@ export async function GET(request: Request) {
 
       if (filter === "OUT_OF_STOCK") {
         return availableStock <= 0;
+      }
+
+      if (filter === "SLOW_STOCK") {
+        return isSlowStock(
+          variant,
+        );
       }
 
       return true;
@@ -161,6 +248,14 @@ export async function GET(request: Request) {
         variant.stock - variant.reservedStock <= 0,
     ).length;
 
+    const slowStock =
+      variants.filter(
+        (variant) =>
+          isSlowStock(
+            variant,
+          ),
+      ).length;
+
     return NextResponse.json({
       variants: filtered.map((variant) => ({
         id: variant.id,
@@ -173,6 +268,16 @@ export async function GET(request: Request) {
         reservedStock: variant.reservedStock,
         availableStock:
           variant.stock - variant.reservedStock,
+        recentSalesQty:
+          recentSalesQty(
+            variant,
+          ),
+        isSlowStock:
+          isSlowStock(
+            variant,
+          ),
+        slowStockDays:
+          SLOW_STOCK_DAYS,
         costPrice: variant.costPrice
           ? Number(variant.costPrice)
           : null,
@@ -194,6 +299,7 @@ export async function GET(request: Request) {
           totalStock - totalReserved,
         lowStock,
         outOfStock,
+        slowStock,
       },
     });
   } catch (error) {
@@ -316,6 +422,7 @@ export async function PATCH(request: Request) {
             select: {
               id: true,
               name: true,
+              inches: true,
             },
           },
         },

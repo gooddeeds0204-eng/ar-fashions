@@ -205,6 +205,8 @@ export async function GET(
                         variant.size.id,
                       name:
                         variant.size.name,
+                      inches:
+                        variant.size.inches,
                     },
                   }),
                 ),
