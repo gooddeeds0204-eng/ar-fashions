@@ -16,6 +16,7 @@ const menu = [
   { label: "Coupons", href: "/admin/coupons", icon: "%" },
   { label: "Banners", href: "/admin/banners", icon: "▱" },
   { label: "Home Content", href: "/admin/home-content", icon: "⌂" },
+  { label: "Video Content", href: "/admin/video-content", icon: "▶" },
 ];
 
 const comingSoon = [

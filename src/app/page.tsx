@@ -62,6 +62,26 @@ type HomeSection = {
   sortOrder: number;
 };
 
+type Reel = {
+  id: string;
+  url: string;
+  thumbnailUrl: string | null;
+  caption: string;
+  sortOrder: number;
+  source: "UPLOAD" | "INSTAGRAM";
+  instagramEmbedUrl: string | null;
+  product: {
+    id: string;
+    name: string;
+    sku: string | null;
+    slug: string;
+    retailPrice: number;
+    resellerPrice: number | null;
+    salesMode: "RETAIL" | "BULK" | "BOTH";
+    image: string | null;
+  };
+};
+
 type Mode = "RETAIL" | "RESELLER";
 
 function money(value: string | number | null) {
@@ -368,18 +388,82 @@ function ProductSection({
 function FashionReelsSection({
   title,
   subtitle,
-  products,
+  reels,
   mode,
 }: {
   title: string;
   subtitle: string;
-  products: Product[];
+  reels: Reel[];
   mode: Mode;
 }) {
   const router = useRouter();
 
-  if (products.length === 0) {
+  const [
+    selectedReelId,
+    setSelectedReelId,
+  ] = useState<string | null>(
+    reels[0]?.id ?? null,
+  );
+
+  useEffect(() => {
+    if (
+      reels.length > 0 &&
+      !reels.some(
+        (item) =>
+          item.id ===
+          selectedReelId,
+      )
+    ) {
+      setSelectedReelId(
+        reels[0].id,
+      );
+    }
+  }, [
+    reels,
+    selectedReelId,
+  ]);
+
+  if (reels.length === 0) {
     return null;
+  }
+
+  const selectedReel =
+    reels.find(
+      (item) =>
+        item.id ===
+        selectedReelId,
+    ) ?? reels[0];
+
+  function openProduct(
+    reel: Reel,
+  ) {
+    router.push(
+      `/products/${reel.product.id}?mode=${mode.toLowerCase()}`,
+    );
+  }
+
+  function selectReel(
+    reel: Reel,
+  ) {
+    setSelectedReelId(
+      reel.id,
+    );
+
+    window.setTimeout(
+      () => {
+        document
+          .getElementById(
+            "fashion-reels-viewer",
+          )
+          ?.scrollIntoView({
+            behavior:
+              "smooth",
+            block:
+              "center",
+          });
+      },
+      50,
+    );
   }
 
   return (
@@ -397,71 +481,256 @@ function FashionReelsSection({
             {title}
           </h2>
 
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-zinc-400">
             {subtitle}
           </p>
         </div>
 
-        <div className="flex gap-4 overflow-x-auto pb-3">
-          {products.slice(0, 8).map(
-            (product) => {
-              const video =
-                product.media.find(
-                  (item) =>
-                    item.type ===
-                    "VIDEO",
-                );
+        {/* SIDE-BY-SIDE REEL PREVIEWS */}
+        <div className="-mx-4 overflow-x-auto px-4 pb-4">
+          <div className="flex min-w-max gap-3">
+            {reels
+              .slice(0, 12)
+              .map(
+                (reel) => {
+                  const active =
+                    reel.id ===
+                    selectedReel.id;
 
-              if (!video) {
-                return null;
+                  return (
+                    <button
+                      key={
+                        reel.id
+                      }
+                      type="button"
+                      onClick={() =>
+                        selectReel(
+                          reel,
+                        )
+                      }
+                      className={`relative w-[112px] shrink-0 overflow-hidden rounded-2xl border text-left transition sm:w-[140px] ${
+                        active
+                          ? "border-emerald-400 ring-2 ring-emerald-400/30"
+                          : "border-white/10"
+                      }`}
+                    >
+                      <div className="relative aspect-[9/14] bg-zinc-900">
+                        {reel.thumbnailUrl ? (
+                          <img
+                            src={
+                              reel.thumbnailUrl
+                            }
+                            alt={
+                              reel.caption
+                            }
+                            className="h-full w-full object-cover"
+                          />
+                        ) : reel.source ===
+                          "UPLOAD" ? (
+                          <video
+                            src={
+                              reel.url
+                            }
+                            muted
+                            playsInline
+                            preload="metadata"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center bg-gradient-to-b from-fuchsia-700 via-rose-600 to-orange-500">
+                            <span className="text-3xl">
+                              ▶
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/10" />
+
+                        <div className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-1 text-[8px] font-black">
+                          {reel.source ===
+                          "INSTAGRAM"
+                            ? "INSTAGRAM"
+                            : "REEL"}
+                        </div>
+
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-sm text-black shadow-lg">
+                            ▶
+                          </span>
+                        </div>
+
+                        <div className="absolute inset-x-0 bottom-0 p-2">
+                          <p className="line-clamp-2 text-[10px] font-black leading-4 text-white">
+                            {
+                              reel.product.name
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                },
+              )}
+          </div>
+        </div>
+
+        <p className="mb-5 text-center text-[10px] font-semibold text-zinc-500">
+          Tap a reel above to watch
+        </p>
+
+        {/* SELECTED MAIN REEL */}
+        <div
+          id="fashion-reels-viewer"
+          className="scroll-mt-24"
+        >
+          <div className="mx-auto grid max-w-4xl gap-5 md:grid-cols-[minmax(0,360px)_1fr] md:items-center">
+            <button
+              type="button"
+              onClick={() =>
+                openProduct(
+                  selectedReel,
+                )
               }
-
-              return (
-                <div
-                  key={product.id}
-                  className="relative min-w-[190px] overflow-hidden rounded-3xl bg-zinc-900 sm:min-w-[230px]"
-                >
+              className="group relative mx-auto block w-full max-w-[360px] overflow-hidden rounded-[2rem] bg-black text-left shadow-2xl"
+              aria-label={`Shop ${selectedReel.product.name}`}
+            >
+              <div className="relative aspect-[9/14]">
+                {selectedReel.source ===
+                  "INSTAGRAM" &&
+                selectedReel.instagramEmbedUrl ? (
+                  <iframe
+                    key={
+                      selectedReel.id
+                    }
+                    src={
+                      selectedReel.instagramEmbedUrl
+                    }
+                    title={
+                      selectedReel.caption
+                    }
+                    className="pointer-events-none h-full w-full border-0 bg-white"
+                    allow="autoplay; encrypted-media"
+                  />
+                ) : (
                   <video
-                    src={video.url}
+                    key={
+                      selectedReel.id
+                    }
+                    src={
+                      selectedReel.url
+                    }
+                    poster={
+                      selectedReel.thumbnailUrl ??
+                      undefined
+                    }
                     muted
                     autoPlay
                     loop
                     playsInline
-                    className="aspect-[9/14] w-full object-cover"
+                    className="h-full w-full object-cover"
                   />
+                )}
 
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/30 to-transparent p-4 pt-20">
-                    <p className="text-sm font-bold">
-                      {product.name}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/10" />
+
+                <div className="pointer-events-none absolute left-4 top-4 rounded-full bg-black/70 px-3 py-1.5 text-[9px] font-black">
+                  {selectedReel.source ===
+                  "INSTAGRAM"
+                    ? "INSTAGRAM REEL"
+                    : "AR FASHIONS REEL"}
+                </div>
+
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 p-5">
+                  <p className="text-lg font-black">
+                    {
+                      selectedReel.product
+                        .name
+                    }
+                  </p>
+
+                  {selectedReel.caption ? (
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-zinc-300">
+                      {
+                        selectedReel.caption
+                      }
                     </p>
+                  ) : null}
 
-                    <p className="mt-1 text-xs text-zinc-300">
+                  <div className="mt-4 flex items-center justify-between gap-3">
+                    <span className="text-sm font-black">
                       {money(
                         mode ===
                           "RESELLER" &&
-                          product.resellerPrice !==
+                          selectedReel
+                            .product
+                            .resellerPrice !==
                             null
-                          ? product.resellerPrice
-                          : product.retailPrice,
+                          ? selectedReel
+                              .product
+                              .resellerPrice
+                          : selectedReel
+                              .product
+                              .retailPrice,
                       )}
-                    </p>
+                    </span>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        router.push(
-                          `/products/${product.id}?mode=${mode.toLowerCase()}`,
-                        )
-                      }
-                      className="mt-3 rounded-full bg-white px-4 py-2 text-[10px] font-black text-black"
-                    >
-                      Shop Now
-                    </button>
+                    <span className="rounded-full bg-white px-4 py-2 text-[10px] font-black text-black">
+                      Shop Product →
+                    </span>
                   </div>
                 </div>
-              );
-            },
-          )}
+              </div>
+            </button>
+
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">
+                Featured in this reel
+              </p>
+
+              <h3 className="mt-3 text-2xl font-black">
+                {
+                  selectedReel.product
+                    .name
+                }
+              </h3>
+
+              <p className="mt-2 text-sm leading-6 text-zinc-400">
+                {selectedReel.caption}
+              </p>
+
+              <p className="mt-5 text-xl font-black">
+                {money(
+                  mode ===
+                    "RESELLER" &&
+                    selectedReel.product
+                      .resellerPrice !==
+                      null
+                    ? selectedReel
+                        .product
+                        .resellerPrice
+                    : selectedReel
+                        .product
+                        .retailPrice,
+                )}
+              </p>
+
+              <button
+                type="button"
+                onClick={() =>
+                  openProduct(
+                    selectedReel,
+                  )
+                }
+                className="mt-5 w-full rounded-2xl bg-emerald-500 px-5 py-4 text-sm font-black text-black"
+              >
+                Shop This Product
+              </button>
+
+              <p className="mt-3 text-center text-[10px] text-zinc-500">
+                Tap the reel itself to open the product page
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -481,6 +750,11 @@ export default function Home() {
     setHomeSections,
   ] = useState<HomeSection[]>([]);
 
+  const [
+    videoReels,
+    setVideoReels,
+  ] = useState<Reel[]>([]);
+
   const [bannerIndex, setBannerIndex] =
     useState(0);
 
@@ -488,6 +762,48 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("ALL");
+
+  useEffect(() => {
+    async function loadReels() {
+      try {
+        const response =
+          await fetch(
+            "/api/reels",
+            {
+              cache:
+                "no-store",
+            },
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error ??
+              "Failed to load reels.",
+          );
+        }
+
+        setVideoReels(
+          Array.isArray(
+            data.reels,
+          )
+            ? data.reels
+            : [],
+        );
+      } catch (error) {
+        console.error(
+          "Reels load failed:",
+          error,
+        );
+
+        setVideoReels([]);
+      }
+    }
+
+    loadReels();
+  }, []);
 
   useEffect(() => {
     ensureUserSession().catch((error) => {
@@ -656,14 +972,6 @@ export default function Home() {
     (product) => product.isNewArrival,
   );
 
-  const reels = visibleProducts.filter(
-    (product) =>
-      product.media.some(
-        (item) =>
-          item.type === "VIDEO",
-      ),
-  );
-
   const defaultHomeSections:
     HomeSection[] = [
       {
@@ -728,6 +1036,8 @@ export default function Home() {
             </p>
           </div>
 
+
+
           <div className="hidden max-w-md flex-1 md:block">
             <div className="flex items-center rounded-full bg-zinc-100 px-4 py-2.5">
               <span className="mr-2 text-zinc-400">⌕</span>
@@ -741,31 +1051,9 @@ export default function Home() {
             </div>
           </div>
 
-          <button
-            type="button"
-            className="hidden text-xl sm:block"
-            aria-label="Search"
-          >
-            ⌕
-          </button>
+          
 
-          <button
-            type="button"
-            onClick={() => router.push("/wishlist")}
-            className="text-xl transition hover:scale-110"
-            aria-label="Wishlist"
-          >
-            ♡
-          </button>
-
-          <button
-            type="button"
-            onClick={() => router.push("/cart")}
-            className="text-xl"
-            aria-label="Cart"
-          >
-            🛍
-          </button>
+          
 
           <button
             type="button"
@@ -1101,7 +1389,7 @@ export default function Home() {
                     subtitle={
                       section.subtitle
                     }
-                    products={reels}
+                    reels={videoReels}
                     mode={mode}
                   />
                 );
@@ -1325,13 +1613,10 @@ export default function Home() {
             [
               "✦",
               "Reels",
-              () => {
-                document
-                  .getElementById("fashion-reels")
-                  ?.scrollIntoView({
-                    behavior: "smooth",
-                  });
-              },
+              () =>
+                router.push(
+                  `/reels?mode=${mode.toLowerCase()}`,
+                ),
             ],
             [
               "♡",
