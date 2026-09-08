@@ -17,10 +17,11 @@ const menu = [
   { label: "Banners", href: "/admin/banners", icon: "▱" },
   { label: "Home Content", href: "/admin/home-content", icon: "⌂" },
   { label: "Video Content", href: "/admin/video-content", icon: "▶" },
+  { label: "Reseller Sets", href: "/admin/reseller-sets", icon: "◆" },
+  { label: "Notifications", href: "/admin/notifications", icon: "♢" },
 ];
 
 const comingSoon = [
-  { label: "Reseller Sets", href: "/admin/reseller-sets", icon: "◆" },
   { label: "Settings", icon: "⚙" },
 ];
 

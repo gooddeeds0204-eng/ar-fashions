@@ -18,6 +18,7 @@ type SessionUser = {
 type AccountCounts = {
   orders: number;
   addresses: number;
+  notifications: number;
 };
 
 export default function AccountPage() {
@@ -30,6 +31,7 @@ export default function AccountPage() {
     useState<AccountCounts>({
       orders: 0,
       addresses: 0,
+      notifications: 0,
     });
 
   const [loading, setLoading] =
@@ -68,6 +70,7 @@ export default function AccountPage() {
         const [
           ordersResponse,
           addressesResponse,
+          notificationsResponse,
         ] = await Promise.all([
           fetch(
             "/api/my-orders",
@@ -85,10 +88,19 @@ export default function AccountPage() {
                 "same-origin",
             },
           ),
+          fetch(
+            "/api/notifications",
+            {
+              cache: "no-store",
+              credentials:
+                "same-origin",
+            },
+          ),
         ]);
 
         let ordersCount = 0;
         let addressesCount = 0;
+        let notificationsCount = 0;
 
         if (
           ordersResponse.ok
@@ -116,10 +128,25 @@ export default function AccountPage() {
             ) || 0;
         }
 
+        if (
+          notificationsResponse.ok
+        ) {
+          const notificationsData =
+            await notificationsResponse.json();
+
+          notificationsCount =
+            Number(
+              notificationsData.unreadCount ??
+                0,
+            ) || 0;
+        }
+
         setCounts({
           orders: ordersCount,
           addresses:
             addressesCount,
+          notifications:
+            notificationsCount,
         });
       } catch (error) {
         setError(
@@ -257,7 +284,7 @@ export default function AccountPage() {
             </section>
 
             {/* QUICK STATS */}
-            <section className="mt-5 grid grid-cols-2 gap-3">
+            <section className="mt-5 grid grid-cols-3 gap-3">
               <button
                 type="button"
                 onClick={() =>
@@ -295,6 +322,26 @@ export default function AccountPage() {
                   Saved Addresses
                 </p>
               </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    "/notifications",
+                  )
+                }
+                className="rounded-3xl bg-white p-5 text-left shadow-sm"
+              >
+                <p className="text-3xl font-black">
+                  {
+                    counts.notifications
+                  }
+                </p>
+
+                <p className="mt-1 text-xs font-bold text-zinc-500">
+                  Notifications
+                </p>
+              </button>
             </section>
 
             {/* ACCOUNT MENU */}
@@ -320,6 +367,19 @@ export default function AccountPage() {
                   action: () =>
                     router.push(
                       "/addresses",
+                    ),
+                },
+                {
+                  icon: "🔔",
+                  title:
+                    "Notifications",
+                  subtitle:
+                    counts.notifications > 0
+                      ? `${counts.notifications} unread update${counts.notifications === 1 ? "" : "s"}`
+                      : "Store updates, offers and alerts",
+                  action: () =>
+                    router.push(
+                      "/notifications",
                     ),
                 },
                 {

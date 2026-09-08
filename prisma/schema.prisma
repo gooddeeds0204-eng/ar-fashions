@@ -392,15 +392,38 @@ model Review {
 }
 
 model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  title     String
-  message   String
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String                @id @default(cuid())
+  userId     String
+  campaignId String?
+  title      String
+  message    String
+  link       String?
+  isRead     Boolean               @default(false)
+  readAt     DateTime?
+  createdAt  DateTime              @default(now())
+  user       User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign   NotificationCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
 
   @@index([userId, isRead])
+  @@index([campaignId])
+}
+
+model NotificationCampaign {
+  id             String                     @id @default(cuid())
+  title          String
+  message        String
+  link           String?
+  audience       NotificationAudience
+  targetUserId   String?
+  status         NotificationCampaignStatus @default(DRAFT)
+  recipientCount Int                        @default(0)
+  sentAt         DateTime?
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
+  notifications  Notification[]
+
+  @@index([status, createdAt])
+  @@index([audience])
 }
 
 model SiteSetting {
@@ -439,6 +462,18 @@ model Banner {
   updatedAt  DateTime  @updatedAt
 
   @@index([isActive, sortOrder])
+}
+
+enum NotificationAudience {
+  ALL
+  RETAIL
+  RESELLER
+  INDIVIDUAL
+}
+
+enum NotificationCampaignStatus {
+  DRAFT
+  SENT
 }
 
 enum UserRole {
