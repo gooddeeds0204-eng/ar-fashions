@@ -147,6 +147,73 @@ function statusClass(status: string) {
   }
 }
 
+const allowedOrderTransitions:
+  Record<string, string[]> = {
+    PENDING: [
+      "CONFIRMED",
+      "CANCELLED",
+    ],
+
+    CONFIRMED: [
+      "PACKED",
+      "CANCELLED",
+    ],
+
+    PACKED: [
+      "SHIPPED",
+      "CANCELLED",
+    ],
+
+    SHIPPED: [
+      "DELIVERED",
+      "RETURN_REQUESTED",
+    ],
+
+    DELIVERED: [
+      "RETURN_REQUESTED",
+    ],
+
+    RETURN_REQUESTED: [
+      "RETURNED",
+    ],
+
+    RETURNED: [
+      "REFUNDED",
+    ],
+
+    CANCELLED: [],
+    REFUNDED: [],
+  };
+
+function statusOptionsForOrder(
+  order: Pick<
+    Order,
+    | "status"
+    | "deliveryChargePending"
+  >,
+) {
+  const nextStatuses =
+    allowedOrderTransitions[
+      order.status
+    ] ?? [];
+
+  const allowed =
+    nextStatuses.filter(
+      (status) =>
+        !(
+          status ===
+            "SHIPPED" &&
+          order
+            .deliveryChargePending
+        ),
+    );
+
+  return [
+    order.status,
+    ...allowed,
+  ];
+}
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -583,27 +650,36 @@ export default function AdminOrdersPage() {
 
                       <select
                         value={order.status}
-                        disabled={updating === order.id}
+                        disabled={
+                          updating ===
+                            order.id ||
+                          statusOptionsForOrder(
+                            order,
+                          ).length ===
+                            1
+                        }
                         onChange={(event) =>
                           updateStatus(
                             order.id,
                             event.target.value,
                           )
                         }
-                        className="rounded-xl border border-black/10 bg-white px-3 py-3 text-xs font-bold outline-none"
+                        className="rounded-xl border border-black/10 bg-white px-3 py-3 text-xs font-bold outline-none disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        {statuses
-                          .filter(
-                            (status) => status !== "ALL",
-                          )
-                          .map((status) => (
+                        {statusOptionsForOrder(
+                          order,
+                        ).map(
+                          (status) => (
                             <option
                               key={status}
                               value={status}
                             >
-                              {statusLabel(status)}
+                              {statusLabel(
+                                status,
+                              )}
                             </option>
-                          ))}
+                          ),
+                        )}
                       </select>
                     </div>
                   </div>
