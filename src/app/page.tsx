@@ -799,6 +799,11 @@ export default function Home() {
   ] = useState<HomeSection[]>([]);
 
   const [
+    homeSectionsConfigured,
+    setHomeSectionsConfigured,
+  ] = useState(false);
+
+  const [
     videoReels,
     setVideoReels,
   ] = useState<Reel[]>([]);
@@ -1020,6 +1025,10 @@ export default function Home() {
             ? data.sections
             : [],
         );
+
+        setHomeSectionsConfigured(
+          data.configured === true,
+        );
       } catch (error) {
         console.error(
           "Homepage sections failed:",
@@ -1139,7 +1148,7 @@ export default function Home() {
     ];
 
   const contentSections =
-    homeSections.length > 0
+    homeSectionsConfigured
       ? homeSections
       : defaultHomeSections;
 

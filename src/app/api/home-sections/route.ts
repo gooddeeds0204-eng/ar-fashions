@@ -24,19 +24,24 @@ function subtitleFromConfig(
 
 export async function GET() {
   try {
-    const sections =
+    const allSections =
       await prisma.homeSection.findMany({
-        where: {
-          isActive: true,
-        },
         orderBy: [
           { sortOrder: "asc" },
           { createdAt: "asc" },
         ],
       });
 
+    const sections =
+      allSections.filter(
+        (section) =>
+          section.isActive,
+      );
+
     return NextResponse.json({
       success: true,
+      configured:
+        allSections.length > 0,
       sections:
         sections.map(
           (section) => ({
