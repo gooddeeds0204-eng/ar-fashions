@@ -135,29 +135,45 @@ model Product {
 }
 
 model ProductVariant {
-  id            String      @id @default(cuid())
-  productId     String
-  colorId       String
-  sizeId        String
-  sku           String?     @unique
-  stock         Int         @default(0)
-  reservedStock Int         @default(0)
-  costPrice     Decimal?    @db.Decimal(10, 2)
-  retailPrice   Decimal?    @db.Decimal(10, 2)
-  resellerPrice Decimal?    @db.Decimal(10, 2)
-  isActive      Boolean     @default(true)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  cartItems     CartItem[]
-  orderItems    OrderItem[]
-  color         Color       @relation(fields: [colorId], references: [id])
-  product       Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  size          Size        @relation(fields: [sizeId], references: [id])
+  id                   String                @id @default(cuid())
+  productId            String
+  colorId              String
+  sizeId               String
+  sku                  String?               @unique
+  stock                Int                   @default(0)
+  reservedStock        Int                   @default(0)
+  costPrice            Decimal?              @db.Decimal(10, 2)
+  retailPrice          Decimal?              @db.Decimal(10, 2)
+  resellerPrice        Decimal?              @db.Decimal(10, 2)
+  isActive             Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  cartItems            CartItem[]
+  orderItems           OrderItem[]
+  inventoryAdjustments InventoryAdjustment[]
+  color                Color                 @relation(fields: [colorId], references: [id])
+  product              Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size                 Size                  @relation(fields: [sizeId], references: [id])
 
   @@unique([productId, colorId, sizeId])
   @@index([productId])
   @@index([colorId])
   @@index([sizeId])
+}
+
+model InventoryAdjustment {
+  id            String   @id @default(cuid())
+  variantId     String
+  adjustment    Int
+  previousStock Int
+  newStock      Int
+  reason        String
+  createdAt     DateTime @default(now())
+
+  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([variantId])
+  @@index([createdAt])
 }
 
 model ProductMedia {

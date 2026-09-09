@@ -323,31 +323,61 @@ export async function GET(request: Request) {
  * Product PUT so product editing cannot silently
  * recreate inventory variants.
  */
+
 export async function PATCH(request: Request) {
   /* ADMIN_GUARD_PATCH */
-  const adminError = await requireAdmin();
+  const adminError =
+    await requireAdmin();
 
   if (adminError) {
     return adminError;
   }
 
   try {
-    const body = await request.json();
+    const body =
+      await request.json();
 
-    const variantId = cleanString(body.variantId);
-    const adjustment = toInt(body.adjustment);
-    const reason = cleanString(body.reason);
+    const variantId =
+      cleanString(
+        body.variantId,
+      );
+
+    const adjustment =
+      toInt(
+        body.adjustment,
+      );
+
+    const requestedReason =
+      cleanString(
+        body.reason,
+      );
+
+    const validReasons = [
+      "MANUAL_ADJUSTMENT",
+      "NEW_STOCK",
+      "DAMAGED",
+      "CORRECTION",
+      "RETURN_RESTOCK",
+    ];
+
+    const reason =
+      requestedReason ||
+      "MANUAL_ADJUSTMENT";
 
     if (!variantId) {
       return NextResponse.json(
         {
-          error: "Variant ID is required.",
+          error:
+            "Variant ID is required.",
         },
         { status: 400 },
       );
     }
 
-    if (adjustment === null || adjustment === 0) {
+    if (
+      adjustment === null ||
+      adjustment === 0
+    ) {
       return NextResponse.json(
         {
           error:
@@ -357,104 +387,226 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const variant = await prisma.productVariant.findUnique({
-      where: {
-        id: variantId,
-      },
-    });
-
-    if (!variant) {
+    if (
+      !validReasons.includes(
+        reason,
+      )
+    ) {
       return NextResponse.json(
         {
-          error: "Inventory variant not found.",
-        },
-        { status: 404 },
-      );
-    }
-
-    const newStock = variant.stock + adjustment;
-
-    if (newStock < 0) {
-      return NextResponse.json(
-        {
-          error: "Stock cannot be negative.",
+          error:
+            "Invalid inventory adjustment reason.",
         },
         { status: 400 },
       );
     }
 
-    if (newStock < variant.reservedStock) {
-      return NextResponse.json(
-        {
-          error: `Stock cannot be lower than reserved stock (${variant.reservedStock}).`,
-        },
-        { status: 400 },
-      );
-    }
-
-    const updated =
-      await prisma.productVariant.update({
-        where: {
-          id: variantId,
-        },
-
-        data: {
-          stock: newStock,
-        },
-
-        include: {
-          product: {
-            select: {
-              id: true,
-              name: true,
-              sku: true,
-            },
-          },
-
-          color: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-
-          size: {
-            select: {
-              id: true,
-              name: true,
-              inches: true,
-            },
-          },
-        },
-      });
-
-    const result = {
-      variant: updated,
-      previousStock: variant.stock,
-      adjustment,
-      reason: reason || "MANUAL_ADJUSTMENT",
+    type StockRow = {
+      id: string;
+      stock: number;
+      reservedStock: number;
+      updatedAt: Date;
     };
+
+    const result =
+      await prisma.$transaction(
+        async (tx) => {
+          /*
+           * Atomic stock update.
+           *
+           * The validation and stock change happen
+           * inside one SQL statement, preventing
+           * concurrent admin adjustments from
+           * overwriting each other.
+           */
+          const changed =
+            await tx.$queryRaw<
+              StockRow[]
+            >`
+              UPDATE "ProductVariant"
+              SET
+                stock =
+                  stock + ${adjustment},
+                "updatedAt" =
+                  NOW()
+              WHERE
+                id = ${variantId}
+                AND
+                stock + ${adjustment}
+                  >= 0
+                AND
+                stock + ${adjustment}
+                  >= "reservedStock"
+              RETURNING
+                id,
+                stock,
+                "reservedStock",
+                "updatedAt"
+            `;
+
+          if (
+            changed.length !== 1
+          ) {
+            const current =
+              await tx.productVariant.findUnique(
+                {
+                  where: {
+                    id: variantId,
+                  },
+                  select: {
+                    id: true,
+                    stock: true,
+                    reservedStock:
+                      true,
+                  },
+                },
+              );
+
+            if (!current) {
+              throw new Error(
+                "Inventory variant not found.",
+              );
+            }
+
+            const attemptedStock =
+              current.stock +
+              adjustment;
+
+            if (
+              attemptedStock < 0
+            ) {
+              throw new Error(
+                "Stock cannot be negative.",
+              );
+            }
+
+            if (
+              attemptedStock <
+              current.reservedStock
+            ) {
+              throw new Error(
+                `Stock cannot be lower than reserved stock (${current.reservedStock}).`,
+              );
+            }
+
+            throw new Error(
+              "Inventory changed while updating. Please try again.",
+            );
+          }
+
+          const stockRow =
+            changed[0];
+
+          const previousStock =
+            stockRow.stock -
+            adjustment;
+
+          await tx.inventoryAdjustment.create(
+            {
+              data: {
+                variantId,
+                adjustment,
+                previousStock,
+                newStock:
+                  stockRow.stock,
+                reason,
+              },
+            },
+          );
+
+          const updated =
+            await tx.productVariant.findUnique(
+              {
+                where: {
+                  id: variantId,
+                },
+
+                include: {
+                  product: {
+                    select: {
+                      id: true,
+                      name: true,
+                      sku: true,
+                    },
+                  },
+
+                  color: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+
+                  size: {
+                    select: {
+                      id: true,
+                      name: true,
+                      inches: true,
+                    },
+                  },
+                },
+              },
+            );
+
+          if (!updated) {
+            throw new Error(
+              "Updated inventory variant could not be loaded.",
+            );
+          }
+
+          return {
+            variant:
+              updated,
+            previousStock,
+            adjustment,
+            reason,
+          };
+        },
+      );
 
     return NextResponse.json({
       success: true,
 
       inventory: {
-        id: result.variant.id,
-        product: result.variant.product,
-        color: result.variant.color,
-        size: result.variant.size,
-        sku: result.variant.sku,
-        previousStock: result.previousStock,
-        adjustment: result.adjustment,
-        stock: result.variant.stock,
+        id:
+          result.variant.id,
+
+        product:
+          result.variant.product,
+
+        color:
+          result.variant.color,
+
+        size:
+          result.variant.size,
+
+        sku:
+          result.variant.sku,
+
+        previousStock:
+          result.previousStock,
+
+        adjustment:
+          result.adjustment,
+
+        stock:
+          result.variant.stock,
+
         reservedStock:
-          result.variant.reservedStock,
+          result.variant
+            .reservedStock,
+
         availableStock:
           result.variant.stock -
-          result.variant.reservedStock,
-        reason: result.reason,
+          result.variant
+            .reservedStock,
+
+        reason:
+          result.reason,
+
         updatedAt:
-          result.variant.updatedAt,
+          result.variant
+            .updatedAt,
       },
     });
   } catch (error) {
