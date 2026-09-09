@@ -35,6 +35,17 @@ export async function GET() {
         },
       });
 
+    const salesMode =
+      await prisma.salesMode.findFirst({
+        orderBy: {
+          updatedAt: "desc",
+        },
+        select: {
+          retailStatus: true,
+          resellerStatus: true,
+        },
+      });
+
     return NextResponse.json({
       success: true,
       stats: {
@@ -42,6 +53,14 @@ export async function GET() {
         categories,
         colors,
         sizes,
+      },
+      salesMode: {
+        retailStatus:
+          salesMode?.retailStatus ??
+          "OPEN",
+        resellerStatus:
+          salesMode?.resellerStatus ??
+          "OPEN",
       },
     });
   } catch (error) {

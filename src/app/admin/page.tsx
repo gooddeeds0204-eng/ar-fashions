@@ -32,6 +32,15 @@ type DashboardStats = {
   sizes: number;
 };
 
+type SalesMode = {
+  retailStatus:
+    | "OPEN"
+    | "CLOSED";
+  resellerStatus:
+    | "OPEN"
+    | "CLOSED";
+};
+
 export default function AdminDashboard() {
   const pathname = usePathname();
   const router = useRouter();
@@ -40,6 +49,13 @@ export default function AdminDashboard() {
     dashboardStats,
     setDashboardStats,
   ] = useState<DashboardStats | null>(
+    null,
+  );
+
+  const [
+    salesMode,
+    setSalesMode,
+  ] = useState<SalesMode | null>(
     null,
   );
 
@@ -79,6 +95,16 @@ export default function AdminDashboard() {
         ) {
           setDashboardStats(
             data.stats,
+          );
+        }
+
+        if (
+          data.salesMode &&
+          typeof data.salesMode ===
+            "object"
+        ) {
+          setSalesMode(
+            data.salesMode,
           );
         }
       } catch (error) {
@@ -366,8 +392,19 @@ export default function AdminDashboard() {
                       Individual customer shopping
                     </div>
                   </div>
-                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-semibold text-emerald-600">
-                    OPEN
+                  <span
+                    className={`rounded-full px-3 py-1 text-[10px] font-semibold ${
+                      salesMode?.retailStatus ===
+                      "CLOSED"
+                        ? "bg-red-50 text-red-600"
+                        : salesMode?.retailStatus ===
+                            "OPEN"
+                          ? "bg-emerald-50 text-emerald-600"
+                          : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    {salesMode?.retailStatus ??
+                      "—"}
                   </span>
                 </div>
 
@@ -378,19 +415,40 @@ export default function AdminDashboard() {
                       Bulk & wholesale orders
                     </div>
                   </div>
-                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-semibold text-emerald-600">
-                    OPEN
+                  <span
+                    className={`rounded-full px-3 py-1 text-[10px] font-semibold ${
+                      salesMode?.resellerStatus ===
+                      "CLOSED"
+                        ? "bg-red-50 text-red-600"
+                        : salesMode?.resellerStatus ===
+                            "OPEN"
+                          ? "bg-emerald-50 text-emerald-600"
+                          : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    {salesMode?.resellerStatus ??
+                      "—"}
                   </span>
                 </div>
               </div>
 
-              <div className="mt-5 rounded-2xl border border-dashed border-[#d9dde5] p-4">
-                <div className="text-xs font-medium">Next module</div>
-                <div className="mt-1 text-xs leading-5 text-[#9ba2ae]">
-                  Product Builder will connect colors, sizes, variants,
-                  stock and retail/reseller pricing.
+              <Link
+                href="/admin/settings"
+                className="mt-5 block rounded-2xl border border-dashed border-[#d9dde5] p-4 transition hover:border-[#c49a6c]/50 hover:bg-[#fcfaf8]"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-medium">
+                    Store Controls
+                  </div>
+                  <span className="text-[#b98b5e]">
+                    →
+                  </span>
                 </div>
-              </div>
+                <div className="mt-1 text-xs leading-5 text-[#9ba2ae]">
+                  Manage retail and reseller availability, COD,
+                  maintenance mode and checkout rules.
+                </div>
+              </Link>
             </div>
           </section>
         </div>
