@@ -2,15 +2,11 @@ import {
   NextResponse,
 } from "next/server";
 import {
-  cookies,
-} from "next/headers";
-import {
   prisma,
 } from "@/lib/prisma";
 import {
-  CUSTOMER_SESSION_COOKIE,
-  verifyCustomerSessionToken,
-} from "@/lib/customer-session";
+  getAuthenticatedCustomerId,
+} from "@/lib/customer-auth";
 
 function cleanString(
   value: unknown,
@@ -18,20 +14,6 @@ function cleanString(
   return String(
     value ?? "",
   ).trim();
-}
-
-async function getSessionUserId() {
-  const cookieStore =
-    await cookies();
-
-  const token =
-    cookieStore.get(
-      CUSTOMER_SESSION_COOKIE,
-    )?.value;
-
-  return verifyCustomerSessionToken(
-    token,
-  );
 }
 
 /*
@@ -43,7 +25,7 @@ async function getSessionUserId() {
 export async function GET() {
   try {
     const userId =
-      await getSessionUserId();
+      await getAuthenticatedCustomerId();
 
     if (!userId) {
       return NextResponse.json(
@@ -241,7 +223,7 @@ export async function POST(
 ) {
   try {
     const userId =
-      await getSessionUserId();
+      await getAuthenticatedCustomerId();
 
     if (!userId) {
       return NextResponse.json(
@@ -414,7 +396,7 @@ export async function DELETE(
 ) {
   try {
     const userId =
-      await getSessionUserId();
+      await getAuthenticatedCustomerId();
 
     if (!userId) {
       return NextResponse.json(

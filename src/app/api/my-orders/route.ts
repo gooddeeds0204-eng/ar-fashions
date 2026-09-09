@@ -1,25 +1,13 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import {
-  CUSTOMER_SESSION_COOKIE,
-  verifyCustomerSessionToken,
-} from "@/lib/customer-session";
+  getAuthenticatedCustomerId,
+} from "@/lib/customer-auth";
 
 export async function GET() {
   try {
-    const cookieStore =
-      await cookies();
-
-    const token =
-      cookieStore.get(
-        CUSTOMER_SESSION_COOKIE,
-      )?.value;
-
     const userId =
-      verifyCustomerSessionToken(
-        token,
-      );
+      await getAuthenticatedCustomerId();
 
     if (!userId) {
       return NextResponse.json(

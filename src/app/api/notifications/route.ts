@@ -2,34 +2,16 @@ import {
   NextResponse,
 } from "next/server";
 import {
-  cookies,
-} from "next/headers";
-import {
   prisma,
 } from "@/lib/prisma";
 import {
-  CUSTOMER_SESSION_COOKIE,
-  verifyCustomerSessionToken,
-} from "@/lib/customer-session";
-
-async function getUserId() {
-  const cookieStore =
-    await cookies();
-
-  const token =
-    cookieStore.get(
-      CUSTOMER_SESSION_COOKIE,
-    )?.value;
-
-  return verifyCustomerSessionToken(
-    token,
-  );
-}
+  getAuthenticatedCustomerId,
+} from "@/lib/customer-auth";
 
 export async function GET() {
   try {
     const userId =
-      await getUserId();
+      await getAuthenticatedCustomerId();
 
     if (!userId) {
       return NextResponse.json(
@@ -108,7 +90,7 @@ export async function PATCH(
 ) {
   try {
     const userId =
-      await getUserId();
+      await getAuthenticatedCustomerId();
 
     if (!userId) {
       return NextResponse.json(

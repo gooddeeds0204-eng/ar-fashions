@@ -1,23 +1,11 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import {
-  CUSTOMER_SESSION_COOKIE,
-  verifyCustomerSessionToken,
-} from "@/lib/customer-session";
+  getAuthenticatedCustomerId,
+} from "@/lib/customer-auth";
 
 function cleanString(value: unknown) {
   return String(value ?? "").trim();
-}
-
-async function getCustomerUserId() {
-  const cookieStore = await cookies();
-
-  const token = cookieStore.get(
-    CUSTOMER_SESSION_COOKIE,
-  )?.value;
-
-  return verifyCustomerSessionToken(token);
 }
 
 function validateAddress(body: any) {
@@ -89,7 +77,7 @@ function validateAddress(body: any) {
 export async function GET() {
   try {
     const userId =
-      await getCustomerUserId();
+      await getAuthenticatedCustomerId();
 
     if (!userId) {
       return NextResponse.json(
@@ -142,7 +130,7 @@ export async function POST(
 ) {
   try {
     const userId =
-      await getCustomerUserId();
+      await getAuthenticatedCustomerId();
 
     if (!userId) {
       return NextResponse.json(
@@ -291,7 +279,7 @@ export async function PATCH(
 ) {
   try {
     const userId =
-      await getCustomerUserId();
+      await getAuthenticatedCustomerId();
 
     if (!userId) {
       return NextResponse.json(

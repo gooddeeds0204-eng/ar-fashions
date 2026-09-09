@@ -1,51 +1,12 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
 import {
-  CUSTOMER_SESSION_COOKIE,
-  verifyCustomerSessionToken,
-} from "@/lib/customer-session";
+  getAuthenticatedCustomer,
+} from "@/lib/customer-auth";
 
 export async function GET() {
   try {
-    const cookieStore =
-      await cookies();
-
-    const token =
-      cookieStore.get(
-        CUSTOMER_SESSION_COOKIE,
-      )?.value;
-
-    const userId =
-      verifyCustomerSessionToken(
-        token,
-      );
-
-    if (!userId) {
-      return NextResponse.json(
-        {
-          error:
-            "No customer session found.",
-        },
-        { status: 401 },
-      );
-    }
-
     const user =
-      await prisma.user.findFirst({
-        where: {
-          id: userId,
-          status: "ACTIVE",
-        },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-          role: true,
-          isReseller: true,
-        },
-      });
+      await getAuthenticatedCustomer();
 
     if (!user) {
       return NextResponse.json(

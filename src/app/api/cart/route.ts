@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import {
-  CUSTOMER_SESSION_COOKIE,
-  verifyCustomerSessionToken,
-} from "@/lib/customer-session";
+  getAuthenticatedCustomerId,
+} from "@/lib/customer-auth";
 
 function errorMessage(error: unknown) {
   return error instanceof Error
@@ -12,40 +10,11 @@ function errorMessage(error: unknown) {
     : "Cart operation failed.";
 }
 
-async function getCustomerUserId() {
-  const cookieStore =
-    await cookies();
-
-  const userId =
-    verifyCustomerSessionToken(
-      cookieStore.get(
-        CUSTOMER_SESSION_COOKIE,
-      )?.value,
-    );
-
-  if (!userId) {
-    return null;
-  }
-
-  const user =
-    await prisma.user.findFirst({
-      where: {
-        id: userId,
-        status: "ACTIVE",
-      },
-      select: {
-        id: true,
-      },
-    });
-
-  return user?.id ?? null;
-}
-
 // GET /api/cart
 export async function GET() {
   try {
     const userId =
-      await getCustomerUserId();
+      await getAuthenticatedCustomerId();
 
     if (!userId) {
       return NextResponse.json(
@@ -152,7 +121,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const userId =
-      await getCustomerUserId();
+      await getAuthenticatedCustomerId();
 
     if (!userId) {
       return NextResponse.json(
@@ -335,7 +304,7 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const userId =
-      await getCustomerUserId();
+      await getAuthenticatedCustomerId();
 
     if (!userId) {
       return NextResponse.json(
@@ -435,7 +404,7 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const userId =
-      await getCustomerUserId();
+      await getAuthenticatedCustomerId();
 
     if (!userId) {
       return NextResponse.json(

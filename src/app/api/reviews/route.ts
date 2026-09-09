@@ -1,23 +1,11 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import {
-  CUSTOMER_SESSION_COOKIE,
-  verifyCustomerSessionToken,
-} from "@/lib/customer-session";
+  getAuthenticatedCustomerId,
+} from "@/lib/customer-auth";
 
 function cleanString(value: unknown) {
   return String(value ?? "").trim();
-}
-
-async function getSessionUserId() {
-  const cookieStore = await cookies();
-
-  return verifyCustomerSessionToken(
-    cookieStore.get(
-      CUSTOMER_SESSION_COOKIE,
-    )?.value,
-  );
 }
 
 export async function GET(
@@ -45,7 +33,7 @@ export async function GET(
      */
     if (mine) {
       const userId =
-        await getSessionUserId();
+        await getAuthenticatedCustomerId();
 
       if (!userId) {
         return NextResponse.json(
@@ -161,7 +149,7 @@ export async function POST(
 ) {
   try {
     const userId =
-      await getSessionUserId();
+      await getAuthenticatedCustomerId();
 
     if (!userId) {
       return NextResponse.json(
