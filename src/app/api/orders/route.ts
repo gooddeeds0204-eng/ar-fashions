@@ -1,7 +1,9 @@
 import { requireAdmin } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import {
+  getAuthenticatedCustomerId,
+} from "@/lib/customer-auth";
 import {
   evaluateCoupon,
   type CouponOrderType,
@@ -10,7 +12,6 @@ import {
   CUSTOMER_SESSION_COOKIE,
   CUSTOMER_SESSION_OPTIONS,
   createCustomerSessionToken,
-  verifyCustomerSessionToken,
 } from "@/lib/customer-session";
 
 type OrderItemInput = {
@@ -816,15 +817,8 @@ export async function POST(request: Request) {
      * when the signed customer cookie
      * belongs to the same customer.
      */
-    const cookieStore =
-      await cookies();
-
     const sessionUserId =
-      verifyCustomerSessionToken(
-        cookieStore.get(
-          CUSTOMER_SESSION_COOKIE,
-        )?.value,
-      );
+      await getAuthenticatedCustomerId();
 
     const result = await prisma.$transaction(
       async (tx) => {
