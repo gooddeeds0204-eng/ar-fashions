@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const menu = [
   { label: "Dashboard", href: "/admin", icon: "▦" },
@@ -24,36 +25,119 @@ const menu = [
   { label: "Settings", href: "/admin/settings", icon: "⚙" },
 ];
 
-const stats = [
-  {
-    title: "Total Products",
-    value: "0",
-    note: "Products in catalog",
-    icon: "◇",
-  },
-  {
-    title: "Categories",
-    value: "0",
-    note: "Active categories",
-    icon: "▤",
-  },
-  {
-    title: "Colors",
-    value: "0",
-    note: "Available colors",
-    icon: "●",
-  },
-  {
-    title: "Sizes",
-    value: "0",
-    note: "Available sizes",
-    icon: "□",
-  },
-];
+type DashboardStats = {
+  products: number;
+  categories: number;
+  colors: number;
+  sizes: number;
+};
 
 export default function AdminDashboard() {
   const pathname = usePathname();
   const router = useRouter();
+
+  const [
+    dashboardStats,
+    setDashboardStats,
+  ] = useState<DashboardStats | null>(
+    null,
+  );
+
+  useEffect(() => {
+    async function loadDashboardStats() {
+      try {
+        const response =
+          await fetch(
+            "/api/admin/dashboard-summary",
+            {
+              cache: "no-store",
+              credentials:
+                "same-origin",
+            },
+          );
+
+        if (
+          response.status === 401
+        ) {
+          router.replace(
+            "/admin/login",
+          );
+          return;
+        }
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        if (
+          data.stats &&
+          typeof data.stats ===
+            "object"
+        ) {
+          setDashboardStats(
+            data.stats,
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Dashboard stats failed:",
+          error,
+        );
+      }
+    }
+
+    loadDashboardStats();
+  }, [router]);
+
+  const stats = [
+    {
+      title: "Total Products",
+      value:
+        dashboardStats
+          ? String(
+              dashboardStats.products,
+            )
+          : "—",
+      note: "Products in catalog",
+      icon: "◇",
+    },
+    {
+      title: "Categories",
+      value:
+        dashboardStats
+          ? String(
+              dashboardStats.categories,
+            )
+          : "—",
+      note: "Active categories",
+      icon: "▤",
+    },
+    {
+      title: "Colors",
+      value:
+        dashboardStats
+          ? String(
+              dashboardStats.colors,
+            )
+          : "—",
+      note: "Available colors",
+      icon: "●",
+    },
+    {
+      title: "Sizes",
+      value:
+        dashboardStats
+          ? String(
+              dashboardStats.sizes,
+            )
+          : "—",
+      note: "Available sizes",
+      icon: "□",
+    },
+  ];
 
   async function logout() {
     try {
