@@ -1,110 +1,214 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import {
+  NextResponse,
+} from "next/server";
+import {
+  cookies,
+} from "next/headers";
+import {
+  prisma,
+} from "@/lib/prisma";
+import {
+  CUSTOMER_SESSION_COOKIE,
+  verifyCustomerSessionToken,
+} from "@/lib/customer-session";
 
-function cleanString(value: unknown) {
-  return String(value ?? "").trim();
+function cleanString(
+  value: unknown,
+) {
+  return String(
+    value ?? "",
+  ).trim();
+}
+
+async function getSessionUserId() {
+  const cookieStore =
+    await cookies();
+
+  const token =
+    cookieStore.get(
+      CUSTOMER_SESSION_COOKIE,
+    )?.value;
+
+  return verifyCustomerSessionToken(
+    token,
+  );
 }
 
 /*
- * GET /api/wishlist?userId=USER_ID
+ * GET /api/wishlist
  *
- * Returns all wishlist products for a user.
+ * Customer identity always comes
+ * from the signed httpOnly cookie.
  */
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-
-    const userId = cleanString(
-      searchParams.get("userId"),
-    );
+    const userId =
+      await getSessionUserId();
 
     if (!userId) {
       return NextResponse.json(
-        { error: "userId is required." },
-        { status: 400 },
+        {
+          error:
+            "Please sign in to view your wishlist.",
+        },
+        {
+          status: 401,
+        },
       );
     }
 
-    const items = await prisma.wishlistItem.findMany({
-      where: {
-        userId,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: {
-        product: {
-          include: {
-            category: true,
-            media: {
-              where: {
-                isActive: true,
-              },
-              orderBy: {
-                sortOrder: "asc",
+    const items =
+      await prisma.wishlistItem.findMany({
+        where: {
+          userId,
+        },
+
+        orderBy: {
+          createdAt:
+            "desc",
+        },
+
+        include: {
+          product: {
+            include: {
+              category:
+                true,
+
+              media: {
+                where: {
+                  isActive:
+                    true,
+                },
+
+                orderBy: {
+                  sortOrder:
+                    "asc",
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
     return NextResponse.json({
-      wishlist: items.map((item) => ({
-        id: item.id,
-        productId: item.productId,
-        createdAt: item.createdAt,
+      success: true,
 
-        product: {
-          id: item.product.id,
-          name: item.product.name,
-          slug: item.product.slug,
-          sku: item.product.sku,
-          description: item.product.description,
-          fabric: item.product.fabric,
+      wishlist:
+        items.map(
+          (item) => ({
+            id:
+              item.id,
 
-          retailPrice: Number(
-            item.product.retailPrice,
-          ),
+            productId:
+              item.productId,
 
-          resellerPrice:
-            item.product.resellerPrice !== null
-              ? Number(item.product.resellerPrice)
-              : null,
+            createdAt:
+              item.createdAt,
 
-          mrp:
-            item.product.mrp !== null
-              ? Number(item.product.mrp)
-              : null,
+            product: {
+              id:
+                item.product.id,
 
-          resellerMOQ:
-            item.product.resellerMOQ,
+              name:
+                item.product.name,
 
-          status: item.product.status,
-          salesMode: item.product.salesMode,
-          gender: item.product.gender,
+              slug:
+                item.product.slug,
 
-          category: item.product.category
-            ? {
-                id: item.product.category.id,
-                name: item.product.category.name,
-                slug: item.product.category.slug,
-              }
-            : null,
+              sku:
+                item.product.sku,
 
-          media: item.product.media.map(
-            (media) => ({
-              id: media.id,
-              type: media.type,
-              url: media.url,
-              thumbnailUrl:
-                media.thumbnailUrl,
-              altText: media.altText,
-            }),
-          ),
-        },
-      })),
-      count: items.length,
+              description:
+                item.product.description,
+
+              fabric:
+                item.product.fabric,
+
+              retailPrice:
+                Number(
+                  item.product
+                    .retailPrice,
+                ),
+
+              resellerPrice:
+                item.product
+                  .resellerPrice !==
+                null
+                  ? Number(
+                      item.product
+                        .resellerPrice,
+                    )
+                  : null,
+
+              mrp:
+                item.product.mrp !==
+                null
+                  ? Number(
+                      item.product
+                        .mrp,
+                    )
+                  : null,
+
+              resellerMOQ:
+                item.product
+                  .resellerMOQ,
+
+              status:
+                item.product.status,
+
+              salesMode:
+                item.product
+                  .salesMode,
+
+              gender:
+                item.product.gender,
+
+              category:
+                item.product
+                  .category
+                  ? {
+                      id:
+                        item.product
+                          .category
+                          .id,
+
+                      name:
+                        item.product
+                          .category
+                          .name,
+
+                      slug:
+                        item.product
+                          .category
+                          .slug,
+                    }
+                  : null,
+
+              media:
+                item.product.media.map(
+                  (media) => ({
+                    id:
+                      media.id,
+
+                    type:
+                      media.type,
+
+                    url:
+                      media.url,
+
+                    thumbnailUrl:
+                      media.thumbnailUrl,
+
+                    altText:
+                      media.altText,
+                  }),
+                ),
+            },
+          }),
+        ),
+
+      count:
+        items.length,
     });
   } catch (error) {
     console.error(
@@ -114,9 +218,12 @@ export async function GET(request: Request) {
 
     return NextResponse.json(
       {
-        error: "Failed to fetch wishlist.",
+        error:
+          "Failed to fetch wishlist.",
       },
-      { status: 500 },
+      {
+        status: 500,
+      },
     );
   }
 }
@@ -126,64 +233,95 @@ export async function GET(request: Request) {
  *
  * Body:
  * {
- *   "userId": "...",
  *   "productId": "..."
  * }
  */
-export async function POST(request: Request) {
+export async function POST(
+  request: Request,
+) {
   try {
-    const body = await request.json();
-
-    const userId = cleanString(body?.userId);
-    const productId = cleanString(
-      body?.productId,
-    );
+    const userId =
+      await getSessionUserId();
 
     if (!userId) {
       return NextResponse.json(
-        { error: "userId is required." },
-        { status: 400 },
+        {
+          error:
+            "Please sign in to use Wishlist.",
+        },
+        {
+          status: 401,
+        },
       );
     }
+
+    const body =
+      await request.json();
+
+    const productId =
+      cleanString(
+        body?.productId,
+      );
 
     if (!productId) {
       return NextResponse.json(
-        { error: "productId is required." },
-        { status: 400 },
+        {
+          error:
+            "productId is required.",
+        },
+        {
+          status: 400,
+        },
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-      select: {
-        id: true,
-      },
-    });
+    const user =
+      await prisma.user.findFirst({
+        where: {
+          id: userId,
+          status:
+            "ACTIVE",
+        },
+
+        select: {
+          id: true,
+        },
+      });
 
     if (!user) {
       return NextResponse.json(
-        { error: "User not found." },
-        { status: 404 },
+        {
+          error:
+            "Customer session is no longer valid.",
+        },
+        {
+          status: 401,
+        },
       );
     }
 
     const product =
-      await prisma.product.findUnique({
+      await prisma.product.findFirst({
         where: {
           id: productId,
+          status:
+            "ACTIVE",
         },
+
         select: {
           id: true,
-          status: true,
         },
       });
 
     if (!product) {
       return NextResponse.json(
-        { error: "Product not found." },
-        { status: 404 },
+        {
+          error:
+            "Product not found.",
+        },
+        {
+          status: 404,
+        },
       );
     }
 
@@ -200,12 +338,18 @@ export async function POST(request: Request) {
     if (existing) {
       return NextResponse.json({
         success: true,
-        alreadyExists: true,
+        alreadyExists:
+          true,
+
         wishlistItem: {
-          id: existing.id,
-          userId: existing.userId,
-          productId: existing.productId,
-          createdAt: existing.createdAt,
+          id:
+            existing.id,
+
+          productId:
+            existing.productId,
+
+          createdAt:
+            existing.createdAt,
         },
       });
     }
@@ -221,15 +365,23 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: true,
-        alreadyExists: false,
+        alreadyExists:
+          false,
+
         wishlistItem: {
-          id: item.id,
-          userId: item.userId,
-          productId: item.productId,
-          createdAt: item.createdAt,
+          id:
+            item.id,
+
+          productId:
+            item.productId,
+
+          createdAt:
+            item.createdAt,
         },
       },
-      { status: 201 },
+      {
+        status: 201,
+      },
     );
   } catch (error) {
     console.error(
@@ -239,9 +391,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        error: "Failed to add product to wishlist.",
+        error:
+          "Failed to add product to wishlist.",
       },
-      { status: 500 },
+      {
+        status: 500,
+      },
     );
   }
 }
@@ -251,66 +406,62 @@ export async function POST(request: Request) {
  *
  * Body:
  * {
- *   "userId": "...",
  *   "productId": "..."
  * }
  */
-export async function DELETE(request: Request) {
+export async function DELETE(
+  request: Request,
+) {
   try {
-    const body = await request.json();
-
-    const userId = cleanString(body?.userId);
-    const productId = cleanString(
-      body?.productId,
-    );
+    const userId =
+      await getSessionUserId();
 
     if (!userId) {
       return NextResponse.json(
-        { error: "userId is required." },
-        { status: 400 },
+        {
+          error:
+            "Please sign in.",
+        },
+        {
+          status: 401,
+        },
       );
     }
+
+    const body =
+      await request.json();
+
+    const productId =
+      cleanString(
+        body?.productId,
+      );
 
     if (!productId) {
       return NextResponse.json(
-        { error: "productId is required." },
-        { status: 400 },
-      );
-    }
-
-    const existing =
-      await prisma.wishlistItem.findUnique({
-        where: {
-          userId_productId: {
-            userId,
-            productId,
-          },
-        },
-      });
-
-    if (!existing) {
-      return NextResponse.json(
         {
-          success: true,
-          removed: false,
-          message:
-            "Product is not in wishlist.",
+          error:
+            "productId is required.",
+        },
+        {
+          status: 400,
         },
       );
     }
 
-    await prisma.wishlistItem.delete({
-      where: {
-        userId_productId: {
+    const result =
+      await prisma.wishlistItem.deleteMany({
+        where: {
           userId,
           productId,
         },
-      },
-    });
+      });
 
     return NextResponse.json({
       success: true,
-      removed: true,
+
+      removed:
+        result.count === 1,
+
       productId,
     });
   } catch (error) {
@@ -324,7 +475,9 @@ export async function DELETE(request: Request) {
         error:
           "Failed to remove product from wishlist.",
       },
-      { status: 500 },
+      {
+        status: 500,
+      },
     );
   }
 }

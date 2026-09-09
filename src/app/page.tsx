@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getUserId } from "@/lib/user-session";
 import { ensureUserSession } from "@/lib/user-session-init";
 import { useRouter } from "next/navigation";
 
@@ -156,12 +155,13 @@ function ProductCard({
   useEffect(() => {
     async function loadWishlistState() {
       try {
-        const userId = getUserId();
+        const userId =
+          await ensureUserSession();
 
         if (!userId) return;
 
         const response = await fetch(
-          `/api/wishlist?userId=${encodeURIComponent(userId)}`,
+          "/api/wishlist",
           { cache: "no-store" },
         );
 
@@ -193,7 +193,8 @@ function ProductCard({
   async function toggleWishlist() {
     if (wishlistLoading) return;
 
-    const userId = getUserId();
+    const userId =
+      await ensureUserSession();
 
     if (!userId) {
       alert("Please login to use Wishlist.");
@@ -212,7 +213,6 @@ function ProductCard({
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              userId,
               productId: product.id,
             }),
           },
@@ -234,7 +234,6 @@ function ProductCard({
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              userId,
               productId: product.id,
             }),
           },

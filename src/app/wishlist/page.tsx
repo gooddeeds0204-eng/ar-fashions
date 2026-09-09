@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getUserId } from "@/lib/user-session";
 import { ensureUserSession } from "@/lib/user-session-init";
 
 type WishlistProduct = {
@@ -42,9 +41,9 @@ export default function WishlistPage() {
 
   useEffect(() => {
     async function loadWishlist() {
-      await ensureUserSession();
       try {
-        const userId = getUserId();
+        const userId =
+          await ensureUserSession();
 
         if (!userId) {
           setItems([]);
@@ -52,7 +51,7 @@ export default function WishlistPage() {
         }
 
         const response = await fetch(
-          `/api/wishlist?userId=${encodeURIComponent(userId)}`,
+          "/api/wishlist",
           {
             cache: "no-store",
           },
@@ -83,9 +82,15 @@ export default function WishlistPage() {
   }, []);
 
   async function removeWishlist(productId: string) {
-    const userId = getUserId();
+    const userId =
+      await ensureUserSession();
 
-    if (!userId) return;
+    if (!userId) {
+      alert(
+        "Please sign in to use Wishlist.",
+      );
+      return;
+    }
 
     try {
       const response = await fetch(

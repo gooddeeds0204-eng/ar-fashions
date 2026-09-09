@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getUserId } from "@/lib/user-session";
 import { ensureUserSession } from "@/lib/user-session-init";
 
 type Media = {
@@ -196,14 +195,13 @@ export default function ProductDetailPage() {
   useEffect(() => {
     async function loadWishlistState() {
       try {
-        await ensureUserSession();
-
-        const userId = getUserId();
+        const userId =
+          await ensureUserSession();
 
         if (!userId || !productId) return;
 
         const response = await fetch(
-          `/api/wishlist?userId=${encodeURIComponent(userId)}`,
+          "/api/wishlist",
           { cache: "no-store" },
         );
 
@@ -283,7 +281,7 @@ export default function ProductDetailPage() {
     if (wishlistLoading || !product) return;
 
     const userId =
-      getUserId() ?? (await ensureUserSession());
+      await ensureUserSession();
 
     if (!userId) {
       alert("Please login to use Wishlist.");
@@ -302,7 +300,6 @@ export default function ProductDetailPage() {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              userId,
               productId: product.id,
             }),
           },
@@ -324,7 +321,6 @@ export default function ProductDetailPage() {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              userId,
               productId: product.id,
             }),
           },
