@@ -4,41 +4,65 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import {
   CUSTOMER_SESSION_COOKIE,
-  verifyCustomerSessionToken,
+  CUSTOMER_SESSION_OPTIONS,
+  createCustomerSessionToken,
+  inspectCustomerSessionToken,
 } from "@/lib/customer-session";
 
 export async function getAuthenticatedCustomer() {
   const cookieStore =
     await cookies();
 
-  const userId =
-    verifyCustomerSessionToken(
+  const verification =
+    inspectCustomerSessionToken(
       cookieStore.get(
         CUSTOMER_SESSION_COOKIE,
       )?.value,
     );
 
-  if (!userId) {
+  if (!verification) {
     return null;
   }
 
-  return prisma.user.findFirst({
-    where: {
-      id: userId,
-      status: "ACTIVE",
-      NOT: {
-        role: "ADMIN",
+  const user =
+    await prisma.user.findFirst({
+      where: {
+        id: verification.userId,
+        status: "ACTIVE",
+        NOT: {
+          role: "ADMIN",
+        },
       },
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      phone: true,
-      role: true,
-      isReseller: true,
-    },
-  });
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        isReseller: true,
+      },
+    });
+
+  if (!user) {
+    return null;
+  }
+
+  /*
+   * Transparently replace an old
+   * non-expiring token with the
+   * new 30-day expiring format.
+   */
+  if (verification.legacy) {
+    cookieStore.set(
+      CUSTOMER_SESSION_COOKIE,
+      createCustomerSessionToken(
+        user.id,
+      ),
+      CUSTOMER_SESSION_OPTIONS,
+    );
+  }
+
+  return user;
 }
 
 export async function getAuthenticatedCustomerId() {
