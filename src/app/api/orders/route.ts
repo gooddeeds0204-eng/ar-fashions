@@ -897,23 +897,76 @@ export async function POST(request: Request) {
         }
 
         /*
-         * 1. Find existing customer by phone
-         *    or create a new customer.
+         * 1. Resolve customer identity safely.
+         *
+         * A phone number is contact information,
+         * not authentication.
+         *
+         * - A valid signed customer session may
+         *   reuse its own ACTIVE customer account.
+         * - A new phone may create a new customer.
+         * - If the phone already belongs to another
+         *   account and there is no matching signed
+         *   session, create a detached guest customer
+         *   instead of taking over that account.
+         * - ADMIN accounts are never accepted as
+         *   customer-session identities.
          */
-        const user = await tx.user.upsert({
-          where: {
-            phone,
-          },
-          update: {
-            name,
-          },
-          create: {
-            name,
-            phone,
-            role: "CUSTOMER",
-            status: "ACTIVE",
-          },
-        });
+        const sessionUser =
+          sessionUserId
+            ? await tx.user.findFirst({
+                where: {
+                  id: sessionUserId,
+                  status: "ACTIVE",
+                },
+              })
+            : null;
+
+        const authenticatedUser =
+          sessionUser &&
+          sessionUser.role !== "ADMIN"
+            ? sessionUser
+            : null;
+
+        const phoneOwner =
+          authenticatedUser
+            ? null
+            : await tx.user.findUnique({
+                where: {
+                  phone,
+                },
+                select: {
+                  id: true,
+                },
+              });
+
+        const user =
+          authenticatedUser
+            ? await tx.user.update({
+                where: {
+                  id:
+                    authenticatedUser.id,
+                },
+                data: {
+                  name,
+                },
+              })
+            : phoneOwner
+              ? await tx.user.create({
+                  data: {
+                    name,
+                    role: "CUSTOMER",
+                    status: "ACTIVE",
+                  },
+                })
+              : await tx.user.create({
+                  data: {
+                    name,
+                    phone,
+                    role: "CUSTOMER",
+                    status: "ACTIVE",
+                  },
+                });
 
         /*
          * 2. Resolve delivery address.
