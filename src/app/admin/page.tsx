@@ -24,8 +24,6 @@ const menu = [
   { label: "Settings", href: "/admin/settings", icon: "⚙" },
 ];
 
-const comingSoon: { label: string; icon: string }[] = [];
-
 const stats = [
   {
     title: "Total Products",
@@ -118,26 +116,6 @@ export default function AdminDashboard() {
               })}
             </nav>
 
-            <div className="mb-3 mt-8 px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/30">
-              Business
-            </div>
-
-            <nav className="space-y-1">
-              {comingSoon.map((item) => (
-                <div
-                  key={item.label}
-                  className="flex cursor-default items-center gap-3 rounded-xl px-3 py-3 text-sm text-white/35"
-                >
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5">
-                    {item.icon}
-                  </span>
-                  <span>{item.label}</span>
-                  <span className="ml-auto text-[8px] uppercase tracking-wider text-white/20">
-                    Soon
-                  </span>
-                </div>
-              ))}
-            </nav>
           </div>
 
           <div className="border-t border-white/10 p-4">
