@@ -1867,13 +1867,18 @@ export async function POST(request: Request) {
       },
     );
 
+    const {
+      userId: resultUserId,
+      ...publicResult
+    } = result;
+
     const response =
       NextResponse.json(
         {
           success: true,
           message:
             "Order placed successfully.",
-          ...result,
+          ...publicResult,
         },
         { status: 201 },
       );
@@ -1881,7 +1886,7 @@ export async function POST(request: Request) {
     response.cookies.set(
       CUSTOMER_SESSION_COOKIE,
       createCustomerSessionToken(
-        result.userId,
+        resultUserId,
       ),
       CUSTOMER_SESSION_OPTIONS,
     );

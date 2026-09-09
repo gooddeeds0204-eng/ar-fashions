@@ -1,10 +1,5 @@
 "use client";
 
-import {
-  clearUserId,
-  setUserId,
-} from "@/lib/user-session";
-
 let initializationPromise:
   Promise<string | null> | null =
   null;
@@ -29,29 +24,17 @@ export async function ensureUserSession():
           );
 
         if (!response.ok) {
-          clearUserId();
           return null;
         }
 
         const data =
           await response.json();
 
-        const userId =
-          typeof data?.user?.id ===
+        return typeof data?.user?.id ===
           "string"
-            ? data.user.id
-            : null;
-
-        if (userId) {
-          setUserId(userId);
-        } else {
-          clearUserId();
-        }
-
-        return userId;
+          ? data.user.id
+          : null;
       } catch (error) {
-        clearUserId();
-
         console.error(
           "User session initialization failed:",
           error,
