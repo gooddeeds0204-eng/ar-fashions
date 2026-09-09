@@ -13,6 +13,10 @@ import {
   CUSTOMER_SESSION_OPTIONS,
   createCustomerSessionToken,
 } from "@/lib/customer-session";
+import {
+  enforcePublicRateLimit,
+  requireSameOriginJson,
+} from "@/lib/public-write-security";
 
 type OrderItemInput = {
   productId?: unknown;
@@ -667,6 +671,31 @@ export async function PATCH(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const requestGuard =
+      requireSameOriginJson(
+        request,
+      );
+
+    if (requestGuard) {
+      return requestGuard;
+    }
+
+    const rateLimitResponse =
+      await enforcePublicRateLimit(
+        request,
+        {
+          scope:
+            "public-order-create",
+          limit: 5,
+          windowSeconds:
+            60 * 10,
+        },
+      );
+
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const body = await request.json();
 
     const type = cleanString(body.type);

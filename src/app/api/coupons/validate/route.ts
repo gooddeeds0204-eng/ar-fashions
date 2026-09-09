@@ -4,6 +4,10 @@ import {
   evaluateCoupon,
   type CouponOrderType,
 } from "@/lib/coupon";
+import {
+  enforcePublicRateLimit,
+  requireSameOriginJson,
+} from "@/lib/public-write-security";
 
 function cleanString(
   value: unknown,
@@ -17,6 +21,31 @@ export async function POST(
   request: Request,
 ) {
   try {
+    const requestGuard =
+      requireSameOriginJson(
+        request,
+      );
+
+    if (requestGuard) {
+      return requestGuard;
+    }
+
+    const rateLimitResponse =
+      await enforcePublicRateLimit(
+        request,
+        {
+          scope:
+            "public-coupon-validate",
+          limit: 20,
+          windowSeconds:
+            60 * 10,
+        },
+      );
+
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const body =
       await request.json();
 
