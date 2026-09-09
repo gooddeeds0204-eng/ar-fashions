@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import {
+  CUSTOMER_SESSION_COOKIE,
+  verifyCustomerSessionToken,
+} from "@/lib/customer-session";
 
 function errorMessage(error: unknown) {
   return error instanceof Error
@@ -7,15 +12,48 @@ function errorMessage(error: unknown) {
     : "Cart operation failed.";
 }
 
-// GET /api/cart?userId=...
-export async function GET(request: NextRequest) {
+async function getCustomerUserId() {
+  const cookieStore =
+    await cookies();
+
+  const userId =
+    verifyCustomerSessionToken(
+      cookieStore.get(
+        CUSTOMER_SESSION_COOKIE,
+      )?.value,
+    );
+
+  if (!userId) {
+    return null;
+  }
+
+  const user =
+    await prisma.user.findFirst({
+      where: {
+        id: userId,
+        status: "ACTIVE",
+      },
+      select: {
+        id: true,
+      },
+    });
+
+  return user?.id ?? null;
+}
+
+// GET /api/cart
+export async function GET() {
   try {
-    const userId = request.nextUrl.searchParams.get("userId");
+    const userId =
+      await getCustomerUserId();
 
     if (!userId) {
       return NextResponse.json(
-        { error: "userId is required." },
-        { status: 400 },
+        {
+          error:
+            "Please sign in to view your cart.",
+        },
+        { status: 401 },
       );
     }
 
@@ -93,7 +131,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       cart: {
         id: cart.id,
-        userId: cart.userId,
       },
       items,
       count,
@@ -114,9 +151,21 @@ export async function GET(request: NextRequest) {
 // POST /api/cart
 export async function POST(request: NextRequest) {
   try {
+    const userId =
+      await getCustomerUserId();
+
+    if (!userId) {
+      return NextResponse.json(
+        {
+          error:
+            "Please sign in to use your cart.",
+        },
+        { status: 401 },
+      );
+    }
+
     const body = await request.json();
 
-    const userId = String(body?.userId ?? "");
     const productId = String(body?.productId ?? "");
     const variantId =
       body?.variantId === null ||
@@ -126,13 +175,6 @@ export async function POST(request: NextRequest) {
         : String(body.variantId);
 
     const quantity = Number(body?.quantity ?? 1);
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId is required." },
-        { status: 400 },
-      );
-    }
 
     if (!productId) {
       return NextResponse.json(
@@ -292,16 +334,28 @@ export async function POST(request: NextRequest) {
 // PATCH /api/cart
 export async function PATCH(request: NextRequest) {
   try {
+    const userId =
+      await getCustomerUserId();
+
+    if (!userId) {
+      return NextResponse.json(
+        {
+          error:
+            "Please sign in to update your cart.",
+        },
+        { status: 401 },
+      );
+    }
+
     const body = await request.json();
 
-    const userId = String(body?.userId ?? "");
     const itemId = String(body?.itemId ?? "");
     const quantity = Number(body?.quantity);
 
-    if (!userId || !itemId) {
+    if (!itemId) {
       return NextResponse.json(
         {
-          error: "userId and itemId are required.",
+          error: "itemId is required.",
         },
         { status: 400 },
       );
@@ -380,20 +434,25 @@ export async function PATCH(request: NextRequest) {
 // DELETE /api/cart
 export async function DELETE(request: NextRequest) {
   try {
+    const userId =
+      await getCustomerUserId();
+
+    if (!userId) {
+      return NextResponse.json(
+        {
+          error:
+            "Please sign in to update your cart.",
+        },
+        { status: 401 },
+      );
+    }
+
     const body = await request.json();
 
-    const userId = String(body?.userId ?? "");
     const itemId = body?.itemId
       ? String(body.itemId)
       : null;
     const clearAll = body?.clearAll === true;
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId is required." },
-        { status: 400 },
-      );
-    }
 
     const cart = await prisma.cart.findUnique({
       where: {
