@@ -464,21 +464,58 @@ model HomeSection {
 }
 
 model Banner {
-  id         String    @id @default(cuid())
-  title      String?
-  subtitle   String?
-  imageUrl   String?
-  videoUrl   String?
-  buttonText String?
-  buttonUrl  String?
-  isActive   Boolean   @default(true)
-  sortOrder  Int       @default(0)
-  startsAt   DateTime?
-  expiresAt  DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id                 String            @id @default(cuid())
+  title              String?
+  subtitle           String?
+  imageUrl            String?
+  videoUrl            String?
+  mobileImageUrl      String?
+  mobileVideoUrl      String?
+  buttonText          String?
+  buttonUrl           String?
+  placement           BannerPlacement  @default(HOME_HERO)
+  contentType         BannerContentType @default(IMAGE)
+  audience            BannerAudience   @default(ALL)
+  backgroundColor     String?
+  backgroundGradient  String?
+  textColor           String?
+  textAlign           BannerTextAlign  @default(LEFT)
+  overlayOpacity      Int              @default(40)
+  isActive            Boolean          @default(true)
+  sortOrder           Int              @default(0)
+  startsAt            DateTime?
+  expiresAt           DateTime?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
+  @@index([placement, audience, isActive, sortOrder])
   @@index([isActive, sortOrder])
+}
+
+enum BannerPlacement {
+  HOME_HERO
+  HOME_MIDDLE
+  HOME_BOTTOM
+  SHOP_TOP
+  RESELLER_TOP
+}
+
+enum BannerContentType {
+  IMAGE
+  VIDEO
+  GRAPHIC
+}
+
+enum BannerAudience {
+  ALL
+  RETAIL
+  RESELLER
+}
+
+enum BannerTextAlign {
+  LEFT
+  CENTER
+  RIGHT
 }
 
 enum NotificationAudience {

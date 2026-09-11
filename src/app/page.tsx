@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ensureUserSession } from "@/lib/user-session-init";
 import { useRouter } from "next/navigation";
+import PromoSlot from "@/components/PromoSlot";
 
 type Media = {
   id: string;
@@ -42,10 +43,36 @@ type Banner = {
   id: string;
   title: string | null;
   subtitle: string | null;
+
   imageUrl: string | null;
   videoUrl: string | null;
+  mobileImageUrl: string | null;
+  mobileVideoUrl: string | null;
+
   buttonText: string | null;
   buttonUrl: string | null;
+
+  placement: "HOME_HERO";
+  contentType:
+    | "IMAGE"
+    | "VIDEO"
+    | "GRAPHIC";
+
+  audience:
+    | "ALL"
+    | "RETAIL"
+    | "RESELLER";
+
+  backgroundColor: string | null;
+  backgroundGradient: string | null;
+  textColor: string | null;
+
+  textAlign:
+    | "LEFT"
+    | "CENTER"
+    | "RIGHT";
+
+  overlayOpacity: number;
   sortOrder: number;
 };
 
@@ -967,40 +994,6 @@ export default function Home() {
 
     loadProducts();
 
-    async function loadBanners() {
-      try {
-        const response =
-          await fetch(
-            "/api/banners",
-            {
-              cache: "no-store",
-            },
-          );
-
-        if (!response.ok) {
-          return;
-        }
-
-        const data =
-          await response.json();
-
-        setBanners(
-          Array.isArray(
-            data.banners,
-          )
-            ? data.banners
-            : [],
-        );
-      } catch (error) {
-        console.error(
-          "Homepage banners failed:",
-          error,
-        );
-      }
-    }
-
-    loadBanners();
-
     async function loadHomeSections() {
       try {
         const response =
@@ -1039,6 +1032,60 @@ export default function Home() {
 
     loadHomeSections();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadHeroBanners() {
+      try {
+        const params =
+          new URLSearchParams({
+            placement:
+              "HOME_HERO",
+            audience: mode,
+          });
+
+        const response =
+          await fetch(
+            `/api/banners?${params.toString()}`,
+            {
+              cache:
+                "no-store",
+            },
+          );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        if (!cancelled) {
+          setBanners(
+            Array.isArray(
+              data.banners,
+            )
+              ? data.banners
+              : [],
+          );
+
+          setBannerIndex(0);
+        }
+      } catch (error) {
+        console.error(
+          "Homepage hero banners failed:",
+          error,
+        );
+      }
+    }
+
+    loadHeroBanners();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mode]);
 
   useEffect(() => {
     if (banners.length <= 1) {
@@ -1350,10 +1397,37 @@ export default function Home() {
       ) : (
         <>
       {/* HERO */}
-      <section className="relative overflow-hidden bg-zinc-950">
-        <div className="mx-auto grid min-h-[500px] max-w-7xl lg:grid-cols-2">
+      <section
+        className="relative overflow-hidden bg-zinc-950"
+        style={{
+          background:
+            activeBanner?.backgroundGradient ||
+            activeBanner?.backgroundColor ||
+            undefined,
+        }}
+      >
+        <div
+          className={`mx-auto grid min-h-[500px] max-w-7xl ${
+            activeBanner?.contentType === "GRAPHIC"
+              ? "lg:grid-cols-1"
+              : "lg:grid-cols-2"
+          }`}
+        >
           <div className="relative z-10 flex items-center px-5 py-16 sm:px-8 lg:px-12">
-            <div className="max-w-xl text-white">
+            <div
+              className={`flex w-full max-w-xl flex-col ${
+                activeBanner?.textAlign === "CENTER"
+                  ? "mx-auto items-center text-center"
+                  : activeBanner?.textAlign === "RIGHT"
+                    ? "ml-auto items-end text-right"
+                    : "items-start text-left"
+              }`}
+              style={{
+                color:
+                  activeBanner?.textColor ||
+                  "#ffffff",
+              }}
+            >
               <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.3em] text-emerald-400">
                 AR Fashions · 2026 Collection
               </p>
@@ -1372,12 +1446,22 @@ export default function Home() {
                 )}
               </h1>
 
-              <p className="mt-6 max-w-md text-sm leading-6 text-zinc-400 sm:text-base">
+              <p
+                className="mt-6 max-w-md text-sm leading-6 opacity-80 sm:text-base"
+              >
                 {activeBanner?.subtitle ??
                   "Discover ready-to-wear fashion for women, men and kids. Retail shopping and reseller bulk pricing in one place."}
               </p>
 
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div
+                className={`mt-8 flex flex-wrap gap-3 ${
+                  activeBanner?.textAlign === "CENTER"
+                    ? "justify-center"
+                    : activeBanner?.textAlign === "RIGHT"
+                      ? "justify-end"
+                      : "justify-start"
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => {
@@ -1389,6 +1473,14 @@ export default function Home() {
                       url.startsWith("/")
                     ) {
                       router.push(url);
+                      return;
+                    }
+
+                    if (
+                      url &&
+                      /^https?:\/\//i.test(url)
+                    ) {
+                      window.location.assign(url);
                       return;
                     }
 
@@ -1411,7 +1503,7 @@ export default function Home() {
                   onClick={() =>
                     setMode("RESELLER")
                   }
-                  className="rounded-full border border-white/20 px-6 py-3 text-xs font-bold text-white"
+                  className="rounded-full border border-white/30 px-6 py-3 text-xs font-bold"
                 >
                   Become a Reseller
                 </button>
@@ -1419,117 +1511,169 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative min-h-[360px] bg-zinc-900">
-            {activeBanner?.videoUrl ? (
-              <video
-                key={activeBanner.id}
-                src={
-                  activeBanner.videoUrl
-                }
-                muted
-                autoPlay
-                loop
-                playsInline
-                className="absolute inset-0 h-full w-full object-cover opacity-90"
-              />
-            ) : activeBanner?.imageUrl ? (
-              <img
-                key={activeBanner.id}
-                src={
-                  activeBanner.imageUrl
-                }
-                alt={
-                  activeBanner.title ??
-                  "AR Fashions banner"
-                }
-                className="absolute inset-0 h-full w-full object-cover opacity-90"
-              />
-            ) : heroProduct?.media?.[0] ? (
-              heroProduct.media[0].type ===
-              "VIDEO" ? (
-                <video
-                  src={
-                    heroProduct
-                      .media[0].url
-                  }
-                  muted
-                  autoPlay
-                  loop
-                  playsInline
-                  className="absolute inset-0 h-full w-full object-cover opacity-80"
-                />
+          {activeBanner?.contentType !== "GRAPHIC" && (
+            <div className="relative min-h-[360px] bg-zinc-900">
+              {activeBanner?.contentType === "VIDEO" &&
+              (activeBanner.videoUrl ||
+                activeBanner.mobileVideoUrl) ? (
+                <>
+                  {activeBanner.mobileVideoUrl && (
+                    <video
+                      key={`${activeBanner.id}-mobile`}
+                      src={activeBanner.mobileVideoUrl}
+                      muted
+                      autoPlay
+                      loop
+                      playsInline
+                      className="absolute inset-0 h-full w-full object-cover sm:hidden"
+                    />
+                  )}
+
+                  {(activeBanner.videoUrl ||
+                    activeBanner.mobileVideoUrl) && (
+                    <video
+                      key={`${activeBanner.id}-desktop`}
+                      src={
+                        activeBanner.videoUrl ||
+                        activeBanner.mobileVideoUrl ||
+                        undefined
+                      }
+                      muted
+                      autoPlay
+                      loop
+                      playsInline
+                      className={`absolute inset-0 h-full w-full object-cover ${
+                        activeBanner.mobileVideoUrl
+                          ? "hidden sm:block"
+                          : ""
+                      }`}
+                    />
+                  )}
+                </>
+              ) : activeBanner?.contentType === "IMAGE" &&
+                (activeBanner.imageUrl ||
+                  activeBanner.mobileImageUrl) ? (
+                <picture>
+                  {activeBanner.mobileImageUrl && (
+                    <source
+                      media="(max-width: 639px)"
+                      srcSet={activeBanner.mobileImageUrl}
+                    />
+                  )}
+
+                  <img
+                    key={activeBanner.id}
+                    src={
+                      activeBanner.imageUrl ||
+                      activeBanner.mobileImageUrl ||
+                      ""
+                    }
+                    alt={
+                      activeBanner.title ??
+                      "AR Fashions banner"
+                    }
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                </picture>
+              ) : heroProduct?.media?.[0] ? (
+                heroProduct.media[0].type === "VIDEO" ? (
+                  <video
+                    src={
+                      heroProduct.media[0].url
+                    }
+                    muted
+                    autoPlay
+                    loop
+                    playsInline
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={
+                      heroProduct.media[0].url
+                    }
+                    alt={
+                      heroProduct.name
+                    }
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                )
               ) : (
-                <img
-                  src={
-                    heroProduct
-                      .media[0].url
-                  }
-                  alt={
-                    heroProduct.name
-                  }
-                  className="absolute inset-0 h-full w-full object-cover opacity-80"
-                />
-              )
-            ) : (
-              <div className="flex h-full items-center justify-center text-zinc-600">
-                AR FASHIONS
-              </div>
-            )}
-
-            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-transparent to-transparent" />
-
-            {!activeBanner &&
-              heroProduct && (
-                <div className="absolute bottom-6 left-5 right-5 rounded-2xl border border-white/10 bg-black/40 p-4 text-white backdrop-blur-xl sm:left-auto sm:w-72">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">
-                    Featured
-                  </p>
-
-                  <p className="mt-1 font-bold">
-                    {heroProduct.name}
-                  </p>
-
-                  <p className="mt-1 text-sm text-zinc-300">
-                    {money(
-                      mode ===
-                        "RESELLER" &&
-                        heroProduct.resellerPrice !==
-                          null
-                        ? heroProduct.resellerPrice
-                        : heroProduct.retailPrice,
-                    )}
-                  </p>
+                <div className="flex h-full items-center justify-center text-zinc-600">
+                  AR FASHIONS
                 </div>
               )}
 
-            {banners.length > 1 && (
-              <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-2">
-                {banners.map(
-                  (banner, index) => (
-                    <button
-                      key={banner.id}
-                      type="button"
-                      onClick={() =>
-                        setBannerIndex(
-                          index,
-                        )
-                      }
-                      aria-label={`Show banner ${
-                        index + 1
-                      }`}
-                      className={`h-2.5 rounded-full transition-all ${
-                        index ===
-                        bannerIndex
-                          ? "w-7 bg-white"
-                          : "w-2.5 bg-white/40"
-                      }`}
-                    />
-                  ),
+              <div
+                className="absolute inset-0 bg-black"
+                style={{
+                  opacity:
+                    activeBanner
+                      ? Math.min(
+                          100,
+                          Math.max(
+                            0,
+                            activeBanner.overlayOpacity ??
+                              40,
+                          ),
+                        ) / 100
+                      : 0.2,
+                }}
+              />
+
+              <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/70 via-transparent to-transparent" />
+
+              {!activeBanner &&
+                heroProduct && (
+                  <div className="absolute bottom-6 left-5 right-5 rounded-2xl border border-white/10 bg-black/40 p-4 text-white backdrop-blur-xl sm:left-auto sm:w-72">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">
+                      Featured
+                    </p>
+
+                    <p className="mt-1 font-bold">
+                      {heroProduct.name}
+                    </p>
+
+                    <p className="mt-1 text-sm text-zinc-300">
+                      {money(
+                        mode ===
+                          "RESELLER" &&
+                          heroProduct.resellerPrice !==
+                            null
+                          ? heroProduct.resellerPrice
+                          : heroProduct.retailPrice,
+                      )}
+                    </p>
+                  </div>
                 )}
-              </div>
+            </div>
+          )}
+        </div>
+
+        {banners.length > 1 && (
+          <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+            {banners.map(
+              (banner, index) => (
+                <button
+                  key={banner.id}
+                  type="button"
+                  onClick={() =>
+                    setBannerIndex(index)
+                  }
+                  aria-label={`Show banner ${
+                    index + 1
+                  }`}
+                  className={`h-2.5 rounded-full transition-all ${
+                    index ===
+                    bannerIndex
+                      ? "w-7 bg-white"
+                      : "w-2.5 bg-white/40"
+                  }`}
+                />
+              ),
             )}
           </div>
-        </div>
+        )}
       </section>
 
       {/* CATEGORIES */}
@@ -1564,6 +1708,12 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      <PromoSlot
+        placement="SHOP_TOP"
+        audience={mode}
+        className="py-4"
+      />
 
       {loading ? (
         <section className="mx-auto max-w-7xl px-4 py-20 text-center">
@@ -1665,6 +1815,12 @@ export default function Home() {
         </>
       )}
 
+      <PromoSlot
+        placement="HOME_MIDDLE"
+        audience={mode}
+        className="py-6"
+      />
+
       {/* RESELLER CTA */}
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="overflow-hidden rounded-[2rem] bg-emerald-600 p-7 text-white sm:p-10">
@@ -1722,6 +1878,12 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <PromoSlot
+        placement="HOME_BOTTOM"
+        audience={mode}
+        className="pb-10"
+      />
 
       {/* FOOTER */}
       <footer className="border-t border-black/5 bg-white">

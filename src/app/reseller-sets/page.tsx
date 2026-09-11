@@ -7,6 +7,7 @@ import {
 } from "react";
 
 import { useRouter } from "next/navigation";
+import PromoSlot from "@/components/PromoSlot";
 
 type SetItem = {
   productId: string;
@@ -226,6 +227,12 @@ export default function ResellerSetsPage() {
           </button>
         </div>
       </header>
+
+      <PromoSlot
+        placement="RESELLER_TOP"
+        audience="RESELLER"
+        className="py-6"
+      />
 
       <section className="bg-zinc-950 text-white">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">

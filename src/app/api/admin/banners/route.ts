@@ -2,14 +2,68 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
 
+type BannerPlacement =
+  | "HOME_HERO"
+  | "HOME_MIDDLE"
+  | "HOME_BOTTOM"
+  | "SHOP_TOP"
+  | "RESELLER_TOP";
+
+type BannerContentType =
+  | "IMAGE"
+  | "VIDEO"
+  | "GRAPHIC";
+
+type BannerAudience =
+  | "ALL"
+  | "RETAIL"
+  | "RESELLER";
+
+type BannerTextAlign =
+  | "LEFT"
+  | "CENTER"
+  | "RIGHT";
+
+const placements: BannerPlacement[] = [
+  "HOME_HERO",
+  "HOME_MIDDLE",
+  "HOME_BOTTOM",
+  "SHOP_TOP",
+  "RESELLER_TOP",
+];
+
+const contentTypes: BannerContentType[] = [
+  "IMAGE",
+  "VIDEO",
+  "GRAPHIC",
+];
+
+const audiences: BannerAudience[] = [
+  "ALL",
+  "RETAIL",
+  "RESELLER",
+];
+
+const textAlignments: BannerTextAlign[] = [
+  "LEFT",
+  "CENTER",
+  "RIGHT",
+];
+
 function cleanString(value: unknown) {
   return String(value ?? "").trim();
+}
+
+function optionalString(value: unknown) {
+  return cleanString(value) || null;
 }
 
 function optionalDate(value: unknown) {
   const raw = cleanString(value);
 
-  if (!raw) return null;
+  if (!raw) {
+    return null;
+  }
 
   const date = new Date(raw);
 
@@ -18,8 +72,45 @@ function optionalDate(value: unknown) {
     : date;
 }
 
+function creativeError(input: {
+  contentType: BannerContentType;
+  title: string | null;
+  subtitle: string | null;
+  imageUrl: string | null;
+  videoUrl: string | null;
+  mobileImageUrl: string | null;
+  mobileVideoUrl: string | null;
+}) {
+  if (
+    input.contentType === "IMAGE" &&
+    !input.imageUrl &&
+    !input.mobileImageUrl
+  ) {
+    return "Image banner requires a desktop or mobile image.";
+  }
+
+  if (
+    input.contentType === "VIDEO" &&
+    !input.videoUrl &&
+    !input.mobileVideoUrl
+  ) {
+    return "Video banner requires a desktop or mobile video.";
+  }
+
+  if (
+    input.contentType === "GRAPHIC" &&
+    !input.title &&
+    !input.subtitle
+  ) {
+    return "Graphic banner requires a title or subtitle.";
+  }
+
+  return null;
+}
+
 export async function GET() {
-  const adminError = await requireAdmin();
+  const adminError =
+    await requireAdmin();
 
   if (adminError) {
     return adminError;
@@ -29,8 +120,15 @@ export async function GET() {
     const banners =
       await prisma.banner.findMany({
         orderBy: [
-          { sortOrder: "asc" },
-          { createdAt: "desc" },
+          {
+            placement: "asc",
+          },
+          {
+            sortOrder: "asc",
+          },
+          {
+            createdAt: "desc",
+          },
         ],
       });
 
@@ -57,55 +155,156 @@ export async function GET() {
 export async function POST(
   request: Request,
 ) {
-  const adminError = await requireAdmin();
+  const adminError =
+    await requireAdmin();
 
   if (adminError) {
     return adminError;
   }
 
   try {
-    const body = await request.json();
+    const body =
+      await request.json();
 
     const title =
-      cleanString(body.title) || null;
+      optionalString(body.title);
 
     const subtitle =
-      cleanString(body.subtitle) || null;
+      optionalString(body.subtitle);
 
     const imageUrl =
-      cleanString(body.imageUrl) || null;
+      optionalString(body.imageUrl);
 
     const videoUrl =
-      cleanString(body.videoUrl) || null;
+      optionalString(body.videoUrl);
+
+    const mobileImageUrl =
+      optionalString(
+        body.mobileImageUrl,
+      );
+
+    const mobileVideoUrl =
+      optionalString(
+        body.mobileVideoUrl,
+      );
 
     const buttonText =
-      cleanString(body.buttonText) ||
-      null;
+      optionalString(
+        body.buttonText,
+      );
 
     const buttonUrl =
-      cleanString(body.buttonUrl) || null;
+      optionalString(
+        body.buttonUrl,
+      );
 
-    const sortOrder =
-      Number(body.sortOrder ?? 0);
+    const placementRaw =
+      (
+        cleanString(
+          body.placement,
+        ) || "HOME_HERO"
+      ).toUpperCase();
 
-    const startsAt =
-      optionalDate(body.startsAt);
-
-    const expiresAt =
-      optionalDate(body.expiresAt);
-
-    if (!imageUrl && !videoUrl) {
+    if (
+      !placements.includes(
+        placementRaw as BannerPlacement,
+      )
+    ) {
       return NextResponse.json(
         {
           error:
-            "Banner image or video is required.",
+            "Invalid banner placement.",
         },
         { status: 400 },
       );
     }
 
+    /*
+     * Backward compatibility:
+     * old admin form did not send
+     * contentType.
+     */
+    const requestedContentType =
+      cleanString(
+        body.contentType,
+      ).toUpperCase();
+
+    let contentType:
+      BannerContentType;
+
+    if (!requestedContentType) {
+      contentType =
+        videoUrl && !imageUrl
+          ? "VIDEO"
+          : "IMAGE";
+    } else if (
+      contentTypes.includes(
+        requestedContentType as BannerContentType,
+      )
+    ) {
+      contentType =
+        requestedContentType as BannerContentType;
+    } else {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid banner content type.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const audienceRaw =
+      (
+        cleanString(
+          body.audience,
+        ) || "ALL"
+      ).toUpperCase();
+
     if (
-      !Number.isInteger(sortOrder) ||
+      !audiences.includes(
+        audienceRaw as BannerAudience,
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid banner audience.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const textAlignRaw =
+      (
+        cleanString(
+          body.textAlign,
+        ) || "LEFT"
+      ).toUpperCase();
+
+    if (
+      !textAlignments.includes(
+        textAlignRaw as BannerTextAlign,
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid text alignment.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const sortOrder =
+      Number(
+        body.sortOrder ?? 0,
+      );
+
+    if (
+      !Number.isInteger(
+        sortOrder,
+      ) ||
       sortOrder < 0
     ) {
       return NextResponse.json(
@@ -116,6 +315,40 @@ export async function POST(
         { status: 400 },
       );
     }
+
+    const overlayOpacity =
+      body.overlayOpacity ===
+      undefined
+        ? 40
+        : Number(
+            body.overlayOpacity,
+          );
+
+    if (
+      !Number.isInteger(
+        overlayOpacity,
+      ) ||
+      overlayOpacity < 0 ||
+      overlayOpacity > 100
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Overlay opacity must be between 0 and 100.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const startsAt =
+      optionalDate(
+        body.startsAt,
+      );
+
+    const expiresAt =
+      optionalDate(
+        body.expiresAt,
+      );
 
     if (
       startsAt === undefined ||
@@ -144,20 +377,76 @@ export async function POST(
       );
     }
 
+    const validationError =
+      creativeError({
+        contentType,
+        title,
+        subtitle,
+        imageUrl,
+        videoUrl,
+        mobileImageUrl,
+        mobileVideoUrl,
+      });
+
+    if (validationError) {
+      return NextResponse.json(
+        {
+          error:
+            validationError,
+        },
+        { status: 400 },
+      );
+    }
+
     const banner =
       await prisma.banner.create({
         data: {
           title,
           subtitle,
+
           imageUrl,
           videoUrl,
+          mobileImageUrl,
+          mobileVideoUrl,
+
           buttonText,
           buttonUrl,
+
+          placement:
+            placementRaw as BannerPlacement,
+
+          contentType,
+
+          audience:
+            audienceRaw as BannerAudience,
+
+          backgroundColor:
+            optionalString(
+              body.backgroundColor,
+            ),
+
+          backgroundGradient:
+            optionalString(
+              body.backgroundGradient,
+            ),
+
+          textColor:
+            optionalString(
+              body.textColor,
+            ),
+
+          textAlign:
+            textAlignRaw as BannerTextAlign,
+
+          overlayOpacity,
+
+          isActive:
+            body.isActive !==
+            false,
+
           sortOrder,
           startsAt,
           expiresAt,
-          isActive:
-            body.isActive !== false,
         },
       });
 
@@ -184,16 +473,19 @@ export async function POST(
 export async function PATCH(
   request: Request,
 ) {
-  const adminError = await requireAdmin();
+  const adminError =
+    await requireAdmin();
 
   if (adminError) {
     return adminError;
   }
 
   try {
-    const body = await request.json();
+    const body =
+      await request.json();
 
-    const id = cleanString(body.id);
+    const id =
+      cleanString(body.id);
 
     if (!id) {
       return NextResponse.json(
@@ -207,7 +499,9 @@ export async function PATCH(
 
     const existing =
       await prisma.banner.findUnique({
-        where: { id },
+        where: {
+          id,
+        },
       });
 
     if (!existing) {
@@ -223,69 +517,292 @@ export async function PATCH(
     const data: {
       title?: string | null;
       subtitle?: string | null;
+
       imageUrl?: string | null;
       videoUrl?: string | null;
+      mobileImageUrl?: string | null;
+      mobileVideoUrl?: string | null;
+
       buttonText?: string | null;
       buttonUrl?: string | null;
+
+      placement?: BannerPlacement;
+      contentType?: BannerContentType;
+      audience?: BannerAudience;
+
+      backgroundColor?: string | null;
+      backgroundGradient?: string | null;
+      textColor?: string | null;
+      textAlign?: BannerTextAlign;
+      overlayOpacity?: number;
+
       isActive?: boolean;
       sortOrder?: number;
+
       startsAt?: Date | null;
       expiresAt?: Date | null;
     } = {};
 
-    if (body.title !== undefined) {
+    if (
+      body.title !== undefined
+    ) {
       data.title =
-        cleanString(body.title) || null;
-    }
-
-    if (body.subtitle !== undefined) {
-      data.subtitle =
-        cleanString(body.subtitle) ||
-        null;
-    }
-
-    if (body.imageUrl !== undefined) {
-      data.imageUrl =
-        cleanString(body.imageUrl) ||
-        null;
-    }
-
-    if (body.videoUrl !== undefined) {
-      data.videoUrl =
-        cleanString(body.videoUrl) ||
-        null;
+        optionalString(
+          body.title,
+        );
     }
 
     if (
-      body.buttonText !== undefined
+      body.subtitle !==
+      undefined
+    ) {
+      data.subtitle =
+        optionalString(
+          body.subtitle,
+        );
+    }
+
+    if (
+      body.imageUrl !==
+      undefined
+    ) {
+      data.imageUrl =
+        optionalString(
+          body.imageUrl,
+        );
+    }
+
+    if (
+      body.videoUrl !==
+      undefined
+    ) {
+      data.videoUrl =
+        optionalString(
+          body.videoUrl,
+        );
+    }
+
+    if (
+      body.mobileImageUrl !==
+      undefined
+    ) {
+      data.mobileImageUrl =
+        optionalString(
+          body.mobileImageUrl,
+        );
+    }
+
+    if (
+      body.mobileVideoUrl !==
+      undefined
+    ) {
+      data.mobileVideoUrl =
+        optionalString(
+          body.mobileVideoUrl,
+        );
+    }
+
+    if (
+      body.buttonText !==
+      undefined
     ) {
       data.buttonText =
-        cleanString(body.buttonText) ||
-        null;
+        optionalString(
+          body.buttonText,
+        );
     }
 
     if (
-      body.buttonUrl !== undefined
+      body.buttonUrl !==
+      undefined
     ) {
       data.buttonUrl =
-        cleanString(body.buttonUrl) ||
-        null;
+        optionalString(
+          body.buttonUrl,
+        );
     }
 
     if (
-      typeof body.isActive ===
-      "boolean"
+      body.backgroundColor !==
+      undefined
     ) {
-      data.isActive = body.isActive;
+      data.backgroundColor =
+        optionalString(
+          body.backgroundColor,
+        );
     }
 
-    if (body.sortOrder !== undefined) {
-      const sortOrder =
-        Number(body.sortOrder);
+    if (
+      body.backgroundGradient !==
+      undefined
+    ) {
+      data.backgroundGradient =
+        optionalString(
+          body.backgroundGradient,
+        );
+    }
+
+    if (
+      body.textColor !==
+      undefined
+    ) {
+      data.textColor =
+        optionalString(
+          body.textColor,
+        );
+    }
+
+    if (
+      body.placement !==
+      undefined
+    ) {
+      const value =
+        cleanString(
+          body.placement,
+        ).toUpperCase();
 
       if (
-        !Number.isInteger(sortOrder) ||
-        sortOrder < 0
+        !placements.includes(
+          value as BannerPlacement,
+        )
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Invalid banner placement.",
+          },
+          { status: 400 },
+        );
+      }
+
+      data.placement =
+        value as BannerPlacement;
+    }
+
+    if (
+      body.contentType !==
+      undefined
+    ) {
+      const value =
+        cleanString(
+          body.contentType,
+        ).toUpperCase();
+
+      if (
+        !contentTypes.includes(
+          value as BannerContentType,
+        )
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Invalid banner content type.",
+          },
+          { status: 400 },
+        );
+      }
+
+      data.contentType =
+        value as BannerContentType;
+    }
+
+    if (
+      body.audience !==
+      undefined
+    ) {
+      const value =
+        cleanString(
+          body.audience,
+        ).toUpperCase();
+
+      if (
+        !audiences.includes(
+          value as BannerAudience,
+        )
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Invalid banner audience.",
+          },
+          { status: 400 },
+        );
+      }
+
+      data.audience =
+        value as BannerAudience;
+    }
+
+    if (
+      body.textAlign !==
+      undefined
+    ) {
+      const value =
+        cleanString(
+          body.textAlign,
+        ).toUpperCase();
+
+      if (
+        !textAlignments.includes(
+          value as BannerTextAlign,
+        )
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Invalid text alignment.",
+          },
+          { status: 400 },
+        );
+      }
+
+      data.textAlign =
+        value as BannerTextAlign;
+    }
+
+    if (
+      body.overlayOpacity !==
+      undefined
+    ) {
+      const value =
+        Number(
+          body.overlayOpacity,
+        );
+
+      if (
+        !Number.isInteger(
+          value,
+        ) ||
+        value < 0 ||
+        value > 100
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Overlay opacity must be between 0 and 100.",
+          },
+          { status: 400 },
+        );
+      }
+
+      data.overlayOpacity =
+        value;
+    }
+
+    if (
+      body.sortOrder !==
+      undefined
+    ) {
+      const value =
+        Number(
+          body.sortOrder,
+        );
+
+      if (
+        !Number.isInteger(
+          value,
+        ) ||
+        value < 0
       ) {
         return NextResponse.json(
           {
@@ -296,14 +813,30 @@ export async function PATCH(
         );
       }
 
-      data.sortOrder = sortOrder;
+      data.sortOrder =
+        value;
     }
 
-    if (body.startsAt !== undefined) {
-      const value =
-        optionalDate(body.startsAt);
+    if (
+      typeof body.isActive ===
+      "boolean"
+    ) {
+      data.isActive =
+        body.isActive;
+    }
 
-      if (value === undefined) {
+    if (
+      body.startsAt !==
+      undefined
+    ) {
+      const value =
+        optionalDate(
+          body.startsAt,
+        );
+
+      if (
+        value === undefined
+      ) {
         return NextResponse.json(
           {
             error:
@@ -313,14 +846,22 @@ export async function PATCH(
         );
       }
 
-      data.startsAt = value;
+      data.startsAt =
+        value;
     }
 
-    if (body.expiresAt !== undefined) {
+    if (
+      body.expiresAt !==
+      undefined
+    ) {
       const value =
-        optionalDate(body.expiresAt);
+        optionalDate(
+          body.expiresAt,
+        );
 
-      if (value === undefined) {
+      if (
+        value === undefined
+      ) {
         return NextResponse.json(
           {
             error:
@@ -330,39 +871,19 @@ export async function PATCH(
         );
       }
 
-      data.expiresAt = value;
-    }
-
-    const effectiveImage =
-      data.imageUrl !== undefined
-        ? data.imageUrl
-        : existing.imageUrl;
-
-    const effectiveVideo =
-      data.videoUrl !== undefined
-        ? data.videoUrl
-        : existing.videoUrl;
-
-    if (
-      !effectiveImage &&
-      !effectiveVideo
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Banner image or video is required.",
-        },
-        { status: 400 },
-      );
+      data.expiresAt =
+        value;
     }
 
     const effectiveStart =
-      data.startsAt !== undefined
+      data.startsAt !==
+      undefined
         ? data.startsAt
         : existing.startsAt;
 
     const effectiveExpiry =
-      data.expiresAt !== undefined
+      data.expiresAt !==
+      undefined
         ? data.expiresAt
         : existing.expiresAt;
 
@@ -381,9 +902,67 @@ export async function PATCH(
       );
     }
 
+    const effectiveContentType =
+      data.contentType ??
+      existing.contentType;
+
+    const validationError =
+      creativeError({
+        contentType:
+          effectiveContentType,
+
+        title:
+          data.title !==
+          undefined
+            ? data.title
+            : existing.title,
+
+        subtitle:
+          data.subtitle !==
+          undefined
+            ? data.subtitle
+            : existing.subtitle,
+
+        imageUrl:
+          data.imageUrl !==
+          undefined
+            ? data.imageUrl
+            : existing.imageUrl,
+
+        videoUrl:
+          data.videoUrl !==
+          undefined
+            ? data.videoUrl
+            : existing.videoUrl,
+
+        mobileImageUrl:
+          data.mobileImageUrl !==
+          undefined
+            ? data.mobileImageUrl
+            : existing.mobileImageUrl,
+
+        mobileVideoUrl:
+          data.mobileVideoUrl !==
+          undefined
+            ? data.mobileVideoUrl
+            : existing.mobileVideoUrl,
+      });
+
+    if (validationError) {
+      return NextResponse.json(
+        {
+          error:
+            validationError,
+        },
+        { status: 400 },
+      );
+    }
+
     const banner =
       await prisma.banner.update({
-        where: { id },
+        where: {
+          id,
+        },
         data,
       });
 
@@ -410,16 +989,19 @@ export async function PATCH(
 export async function DELETE(
   request: Request,
 ) {
-  const adminError = await requireAdmin();
+  const adminError =
+    await requireAdmin();
 
   if (adminError) {
     return adminError;
   }
 
   try {
-    const body = await request.json();
+    const body =
+      await request.json();
 
-    const id = cleanString(body.id);
+    const id =
+      cleanString(body.id);
 
     if (!id) {
       return NextResponse.json(
@@ -431,9 +1013,24 @@ export async function DELETE(
       );
     }
 
-    await prisma.banner.delete({
-      where: { id },
-    });
+    const deleted =
+      await prisma.banner.deleteMany({
+        where: {
+          id,
+        },
+      });
+
+    if (
+      deleted.count === 0
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Banner not found.",
+        },
+        { status: 404 },
+      );
+    }
 
     return NextResponse.json({
       success: true,
