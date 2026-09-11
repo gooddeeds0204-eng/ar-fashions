@@ -515,6 +515,39 @@ export async function PATCH(
         value;
     }
 
+    /*
+     * Validate the final combined discount state.
+     *
+     * Important when PATCH changes only
+     * FIXED -> PERCENTAGE without sending
+     * discountValue again.
+     */
+    const effectiveDiscountType =
+      data.discountType ??
+      existing.discountType;
+
+    const effectiveDiscountValue =
+      data.discountValue ??
+      Number(existing.discountValue);
+
+    if (
+      !Number.isFinite(
+        effectiveDiscountValue,
+      ) ||
+      effectiveDiscountValue <= 0 ||
+      (effectiveDiscountType ===
+        "PERCENTAGE" &&
+        effectiveDiscountValue > 100)
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid discount value.",
+        },
+        { status: 400 },
+      );
+    }
+
     for (const field of [
       "minOrderValue",
       "maxDiscount",
@@ -695,9 +728,20 @@ export async function DELETE(
       );
     }
 
-    await prisma.coupon.delete({
-      where: { id },
-    });
+    const deleted =
+      await prisma.coupon.deleteMany({
+        where: { id },
+      });
+
+    if (deleted.count === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Coupon not found.",
+        },
+        { status: 404 },
+      );
+    }
 
     return NextResponse.json({
       success: true,

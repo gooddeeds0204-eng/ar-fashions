@@ -183,9 +183,13 @@ export default function AdminCouponsPage() {
         coupon.resellerOnly,
     });
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
+    requestAnimationFrame(() => {
+      document
+        .getElementById("coupon-form")
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
     });
   }
 
@@ -364,6 +368,7 @@ export default function AdminCouponsPage() {
 
       <div className="mx-auto max-w-6xl space-y-6 px-4 py-6">
         <form
+          id="coupon-form"
           onSubmit={saveCoupon}
           className="rounded-3xl bg-white p-5 shadow-sm"
         >
@@ -639,15 +644,18 @@ export default function AdminCouponsPage() {
 
                     <div className="mt-5 grid grid-cols-3 gap-2">
                       <button
-                        onClick={() =>
-                          editCoupon(coupon)
-                        }
-                        className="rounded-xl bg-zinc-100 px-3 py-3 text-xs font-black"
+                        type="button"
+                        onPointerDown={(event) => {
+                          event.preventDefault();
+                          editCoupon(coupon);
+                        }}
+                        className="touch-manipulation rounded-xl bg-zinc-100 px-3 py-3 text-xs font-black"
                       >
                         Edit
                       </button>
 
                       <button
+                        type="button"
                         onClick={() =>
                           toggleActive(
                             coupon,
@@ -661,6 +669,7 @@ export default function AdminCouponsPage() {
                       </button>
 
                       <button
+                        type="button"
                         onClick={() =>
                           deleteCoupon(
                             coupon,
