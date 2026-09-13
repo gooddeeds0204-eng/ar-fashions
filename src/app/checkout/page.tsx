@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import BrandLogo from "@/components/BrandLogo";
+
 type CartItem = {
   id: string;
   productId: string;
@@ -158,6 +160,15 @@ export default function CheckoutPage() {
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const [
+    checkoutToast,
+    setCheckoutToast,
+  ] = useState<{
+    type: "ERROR" | "SUCCESS";
+    title: string;
+    message: string;
+  } | null>(null);
 
   const [
     couponInput,
@@ -864,23 +875,41 @@ export default function CheckoutPage() {
     setCouponError("");
   }
 
+  function showCheckoutAlert(
+    message: string,
+    title = "Checkout Needs Attention",
+  ) {
+    setCheckoutToast({
+      type: "ERROR",
+      title,
+      message,
+    });
+
+    window.setTimeout(
+      () => {
+        setCheckoutToast(null);
+      },
+      3200,
+    );
+  }
+
   async function placeOrder() {
     if (isMixedCart) {
-      alert(
+      showCheckoutAlert(
         "Retail and reseller items must be ordered separately.",
       );
       return;
     }
 
     if (invalidCuratedCart) {
-      alert(
+      showCheckoutAlert(
         "Curated reseller set cart is invalid. Please rebuild the set.",
       );
       return;
     }
 
     if (invalidResellerGroups.length > 0) {
-      alert(
+      showCheckoutAlert(
         "Reseller MOQ is not reached. Please return to cart.",
       );
       return;
@@ -889,28 +918,28 @@ export default function CheckoutPage() {
     if (
       siteSettings.maintenanceMode
     ) {
-      alert(
+      showCheckoutAlert(
         siteSettings.maintenanceMessage,
       );
       return;
     }
 
     if (salesClosed) {
-      alert(
+      showCheckoutAlert(
         activeSalesMessage,
       );
       return;
     }
 
     if (!siteSettings.codEnabled) {
-      alert(
+      showCheckoutAlert(
         "Cash on Delivery is currently unavailable.",
       );
       return;
     }
 
     if (retailMinimumNotMet) {
-      alert(
+      showCheckoutAlert(
         `Minimum retail order is ${money(
           minimumRetailOrder,
         )}.`,
@@ -919,32 +948,32 @@ export default function CheckoutPage() {
     }
 
     if (!name.trim()) {
-      alert("Please enter your name.");
+      showCheckoutAlert("Please enter your name.");
       return;
     }
 
     if (!/^[6-9]\d{9}$/.test(phone.trim())) {
-      alert("Please enter a valid 10-digit mobile number.");
+      showCheckoutAlert("Please enter a valid 10-digit mobile number.");
       return;
     }
 
     if (!addressLine1.trim()) {
-      alert("Please enter your address.");
+      showCheckoutAlert("Please enter your address.");
       return;
     }
 
     if (!city.trim()) {
-      alert("Please enter your city.");
+      showCheckoutAlert("Please enter your city.");
       return;
     }
 
     if (!state.trim()) {
-      alert("Please enter your state.");
+      showCheckoutAlert("Please enter your state.");
       return;
     }
 
     if (!/^\d{6}$/.test(pincode.trim())) {
-      alert("Please enter a valid 6-digit pincode.");
+      showCheckoutAlert("Please enter a valid 6-digit pincode.");
       return;
     }
 
@@ -983,7 +1012,7 @@ export default function CheckoutPage() {
         !stateAllowed &&
         !pincodeAllowed
       ) {
-        alert(
+        showCheckoutAlert(
           "Sorry, delivery is not available for this address.",
         );
         return;
@@ -991,7 +1020,7 @@ export default function CheckoutPage() {
     }
 
     if (cart.length === 0) {
-      alert("Your cart is empty.");
+      showCheckoutAlert("Your cart is empty.");
       router.push("/cart");
       return;
     }
@@ -1064,7 +1093,7 @@ export default function CheckoutPage() {
         )}`,
       );
     } catch (error) {
-      alert(
+      showCheckoutAlert(
         error instanceof Error
           ? error.message
           : "Failed to place order.",
@@ -1085,599 +1114,1048 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] text-zinc-950">
-      <header className="sticky top-0 z-50 border-b border-black/5 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#f6f5f1] pb-28 text-zinc-950 sm:pb-10">
+      {/* PREMIUM CHECKOUT TOAST */}
+      {checkoutToast && (
+        <div className="fixed left-1/2 top-[78px] z-[140] w-[calc(100%-24px)] max-w-md -translate-x-1/2">
+          <div
+            className={`flex items-center gap-3 rounded-[1.35rem] border p-3.5 text-white shadow-[0_20px_55px_rgba(0,0,0,0.3)] backdrop-blur-xl ${
+              checkoutToast.type ===
+              "SUCCESS"
+                ? "border-emerald-300/25 bg-[#063326]/95"
+                : "border-red-300/25 bg-[#4a1111]/95"
+            }`}
+          >
+            <div
+              className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-black ${
+                checkoutToast.type ===
+                "SUCCESS"
+                  ? "bg-emerald-400 text-[#032017]"
+                  : "bg-red-400 text-white"
+              }`}
+            >
+              {checkoutToast.type ===
+              "SUCCESS"
+                ? "✓"
+                : "!"}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-300">
+                AR Fashions
+              </p>
+
+              <p className="mt-1 text-[13px] font-black">
+                {checkoutToast.title}
+              </p>
+
+              <p className="mt-0.5 text-[9px] font-semibold leading-4 text-white/60">
+                {checkoutToast.message}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setCheckoutToast(null)
+              }
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/10 text-xs font-black"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* HEADER */}
+      <header className="sticky top-0 z-40 border-b border-black/[0.05] bg-[#fffefa]/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-[70px] max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
           <button
-            onClick={() => router.back()}
-            className="rounded-full px-3 py-2 text-sm font-bold hover:bg-zinc-100"
+            type="button"
+            onClick={() =>
+              router.back()
+            }
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-black/[0.06] bg-white text-sm font-black"
           >
             ←
           </button>
 
-          <button
-            onClick={() => router.push("/")}
-            className="ml-3 text-xl font-black tracking-[-0.05em]"
-          >
-            AR
-            <span className="text-emerald-600">
-              FASHIONS
-            </span>
-          </button>
+          <BrandLogo
+            compact
+            onClick={() =>
+              router.push("/")
+            }
+          />
 
-          <span className="ml-auto text-xs font-bold text-zinc-500">
-            {isResellerOrder
-              ? "Secure Reseller Checkout"
-              : "Secure Checkout"}
-          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="hidden rounded-full bg-emerald-50 px-3 py-2 text-[8px] font-black uppercase tracking-[0.1em] text-emerald-700 sm:inline-flex">
+              ✓ Secure Checkout
+            </span>
+
+            <span className="rounded-full bg-[#06261c] px-3 py-2 text-[8px] font-black uppercase tracking-[0.08em] text-white">
+              {isResellerOrder
+                ? "Reseller"
+                : "Retail"}
+            </span>
+          </div>
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[1fr_420px] lg:px-8">
-        {/* CUSTOMER DETAILS */}
-        <section className="rounded-3xl bg-white p-5 shadow-sm sm:p-7">
-          <h1 className="text-2xl font-black">
-            Delivery Details
-          </h1>
+      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
+        {/* CHECKOUT HERO */}
+        <section className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-[#03140e] via-[#06261c] to-black p-5 text-white shadow-[0_24px_65px_rgba(0,0,0,0.2)] sm:p-7">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
 
-          <p className="mt-1 text-sm text-zinc-500">
-            Enter your delivery information.
-          </p>
+          <div className="relative flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-300">
+                Final Step
+              </p>
 
-          {savedAddresses.length > 0 && (
-            <div className="mt-6">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-black uppercase tracking-wider text-zinc-500">
-                  Saved Addresses
-                </p>
+              <h1 className="mt-3 font-serif text-[2.7rem] leading-[0.88] tracking-[-0.045em] sm:text-5xl">
+                Secure
+                <br />
+                Checkout.
+              </h1>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    router.push(
-                      "/addresses",
-                    )
-                  }
-                  className="text-xs font-bold text-emerald-700"
+              <p className="mt-4 max-w-md text-[10px] leading-5 text-white/45 sm:text-sm">
+                Confirm your delivery details, review your order and place it securely.
+              </p>
+            </div>
+
+            <div className="shrink-0 text-right">
+              <p className="font-serif text-[2.2rem] text-emerald-300">
+                {money(total)}
+              </p>
+
+              <p className="mt-1 text-[7px] font-black uppercase tracking-[0.16em] text-white/35">
+                Order Total
+              </p>
+            </div>
+          </div>
+
+          <div className="relative mt-6 grid grid-cols-3 gap-2">
+            {[
+              ["01", "Delivery"],
+              ["02", "Payment"],
+              ["03", "Confirm"],
+            ].map(
+              ([number, label]) => (
+                <div
+                  key={number}
+                  className="rounded-[1rem] border border-white/[0.08] bg-white/[0.05] p-3"
                 >
-                  Manage
-                </button>
-              </div>
+                  <p className="font-serif text-lg text-emerald-300">
+                    {number}
+                  </p>
 
-              <div className="mt-3 grid gap-3">
-                {savedAddresses.map(
-                  (address) => (
-                    <button
-                      key={
-                        address.id
-                      }
-                      type="button"
-                      onClick={() =>
-                        useSavedAddress(
-                          address,
-                        )
-                      }
-                      className={`rounded-2xl border p-4 text-left transition ${
-                        activeSavedAddressId ===
-                        address.id
-                          ? "border-emerald-500 bg-emerald-50"
-                          : "border-black/10 bg-zinc-50"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-black">
-                          {
-                            address.name
-                          }
-                        </p>
-
-                        {address.isDefault && (
-                          <span className="rounded-full bg-white px-2 py-1 text-[9px] font-black uppercase tracking-wider text-emerald-700">
-                            Default
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="mt-1 text-xs leading-5 text-zinc-600">
-                        {
-                          address.addressLine1
-                        }
-                        {address.addressLine2
-                          ? `, ${address.addressLine2}`
-                          : ""}
-                        ,{" "}
-                        {
-                          address.city
-                        }{" "}
-                        -{" "}
-                        {
-                          address.pincode
-                        }
-                      </p>
-                    </button>
-                  ),
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedAddressId(
-                    "",
-                  );
-                  setName("");
-                  setPhone("");
-                  setAddressLine1("");
-                  setAddressLine2("");
-                  setCity("");
-                  setState(
-                    "Andhra Pradesh",
-                  );
-                  setPincode("");
-                  setLandmark("");
-                }}
-                className="mt-3 text-xs font-bold text-zinc-600 underline"
-              >
-                Use a new address
-              </button>
-            </div>
-          )}
-
-          <div className="mt-7 grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <label className="text-xs font-bold">
-                Full Name
-              </label>
-
-              <input
-                value={name}
-                onChange={(event) =>
-                  setName(event.target.value)
-                }
-                placeholder="Enter your full name"
-                className="mt-2 w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-emerald-600"
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="text-xs font-bold">
-                Mobile Number
-              </label>
-
-              <input
-                value={phone}
-                onChange={(event) =>
-                  setPhone(
-                    event.target.value
-                      .replace(/\D/g, "")
-                      .slice(0, 10),
-                  )
-                }
-                inputMode="numeric"
-                placeholder="10-digit mobile number"
-                className="mt-2 w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-emerald-600"
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="text-xs font-bold">
-                Address
-              </label>
-
-              <input
-                value={addressLine1}
-                onChange={(event) =>
-                  setAddressLine1(event.target.value)
-                }
-                placeholder="House / Flat / Street"
-                className="mt-2 w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-emerald-600"
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="text-xs font-bold">
-                Address Line 2
-              </label>
-
-              <input
-                value={addressLine2}
-                onChange={(event) =>
-                  setAddressLine2(event.target.value)
-                }
-                placeholder="Area / Colony / Apartment (optional)"
-                className="mt-2 w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-emerald-600"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold">
-                City
-              </label>
-
-              <input
-                value={city}
-                onChange={(event) =>
-                  setCity(event.target.value)
-                }
-                placeholder="City"
-                className="mt-2 w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-emerald-600"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold">
-                State
-              </label>
-
-              <input
-                value={state}
-                onChange={(event) =>
-                  setState(event.target.value)
-                }
-                placeholder="State"
-                className="mt-2 w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-emerald-600"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold">
-                Pincode
-              </label>
-
-              <input
-                value={pincode}
-                onChange={(event) =>
-                  setPincode(
-                    event.target.value
-                      .replace(/\D/g, "")
-                      .slice(0, 6),
-                  )
-                }
-                inputMode="numeric"
-                placeholder="6-digit pincode"
-                className="mt-2 w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-emerald-600"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold">
-                Landmark
-              </label>
-
-              <input
-                value={landmark}
-                onChange={(event) =>
-                  setLandmark(event.target.value)
-                }
-                placeholder="Nearby landmark (optional)"
-                className="mt-2 w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-emerald-600"
-              />
-            </div>
+                  <p className="mt-1 text-[7px] font-black uppercase tracking-[0.08em] text-white/45">
+                    {label}
+                  </p>
+                </div>
+              ),
+            )}
           </div>
         </section>
 
-        {/* ORDER SUMMARY */}
-        <aside className="h-fit rounded-3xl bg-white p-5 shadow-sm sm:p-7 lg:sticky lg:top-24">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-black">
-              Order Summary
-            </h2>
+        <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_410px] lg:items-start">
+          {/* LEFT COLUMN */}
+          <div className="space-y-5">
+            {/* SAVED ADDRESS */}
+            {savedAddresses.length > 0 && (
+              <section className="overflow-hidden rounded-[1.6rem] border border-black/[0.05] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.035)]">
+                <div className="flex items-center justify-between gap-3 border-b border-black/[0.05] px-5 py-4">
+                  <div>
+                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-700">
+                      Delivery Address
+                    </p>
 
-            {isResellerOrder && (
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-700">
-                Reseller Order
-              </span>
-            )}
-          </div>
+                    <h2 className="mt-1 text-[1.35rem] font-black tracking-[-0.03em]">
+                      Choose a saved address
+                    </h2>
+                  </div>
 
-          <div className="mt-5 space-y-4">
-            {cart.map((item) => (
-              <div
-                key={item.id}
-                className="flex gap-3"
-              >
-                <div className="h-16 w-14 overflow-hidden rounded-xl bg-zinc-100">
-                  {item.image ? (
-                    <img
-                      src={item.image}
-                      alt={item.productName}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(
+                        "/addresses",
+                      )
+                    }
+                    className="rounded-full border border-black/[0.07] bg-white px-3.5 py-2 text-[8px] font-black uppercase tracking-[0.08em]"
+                  >
+                    Manage
+                  </button>
                 </div>
 
-                <div className="min-w-0 flex-1">
-                  <p className="line-clamp-1 text-sm font-bold">
-                    {item.productName}
-                  </p>
+                <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5">
+                  {savedAddresses.map(
+                    (address) => {
+                      const selected =
+                        activeSavedAddressId ===
+                        address.id;
 
-                  <p className="mt-1 text-[11px] text-zinc-500">
-                    {item.colorName} · {item.sizeName} · Qty{" "}
-                    {item.quantity}
-                  </p>
+                      return (
+                        <button
+                          key={address.id}
+                          type="button"
+                          onClick={() =>
+                            useSavedAddress(
+                              address,
+                            )
+                          }
+                          className={`relative rounded-[1.25rem] border p-4 text-left transition ${
+                            selected
+                              ? "border-emerald-400 bg-emerald-50/60 shadow-[0_8px_25px_rgba(16,185,129,0.08)]"
+                              : "border-black/[0.06] bg-[#faf9f6]"
+                          }`}
+                        >
+                          {selected && (
+                            <span className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-full bg-emerald-600 text-[9px] font-black text-white">
+                              ✓
+                            </span>
+                          )}
 
-                  {item.resellerSetId ? (
-                    <p className="mt-1 text-[11px] font-bold text-emerald-700">
-                      Included in curated set
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-sm font-black">
-                      {money(
-                        item.price * item.quantity,
-                      )}
-                    </p>
+                          <div className="pr-9">
+                            <div className="flex flex-wrap gap-1.5">
+                              {address.isDefault && (
+                                <span className="rounded-full bg-white px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.1em] text-emerald-700">
+                                  Default
+                                </span>
+                              )}
+
+                              {selected && (
+                                <span className="rounded-full bg-emerald-600 px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.1em] text-white">
+                                  Selected
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="mt-3 text-[13px] font-black">
+                              {address.name}
+                            </p>
+
+                            <p className="mt-1 text-[9px] font-semibold text-zinc-500">
+                              +91 {address.phone}
+                            </p>
+
+                            <p className="mt-3 text-[10px] leading-5 text-zinc-600">
+                              {address.addressLine1}
+                              {address.addressLine2
+                                ? `, ${address.addressLine2}`
+                                : ""}
+                              , {address.city},{" "}
+                              {address.state} -{" "}
+                              {address.pincode}
+                            </p>
+
+                            {address.landmark && (
+                              <p className="mt-2 text-[8px] font-semibold text-zinc-400">
+                                Near{" "}
+                                {address.landmark}
+                              </p>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    },
                   )}
                 </div>
-              </div>
-            ))}
-          </div>
 
-          <div className="my-6 border-t border-black/10" />
+                <div className="border-t border-black/[0.05] px-4 py-3 sm:px-5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedAddressId("");
+                      setName("");
+                      setPhone("");
+                      setAddressLine1("");
+                      setAddressLine2("");
+                      setCity("");
+                      setState(
+                        "Andhra Pradesh",
+                      );
+                      setPincode("");
+                      setLandmark("");
+                    }}
+                    className="text-[8px] font-black uppercase tracking-[0.08em] text-emerald-700"
+                  >
+                    + Use a new delivery address
+                  </button>
+                </div>
+              </section>
+            )}
 
-          {curatedSet && (
-            <div className="mb-5 rounded-2xl bg-emerald-50 p-4">
-              <p className="text-[10px] font-black uppercase tracking-wider text-emerald-700">
-                Curated Reseller Set
-              </p>
+            {activeSavedAddressId ? (
+              <section className="overflow-hidden rounded-[1.6rem] border border-emerald-200 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.035)]">
+                <div className="flex items-center gap-3 bg-emerald-50/70 p-5">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-600 text-sm font-black text-white">
+                    ✓
+                  </span>
 
-              <p className="mt-1 text-sm font-black">
-                {curatedSet.name}
-              </p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[8px] font-black uppercase tracking-[0.18em] text-emerald-700">
+                      Delivery Details Confirmed
+                    </p>
 
-              <p className="mt-1 text-xs text-emerald-700">
-                {curatedSet.count} set
-                {curatedSet.count === 1
-                  ? ""
-                  : "s"}
-              </p>
-            </div>
-          )}
+                    <p className="mt-1 text-[12px] font-black">
+                      Using your selected saved address
+                    </p>
 
-          <div className="space-y-3 text-sm">
-            {curatedSet && curatedSetSaving > 0 && (
+                    <p className="mt-1 text-[9px] text-zinc-500">
+                      Contact and delivery information is ready for this order.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 p-5 sm:grid-cols-2">
+                  <div className="rounded-[1rem] bg-[#faf9f6] px-4 py-3">
+                    <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                      Recipient
+                    </p>
+
+                    <p className="mt-1 text-[11px] font-black">
+                      {name}
+                    </p>
+                  </div>
+
+                  <div className="rounded-[1rem] bg-[#faf9f6] px-4 py-3">
+                    <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                      Mobile
+                    </p>
+
+                    <p className="mt-1 text-[11px] font-black">
+                      +91 {phone}
+                    </p>
+                  </div>
+
+                  <div className="rounded-[1rem] bg-[#faf9f6] px-4 py-3 sm:col-span-2">
+                    <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                      Delivering To
+                    </p>
+
+                    <p className="mt-1 text-[10px] leading-5 text-zinc-700">
+                      {addressLine1}
+                      {addressLine2
+                        ? `, ${addressLine2}`
+                        : ""}
+                      {landmark
+                        ? `, Near ${landmark}`
+                        : ""}
+                      , {city}, {state} - {pincode}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedAddressId("")
+                    }
+                    className="min-h-[46px] rounded-[1rem] border border-black/[0.08] bg-white px-4 text-[8px] font-black uppercase tracking-[0.08em] text-zinc-600 sm:col-span-2"
+                  >
+                    Edit Delivery Details
+                  </button>
+                </div>
+              </section>
+            ) : (
               <>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">
-                    Normal Reseller Value
-                  </span>
+            {/* DELIVERY FORM */}
+            <section className="overflow-hidden rounded-[1.6rem] border border-black/[0.05] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.035)]">
+              <div className="border-b border-black/[0.05] px-5 py-4">
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-700">
+                  Recipient Details
+                </p>
 
-                  <span className="font-bold">
-                    {money(rawSubtotal)}
-                  </span>
+                <h2 className="mt-1 text-[1.35rem] font-black tracking-[-0.03em]">
+                  Delivery information
+                </h2>
+
+                <p className="mt-1 text-[9px] text-zinc-400">
+                  Make sure the contact and address details are correct.
+                </p>
+              </div>
+
+              <div className="grid gap-4 p-5 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label className="text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                    Full Name
+                  </label>
+
+                  <input
+                    value={name}
+                    onChange={(event) =>
+                      setName(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Enter full name"
+                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#fffefa] px-4 py-3.5 text-sm font-semibold outline-none transition focus:border-emerald-500"
+                  />
                 </div>
 
-                <div className="flex justify-between text-emerald-700">
-                  <span>
-                    Set Saving
-                  </span>
+                <div className="sm:col-span-2">
+                  <label className="text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                    Mobile Number
+                  </label>
 
-                  <span className="font-black">
-                    -{money(curatedSetSaving)}
-                  </span>
+                  <div className="mt-2 flex overflow-hidden rounded-[1rem] border border-black/[0.08] bg-[#fffefa] focus-within:border-emerald-500">
+                    <span className="flex items-center border-r border-black/[0.06] bg-[#f7f6f2] px-4 text-sm font-black text-zinc-500">
+                      +91
+                    </span>
+
+                    <input
+                      value={phone}
+                      onChange={(event) =>
+                        setPhone(
+                          event.target.value
+                            .replace(
+                              /\D/g,
+                              "",
+                            )
+                            .slice(
+                              0,
+                              10,
+                            ),
+                        )
+                      }
+                      inputMode="numeric"
+                      placeholder="10 digit mobile number"
+                      className="min-w-0 flex-1 bg-transparent px-4 py-3.5 text-sm font-semibold outline-none"
+                    />
+                  </div>
                 </div>
+
+                <div className="sm:col-span-2">
+                  <label className="text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                    House / Flat / Street
+                  </label>
+
+                  <input
+                    value={addressLine1}
+                    onChange={(event) =>
+                      setAddressLine1(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="House no, building, street"
+                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#fffefa] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                    Area / Colony
+                  </label>
+
+                  <input
+                    value={addressLine2}
+                    onChange={(event) =>
+                      setAddressLine2(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Area, colony, apartment (optional)"
+                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#fffefa] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                    City
+                  </label>
+
+                  <input
+                    value={city}
+                    onChange={(event) =>
+                      setCity(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="City"
+                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#fffefa] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                    State
+                  </label>
+
+                  <input
+                    value={state}
+                    onChange={(event) =>
+                      setState(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="State"
+                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#fffefa] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                    Pincode
+                  </label>
+
+                  <input
+                    value={pincode}
+                    onChange={(event) =>
+                      setPincode(
+                        event.target.value
+                          .replace(
+                            /\D/g,
+                            "",
+                          )
+                          .slice(
+                            0,
+                            6,
+                          ),
+                      )
+                    }
+                    inputMode="numeric"
+                    placeholder="6 digit pincode"
+                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#fffefa] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                    Landmark
+                  </label>
+
+                  <input
+                    value={landmark}
+                    onChange={(event) =>
+                      setLandmark(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Nearby landmark"
+                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#fffefa] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+            </section>
+
               </>
             )}
 
-            <div className="flex justify-between">
-              <span className="text-zinc-500">
-                Subtotal
-              </span>
-
-              <span className="font-bold">
-                {money(subtotal)}
-              </span>
-            </div>
-
-            <div className="flex items-start justify-between gap-4">
-              <span className="text-zinc-500">
-                Delivery
-              </span>
-
-              <span className="text-right font-bold">
-                {resellerFreightPending
-                  ? "Calculated after packing"
-                  : deliveryCharge === 0
-                    ? "FREE"
-                    : money(deliveryCharge)}
-              </span>
-            </div>
-
-            {resellerFreightPending && (
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4">
-                <p className="text-xs font-black text-violet-800">
-                  Bulk Freight Pending
+            {/* PAYMENT */}
+            <section className="overflow-hidden rounded-[1.6rem] border border-black/[0.05] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.035)]">
+              <div className="border-b border-black/[0.05] px-5 py-4">
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-700">
+                  Payment
                 </p>
 
-                <p className="mt-1 text-[11px] leading-5 text-violet-700">
-                  {
-                    deliverySettings.bulkFreightMessage
-                  }
-                </p>
-
-                <p className="mt-2 text-[10px] font-bold text-violet-600">
-                  Estimated delivery:{" "}
-                  {
-                    deliverySettings.estimatedMinDays
-                  }
-                  –
-                  {
-                    deliverySettings.estimatedMaxDays
-                  }{" "}
-                  days
-                </p>
+                <h2 className="mt-1 text-[1.35rem] font-black tracking-[-0.03em]">
+                  Payment method
+                </h2>
               </div>
-            )}
 
-            {appliedCoupon && (
-              <div className="flex justify-between text-emerald-700">
-                <span>
-                  Coupon · {
-                    appliedCoupon.code
-                  }
-                </span>
+              <div className="p-5">
+                <div
+                  className={`rounded-[1.25rem] border p-4 ${
+                    siteSettings.codEnabled
+                      ? "border-emerald-300 bg-emerald-50/60"
+                      : "border-black/[0.06] bg-zinc-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-black ${
+                        siteSettings.codEnabled
+                          ? "bg-emerald-600 text-white"
+                          : "bg-zinc-300 text-zinc-500"
+                      }`}
+                    >
+                      ₹
+                    </span>
 
-                <span className="font-black">
-                  -{money(
-                    discountAmount,
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[12px] font-black">
+                        Cash on Delivery
+                      </p>
+
+                      <p className="mt-1 text-[9px] leading-4 text-zinc-500">
+                        {siteSettings.codEnabled
+                          ? "Pay when your order reaches you."
+                          : "COD is currently unavailable."}
+                      </p>
+                    </div>
+
+                    {siteSettings.codEnabled && (
+                      <span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-600 text-[9px] font-black text-white">
+                        ✓
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {[
+                    ["✓", "Secure"],
+                    ["◎", "Protected"],
+                    ["₹", "COD"],
+                  ].map(
+                    ([icon, label]) => (
+                      <div
+                        key={label}
+                        className="rounded-xl bg-[#f7f6f2] px-2 py-3 text-center"
+                      >
+                        <p className="text-sm font-black text-emerald-700">
+                          {icon}
+                        </p>
+
+                        <p className="mt-1 text-[7px] font-black uppercase tracking-[0.08em] text-zinc-500">
+                          {label}
+                        </p>
+                      </div>
+                    ),
                   )}
-                </span>
+                </div>
               </div>
-            )}
+            </section>
           </div>
 
-          <div className="mt-5 rounded-2xl border border-black/10 p-4">
-            <p className="text-xs font-black">
-              Coupon Code
-            </p>
-
-            {appliedCoupon ? (
-              <div className="mt-3 flex items-center justify-between rounded-xl bg-emerald-50 px-4 py-3">
+          {/* RIGHT SUMMARY */}
+          <aside className="h-fit overflow-hidden rounded-[1.6rem] border border-black/[0.05] bg-white shadow-[0_12px_35px_rgba(0,0,0,0.045)] lg:sticky lg:top-24">
+            <div className="bg-[#06261c] p-5 text-white">
+              <div className="flex items-end justify-between gap-3">
                 <div>
-                  <p className="text-sm font-black text-emerald-700">
-                    {
-                      appliedCoupon.code
-                    } applied
+                  <p className="text-[8px] font-black uppercase tracking-[0.22em] text-emerald-300">
+                    Final Review
                   </p>
 
-                  <p className="mt-1 text-[11px] text-emerald-700/80">
-                    You save {
-                      money(
-                        discountAmount,
-                      )
-                    }
+                  <h2 className="mt-2 font-serif text-[1.9rem] leading-none">
+                    Order Summary
+                  </h2>
+
+                  <p className="mt-2 text-[9px] text-white/45">
+                    {cart.reduce(
+                      (sum, item) =>
+                        sum +
+                        item.quantity,
+                      0,
+                    )}{" "}
+                    items
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={
-                    removeCoupon
-                  }
-                  className="text-xs font-black text-red-600"
-                >
-                  Remove
-                </button>
+                <span className="rounded-full bg-white/10 px-3 py-2 text-[7px] font-black uppercase tracking-[0.1em] text-white/70">
+                  {isResellerOrder
+                    ? "Reseller"
+                    : "Retail"}
+                </span>
               </div>
-            ) : (
-              <div className="mt-3 flex gap-2">
-                <input
-                  value={
-                    couponInput
-                  }
-                  onChange={(event) => {
-                    setCouponInput(
-                      event.target.value
-                        .toUpperCase(),
-                    );
-                    setCouponError(
-                      "",
-                    );
-                  }}
-                  placeholder="Enter coupon"
-                  className="min-w-0 flex-1 rounded-xl border border-black/10 px-4 py-3 text-sm font-bold uppercase outline-none focus:border-emerald-600"
-                />
+            </div>
 
-                <button
-                  type="button"
-                  disabled={
-                    couponLoading
-                  }
-                  onClick={
-                    applyCoupon
-                  }
-                  className="rounded-xl bg-zinc-950 px-5 text-xs font-black text-white disabled:bg-zinc-300"
-                >
-                  {couponLoading
-                    ? "..."
-                    : "Apply"}
-                </button>
+            {/* PRODUCTS */}
+            <div className="border-b border-black/[0.05] p-4">
+              <div className="space-y-3">
+                {cart.map(
+                  (item) => (
+                    <div
+                      key={item.id}
+                      className="flex gap-3 rounded-[1rem] bg-[#faf9f6] p-2.5"
+                    >
+                      <div className="h-[72px] w-[58px] shrink-0 overflow-hidden rounded-xl bg-zinc-100">
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.productName}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="grid h-full place-items-center font-serif text-xs text-zinc-300">
+                            AR
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1 py-1">
+                        <p className="line-clamp-1 text-[10px] font-black">
+                          {item.productName}
+                        </p>
+
+                        <p className="mt-1 text-[8px] leading-4 text-zinc-500">
+                          {item.colorName} ·{" "}
+                          {item.sizeName} · Qty{" "}
+                          {item.quantity}
+                        </p>
+
+                        {item.resellerSetId ? (
+                          <p className="mt-2 text-[8px] font-black text-emerald-700">
+                            Included in curated set
+                          </p>
+                        ) : (
+                          <p className="mt-2 text-[11px] font-black">
+                            {money(
+                              item.price *
+                                item.quantity,
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ),
+                )}
               </div>
-            )}
-
-            {couponError && (
-              <p className="mt-2 text-xs font-bold text-red-600">
-                {couponError}
-              </p>
-            )}
-          </div>
-
-          <div className="my-5 border-t border-black/10" />
-
-          <div className="flex items-center justify-between">
-            <span className="text-base font-black">
-              Total
-            </span>
-
-            <span className="text-2xl font-black">
-              {money(total)}
-            </span>
-          </div>
-
-          {checkoutBlocked && (
-            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <p className="text-xs font-black text-amber-800">
-                CHECKOUT NOTICE
-              </p>
-
-              <p className="mt-1 text-[11px] leading-5 text-amber-700">
-                {checkoutBlockMessage}
-              </p>
             </div>
-          )}
 
-          {siteSettings.codEnabled ? (
-            <div className="mt-5 rounded-2xl bg-emerald-50 p-4">
-              <p className="text-xs font-black text-emerald-700">
-                CASH ON DELIVERY
-              </p>
+            <div className="p-5">
+              {/* CURATED SET */}
+              {curatedSet && (
+                <div className="mb-4 rounded-[1.1rem] border border-violet-100 bg-violet-50 p-4">
+                  <p className="text-[7px] font-black uppercase tracking-[0.15em] text-violet-700">
+                    Curated Reseller Set
+                  </p>
 
-              <p className="mt-1 text-[11px] leading-5 text-emerald-700/80">
-                Pay when your order is delivered.
-              </p>
-            </div>
-          ) : (
-            <div className="mt-5 rounded-2xl bg-zinc-100 p-4">
-              <p className="text-xs font-black text-zinc-600">
-                CASH ON DELIVERY UNAVAILABLE
-              </p>
-            </div>
-          )}
+                  <p className="mt-1 text-[11px] font-black">
+                    {curatedSet.name}
+                  </p>
 
-          {isMixedCart && (
-            <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-bold text-red-700">
-              Retail and reseller items must be ordered separately.
-            </div>
-          )}
+                  <p className="mt-1 text-[8px] text-violet-700">
+                    {curatedSet.count} set
+                    {curatedSet.count ===
+                    1
+                      ? ""
+                      : "s"}
+                  </p>
+                </div>
+              )}
 
-          {invalidResellerGroups.length > 0 && (
-            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <p className="text-xs font-black text-amber-900">
-                Reseller MOQ not reached
-              </p>
+              {/* COUPON */}
+              <div className="rounded-[1.1rem] border border-black/[0.06] bg-[#faf9f6] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[7px] font-black uppercase tracking-[0.15em] text-emerald-700">
+                      Offers
+                    </p>
 
-              {invalidResellerGroups.map((group) => (
-                <p
-                  key={group.productName}
-                  className="mt-2 text-xs font-semibold text-amber-800"
-                >
-                  {group.productName}: {group.quantity}/{group.moq} pcs
+                    <p className="mt-1 text-[11px] font-black">
+                      Coupon Code
+                    </p>
+                  </div>
+
+                  {appliedCoupon && (
+                    <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.1em] text-emerald-700">
+                      Applied
+                    </span>
+                  )}
+                </div>
+
+                {appliedCoupon ? (
+                  <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-3">
+                    <div>
+                      <p className="text-[10px] font-black text-emerald-700">
+                        {appliedCoupon.code}
+                      </p>
+
+                      <p className="mt-1 text-[8px] text-zinc-500">
+                        You save{" "}
+                        {money(
+                          discountAmount,
+                        )}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={removeCoupon}
+                      className="text-[7px] font-black uppercase tracking-[0.08em] text-red-600"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-3 flex gap-2">
+                    <input
+                      value={couponInput}
+                      onChange={(event) => {
+                        setCouponInput(
+                          event.target.value.toUpperCase(),
+                        );
+
+                        setCouponError("");
+                      }}
+                      placeholder="ENTER CODE"
+                      className="min-w-0 flex-1 rounded-xl border border-black/[0.07] bg-white px-3 py-3 text-[9px] font-black uppercase outline-none focus:border-emerald-500"
+                    />
+
+                    <button
+                      type="button"
+                      disabled={couponLoading}
+                      onClick={applyCoupon}
+                      className="rounded-xl bg-[#06261c] px-4 text-[8px] font-black uppercase tracking-[0.08em] text-white disabled:bg-zinc-300"
+                    >
+                      {couponLoading
+                        ? "..."
+                        : "Apply"}
+                    </button>
+                  </div>
+                )}
+
+                {couponError && (
+                  <p className="mt-2 text-[8px] font-bold leading-4 text-red-600">
+                    {couponError}
+                  </p>
+                )}
+              </div>
+
+              {/* PRICE DETAILS */}
+              <div className="mt-5">
+                <p className="text-[7px] font-black uppercase tracking-[0.16em] text-zinc-400">
+                  Price Details
                 </p>
-              ))}
+
+                <div className="mt-3 space-y-3 text-[10px]">
+                  {curatedSet &&
+                    curatedSetSaving >
+                      0 && (
+                      <>
+                        <div className="flex justify-between gap-4">
+                          <span className="text-zinc-500">
+                            Normal reseller value
+                          </span>
+
+                          <span className="font-black">
+                            {money(
+                              rawSubtotal,
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between gap-4 text-emerald-700">
+                          <span>
+                            Set saving
+                          </span>
+
+                          <span className="font-black">
+                            -
+                            {money(
+                              curatedSetSaving,
+                            )}
+                          </span>
+                        </div>
+                      </>
+                    )}
+
+                  <div className="flex justify-between gap-4">
+                    <span className="text-zinc-500">
+                      Subtotal
+                    </span>
+
+                    <span className="font-black">
+                      {money(subtotal)}
+                    </span>
+                  </div>
+
+                  {appliedCoupon && (
+                    <div className="flex justify-between gap-4 text-emerald-700">
+                      <span>
+                        Coupon ·{" "}
+                        {appliedCoupon.code}
+                      </span>
+
+                      <span className="font-black">
+                        -
+                        {money(
+                          discountAmount,
+                        )}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <span className="text-zinc-500">
+                        Delivery
+                      </span>
+
+                      {resellerFreightPending && (
+                        <p className="mt-1 max-w-[180px] text-[7px] leading-3 text-violet-500">
+                          Freight calculated after packing
+                        </p>
+                      )}
+                    </div>
+
+                    <span
+                      className={`text-right font-black ${
+                        !resellerFreightPending &&
+                        deliveryCharge ===
+                          0
+                          ? "text-emerald-700"
+                          : ""
+                      }`}
+                    >
+                      {resellerFreightPending
+                        ? "Pending"
+                        : deliveryCharge ===
+                            0
+                          ? "FREE"
+                          : money(
+                              deliveryCharge,
+                            )}
+                    </span>
+                  </div>
+
+                  <div className="border-t border-black/[0.07] pt-4">
+                    <div className="flex items-end justify-between gap-3">
+                      <span className="font-black">
+                        Total
+                      </span>
+
+                      <span className="text-[1.45rem] font-black">
+                        {money(total)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* FREIGHT */}
+              {resellerFreightPending && (
+                <div className="mt-4 rounded-[1.1rem] border border-violet-100 bg-violet-50 p-4">
+                  <p className="text-[9px] font-black text-violet-800">
+                    Bulk Freight Pending
+                  </p>
+
+                  <p className="mt-1 text-[8px] leading-4 text-violet-700">
+                    {deliverySettings.bulkFreightMessage}
+                  </p>
+
+                  <p className="mt-2 text-[7px] font-black uppercase tracking-[0.08em] text-violet-600">
+                    Estimated{" "}
+                    {deliverySettings.estimatedMinDays}
+                    –
+                    {deliverySettings.estimatedMaxDays}{" "}
+                    days
+                  </p>
+                </div>
+              )}
+
+              {/* CHECKOUT WARNINGS */}
+              {checkoutBlocked && (
+                <div className="mt-4 rounded-[1.1rem] border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-[8px] font-black uppercase tracking-[0.12em] text-amber-900">
+                    Checkout Notice
+                  </p>
+
+                  <p className="mt-1 text-[8px] leading-4 text-amber-700">
+                    {checkoutBlockMessage}
+                  </p>
+                </div>
+              )}
+
+              {isMixedCart && (
+                <div className="mt-4 rounded-[1.1rem] border border-red-200 bg-red-50 p-4">
+                  <p className="text-[9px] font-black text-red-800">
+                    Retail and reseller items must be ordered separately.
+                  </p>
+                </div>
+              )}
+
+              {invalidCuratedCart && (
+                <div className="mt-4 rounded-[1.1rem] border border-red-200 bg-red-50 p-4">
+                  <p className="text-[9px] font-black text-red-800">
+                    Curated reseller set is invalid. Please rebuild the set.
+                  </p>
+                </div>
+              )}
+
+              {invalidResellerGroups.length >
+                0 && (
+                <div className="mt-4 rounded-[1.1rem] border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-[9px] font-black text-amber-900">
+                    Reseller MOQ not reached
+                  </p>
+
+                  {invalidResellerGroups.map(
+                    (group) => (
+                      <p
+                        key={
+                          group.productName
+                        }
+                        className="mt-2 text-[8px] font-semibold text-amber-800"
+                      >
+                        {group.productName}:{" "}
+                        {group.quantity}/
+                        {group.moq} pcs
+                      </p>
+                    ),
+                  )}
+                </div>
+              )}
+
+              {/* DESKTOP CTA */}
+              <button
+                type="button"
+                onClick={placeOrder}
+                disabled={
+                  loading ||
+                  !canPlaceOrder
+                }
+                className="mt-5 hidden min-h-[54px] w-full rounded-[1rem] bg-emerald-600 px-4 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-emerald-600/15 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 disabled:shadow-none sm:block"
+              >
+                {loading
+                  ? "Placing Order..."
+                  : isResellerOrder
+                    ? `Place Reseller Order · ${money(
+                        total,
+                      )}`
+                    : `Place Order · ${money(
+                        total,
+                      )}`}
+              </button>
+
+              <p className="mt-3 text-center text-[7px] leading-4 text-zinc-400">
+                By placing your order, you confirm that your delivery details are correct.
+              </p>
             </div>
-          )}
+          </aside>
+        </div>
+      </div>
+
+      {/* MOBILE PLACE ORDER BAR */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/[0.07] bg-[#fffefa]/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.09)] backdrop-blur-xl sm:hidden">
+        <div className="mx-auto flex max-w-md items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
+              Pay on Delivery
+            </p>
+
+            <p className="mt-0.5 text-[18px] font-black leading-none">
+              {money(total)}
+            </p>
+
+            <p className="mt-1 text-[7px] font-semibold text-zinc-400">
+              {cart.reduce(
+                (sum, item) =>
+                  sum +
+                  item.quantity,
+                0,
+              )}{" "}
+              items
+            </p>
+          </div>
 
           <button
+            type="button"
             onClick={placeOrder}
-            disabled={loading || !canPlaceOrder}
-            className="mt-5 w-full rounded-2xl bg-zinc-950 py-4 text-sm font-black text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-zinc-300"
+            disabled={
+              loading ||
+              !canPlaceOrder
+            }
+            className="min-h-[50px] min-w-[185px] rounded-[1rem] bg-emerald-600 px-4 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-emerald-600/15 transition active:scale-[0.98] disabled:bg-zinc-300 disabled:text-zinc-500 disabled:shadow-none"
           >
             {loading
-              ? "Placing Order..."
+              ? "Placing..."
               : isResellerOrder
-                ? `Place Reseller Order · ${money(total)}`
-                : `Place Order · ${money(total)}`}
+                ? "Place Reseller Order →"
+                : "Place Order →"}
           </button>
-        </aside>
+        </div>
       </div>
     </main>
   );

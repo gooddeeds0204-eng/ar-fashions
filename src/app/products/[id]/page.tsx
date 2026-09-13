@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ensureUserSession } from "@/lib/user-session-init";
+import BrandLogo from "@/components/BrandLogo";
 
 type Media = {
   id: string;
@@ -127,6 +128,7 @@ export default function ProductDetailPage() {
   const [isReseller, setIsReseller] = useState(false);
   const [resellerQuantities, setResellerQuantities] = useState<Record<string, number>>({});
   const [adding, setAdding] = useState(false);
+  const [cartNotice, setCartNotice] = useState(false);
 
   const [wishlisted, setWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
@@ -700,9 +702,106 @@ export default function ProductDetailPage() {
 
     setAdding(false);
 
-    alert("Added to cart successfully.");
+    setCartNotice(true);
 
-    router.push("/cart");
+    window.setTimeout(() => {
+      setCartNotice(false);
+    }, 2800);
+  }
+
+  function buyNow() {
+    if (!product) return;
+
+    if (!selectedVariant) {
+      alert("Please select color and size.");
+      return;
+    }
+
+    if (selectedVariant.stock <= 0) {
+      alert("This variant is out of stock.");
+      return;
+    }
+
+    if (quantity > selectedVariant.stock) {
+      alert(
+        `Only ${selectedVariant.stock} pieces available.`,
+      );
+      return;
+    }
+
+    setAdding(true);
+
+    const cart = getCart();
+
+    const modeValue =
+      isReseller ? "RESELLER" : "RETAIL";
+
+    const existingIndex =
+      cart.findIndex(
+        (item) =>
+          item.productId === product.id &&
+          item.variantId === selectedVariant.id &&
+          (item.mode ?? "RETAIL") === modeValue,
+      );
+
+    if (existingIndex >= 0) {
+      cart[existingIndex].quantity =
+        Math.min(
+          cart[existingIndex].quantity +
+            quantity,
+          selectedVariant.stock,
+        );
+
+      cart[existingIndex].sizeName =
+        sizeLabel(
+          selectedVariant.size.name,
+          selectedVariant.size.inches,
+        );
+    } else {
+      cart.push({
+        id: `${product.id}-${selectedVariant.id}-${modeValue}`,
+        productId: product.id,
+        productName: product.name,
+        image:
+          product.media.find(
+            (item) =>
+              item.type === "IMAGE",
+          )?.url ??
+          product.media[0]?.url ??
+          null,
+        variantId:
+          selectedVariant.id,
+        colorId:
+          selectedVariant.color.id,
+        colorName:
+          selectedVariant.color.name,
+        sizeId:
+          selectedVariant.size.id,
+        sizeName:
+          sizeLabel(
+            selectedVariant.size.name,
+            selectedVariant.size.inches,
+          ),
+        price:
+          currentPrice,
+        quantity,
+        mode:
+          modeValue,
+        resellerMOQ:
+          isReseller
+            ? minimumQuantity
+            : undefined,
+      });
+    }
+
+    localStorage.setItem(
+      "ar-fashions-cart",
+      JSON.stringify(cart),
+    );
+
+    setAdding(false);
+
+    router.push("/checkout");
   }
 
   if (loading) {
@@ -745,39 +844,34 @@ export default function ProductDetailPage() {
       : null;
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] text-zinc-950">
-      <header className="sticky top-0 z-50 border-b border-black/5 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#f7f6f2] pb-24 text-zinc-950 sm:pb-0">
+      <header className="sticky top-0 z-50 border-b border-black/[0.06] bg-[#fffefa]/95 shadow-[0_1px_12px_rgba(0,0,0,0.04)] backdrop-blur-xl">
+        <div className="mx-auto flex h-[60px] max-w-7xl items-center px-4 sm:h-16 sm:px-6 lg:px-8">
           <button
             onClick={() => router.back()}
-            className="mr-4 rounded-full px-3 py-2 text-sm font-bold hover:bg-zinc-100"
+            className="mr-3 flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-sm font-black transition active:scale-95"
           >
             ←
           </button>
 
-          <button
+          <BrandLogo
+            compact
             onClick={() => router.push("/")}
-            className="text-xl font-black tracking-[-0.05em]"
-          >
-            AR
-            <span className="text-emerald-600">
-              FASHIONS
-            </span>
-          </button>
+          />
 
           <button
             onClick={() => router.push("/cart")}
-            className="ml-auto rounded-full border border-black/10 px-4 py-2 text-xs font-bold"
+            className="ml-auto rounded-full border border-black/[0.08] bg-white px-4 py-2 text-[11px] font-black shadow-sm transition active:scale-95"
           >
             🛒 Cart
           </button>
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-12">
+      <div className="mx-auto grid max-w-7xl gap-0 pb-8 sm:gap-8 sm:px-6 sm:pt-6 lg:grid-cols-2 lg:px-8 lg:py-10">
         {/* MEDIA */}
-        <section>
-          <div className="overflow-hidden rounded-3xl bg-zinc-100">
+        <section className="lg:sticky lg:top-24 lg:self-start">
+          <div className="overflow-hidden bg-[#eeede9] sm:rounded-[2rem]">
             <div className="aspect-[4/5]">
               {media?.type === "VIDEO" ? (
                 <video
@@ -804,7 +898,7 @@ export default function ProductDetailPage() {
           </div>
 
           {product.media.length > 1 && (
-            <div className="mt-4 grid grid-cols-5 gap-3">
+            <div className="mt-3 grid grid-cols-5 gap-2 px-4 pb-2 sm:mt-4 sm:gap-3 sm:px-0 sm:pb-0">
               {product.media.map(
                 (item, index) => (
                   <button
@@ -812,7 +906,7 @@ export default function ProductDetailPage() {
                     onClick={() =>
                       setSelectedMedia(index)
                     }
-                    className={`overflow-hidden rounded-xl border-2 ${
+                    className={`overflow-hidden rounded-xl border-2 bg-white shadow-sm transition active:scale-95 ${
                       selectedMedia === index
                         ? "border-emerald-600"
                         : "border-transparent"
@@ -837,13 +931,13 @@ export default function ProductDetailPage() {
         </section>
 
         {/* DETAILS */}
-        <section className="lg:py-4">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-600">
+        <section className="relative z-10 mt-3 rounded-[1.5rem] bg-white px-4 pb-8 pt-6 shadow-sm sm:mt-0 sm:rounded-[2rem] sm:p-6 lg:p-8">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-600">
             {product.category.name}
           </p>
 
           <div className="mt-2 flex items-start gap-4">
-            <h1 className="flex-1 text-3xl font-black tracking-tight sm:text-4xl">
+            <h1 className="flex-1 text-[1.65rem] font-black leading-tight tracking-[-0.035em] sm:text-4xl">
               {product.name}
             </h1>
 
@@ -856,7 +950,7 @@ export default function ProductDetailPage() {
                   ? "Remove from Wishlist"
                   : "Add to Wishlist"
               }
-              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-white text-2xl shadow-sm transition ${
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border bg-white text-xl shadow-sm transition active:scale-95 ${
                 wishlisted
                   ? "border-red-200 text-red-500"
                   : "border-black/10 text-zinc-700 hover:border-emerald-500 hover:text-emerald-600"
@@ -876,22 +970,44 @@ export default function ProductDetailPage() {
             </p>
           )}
 
-          <div className="mt-6 flex items-center gap-3">
-            <span className="text-3xl font-black">
+          <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span className="text-[1.8rem] font-black tracking-[-0.04em]">
               {money(currentPrice)}
             </span>
 
             {product.mrp &&
               Number(product.mrp) >
                 currentPrice && (
-                <span className="text-base text-zinc-400 line-through">
-                  {money(product.mrp)}
-                </span>
+                <>
+                  <span className="text-sm font-semibold text-zinc-400 line-through">
+                    {money(product.mrp)}
+                  </span>
+
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700">
+                    {Math.round(
+                      ((Number(product.mrp) -
+                        currentPrice) /
+                        Number(product.mrp)) *
+                        100,
+                    )}
+                    % OFF
+                  </span>
+                </>
               )}
           </div>
 
+          {reviews.length > 0 && (
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-[11px] font-black text-amber-700">
+              ★ {averageRating.toFixed(1)}
+
+              <span className="font-semibold text-zinc-400">
+                · {reviews.length} verified
+              </span>
+            </div>
+          )}
+
           {isReseller && (
-            <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+            <div className="mt-5 rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-sm">
               <p className="text-xs font-black uppercase tracking-wider text-emerald-700">
                 Reseller Price
               </p>
@@ -904,7 +1020,7 @@ export default function ProductDetailPage() {
           {!isReseller ? (
             <>
           {/* COLOR */}
-          <div className="mt-8">
+          <div className="mt-7 rounded-[1.35rem] border border-black/[0.06] bg-[#faf9f6] p-4 sm:p-5">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-bold">
                 Color
@@ -926,13 +1042,22 @@ export default function ProductDetailPage() {
                   onClick={() =>
                     selectColor(color.id)
                   }
-                  className={`rounded-full border-2 px-4 py-2 text-xs font-bold ${
+                  className={`flex items-center gap-2 rounded-full border px-3.5 py-2.5 text-[11px] font-black transition active:scale-95 ${
                     selectedColorId ===
                     color.id
-                      ? "border-emerald-600 bg-emerald-50"
-                      : "border-black/10 bg-white"
+                      ? "border-zinc-950 bg-zinc-950 text-white shadow-sm"
+                      : "border-black/[0.08] bg-white text-zinc-700"
                   }`}
                 >
+                  <span
+                    className="h-4 w-4 rounded-full border border-black/10 shadow-inner"
+                    style={{
+                      background:
+                        color.hexCode ||
+                        "#d4d4d8",
+                    }}
+                  />
+
                   {color.name}
                 </button>
               ))}
@@ -940,7 +1065,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* SIZE */}
-          <div className="mt-8">
+          <div className="mt-4 rounded-[1.35rem] border border-black/[0.06] bg-[#faf9f6] p-4 sm:p-5">
             <p className="mb-3 text-sm font-bold">
               Size
             </p>
@@ -967,7 +1092,7 @@ export default function ProductDetailPage() {
                     onClick={() =>
                       selectSize(size.id)
                     }
-                    className={`min-w-14 rounded-xl border px-4 py-3 text-xs font-bold ${
+                    className={`min-w-[64px] rounded-xl border px-3 py-3 text-[11px] font-black transition active:scale-95 ${
                       selectedSizeId ===
                       size.id
                         ? "border-emerald-600 bg-emerald-600 text-white"
@@ -992,10 +1117,10 @@ export default function ProductDetailPage() {
           </div>
 
           {/* STOCK */}
-          <div className="mt-6">
+          <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3">
             {selectedVariant ? (
               availableStock > 0 ? (
-                <p className="text-sm font-bold text-emerald-600">
+                <p className="inline-flex rounded-full bg-emerald-50 px-3 py-2 text-[11px] font-black text-emerald-700">
                   ✓ {availableStock} pieces
                   available
                 </p>
@@ -1012,12 +1137,18 @@ export default function ProductDetailPage() {
           </div>
 
           {/* QUANTITY */}
-          <div className="mt-6 flex items-center gap-4">
-            <p className="text-sm font-bold">
-              Quantity
-            </p>
+          <div className="mt-4 flex items-center justify-between gap-4 rounded-[1.35rem] border border-black/[0.06] bg-[#faf9f6] p-4">
+            <div>
+              <p className="text-sm font-black">
+                Quantity
+              </p>
 
-            <div className="flex items-center overflow-hidden rounded-xl border border-black/10 bg-white">
+              <p className="mt-0.5 text-[10px] text-zinc-400">
+                Choose pieces
+              </p>
+            </div>
+
+            <div className="flex items-center overflow-hidden rounded-xl border border-black/[0.08] bg-white shadow-sm">
               <button
                 disabled={quantity <= 1}
                 onClick={() =>
@@ -1057,21 +1188,35 @@ export default function ProductDetailPage() {
 
           {/* ACTION */}
           {!isReseller || meetsMOQ ? (
-            <button
-              disabled={
-                adding ||
-                !selectedVariant ||
-                availableStock <= 0
-              }
-              onClick={addToCart}
-              className="mt-8 w-full rounded-2xl bg-zinc-950 py-4 text-sm font-black text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-zinc-300"
-            >
-              {adding
-                ? "Adding..."
-                : isReseller
-                  ? "Proceed to Buy"
+            <div className="mt-6 hidden grid-cols-2 gap-3 sm:grid">
+              <button
+                type="button"
+                disabled={
+                  adding ||
+                  !selectedVariant ||
+                  availableStock <= 0
+                }
+                onClick={addToCart}
+                className="rounded-2xl border border-black/[0.1] bg-white py-4 text-[12px] font-black text-zinc-950 transition active:scale-[0.99] disabled:bg-zinc-100 disabled:text-zinc-400"
+              >
+                {adding
+                  ? "Adding..."
                   : "Add to Cart"}
-            </button>
+              </button>
+
+              <button
+                type="button"
+                disabled={
+                  adding ||
+                  !selectedVariant ||
+                  availableStock <= 0
+                }
+                onClick={buyNow}
+                className="rounded-2xl bg-zinc-950 py-4 text-[12px] font-black text-white shadow-lg transition active:scale-[0.99] disabled:bg-zinc-300"
+              >
+                Buy Now
+              </button>
+            </div>
           ) : (
             <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
               {!selectedVariant
@@ -1107,7 +1252,7 @@ export default function ProductDetailPage() {
                   return (
                     <div
                       key={color.id}
-                      className="rounded-2xl border border-black/10 bg-white p-4"
+                      className="rounded-2xl border border-black/[0.07] bg-[#fcfbf8] p-4 shadow-sm"
                     >
                       <div className="mb-4 flex items-center justify-between">
                         <p className="font-black">
@@ -1147,7 +1292,7 @@ export default function ProductDetailPage() {
                           return (
                             <div
                               key={variant.id}
-                              className="flex items-center justify-between gap-3 rounded-xl bg-zinc-50 p-3"
+                              className="flex items-center justify-between gap-3 rounded-xl border border-black/[0.05] bg-white p-3"
                             >
                               <div>
                                 <p className="text-sm font-black">
@@ -1210,7 +1355,7 @@ export default function ProductDetailPage() {
                 })}
               </div>
 
-              <div className="mt-6 rounded-2xl border border-black/10 bg-zinc-950 p-5 text-white">
+              <div className="mt-6 rounded-[1.5rem] bg-zinc-950 p-5 text-white shadow-xl shadow-black/10">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
@@ -1252,7 +1397,7 @@ export default function ProductDetailPage() {
                 <button
                   disabled={adding}
                   onClick={addResellerSelectionToCart}
-                  className="mt-6 w-full rounded-2xl bg-emerald-600 py-4 text-sm font-black text-white transition hover:bg-emerald-700 disabled:bg-zinc-300"
+                  className="mt-5 w-full rounded-2xl bg-emerald-600 py-4 text-[13px] font-black text-white shadow-lg transition active:scale-[0.99] hover:bg-emerald-700 disabled:bg-zinc-300"
                 >
                   {adding
                     ? "Adding..."
@@ -1262,20 +1407,76 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {product.description && (
-            <div className="mt-8 border-t border-black/10 pt-6">
-              <h2 className="text-sm font-black">
-                Product Details
-              </h2>
+          <div className="mt-6 grid grid-cols-3 gap-2">
+            {[
+              [
+                "✓",
+                "Quality Checked",
+                "Selected styles",
+              ],
+              [
+                "₹",
+                "COD Available",
+                "Easy payment",
+              ],
+              [
+                "◎",
+                "Secure Order",
+                "Protected checkout",
+              ],
+            ].map(
+              ([icon, title, subtitle]) => (
+                <div
+                  key={title}
+                  className="rounded-[1.25rem] border border-black/[0.05] bg-[#f7f6f2] px-2 py-3.5 text-center"
+                >
+                  <span className="mx-auto grid h-8 w-8 place-items-center rounded-full bg-white text-[11px] font-black text-emerald-700 shadow-sm">
+                    {icon}
+                  </span>
 
-              <p className="mt-3 whitespace-pre-line text-sm leading-7 text-zinc-600">
-                {product.description}
-              </p>
+                  <p className="mt-2 text-[9px] font-black leading-tight text-zinc-900">
+                    {title}
+                  </p>
+
+                  <p className="mt-1 hidden text-[7px] font-medium text-zinc-400 min-[360px]:block">
+                    {subtitle}
+                  </p>
+                </div>
+              ),
+            )}
+          </div>
+
+          {product.description && (
+            <div className="mt-6 overflow-hidden rounded-[1.4rem] border border-black/[0.06] bg-[#faf9f6]">
+              <div className="border-b border-black/[0.05] px-5 py-4">
+                <p className="text-[8px] font-black uppercase tracking-[0.22em] text-emerald-700">
+                  About this piece
+                </p>
+
+                <h2 className="mt-1 text-[15px] font-black text-zinc-950">
+                  Product Details
+                </h2>
+              </div>
+
+              <div className="px-5 py-4">
+                <p className="whitespace-pre-line text-[12px] leading-6 text-zinc-600 sm:text-sm sm:leading-7">
+                  {product.description
+                    .replace(
+                      /^\s*product details\s*[:\-]?\s*$/gim,
+                      "",
+                    )
+                    .replace(
+                      /\n{3,}/g,
+                      "\n\n",
+                    )
+                    .trim()}
+                </p>
+              </div>
             </div>
           )}
 
-          <div className="mt-8 border-t border-black/10 pt-6">
-            <div className="flex items-end justify-between gap-4">
+          <div className="mt-6 overflow-hidden rounded-[1.4rem] border border-black/[0.06] bg-white shadow-[0_12px_35px_rgba(0,0,0,0.04)]">
+            <div className="flex items-end justify-between gap-4 border-b border-black/[0.05] bg-[#faf9f6] px-5 py-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
                   Verified Buyers
@@ -1306,6 +1507,7 @@ export default function ProductDetailPage() {
               )}
             </div>
 
+            <div className="px-5 pb-5">
             {reviews.length === 0 ? (
               <div className="mt-4 rounded-2xl bg-zinc-50 p-5 text-sm text-zinc-500">
                 No approved reviews
@@ -1319,7 +1521,7 @@ export default function ProductDetailPage() {
                       key={
                         review.id
                       }
-                      className="rounded-2xl border border-black/10 p-4"
+                      className="rounded-[1.2rem] border border-black/[0.05] bg-[#faf9f6] p-4 shadow-[0_4px_18px_rgba(0,0,0,0.025)]"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
@@ -1379,9 +1581,98 @@ export default function ProductDetailPage() {
                 )}
               </div>
             )}
+            </div>
           </div>
         </section>
       </div>
+
+      {cartNotice && (
+        <div className="fixed left-1/2 top-[78px] z-[70] w-[calc(100%-24px)] max-w-md -translate-x-1/2">
+          <div className="mx-auto flex max-w-md items-center gap-3 rounded-[1.3rem] border border-emerald-400/25 bg-[#06261c]/95 p-3.5 text-white shadow-[0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-400 text-lg font-black text-[#042016]">
+              ✓
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-300">
+                Added to Bag
+              </p>
+
+              <p className="mt-1 truncate text-[12px] font-black">
+                {product.name}
+              </p>
+
+              <p className="mt-0.5 text-[10px] font-semibold text-white/55">
+                {quantity} × {money(currentPrice)}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => router.push("/cart")}
+              className="shrink-0 rounded-full bg-white px-4 py-2.5 text-[9px] font-black text-[#06261c]"
+            >
+              View Bag →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!isReseller && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden">
+          <div className="w-full border-t border-black/[0.08] bg-white/98 px-3 pb-3 pt-3 shadow-[0_-12px_35px_rgba(0,0,0,0.14)] backdrop-blur-xl">
+            <div className="flex w-full items-center gap-2">
+              <div className="min-w-[78px] px-1">
+                <div className="flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+
+                  <p className="text-[7px] font-black uppercase tracking-[0.15em] text-emerald-700">
+                    Price
+                  </p>
+                </div>
+
+                <p className="mt-1 text-[18px] font-black leading-none tracking-[-0.04em] text-zinc-950">
+                  {money(currentPrice)}
+                </p>
+
+                {product.mrp &&
+                  Number(product.mrp) >
+                    currentPrice && (
+                    <p className="mt-1 text-[8px] font-semibold text-zinc-400 line-through">
+                      {money(product.mrp)}
+                    </p>
+                  )}
+              </div>
+
+              <button
+                type="button"
+                disabled={
+                  adding ||
+                  !selectedVariant ||
+                  availableStock <= 0
+                }
+                onClick={addToCart}
+                className="min-h-[56px] flex-1 rounded-[1rem] border-2 border-zinc-950 bg-white px-2 text-[11px] font-black text-zinc-950 transition active:scale-[0.98] disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400"
+              >
+                Add to Cart
+              </button>
+
+              <button
+                type="button"
+                disabled={
+                  adding ||
+                  !selectedVariant ||
+                  availableStock <= 0
+                }
+                onClick={buyNow}
+                className="min-h-[56px] flex-[1.15] rounded-[1rem] bg-emerald-600 px-2 text-[12px] font-black text-white shadow-[0_10px_24px_rgba(5,150,105,0.32)] transition active:scale-[0.98] disabled:bg-zinc-300 disabled:shadow-none"
+              >
+                Buy Now →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

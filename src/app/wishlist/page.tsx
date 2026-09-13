@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import { ensureUserSession } from "@/lib/user-session-init";
+import BrandLogo from "@/components/BrandLogo";
 
 type WishlistProduct = {
   id: string;
@@ -25,19 +29,88 @@ type WishlistProduct = {
   };
 };
 
-function money(value: string | number | null) {
-  if (value === null || value === undefined || value === "") {
+type ToastState = {
+  type: "SUCCESS" | "ERROR";
+  title: string;
+  message: string;
+} | null;
+
+function money(
+  value: string | number | null,
+) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
     return "₹0";
   }
 
-  return `₹${Number(value).toLocaleString("en-IN")}`;
+  return `₹${Number(
+    value,
+  ).toLocaleString("en-IN")}`;
+}
+
+function discountPercent(
+  mrp: string | number | null,
+  price: string | number,
+) {
+  if (
+    !mrp ||
+    Number(mrp) <= Number(price)
+  ) {
+    return 0;
+  }
+
+  return Math.round(
+    ((Number(mrp) -
+      Number(price)) /
+      Number(mrp)) *
+      100,
+  );
 }
 
 export default function WishlistPage() {
   const router = useRouter();
 
-  const [items, setItems] = useState<WishlistProduct[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [
+    items,
+    setItems,
+  ] = useState<
+    WishlistProduct[]
+  >([]);
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
+
+  const [
+    toast,
+    setToast,
+  ] =
+    useState<ToastState>(
+      null,
+    );
+
+  function notify(
+    type: "SUCCESS" | "ERROR",
+    title: string,
+    message: string,
+  ) {
+    setToast({
+      type,
+      title,
+      message,
+    });
+
+    window.setTimeout(
+      () => {
+        setToast(null);
+      },
+      2800,
+    );
+  }
 
   useEffect(() => {
     async function loadWishlist() {
@@ -50,21 +123,30 @@ export default function WishlistPage() {
           return;
         }
 
-        const response = await fetch(
-          "/api/wishlist",
-          {
-            cache: "no-store",
-          },
-        );
+        const response =
+          await fetch(
+            "/api/wishlist",
+            {
+              cache:
+                "no-store",
+              credentials:
+                "same-origin",
+            },
+          );
 
         if (!response.ok) {
-          throw new Error("Failed to load wishlist");
+          throw new Error(
+            "Failed to load wishlist",
+          );
         }
 
-        const data = await response.json();
+        const data =
+          await response.json();
 
         setItems(
-          Array.isArray(data?.wishlist)
+          Array.isArray(
+            data?.wishlist,
+          )
             ? data.wishlist
             : [],
         );
@@ -72,6 +154,12 @@ export default function WishlistPage() {
         console.error(
           "Wishlist page failed:",
           error,
+        );
+
+        notify(
+          "ERROR",
+          "Wishlist unavailable",
+          "Please try again shortly.",
         );
       } finally {
         setLoading(false);
@@ -81,31 +169,41 @@ export default function WishlistPage() {
     loadWishlist();
   }, []);
 
-  async function removeWishlist(productId: string) {
+  async function removeWishlist(
+    productId: string,
+  ) {
     const userId =
       await ensureUserSession();
 
     if (!userId) {
-      alert(
-        "Please sign in to use Wishlist.",
+      notify(
+        "ERROR",
+        "Sign in required",
+        "Please sign in to manage your wishlist.",
       );
+
       return;
     }
 
     try {
-      const response = await fetch(
-        "/api/wishlist",
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
+      const response =
+        await fetch(
+          "/api/wishlist",
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            credentials:
+              "same-origin",
+            body:
+              JSON.stringify({
+                userId,
+                productId,
+              }),
           },
-          body: JSON.stringify({
-            userId,
-            productId,
-          }),
-        },
-      );
+        );
 
       if (!response.ok) {
         throw new Error(
@@ -113,11 +211,19 @@ export default function WishlistPage() {
         );
       }
 
-      setItems((current) =>
-        current.filter(
-          (item) =>
-            item.productId !== productId,
-        ),
+      setItems(
+        (current) =>
+          current.filter(
+            (item) =>
+              item.productId !==
+              productId,
+          ),
+      );
+
+      notify(
+        "SUCCESS",
+        "Removed from Saved Looks",
+        "The product has been removed from your wishlist.",
       );
     } catch (error) {
       console.error(
@@ -125,189 +231,504 @@ export default function WishlistPage() {
         error,
       );
 
-      alert("Could not remove wishlist item.");
+      notify(
+        "ERROR",
+        "Could not remove",
+        "Please try again.",
+      );
     }
   }
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f7f7f5]">
-        <p className="text-sm font-semibold text-zinc-500">
-          Loading wishlist...
-        </p>
+      <main className="flex min-h-screen items-center justify-center bg-[#03140e] text-white">
+        <div className="text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-emerald-400" />
+
+          <p className="mt-4 text-[9px] font-black uppercase tracking-[0.2em] text-white/40">
+            Loading Saved Looks
+          </p>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] text-zinc-950">
-      <header className="sticky top-0 z-50 border-b border-black/5 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
-          <button
-            type="button"
-            onClick={() => router.push("/")}
-            className="text-sm font-bold"
+    <main className="min-h-screen bg-[#03140e] pb-24 text-white sm:pb-12">
+      {/* TOP CENTER TOAST */}
+      {toast && (
+        <div className="fixed left-1/2 top-[78px] z-[100] w-[calc(100%-24px)] max-w-md -translate-x-1/2">
+          <div
+            className={`flex items-center gap-3 rounded-[1.35rem] border p-3.5 shadow-[0_20px_55px_rgba(0,0,0,0.35)] backdrop-blur-xl ${
+              toast.type ===
+              "SUCCESS"
+                ? "border-emerald-300/25 bg-[#063326]/95"
+                : "border-red-300/25 bg-[#4a1111]/95"
+            }`}
           >
-            ← AR FASHIONS
-          </button>
+            <div
+              className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-black ${
+                toast.type ===
+                "SUCCESS"
+                  ? "bg-emerald-400 text-[#032017]"
+                  : "bg-red-400 text-white"
+              }`}
+            >
+              {toast.type ===
+              "SUCCESS"
+                ? "✓"
+                : "!"}
+            </div>
 
-          <h1 className="ml-auto text-sm font-black">
-            Wishlist
-          </h1>
-        </div>
-      </header>
+            <div className="min-w-0 flex-1">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-300">
+                AR Fashions
+              </p>
 
-      <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-600">
-            AR Fashions
-          </p>
+              <p className="mt-1 text-[13px] font-black text-white">
+                {toast.title}
+              </p>
 
-          <h2 className="mt-1 text-3xl font-black tracking-tight">
-            My Wishlist
-          </h2>
-
-          <p className="mt-2 text-sm text-zinc-500">
-            {items.length} saved{" "}
-            {items.length === 1
-              ? "product"
-              : "products"}
-          </p>
-        </div>
-
-        {items.length === 0 ? (
-          <div className="rounded-3xl border border-black/5 bg-white px-6 py-20 text-center shadow-sm">
-            <div className="text-5xl">♡</div>
-
-            <h3 className="mt-5 text-xl font-black">
-              Your wishlist is empty
-            </h3>
-
-            <p className="mx-auto mt-2 max-w-md text-sm text-zinc-500">
-              Save products you love and come back
-              to them anytime.
-            </p>
+              <p className="mt-0.5 text-[9px] font-semibold text-white/55">
+                {toast.message}
+              </p>
+            </div>
 
             <button
               type="button"
-              onClick={() => router.push("/")}
-              className="mt-6 rounded-xl bg-zinc-950 px-6 py-3 text-xs font-bold text-white transition hover:bg-emerald-600"
+              onClick={() =>
+                setToast(null)
+              }
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/10 text-xs font-black text-white"
             >
-              Continue Shopping
+              ×
             </button>
           </div>
+        </div>
+      )}
+
+      {/* HEADER */}
+      <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-[#03140e]/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-[70px] max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+          <button
+            type="button"
+            onClick={() =>
+              router.back()
+            }
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-sm font-black text-white"
+          >
+            ←
+          </button>
+
+          <BrandLogo
+            light
+            compact
+            onClick={() =>
+              router.push("/")
+            }
+          />
+
+          <button
+            type="button"
+            onClick={() =>
+              router.push(
+                "/cart",
+              )
+            }
+            className="ml-auto rounded-full border border-white/10 bg-white/[0.05] px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.08em] text-white"
+          >
+            Bag →
+          </button>
+        </div>
+      </header>
+
+      {/* HERO */}
+      <section className="relative overflow-hidden border-b border-white/[0.06]">
+        <div className="pointer-events-none absolute -right-24 top-[-80px] h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl" />
+
+        <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6 sm:py-12 lg:px-8">
+          <div className="relative">
+            <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-300">
+              AR Saved Edit
+            </p>
+
+            <div className="mt-3 flex items-end justify-between gap-4">
+              <div>
+                <h1 className="font-serif text-[2.8rem] leading-[0.86] tracking-[-0.045em] text-white sm:text-6xl">
+                  Saved
+                  <br />
+                  Looks.
+                </h1>
+
+                <p className="mt-4 max-w-sm text-[10px] leading-5 text-white/45 sm:text-sm">
+                  Your personal fashion edit — keep the pieces you love and return whenever you are ready.
+                </p>
+              </div>
+
+              <div className="shrink-0 text-right">
+                <p className="font-serif text-4xl text-emerald-300 sm:text-5xl">
+                  {items.length}
+                </p>
+
+                <p className="mt-1 text-[7px] font-black uppercase tracking-[0.18em] text-white/35">
+                  Saved
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-9 lg:px-8">
+        {items.length === 0 ? (
+          <div className="relative overflow-hidden rounded-[1.8rem] border border-emerald-300/10 bg-[#06261c] shadow-[0_30px_80px_rgba(0,0,0,0.3)]">
+            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-emerald-400/10 blur-3xl" />
+
+            <div className="relative p-6 sm:p-10">
+              <div className="grid gap-7 md:grid-cols-[1fr_0.9fr] md:items-center">
+                <div>
+                  <div className="grid h-14 w-14 place-items-center rounded-full border border-emerald-300/20 bg-emerald-400/10 text-3xl text-emerald-300">
+                    ♡
+                  </div>
+
+                  <p className="mt-6 text-[8px] font-black uppercase tracking-[0.28em] text-emerald-300">
+                    Your Personal Edit
+                  </p>
+
+                  <h2 className="mt-3 max-w-sm font-serif text-[2.25rem] leading-[0.92] text-white sm:text-4xl">
+                    Your saved runway starts here.
+                  </h2>
+
+                  <p className="mt-4 max-w-md text-[10px] leading-5 text-white/45 sm:text-sm">
+                    Tap the heart on any product you love. We will keep it here so your favourites are always one tap away.
+                  </p>
+
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        router.push(
+                          "/",
+                        )
+                      }
+                      className="rounded-full bg-emerald-400 px-5 py-3 text-[9px] font-black uppercase tracking-[0.08em] text-[#032017]"
+                    >
+                      Explore Collection →
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        router.push(
+                          "/reels?mode=retail",
+                        )
+                      }
+                      className="rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-[9px] font-black uppercase tracking-[0.08em] text-white"
+                    >
+                      Watch Reels
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    [
+                      "01",
+                      "Discover",
+                      "Browse the AR collection",
+                    ],
+                    [
+                      "02",
+                      "Save",
+                      "Tap ♡ on your favourites",
+                    ],
+                    [
+                      "03",
+                      "Return",
+                      "Find them here anytime",
+                    ],
+                    [
+                      "04",
+                      "Shop",
+                      "Open and buy when ready",
+                    ],
+                  ].map(
+                    ([
+                      number,
+                      title,
+                      subtitle,
+                    ]) => (
+                      <div
+                        key={
+                          number
+                        }
+                        className="rounded-[1.2rem] border border-white/[0.07] bg-white/[0.035] p-4"
+                      >
+                        <p className="font-serif text-xl text-emerald-300">
+                          {number}
+                        </p>
+
+                        <p className="mt-4 text-[9px] font-black text-white">
+                          {title}
+                        </p>
+
+                        <p className="mt-1 text-[7px] leading-4 text-white/35">
+                          {subtitle}
+                        </p>
+                      </div>
+                    ),
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {items.map((item) => {
-              const product = item.product;
+          <>
+            <div className="mb-5 flex items-end justify-between gap-3">
+              <div>
+                <p className="text-[8px] font-black uppercase tracking-[0.28em] text-emerald-300">
+                  Your Edit
+                </p>
 
-              if (!product) return null;
+                <h2 className="mt-2 font-serif text-[1.8rem] leading-none text-white">
+                  Pieces you saved
+                </h2>
+              </div>
 
-              const media =
-                product.media?.find(
-                  (entry) =>
-                    entry.type === "IMAGE",
-                ) ??
-                product.media?.[0];
+              <button
+                type="button"
+                onClick={() =>
+                  router.push("/")
+                }
+                className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[8px] font-black uppercase tracking-[0.08em] text-white/70"
+              >
+                Add More →
+              </button>
+            </div>
 
-              return (
-                <article
-                  key={item.id}
-                  className="overflow-hidden rounded-3xl border border-black/5 bg-white shadow-sm"
-                >
-                  <button
-                    type="button"
-                    onClick={() =>
-                      router.push(
-                        `/products/${product.id}`,
-                      )
-                    }
-                    className="block w-full text-left"
-                  >
-                    <div className="relative aspect-[4/5] overflow-hidden bg-zinc-100">
-                      {media ? (
-                        <img
-                          src={media.url}
-                          alt={
-                            media.altText ??
-                            product.name
+            <div className="grid grid-cols-2 gap-x-2.5 gap-y-5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+              {items.map(
+                (item) => {
+                  const product =
+                    item.product;
+
+                  if (!product) {
+                    return null;
+                  }
+
+                  const media =
+                    product.media?.find(
+                      (entry) =>
+                        entry.type ===
+                        "IMAGE",
+                    ) ??
+                    product.media?.[0];
+
+                  const discount =
+                    discountPercent(
+                      product.mrp,
+                      product.retailPrice,
+                    );
+
+                  return (
+                    <article
+                      key={item.id}
+                      className="group overflow-hidden rounded-[1.25rem] border border-white/[0.08] bg-[#061a13] shadow-[0_16px_40px_rgba(0,0,0,0.2)]"
+                    >
+                      <div className="relative aspect-[3/4] overflow-hidden bg-[#0a251c]">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            router.push(
+                              `/products/${product.id}?mode=retail`,
+                            )
                           }
-                          className="h-full w-full object-cover transition duration-500 hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-sm text-zinc-400">
-                          No image
-                        </div>
-                      )}
+                          className="block h-full w-full"
+                        >
+                          {media?.type ===
+                          "VIDEO" ? (
+                            <video
+                              src={
+                                media.url
+                              }
+                              muted
+                              playsInline
+                              className="h-full w-full object-cover"
+                            />
+                          ) : media ? (
+                            <img
+                              src={
+                                media.url
+                              }
+                              alt={
+                                media.altText ??
+                                product.name
+                              }
+                              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="grid h-full place-items-center font-serif text-xl text-white/20">
+                              AR
+                            </div>
+                          )}
+                        </button>
 
-                      <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-lg text-red-500 shadow-sm">
-                        ♥
-                      </span>
-                    </div>
-                  </button>
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
 
-                  <div className="p-4">
-                    {product.category && (
-                      <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-400">
-                        {product.category.name}
-                      </p>
-                    )}
+                        <span className="absolute left-2.5 top-2.5 rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.14em] text-emerald-200 backdrop-blur">
+                          Saved Look
+                        </span>
 
-                    <h3 className="line-clamp-1 text-sm font-bold">
-                      {product.name}
-                    </h3>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            removeWishlist(
+                              product.id,
+                            )
+                          }
+                          aria-label="Remove from Wishlist"
+                          className="absolute right-2.5 top-2.5 grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-black/55 text-base text-red-300 backdrop-blur transition active:scale-90"
+                        >
+                          ♥
+                        </button>
 
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="font-extrabold">
-                        {money(
-                          product.retailPrice,
-                        )}
-                      </span>
-
-                      {product.mrp &&
-                        Number(product.mrp) >
-                          Number(
-                            product.retailPrice,
-                          ) && (
-                          <span className="text-xs text-zinc-400 line-through">
-                            {money(product.mrp)}
+                        {discount >
+                          0 && (
+                          <span className="absolute bottom-2.5 left-2.5 rounded-full bg-emerald-400 px-2.5 py-1 text-[7px] font-black text-[#032017]">
+                            {discount}% OFF
                           </span>
                         )}
-                    </div>
+                      </div>
 
-                    <div className="mt-4 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          router.push(
-                            `/products/${product.id}`,
-                          )
-                        }
-                        className="flex-1 rounded-xl bg-zinc-950 py-3 text-[11px] font-bold text-white"
-                      >
-                        View Product
-                      </button>
+                      <div className="p-3.5">
+                        {product.category && (
+                          <p className="text-[7px] font-black uppercase tracking-[0.18em] text-emerald-300">
+                            {
+                              product
+                                .category
+                                .name
+                            }
+                          </p>
+                        )}
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          removeWishlist(
-                            product.id,
-                          )
-                        }
-                        className="rounded-xl border border-black/10 px-3 text-lg"
-                        aria-label="Remove from Wishlist"
-                      >
-                        ♡
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+                        <h3 className="mt-1.5 line-clamp-2 min-h-[2.25rem] text-[12px] font-black leading-[1.1rem] text-white">
+                          {
+                            product.name
+                          }
+                        </h3>
+
+                        <div className="mt-2.5 flex flex-wrap items-baseline gap-2">
+                          <span className="text-[15px] font-black text-white">
+                            {money(
+                              product.retailPrice,
+                            )}
+                          </span>
+
+                          {product.mrp &&
+                            Number(
+                              product.mrp,
+                            ) >
+                              Number(
+                                product.retailPrice,
+                              ) && (
+                              <span className="text-[9px] text-white/30 line-through">
+                                {money(
+                                  product.mrp,
+                                )}
+                              </span>
+                            )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            router.push(
+                              `/products/${product.id}?mode=retail`,
+                            )
+                          }
+                          className="mt-3.5 min-h-[42px] w-full rounded-xl bg-emerald-400 px-3 text-[9px] font-black uppercase tracking-[0.08em] text-[#032017] transition active:scale-[0.98]"
+                        >
+                          View Product →
+                        </button>
+                      </div>
+                    </article>
+                  );
+                },
+              )}
+            </div>
+          </>
         )}
       </section>
+
+      {/* MOBILE NAV */}
+      <nav className="fixed bottom-2 left-3 right-3 z-50 rounded-[1.35rem] border border-emerald-200/10 bg-[#03140e]/95 px-1 pb-1.5 pt-1 shadow-[0_18px_55px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:hidden">
+        <div className="grid grid-cols-4">
+          <button
+            type="button"
+            onClick={() =>
+              router.push("/")
+            }
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-white/40"
+          >
+            <span className="text-lg">
+              ⌂
+            </span>
+
+            <span className="text-[7px] font-black">
+              Home
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              router.push(
+                "/reels?mode=retail",
+              )
+            }
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-white/40"
+          >
+            <span className="text-lg">
+              ▶
+            </span>
+
+            <span className="text-[7px] font-black">
+              Reels
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-emerald-300"
+          >
+            <span className="text-lg">
+              ♥
+            </span>
+
+            <span className="text-[7px] font-black">
+              Wishlist
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              router.push(
+                "/account",
+              )
+            }
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-white/40"
+          >
+            <span className="grid h-5 w-5 place-items-center rounded-full border border-current text-[7px]">
+              A
+            </span>
+
+            <span className="text-[7px] font-black">
+              Account
+            </span>
+          </button>
+        </div>
+      </nav>
     </main>
   );
 }

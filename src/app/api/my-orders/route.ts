@@ -29,7 +29,27 @@ export async function GET() {
         },
         include: {
           address: true,
-          items: true,
+          items: {
+            include: {
+              product: {
+                select: {
+                  media: {
+                    where: {
+                      isActive: true,
+                    },
+                    orderBy: {
+                      sortOrder: "asc",
+                    },
+                    select: {
+                      url: true,
+                      thumbnailUrl: true,
+                      type: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
           payment: true,
         },
       });
@@ -110,6 +130,22 @@ export async function GET() {
               Number(
                 item.totalPrice,
               ),
+
+            image:
+              item.product.media.find(
+                (media) =>
+                  media.type ===
+                  "IMAGE",
+              )?.url ??
+              item.product.media.find(
+                (media) =>
+                  Boolean(
+                    media.thumbnailUrl,
+                  ),
+              )?.thumbnailUrl ??
+              item.product.media[0]
+                ?.url ??
+              null,
           }),
         ),
 

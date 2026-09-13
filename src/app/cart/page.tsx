@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
+import BrandLogo from "@/components/BrandLogo";
 
 type CartItem = {
   id: string;
@@ -25,160 +30,345 @@ type CartItem = {
   resellerSetPrice?: number;
 };
 
-function money(value: number) {
-  return `₹${value.toLocaleString("en-IN")}`;
+type ToastState = {
+  type: "SUCCESS" | "ERROR";
+  title: string;
+  message: string;
+} | null;
+
+function money(
+  value: number,
+) {
+  return `₹${Number(
+    value || 0,
+  ).toLocaleString("en-IN")}`;
 }
 
 export default function CartPage() {
   const router = useRouter();
 
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [
+    cart,
+    setCart,
+  ] = useState<CartItem[]>(
+    [],
+  );
+
+  const [
+    loaded,
+    setLoaded,
+  ] = useState(false);
+
+  const [
+    toast,
+    setToast,
+  ] =
+    useState<ToastState>(
+      null,
+    );
+
+  const [
+    clearConfirm,
+    setClearConfirm,
+  ] = useState(false);
+
+  function notify(
+    type: "SUCCESS" | "ERROR",
+    title: string,
+    message: string,
+  ) {
+    setToast({
+      type,
+      title,
+      message,
+    });
+
+    window.setTimeout(
+      () => {
+        setToast(null);
+      },
+      2800,
+    );
+  }
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("ar-fashions-cart");
+      const raw =
+        localStorage.getItem(
+          "ar-fashions-cart",
+        );
 
       if (raw) {
-        const parsed = JSON.parse(raw);
+        const parsed =
+          JSON.parse(raw);
 
-        if (Array.isArray(parsed)) {
+        if (
+          Array.isArray(
+            parsed,
+          )
+        ) {
           setCart(parsed);
         }
       }
     } catch (error) {
-      console.error("Cart load failed:", error);
+      console.error(
+        "Cart load failed:",
+        error,
+      );
     } finally {
       setLoaded(true);
     }
   }, []);
 
-  function saveCart(nextCart: CartItem[]) {
+  function saveCart(
+    nextCart: CartItem[],
+  ) {
     setCart(nextCart);
+
     localStorage.setItem(
       "ar-fashions-cart",
-      JSON.stringify(nextCart),
+      JSON.stringify(
+        nextCart,
+      ),
     );
   }
 
-  function increase(itemId: string) {
-    const nextCart = cart.map((item) =>
-      item.id === itemId
-        ? {
-            ...item,
-            quantity: item.quantity + 1,
-          }
-        : item,
-    );
-
-    saveCart(nextCart);
-  }
-
-  function decrease(itemId: string) {
-    const nextCart = cart
-      .map((item) =>
+  function increase(
+    itemId: string,
+  ) {
+    const nextCart =
+      cart.map((item) =>
         item.id === itemId
           ? {
               ...item,
-              quantity: item.quantity - 1,
+              quantity:
+                item.quantity +
+                1,
             }
           : item,
-      )
-      .filter((item) => item.quantity > 0);
+      );
 
-    saveCart(nextCart);
+    saveCart(
+      nextCart,
+    );
   }
 
-  function removeItem(itemId: string) {
-    const nextCart = cart.filter(
-      (item) => item.id !== itemId,
+  function decrease(
+    itemId: string,
+  ) {
+    const current =
+      cart.find(
+        (item) =>
+          item.id ===
+          itemId,
+      );
+
+    const nextCart =
+      cart
+        .map((item) =>
+          item.id ===
+          itemId
+            ? {
+                ...item,
+                quantity:
+                  item.quantity -
+                  1,
+              }
+            : item,
+        )
+        .filter(
+          (item) =>
+            item.quantity >
+            0,
+        );
+
+    saveCart(
+      nextCart,
     );
 
-    saveCart(nextCart);
+    if (
+      current?.quantity ===
+      1
+    ) {
+      notify(
+        "SUCCESS",
+        "Removed from Bag",
+        `${current.productName} was removed.`,
+      );
+    }
+  }
+
+  function removeItem(
+    itemId: string,
+  ) {
+    const current =
+      cart.find(
+        (item) =>
+          item.id ===
+          itemId,
+      );
+
+    const nextCart =
+      cart.filter(
+        (item) =>
+          item.id !==
+          itemId,
+      );
+
+    saveCart(
+      nextCart,
+    );
+
+    notify(
+      "SUCCESS",
+      "Removed from Bag",
+      current
+        ? `${current.productName} was removed.`
+        : "Item removed from your bag.",
+    );
   }
 
   function clearCart() {
     setCart([]);
-    localStorage.removeItem("ar-fashions-cart");
+
+    localStorage.removeItem(
+      "ar-fashions-cart",
+    );
+
+    setClearConfirm(
+      false,
+    );
+
+    notify(
+      "SUCCESS",
+      "Bag Cleared",
+      "All items were removed from your shopping bag.",
+    );
   }
 
-  const totalItems = useMemo(
-    () =>
-      cart.reduce(
-        (total, item) => total + item.quantity,
-        0,
-      ),
-    [cart],
-  );
-
-  const rawSubtotal = useMemo(
-    () =>
-      cart.reduce(
-        (total, item) =>
-          total + item.price * item.quantity,
-        0,
-      ),
-    [cart],
-  );
-
-  const curatedSet = useMemo(() => {
-    if (cart.length === 0) {
-      return null;
-    }
-
-    const first = cart[0];
-
-    if (
-      first.mode !== "RESELLER" ||
-      !first.resellerSetId
-    ) {
-      return null;
-    }
-
-    const setId = first.resellerSetId;
-
-    const setCount = Number(
-      first.resellerSetCount,
+  const totalItems =
+    useMemo(
+      () =>
+        cart.reduce(
+          (
+            total,
+            item,
+          ) =>
+            total +
+            item.quantity,
+          0,
+        ),
+      [cart],
     );
 
-    const setPrice = Number(
-      first.resellerSetPrice,
+  const rawSubtotal =
+    useMemo(
+      () =>
+        cart.reduce(
+          (
+            total,
+            item,
+          ) =>
+            total +
+            item.price *
+              item.quantity,
+          0,
+        ),
+      [cart],
     );
 
-    if (
-      !Number.isInteger(setCount) ||
-      setCount <= 0 ||
-      !Number.isFinite(setPrice) ||
-      setPrice <= 0
-    ) {
-      return null;
-    }
-
-    const valid = cart.every(
+  const hasCuratedSetItems =
+    cart.some(
       (item) =>
-        item.mode === "RESELLER" &&
-        item.resellerSetId === setId &&
-        Number(item.resellerSetCount) ===
-          setCount &&
-        Number(item.resellerSetPrice) ===
-          setPrice,
+        Boolean(
+          item.resellerSetId,
+        ),
     );
 
-    if (!valid) {
-      return null;
-    }
+  const curatedSet =
+    useMemo(() => {
+      if (
+        cart.length === 0
+      ) {
+        return null;
+      }
 
-    return {
-      id: setId,
-      slug:
-        first.resellerSetSlug ?? "",
-      name:
-        first.resellerSetName ??
-        "Reseller Set",
-      count: setCount,
-      price: setPrice,
-    };
-  }, [cart]);
+      const first =
+        cart[0];
+
+      if (
+        first.mode !==
+          "RESELLER" ||
+        !first.resellerSetId
+      ) {
+        return null;
+      }
+
+      const setId =
+        first.resellerSetId;
+
+      const setCount =
+        Number(
+          first.resellerSetCount,
+        );
+
+      const setPrice =
+        Number(
+          first.resellerSetPrice,
+        );
+
+      if (
+        !Number.isInteger(
+          setCount,
+        ) ||
+        setCount <= 0 ||
+        !Number.isFinite(
+          setPrice,
+        ) ||
+        setPrice <= 0
+      ) {
+        return null;
+      }
+
+      const valid =
+        cart.every(
+          (item) =>
+            item.mode ===
+              "RESELLER" &&
+            item.resellerSetId ===
+              setId &&
+            Number(
+              item.resellerSetCount,
+            ) ===
+              setCount &&
+            Number(
+              item.resellerSetPrice,
+            ) ===
+              setPrice,
+        );
+
+      if (!valid) {
+        return null;
+      }
+
+      return {
+        id: setId,
+        slug:
+          first.resellerSetSlug ??
+          "",
+        name:
+          first.resellerSetName ??
+          "Reseller Set",
+        count:
+          setCount,
+        price:
+          setPrice,
+      };
+    }, [cart]);
+
+  const invalidCuratedCart =
+    hasCuratedSetItems &&
+    !curatedSet;
 
   const subtotal =
     curatedSet
@@ -190,413 +380,1034 @@ export default function CartPage() {
     curatedSet
       ? Math.max(
           0,
-          rawSubtotal - subtotal,
+          rawSubtotal -
+            subtotal,
         )
       : 0;
 
-  const resellerGroups = useMemo(() => {
-    const groups = new Map<
-      string,
-      {
-        productId: string;
-        productName: string;
-        quantity: number;
-        moq: number;
+  const resellerGroups =
+    useMemo(() => {
+      const groups =
+        new Map<
+          string,
+          {
+            productId: string;
+            productName: string;
+            quantity: number;
+            moq: number;
+          }
+        >();
+
+      for (
+        const item of cart
+      ) {
+        if (
+          item.mode !==
+          "RESELLER"
+        ) {
+          continue;
+        }
+
+        if (
+          item.resellerSetId
+        ) {
+          continue;
+        }
+
+        const existing =
+          groups.get(
+            item.productId,
+          );
+
+        if (existing) {
+          existing.quantity +=
+            item.quantity;
+
+          existing.moq =
+            Math.max(
+              existing.moq,
+              item.resellerMOQ ??
+                1,
+            );
+        } else {
+          groups.set(
+            item.productId,
+            {
+              productId:
+                item.productId,
+              productName:
+                item.productName,
+              quantity:
+                item.quantity,
+              moq: Math.max(
+                1,
+                item.resellerMOQ ??
+                  1,
+              ),
+            },
+          );
+        }
       }
-    >();
 
-    for (const item of cart) {
-      if (item.mode !== "RESELLER") continue;
+      return Array.from(
+        groups.values(),
+      );
+    }, [cart]);
 
-      if (item.resellerSetId) {
-        continue;
-      }
+  const invalidResellerGroups =
+    useMemo(
+      () =>
+        resellerGroups.filter(
+          (group) =>
+            group.quantity <
+            group.moq,
+        ),
+      [resellerGroups],
+    );
 
-      const existing = groups.get(item.productId);
+  const hasRetailItems =
+    cart.some(
+      (item) =>
+        (
+          item.mode ??
+          "RETAIL"
+        ) === "RETAIL",
+    );
 
-      if (existing) {
-        existing.quantity += item.quantity;
-        existing.moq = Math.max(
-          existing.moq,
-          item.resellerMOQ ?? 1,
-        );
-      } else {
-        groups.set(item.productId, {
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          moq: Math.max(1, item.resellerMOQ ?? 1),
-        });
-      }
-    }
+  const hasResellerItems =
+    cart.some(
+      (item) =>
+        item.mode ===
+        "RESELLER",
+    );
 
-    return Array.from(groups.values());
-  }, [cart]);
+  const isMixedCart =
+    hasRetailItems &&
+    hasResellerItems;
 
-  const invalidResellerGroups = useMemo(
-    () =>
-      resellerGroups.filter(
-        (group) => group.quantity < group.moq,
-      ),
-    [resellerGroups],
-  );
+  const isResellerOrder =
+    hasResellerItems &&
+    !hasRetailItems;
 
   const canCheckout =
-    invalidResellerGroups.length === 0;
+    !isMixedCart &&
+    !invalidCuratedCart &&
+    invalidResellerGroups.length ===
+      0;
 
-  const delivery = subtotal >= 999 || subtotal === 0 ? 0 : 79;
+  /*
+   * Cart shows a quick delivery estimate.
+   * Checkout performs the final server
+   * validated delivery calculation.
+   */
+  const delivery =
+    subtotal >= 999 ||
+    subtotal === 0
+      ? 0
+      : 79;
 
-  const total = subtotal + delivery;
+  const total =
+    subtotal +
+    delivery;
+
+  const freeDeliveryLeft =
+    subtotal > 0 &&
+    subtotal < 999
+      ? 999 - subtotal
+      : 0;
+
+  function openProduct(
+    item: CartItem,
+  ) {
+    router.push(
+      `/products/${item.productId}?mode=${
+        item.mode ===
+        "RESELLER"
+          ? "reseller"
+          : "retail"
+      }`,
+    );
+  }
 
   if (!loaded) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f7f7f5]">
-        <p className="text-sm font-semibold text-zinc-500">
-          Loading cart...
-        </p>
+      <main className="flex min-h-screen items-center justify-center bg-[#03140e] text-white">
+        <div className="text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-emerald-400" />
+
+          <p className="mt-4 text-[9px] font-black uppercase tracking-[0.2em] text-white/40">
+            Preparing Your Bag
+          </p>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] text-zinc-950">
-      <header className="sticky top-0 z-50 border-b border-black/5 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
-          <button
-            onClick={() => router.push("/")}
-            className="text-xl font-black tracking-[-0.05em]"
+    <main className="min-h-screen bg-[#f6f5f1] pb-28 text-zinc-950 sm:pb-10">
+      {/* AR TOAST */}
+      {toast && (
+        <div className="fixed left-1/2 top-[78px] z-[120] w-[calc(100%-24px)] max-w-md -translate-x-1/2">
+          <div
+            className={`flex items-center gap-3 rounded-[1.35rem] border p-3.5 text-white shadow-[0_20px_55px_rgba(0,0,0,0.3)] backdrop-blur-xl ${
+              toast.type ===
+              "SUCCESS"
+                ? "border-emerald-300/25 bg-[#063326]/95"
+                : "border-red-300/25 bg-[#4a1111]/95"
+            }`}
           >
-            AR
-            <span className="text-emerald-600">
-              FASHIONS
-            </span>
+            <div
+              className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-black ${
+                toast.type ===
+                "SUCCESS"
+                  ? "bg-emerald-400 text-[#032017]"
+                  : "bg-red-400 text-white"
+              }`}
+            >
+              {toast.type ===
+              "SUCCESS"
+                ? "✓"
+                : "!"}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-300">
+                AR Fashions
+              </p>
+
+              <p className="mt-1 text-[13px] font-black">
+                {
+                  toast.title
+                }
+              </p>
+
+              <p className="mt-0.5 text-[9px] font-semibold text-white/55">
+                {
+                  toast.message
+                }
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setToast(null)
+              }
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/10 text-xs font-black"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* HEADER */}
+      <header className="sticky top-0 z-40 border-b border-black/[0.05] bg-[#fffefa]/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-[70px] max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+          <button
+            type="button"
+            onClick={() =>
+              router.back()
+            }
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-black/[0.06] bg-white text-sm font-black"
+          >
+            ←
           </button>
 
+          <BrandLogo
+            compact
+            onClick={() =>
+              router.push("/")
+            }
+          />
+
           <button
-            onClick={() => router.push("/")}
-            className="ml-auto rounded-full border border-black/10 px-4 py-2 text-xs font-bold"
+            type="button"
+            onClick={() =>
+              router.push("/")
+            }
+            className="ml-auto rounded-full border border-black/[0.07] bg-white px-4 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] text-zinc-600"
           >
-            ← Continue Shopping
+            Keep Shopping
           </button>
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-        <div className="mb-8 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-600">
-              AR Fashions
-            </p>
+      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
+        {/* HERO */}
+        <section className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-[#03140e] via-[#06261c] to-black p-5 text-white shadow-[0_24px_65px_rgba(0,0,0,0.2)] sm:p-7">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
 
-            <h1 className="mt-1 text-3xl font-black tracking-tight sm:text-4xl">
-              Shopping Cart
-            </h1>
+          <div className="relative flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-300">
+                AR Shopping Bag
+              </p>
 
-            <p className="mt-2 text-sm text-zinc-500">
-              {totalItems}{" "}
-              {totalItems === 1 ? "item" : "items"} in
-              your cart
-            </p>
-          </div>
+              <h1 className="mt-3 font-serif text-[2.8rem] leading-[0.86] tracking-[-0.045em] sm:text-5xl">
+                Your
+                <br />
+                Selection.
+              </h1>
 
-          {cart.length > 0 && (
-            <button
-              onClick={clearCart}
-              className="text-xs font-bold text-red-500"
-            >
-              Clear Cart
-            </button>
-          )}
-        </div>
-
-        {cart.length === 0 ? (
-          <section className="rounded-3xl border border-black/5 bg-white px-6 py-16 text-center shadow-sm">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-zinc-100 text-3xl">
-              🛒
+              <p className="mt-4 text-[10px] leading-5 text-white/45 sm:text-sm">
+                Review your pieces, quantities and order value before checkout.
+              </p>
             </div>
 
-            <h2 className="mt-6 text-xl font-black">
-              Your cart is empty
-            </h2>
+            <div className="shrink-0 text-right">
+              <p className="font-serif text-5xl text-emerald-300">
+                {
+                  totalItems
+                }
+              </p>
 
-            <p className="mt-2 text-sm text-zinc-500">
-              Add some products to continue shopping.
-            </p>
+              <p className="mt-1 text-[7px] font-black uppercase tracking-[0.18em] text-white/35">
+                {totalItems ===
+                1
+                  ? "Item"
+                  : "Items"}
+              </p>
+            </div>
+          </div>
 
-            <button
-              onClick={() => router.push("/")}
-              className="mt-6 rounded-2xl bg-zinc-950 px-8 py-4 text-sm font-black text-white transition hover:bg-emerald-600"
-            >
-              Start Shopping
-            </button>
-          </section>
-        ) : (
-          <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
-            <section className="space-y-4">
-              {cart.map((item) => (
-                <article
-                  key={item.id}
-                  className="rounded-3xl border border-black/5 bg-white p-4 shadow-sm"
+          {cart.length >
+            0 && (
+            <div className="relative mt-6 grid grid-cols-3 gap-2">
+              <div className="rounded-[1rem] border border-white/[0.08] bg-white/[0.05] p-3">
+                <p className="text-[7px] font-black uppercase tracking-[0.12em] text-white/35">
+                  Mode
+                </p>
+
+                <p className="mt-2 text-[10px] font-black">
+                  {isMixedCart
+                    ? "Mixed"
+                    : isResellerOrder
+                      ? "Reseller"
+                      : "Retail"}
+                </p>
+              </div>
+
+              <div className="rounded-[1rem] border border-white/[0.08] bg-white/[0.05] p-3">
+                <p className="text-[7px] font-black uppercase tracking-[0.12em] text-white/35">
+                  Subtotal
+                </p>
+
+                <p className="mt-2 text-[10px] font-black">
+                  {money(
+                    subtotal,
+                  )}
+                </p>
+              </div>
+
+              <div className="rounded-[1rem] border border-white/[0.08] bg-white/[0.05] p-3">
+                <p className="text-[7px] font-black uppercase tracking-[0.12em] text-white/35">
+                  Checkout
+                </p>
+
+                <p
+                  className={`mt-2 text-[10px] font-black ${
+                    canCheckout
+                      ? "text-emerald-300"
+                      : "text-amber-300"
+                  }`}
                 >
-                  <div className="flex gap-4">
-                    <div className="h-28 w-24 shrink-0 overflow-hidden rounded-2xl bg-zinc-100">
-                      {item.image ? (
-                        <img
-                          src={item.image}
-                          alt={item.productName}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-xs text-zinc-400">
-                          No Image
-                        </div>
-                      )}
-                    </div>
+                  {canCheckout
+                    ? "Ready"
+                    : "Action Needed"}
+                </p>
+              </div>
+            </div>
+          )}
+        </section>
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex justify-between gap-3">
-                        <div>
-                          <h2 className="line-clamp-2 text-sm font-black">
-                            {item.productName}
-                          </h2>
+        {cart.length ===
+        0 ? (
+          <section className="mt-5 overflow-hidden rounded-[1.8rem] border border-black/[0.05] bg-white shadow-sm">
+            <div className="px-6 py-14 text-center">
+              <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-50 font-serif text-xl text-emerald-700">
+                AR
+              </div>
 
-                          <p className="mt-1 text-xs text-zinc-500">
-                            Color: {item.colorName}
-                          </p>
+              <p className="mt-5 text-[8px] font-black uppercase tracking-[0.25em] text-emerald-700">
+                Your Bag
+              </p>
 
-                          <p className="text-xs text-zinc-500">
-                            Size: {item.sizeName}
-                          </p>
-
-                          {item.mode === "RESELLER" && (
-                            <p className="mt-1 inline-flex rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-700">
-                              Reseller
-                            </p>
-                          )}
-                        </div>
-
-                        {!item.resellerSetId ? (
-                          <button
-                            onClick={() =>
-                              removeItem(item.id)
-                            }
-                            className="text-xs font-bold text-red-500"
-                          >
-                            Remove
-                          </button>
-                        ) : (
-                          <span className="rounded-full bg-zinc-100 px-2 py-1 text-[9px] font-black uppercase text-zinc-500">
-                            Set Item
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="mt-4 flex items-center justify-between">
-                        {item.resellerSetId ? (
-                          <p className="text-xs font-bold text-emerald-700">
-                            Included in curated set
-                          </p>
-                        ) : (
-                          <p className="text-base font-black">
-                            {money(item.price)}
-                          </p>
-                        )}
-
-                        {item.resellerSetId ? (
-                          <div className="rounded-xl border border-black/10 bg-zinc-50 px-4 py-2 text-sm font-black">
-                            Qty {item.quantity}
-                          </div>
-                        ) : (
-                          <div className="flex items-center overflow-hidden rounded-xl border border-black/10">
-                            <button
-                              onClick={() =>
-                                decrease(item.id)
-                              }
-                              className="px-3 py-2 font-bold"
-                            >
-                              −
-                            </button>
-
-                            <span className="min-w-9 text-center text-sm font-bold">
-                              {item.quantity}
-                            </span>
-
-                            <button
-                              onClick={() =>
-                                increase(item.id)
-                              }
-                              className="px-3 py-2 font-bold"
-                            >
-                              +
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {!item.resellerSetId && (
-                        <p className="mt-2 text-right text-sm font-black">
-                          {money(
-                            item.price * item.quantity,
-                          )}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </section>
-
-            <aside className="h-fit rounded-3xl border border-black/5 bg-white p-6 shadow-sm lg:sticky lg:top-24">
-              <h2 className="text-lg font-black">
-                Order Summary
+              <h2 className="mt-2 font-serif text-[2rem] leading-none">
+                Nothing selected yet.
               </h2>
 
-              {curatedSet && (
-                <div className="mt-5 rounded-2xl bg-emerald-50 p-4">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-emerald-700">
-                    Curated Reseller Set
+              <p className="mx-auto mt-3 max-w-sm text-[11px] leading-5 text-zinc-500">
+                Explore the latest AR Fashions collection and add the pieces you love.
+              </p>
+
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    "/",
+                  )
+                }
+                className="mt-6 rounded-full bg-[#06261c] px-6 py-3 text-[9px] font-black uppercase tracking-[0.08em] text-white"
+              >
+                Explore Collection →
+              </button>
+            </div>
+          </section>
+        ) : (
+          <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-start">
+            {/* BAG ITEMS */}
+            <section>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-700">
+                    Selected Pieces
                   </p>
 
-                  <p className="mt-1 text-sm font-black">
-                    {curatedSet.name}
-                  </p>
-
-                  <div className="mt-3 flex items-center justify-between text-xs">
-                    <span className="text-emerald-700">
-                      {curatedSet.count} set
-                      {curatedSet.count === 1
-                        ? ""
-                        : "s"}
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        router.push(
-                          curatedSet.slug
-                            ? `/reseller-sets/${curatedSet.slug}`
-                            : "/reseller-sets",
-                        )
-                      }
-                      className="font-black text-emerald-800"
-                    >
-                      Edit Selection
-                    </button>
-                  </div>
+                  <h2 className="mt-1 text-[1.45rem] font-black tracking-[-0.03em]">
+                    Shopping Bag
+                  </h2>
                 </div>
-              )}
 
-              <div className="mt-6 space-y-4 text-sm">
-                {curatedSet && curatedSetSaving > 0 && (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-zinc-500">
-                        Normal Reseller Value
-                      </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setClearConfirm(
+                      true,
+                    )
+                  }
+                  className="rounded-full bg-red-50 px-3.5 py-2 text-[8px] font-black uppercase tracking-[0.08em] text-red-600"
+                >
+                  Clear Bag
+                </button>
+              </div>
 
-                      <span className="font-bold">
-                        {money(rawSubtotal)}
-                      </span>
-                    </div>
+              <div className="space-y-3">
+                {cart.map(
+                  (item) => {
+                    const lineTotal =
+                      item.price *
+                      item.quantity;
 
-                    <div className="flex justify-between text-emerald-700">
-                      <span>
-                        Set Saving
-                      </span>
+                    return (
+                      <article
+                        key={
+                          item.id
+                        }
+                        className="overflow-hidden rounded-[1.45rem] border border-black/[0.05] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.035)]"
+                      >
+                        <div className="p-3.5 sm:p-4">
+                          <div className="flex gap-3.5">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openProduct(
+                                  item,
+                                )
+                              }
+                              className="h-[132px] w-[98px] shrink-0 overflow-hidden rounded-[1.05rem] bg-[#eeede9] sm:h-36 sm:w-28"
+                            >
+                              {item.image ? (
+                                <img
+                                  src={
+                                    item.image
+                                  }
+                                  alt={
+                                    item.productName
+                                  }
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <div className="grid h-full place-items-center font-serif text-lg text-zinc-300">
+                                  AR
+                                </div>
+                              )}
+                            </button>
 
-                      <span className="font-black">
-                        -{money(curatedSetSaving)}
-                      </span>
-                    </div>
-                  </>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                  <div className="flex flex-wrap gap-1.5">
+                                    <span
+                                      className={`rounded-full px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.12em] ${
+                                        item.mode ===
+                                        "RESELLER"
+                                          ? "bg-emerald-50 text-emerald-700"
+                                          : "bg-zinc-100 text-zinc-500"
+                                      }`}
+                                    >
+                                      {item.mode ===
+                                      "RESELLER"
+                                        ? "Reseller"
+                                        : "Retail"}
+                                    </span>
+
+                                    {item.resellerSetId && (
+                                      <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.12em] text-violet-700">
+                                        Set Item
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      openProduct(
+                                        item,
+                                      )
+                                    }
+                                    className="mt-2 line-clamp-2 text-left text-[13px] font-black leading-5 sm:text-sm"
+                                  >
+                                    {
+                                      item.productName
+                                    }
+                                  </button>
+
+                                  <div className="mt-2 flex flex-wrap gap-1.5">
+                                    <span className="rounded-lg bg-[#f7f6f2] px-2.5 py-1.5 text-[8px] font-bold text-zinc-500">
+                                      Color ·{" "}
+                                      {
+                                        item.colorName
+                                      }
+                                    </span>
+
+                                    <span className="rounded-lg bg-[#f7f6f2] px-2.5 py-1.5 text-[8px] font-bold text-zinc-500">
+                                      Size ·{" "}
+                                      {
+                                        item.sizeName
+                                      }
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {!item.resellerSetId && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      removeItem(
+                                        item.id,
+                                      )
+                                    }
+                                    className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red-50 text-sm font-black text-red-500"
+                                    aria-label="Remove item"
+                                  >
+                                    ×
+                                  </button>
+                                )}
+                              </div>
+
+                              <div className="mt-4 flex items-end justify-between gap-3">
+                                <div>
+                                  {item.resellerSetId ? (
+                                    <>
+                                      <p className="text-[7px] font-black uppercase tracking-[0.12em] text-emerald-700">
+                                        Included In Set
+                                      </p>
+
+                                      <p className="mt-1 text-[10px] font-bold text-zinc-500">
+                                        Qty{" "}
+                                        {
+                                          item.quantity
+                                        }
+                                      </p>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                                        Unit Price
+                                      </p>
+
+                                      <p className="mt-1 text-[14px] font-black">
+                                        {money(
+                                          item.price,
+                                        )}
+                                      </p>
+                                    </>
+                                  )}
+                                </div>
+
+                                {item.resellerSetId ? (
+                                  <div className="rounded-xl bg-[#f7f6f2] px-3 py-2 text-[9px] font-black">
+                                    Qty{" "}
+                                    {
+                                      item.quantity
+                                    }
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center overflow-hidden rounded-xl border border-black/[0.08] bg-[#faf9f6]">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        decrease(
+                                          item.id,
+                                        )
+                                      }
+                                      className="grid h-9 w-9 place-items-center text-sm font-black"
+                                    >
+                                      −
+                                    </button>
+
+                                    <span className="min-w-8 text-center text-[10px] font-black">
+                                      {
+                                        item.quantity
+                                      }
+                                    </span>
+
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        increase(
+                                          item.id,
+                                        )
+                                      }
+                                      className="grid h-9 w-9 place-items-center text-sm font-black"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {!item.resellerSetId && (
+                            <div className="mt-3 flex items-center justify-between border-t border-black/[0.05] pt-3">
+                              <span className="text-[8px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                                Line Total
+                              </span>
+
+                              <span className="text-[15px] font-black">
+                                {money(
+                                  lineTotal,
+                                )}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  },
                 )}
+              </div>
+            </section>
 
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">
-                    Subtotal
-                  </span>
+            {/* SUMMARY */}
+            <aside className="overflow-hidden rounded-[1.6rem] border border-black/[0.05] bg-white shadow-[0_12px_35px_rgba(0,0,0,0.045)] lg:sticky lg:top-24">
+              <div className="bg-[#06261c] p-5 text-white">
+                <p className="text-[8px] font-black uppercase tracking-[0.22em] text-emerald-300">
+                  Order Summary
+                </p>
 
-                  <span className="font-bold">
-                    {money(subtotal)}
-                  </span>
-                </div>
+                <div className="mt-3 flex items-end justify-between gap-3">
+                  <div>
+                    <h2 className="font-serif text-[1.9rem] leading-none">
+                      Bag Total
+                    </h2>
 
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">
-                    Delivery
-                  </span>
-
-                  <span className="font-bold">
-                    {delivery === 0
-                      ? "FREE"
-                      : money(delivery)}
-                  </span>
-                </div>
-
-                <div className="border-t border-black/10 pt-4">
-                  <div className="flex justify-between">
-                    <span className="font-black">
-                      Total
-                    </span>
-
-                    <span className="text-xl font-black">
-                      {money(total)}
-                    </span>
+                    <p className="mt-2 text-[9px] text-white/45">
+                      {
+                        totalItems
+                      }{" "}
+                      {totalItems ===
+                      1
+                        ? "item"
+                        : "items"}
+                    </p>
                   </div>
+
+                  <p className="text-[1.65rem] font-black">
+                    {money(
+                      total,
+                    )}
+                  </p>
                 </div>
               </div>
 
-              {subtotal > 0 && subtotal < 999 && (
-                <p className="mt-4 rounded-xl bg-emerald-50 p-3 text-xs font-semibold text-emerald-700">
-                  Add {money(999 - subtotal)} more for
-                  FREE delivery.
-                </p>
-              )}
+              <div className="p-5">
+                {curatedSet && (
+                  <div className="rounded-[1.15rem] border border-emerald-100 bg-emerald-50/60 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[7px] font-black uppercase tracking-[0.16em] text-emerald-700">
+                          Curated Reseller Set
+                        </p>
 
-              {invalidResellerGroups.length > 0 && (
-                <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                  <p className="text-sm font-black text-amber-900">
-                    Reseller MOQ not reached
-                  </p>
+                        <p className="mt-1 text-[12px] font-black">
+                          {
+                            curatedSet.name
+                          }
+                        </p>
 
-                  <div className="mt-3 space-y-2">
-                    {invalidResellerGroups.map(
-                      (group) => (
-                        <div
-                          key={group.productId}
-                          className="text-xs font-semibold text-amber-800"
-                        >
-                          {group.productName}:{" "}
-                          {group.quantity}/{group.moq} pcs
-                          · Add{" "}
-                          {group.moq -
-                            group.quantity}{" "}
-                          more
+                        <p className="mt-1 text-[9px] text-zinc-500">
+                          {
+                            curatedSet.count
+                          }{" "}
+                          set
+                          {curatedSet.count ===
+                          1
+                            ? ""
+                            : "s"}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          router.push(
+                            curatedSet.slug
+                              ? `/reseller-sets/${curatedSet.slug}`
+                              : "/reseller-sets",
+                          )
+                        }
+                        className="rounded-full bg-white px-3 py-2 text-[7px] font-black uppercase tracking-[0.08em] text-emerald-700"
+                      >
+                        Edit Set
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-5 space-y-3 text-[11px]">
+                  {curatedSet &&
+                    curatedSetSaving >
+                      0 && (
+                      <>
+                        <div className="flex justify-between gap-4">
+                          <span className="text-zinc-500">
+                            Normal reseller value
+                          </span>
+
+                          <span className="font-black">
+                            {money(
+                              rawSubtotal,
+                            )}
+                          </span>
                         </div>
-                      ),
+
+                        <div className="flex justify-between gap-4 text-emerald-700">
+                          <span>
+                            Curated set saving
+                          </span>
+
+                          <span className="font-black">
+                            -
+                            {money(
+                              curatedSetSaving,
+                            )}
+                          </span>
+                        </div>
+                      </>
                     )}
+
+                  <div className="flex justify-between gap-4">
+                    <span className="text-zinc-500">
+                      Subtotal
+                    </span>
+
+                    <span className="font-black">
+                      {money(
+                        subtotal,
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between gap-4">
+                    <div>
+                      <span className="text-zinc-500">
+                        Delivery estimate
+                      </span>
+
+                      <p className="mt-1 text-[7px] text-zinc-400">
+                        Final charge confirmed at checkout
+                      </p>
+                    </div>
+
+                    <span
+                      className={`font-black ${
+                        delivery ===
+                        0
+                          ? "text-emerald-700"
+                          : ""
+                      }`}
+                    >
+                      {delivery ===
+                      0
+                        ? "FREE"
+                        : money(
+                            delivery,
+                          )}
+                    </span>
+                  </div>
+
+                  <div className="border-t border-black/[0.07] pt-4">
+                    <div className="flex items-end justify-between gap-3">
+                      <span className="font-black">
+                        Estimated Total
+                      </span>
+
+                      <span className="text-[1.35rem] font-black">
+                        {money(
+                          total,
+                        )}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              )}
 
-              {canCheckout && (
-                <button
-                  onClick={() =>
-                    router.push("/checkout")
-                  }
-                  className="mt-6 w-full rounded-2xl bg-zinc-950 py-4 text-sm font-black text-white transition hover:bg-emerald-600"
-                >
-                  Proceed to Checkout
-                </button>
-              )}
+                {freeDeliveryLeft >
+                  0 && (
+                  <div className="mt-5 rounded-[1.1rem] bg-emerald-50 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-[9px] font-black text-emerald-800">
+                        Add{" "}
+                        {money(
+                          freeDeliveryLeft,
+                        )}{" "}
+                        more
+                      </p>
 
-              <div className="mt-4 text-center text-[11px] text-zinc-400">
-                Secure checkout • AR Fashions
+                      <span className="text-[7px] font-black uppercase tracking-[0.1em] text-emerald-700">
+                        Free Delivery
+                      </span>
+                    </div>
+
+                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-emerald-100">
+                      <div
+                        className="h-full rounded-full bg-emerald-600"
+                        style={{
+                          width: `${Math.min(
+                            100,
+                            (subtotal /
+                              999) *
+                              100,
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {isMixedCart && (
+                  <div className="mt-5 rounded-[1.1rem] border border-red-200 bg-red-50 p-4">
+                    <p className="text-[10px] font-black text-red-800">
+                      Retail + Reseller items cannot be checked out together.
+                    </p>
+
+                    <p className="mt-1 text-[8px] leading-4 text-red-600">
+                      Place retail and reseller orders separately.
+                    </p>
+                  </div>
+                )}
+
+                {invalidCuratedCart && (
+                  <div className="mt-5 rounded-[1.1rem] border border-red-200 bg-red-50 p-4">
+                    <p className="text-[10px] font-black text-red-800">
+                      Reseller set needs attention
+                    </p>
+
+                    <p className="mt-1 text-[8px] leading-4 text-red-600">
+                      Rebuild the curated set before checkout.
+                    </p>
+                  </div>
+                )}
+
+                {invalidResellerGroups.length >
+                  0 && (
+                  <div className="mt-5 rounded-[1.1rem] border border-amber-200 bg-amber-50 p-4">
+                    <p className="text-[10px] font-black text-amber-900">
+                      Reseller MOQ not reached
+                    </p>
+
+                    <div className="mt-3 space-y-2">
+                      {invalidResellerGroups.map(
+                        (
+                          group,
+                        ) => (
+                          <div
+                            key={
+                              group.productId
+                            }
+                            className="rounded-xl bg-white/70 px-3 py-2.5"
+                          >
+                            <p className="text-[9px] font-black text-amber-900">
+                              {
+                                group.productName
+                              }
+                            </p>
+
+                            <p className="mt-1 text-[8px] text-amber-700">
+                              {
+                                group.quantity
+                              }
+                              /
+                              {
+                                group.moq
+                              }{" "}
+                              pcs · Add{" "}
+                              {group.moq -
+                                group.quantity}{" "}
+                              more
+                            </p>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {canCheckout && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(
+                        "/checkout",
+                      )
+                    }
+                    className="mt-5 hidden min-h-[52px] w-full rounded-[1rem] bg-emerald-600 px-5 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-emerald-600/15 transition active:scale-[0.98] sm:block"
+                  >
+                    Proceed to Checkout →
+                  </button>
+                )}
+
+                <div className="mt-5 grid grid-cols-3 gap-2">
+                  {[
+                    [
+                      "✓",
+                      "Secure",
+                    ],
+                    [
+                      "₹",
+                      "COD",
+                    ],
+                    [
+                      "◎",
+                      "Protected",
+                    ],
+                  ].map(
+                    ([
+                      icon,
+                      label,
+                    ]) => (
+                      <div
+                        key={
+                          label
+                        }
+                        className="rounded-xl bg-[#f7f6f2] px-2 py-3 text-center"
+                      >
+                        <p className="text-sm font-black text-emerald-700">
+                          {icon}
+                        </p>
+
+                        <p className="mt-1 text-[7px] font-black uppercase tracking-[0.08em] text-zinc-500">
+                          {
+                            label
+                          }
+                        </p>
+                      </div>
+                    ),
+                  )}
+                </div>
               </div>
             </aside>
           </div>
         )}
       </div>
+
+      {/* CLEAR BAG CONFIRMATION */}
+      {clearConfirm && (
+        <div className="fixed inset-0 z-[130] grid place-items-end bg-black/55 p-3 backdrop-blur-sm sm:place-items-center">
+          <div className="w-full max-w-md overflow-hidden rounded-[1.7rem] bg-white shadow-[0_30px_90px_rgba(0,0,0,0.3)]">
+            <div className="bg-[#06261c] p-5 text-white">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-300">
+                AR Shopping Bag
+              </p>
+
+              <h2 className="mt-2 font-serif text-[1.8rem]">
+                Clear your bag?
+              </h2>
+
+              <p className="mt-2 text-[10px] leading-5 text-white/45">
+                All selected items will be removed from this shopping bag.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 p-4">
+              <button
+                type="button"
+                onClick={() =>
+                  setClearConfirm(
+                    false,
+                  )
+                }
+                className="min-h-[48px] rounded-[1rem] border border-black/[0.08] bg-white text-[9px] font-black uppercase tracking-[0.08em]"
+              >
+                Keep Items
+              </button>
+
+              <button
+                type="button"
+                onClick={
+                  clearCart
+                }
+                className="min-h-[48px] rounded-[1rem] bg-red-600 text-[9px] font-black uppercase tracking-[0.08em] text-white"
+              >
+                Clear Bag
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MOBILE CHECKOUT BAR */}
+      {cart.length >
+        0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/[0.07] bg-[#fffefa]/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.09)] backdrop-blur-xl sm:hidden">
+          <div className="mx-auto flex max-w-md items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                Estimated Total
+              </p>
+
+              <p className="mt-0.5 text-[18px] font-black leading-none">
+                {money(
+                  total,
+                )}
+              </p>
+
+              <p className="mt-1 text-[7px] font-semibold text-zinc-400">
+                {
+                  totalItems
+                }{" "}
+                {totalItems ===
+                1
+                  ? "item"
+                  : "items"}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              disabled={
+                !canCheckout
+              }
+              onClick={() =>
+                router.push(
+                  "/checkout",
+                )
+              }
+              className="min-h-[50px] min-w-[175px] rounded-[1rem] bg-emerald-600 px-5 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-emerald-600/15 transition active:scale-[0.98] disabled:bg-zinc-300 disabled:text-zinc-500 disabled:shadow-none"
+            >
+              {canCheckout
+                ? "Checkout →"
+                : isMixedCart
+                  ? "Separate Orders"
+                  : invalidCuratedCart
+                    ? "Fix Set"
+                    : "MOQ Required"}
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

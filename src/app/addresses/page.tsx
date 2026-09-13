@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+import BrandLogo from "@/components/BrandLogo";
 
 type Address = {
   id: string;
@@ -20,6 +21,12 @@ type Address = {
   landmark: string | null;
   isDefault: boolean;
 };
+
+type ToastState = {
+  type: "SUCCESS" | "ERROR";
+  title: string;
+  message: string;
+} | null;
 
 export default function AddressesPage() {
   const router = useRouter();
@@ -38,6 +45,9 @@ export default function AddressesPage() {
 
   const [showForm, setShowForm] =
     useState(false);
+
+  const [toast, setToast] =
+    useState<ToastState>(null);
 
   const [name, setName] =
     useState("");
@@ -66,6 +76,25 @@ export default function AddressesPage() {
 
   const [landmark, setLandmark] =
     useState("");
+
+  function notify(
+    type: "SUCCESS" | "ERROR",
+    title: string,
+    message: string,
+  ) {
+    setToast({
+      type,
+      title,
+      message,
+    });
+
+    window.setTimeout(
+      () => {
+        setToast(null);
+      },
+      3000,
+    );
+  }
 
   const loadAddresses =
     useCallback(async () => {
@@ -182,8 +211,18 @@ export default function AddressesPage() {
       setShowForm(false);
 
       await loadAddresses();
+
+      notify(
+        "SUCCESS",
+        "Address Saved",
+        addresses.length === 0
+          ? "Your first address is ready for checkout."
+          : "Delivery address added successfully.",
+      );
     } catch (error) {
-      alert(
+      notify(
+        "ERROR",
+        "Could Not Save",
         error instanceof Error
           ? error.message
           : "Failed to save address.",
@@ -195,6 +234,7 @@ export default function AddressesPage() {
 
   async function makeDefault(
     addressId: string,
+    goToCheckout = false,
   ) {
     try {
       const response =
@@ -226,41 +266,143 @@ export default function AddressesPage() {
       }
 
       await loadAddresses();
+
+      notify(
+        "SUCCESS",
+        "Default Address Updated",
+        goToCheckout
+          ? "Using this address for your checkout."
+          : "This is now your preferred delivery address.",
+      );
+
+      if (goToCheckout) {
+        window.setTimeout(
+          () => {
+            router.push(
+              "/checkout",
+            );
+          },
+          350,
+        );
+      }
+
+      return true;
     } catch (error) {
-      alert(
+      notify(
+        "ERROR",
+        "Update Failed",
         error instanceof Error
           ? error.message
           : "Failed to update address.",
       );
+
+      return false;
     }
   }
 
+  function useAtCheckout(
+    address: Address,
+  ) {
+    if (address.isDefault) {
+      router.push(
+        "/checkout",
+      );
+
+      return;
+    }
+
+    void makeDefault(
+      address.id,
+      true,
+    );
+  }
+
+  const defaultAddress =
+    addresses.find(
+      (address) =>
+        address.isDefault,
+    );
+
   return (
-    <main className="min-h-screen bg-[#f7f7f5] text-zinc-950">
-      <header className="border-b border-black/5 bg-white">
-        <div className="mx-auto flex h-16 max-w-5xl items-center px-4">
+    <main className="min-h-screen bg-[#f7f6f2] pb-12 text-zinc-950">
+      {/* TOP-CENTER AR TOAST */}
+      {toast && (
+        <div className="fixed left-1/2 top-[78px] z-[120] w-[calc(100%-24px)] max-w-md -translate-x-1/2">
+          <div
+            className={`flex items-center gap-3 rounded-[1.35rem] border p-3.5 text-white shadow-[0_20px_55px_rgba(0,0,0,0.28)] backdrop-blur-xl ${
+              toast.type ===
+              "SUCCESS"
+                ? "border-emerald-300/25 bg-[#063326]/95"
+                : "border-red-300/25 bg-[#4a1111]/95"
+            }`}
+          >
+            <div
+              className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-black ${
+                toast.type ===
+                "SUCCESS"
+                  ? "bg-emerald-400 text-[#032017]"
+                  : "bg-red-400 text-white"
+              }`}
+            >
+              {toast.type ===
+              "SUCCESS"
+                ? "✓"
+                : "!"}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p
+                className={`text-[8px] font-black uppercase tracking-[0.2em] ${
+                  toast.type ===
+                  "SUCCESS"
+                    ? "text-emerald-300"
+                    : "text-red-200"
+                }`}
+              >
+                AR Fashions
+              </p>
+
+              <p className="mt-1 text-[13px] font-black">
+                {toast.title}
+              </p>
+
+              <p className="mt-0.5 text-[9px] font-semibold text-white/55">
+                {toast.message}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setToast(null)
+              }
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/10 text-xs font-black"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* HEADER */}
+      <header className="sticky top-0 z-40 border-b border-black/[0.06] bg-[#fffefa]/95 shadow-[0_1px_12px_rgba(0,0,0,0.03)] backdrop-blur-xl">
+        <div className="mx-auto flex h-[68px] max-w-5xl items-center gap-3 px-4 sm:px-6">
           <button
             type="button"
             onClick={() =>
               router.back()
             }
-            className="rounded-full px-3 py-2 text-sm font-bold"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-zinc-100 text-sm font-black transition active:scale-95"
           >
             ←
           </button>
 
-          <button
-            type="button"
+          <BrandLogo
+            compact
             onClick={() =>
               router.push("/")
             }
-            className="ml-3 text-xl font-black tracking-[-0.05em]"
-          >
-            AR
-            <span className="text-emerald-600">
-              FASHIONS
-            </span>
-          </button>
+          />
 
           <button
             type="button"
@@ -268,158 +410,408 @@ export default function AddressesPage() {
               resetForm();
               setShowForm(true);
             }}
-            className="ml-auto rounded-xl bg-zinc-950 px-4 py-2 text-xs font-bold text-white"
+            className="ml-auto rounded-full bg-zinc-950 px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-sm transition active:scale-[0.98]"
           >
             + Add Address
           </button>
         </div>
       </header>
 
-      <div className="mx-auto max-w-5xl px-4 py-8">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-400">
-            Account
+      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+        {/* TITLE */}
+        <section>
+          <p className="text-[8px] font-black uppercase tracking-[0.28em] text-emerald-700">
+            AR Fashions · Account
           </p>
 
-          <h1 className="mt-1 text-2xl font-black">
-            Saved Addresses
-          </h1>
+          <div className="mt-2 flex items-end justify-between gap-4">
+            <div>
+              <h1 className="font-serif text-[2.35rem] leading-none tracking-[-0.04em] sm:text-5xl">
+                Saved Addresses
+              </h1>
 
-          <p className="mt-2 text-sm text-zinc-500">
-            Choose your preferred
-            delivery address at
-            checkout.
-          </p>
-        </div>
+              <p className="mt-3 max-w-lg text-[11px] leading-5 text-zinc-500 sm:text-sm">
+                Manage your preferred delivery locations and choose the address you want to use at checkout.
+              </p>
+            </div>
+
+            {!loading &&
+              !error &&
+              addresses.length >
+                0 && (
+                <span className="shrink-0 rounded-full bg-zinc-950 px-3 py-2 text-[9px] font-black text-white">
+                  {
+                    addresses.length
+                  }{" "}
+                  Saved
+                </span>
+              )}
+          </div>
+        </section>
+
+        {/* ACCOUNT DELIVERY STATUS */}
+        {!loading &&
+          !error &&
+          addresses.length >
+            0 && (
+            <section className="mt-6 grid grid-cols-3 gap-2">
+              <div className="rounded-[1.2rem] border border-black/[0.05] bg-white p-3 text-center shadow-sm">
+                <span className="mx-auto grid h-8 w-8 place-items-center rounded-full bg-emerald-50 text-[11px] font-black text-emerald-700">
+                  ✓
+                </span>
+
+                <p className="mt-2 text-[8px] font-black">
+                  Checkout Ready
+                </p>
+
+                <p className="mt-1 text-[6px] text-zinc-400">
+                  Address saved
+                </p>
+              </div>
+
+              <div className="rounded-[1.2rem] border border-black/[0.05] bg-white p-3 text-center shadow-sm">
+                <span className="mx-auto grid h-8 w-8 place-items-center rounded-full bg-emerald-50 text-[11px] font-black text-emerald-700">
+                  ₹
+                </span>
+
+                <p className="mt-2 text-[8px] font-black">
+                  COD Ready
+                </p>
+
+                <p className="mt-1 text-[6px] text-zinc-400">
+                  Pay on delivery
+                </p>
+              </div>
+
+              <div className="rounded-[1.2rem] border border-black/[0.05] bg-white p-3 text-center shadow-sm">
+                <span className="mx-auto grid h-8 w-8 place-items-center rounded-full bg-emerald-50 text-[11px] font-black text-emerald-700">
+                  ◎
+                </span>
+
+                <p className="mt-2 text-[8px] font-black">
+                  Secure
+                </p>
+
+                <p className="mt-1 text-[6px] text-zinc-400">
+                  Account protected
+                </p>
+              </div>
+            </section>
+          )}
 
         {loading ? (
-          <div className="mt-6 rounded-3xl bg-white p-8 text-center shadow-sm">
-            Loading addresses...
+          <div className="mt-6 rounded-[1.7rem] border border-black/[0.05] bg-white p-10 text-center shadow-sm">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-emerald-500" />
+
+            <p className="mt-4 text-[11px] font-bold text-zinc-500">
+              Loading addresses...
+            </p>
           </div>
         ) : error ? (
-          <div className="mt-6 rounded-3xl bg-white p-8 text-center shadow-sm">
-            <p className="font-bold">
-              {error}
-            </p>
+          <div className="mt-6 rounded-[1.7rem] border border-red-100 bg-white p-8 text-center shadow-sm">
+            <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-red-50 text-xl font-black text-red-500">
+              !
+            </div>
 
-            <p className="mt-2 text-sm text-zinc-500">
-              Place an order first
-              to create your secure
-              customer session.
-            </p>
-          </div>
-        ) : addresses.length === 0 ? (
-          <div className="mt-6 rounded-3xl bg-white p-8 text-center shadow-sm">
-            <h2 className="font-black">
-              No saved addresses
+            <h2 className="mt-4 text-lg font-black">
+              Unable to load addresses
             </h2>
 
-            <p className="mt-2 text-sm text-zinc-500">
-              Add your first delivery
-              address.
+            <p className="mt-2 text-sm leading-6 text-zinc-500">
+              {error}
             </p>
 
             <button
               type="button"
-              onClick={() =>
-                setShowForm(true)
-              }
-              className="mt-5 rounded-xl bg-zinc-950 px-5 py-3 text-sm font-bold text-white"
+              onClick={() => {
+                setLoading(true);
+                void loadAddresses();
+              }}
+              className="mt-5 rounded-xl bg-zinc-950 px-5 py-3 text-sm font-black text-white"
             >
-              Add Address
+              Try Again
+            </button>
+          </div>
+        ) : addresses.length ===
+          0 ? (
+          <div className="mt-6 rounded-[1.8rem] border border-black/[0.05] bg-white px-6 py-14 text-center shadow-sm">
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-50 text-2xl text-emerald-700">
+              ⌂
+            </div>
+
+            <p className="mt-5 text-[8px] font-black uppercase tracking-[0.2em] text-emerald-700">
+              Delivery Address
+            </p>
+
+            <h2 className="mt-2 text-xl font-black">
+              No saved addresses
+            </h2>
+
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500">
+              Add your first delivery address to make checkout faster.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                resetForm();
+                setShowForm(true);
+              }}
+              className="mt-6 rounded-2xl bg-emerald-600 px-7 py-3.5 text-sm font-black text-white shadow-lg shadow-emerald-600/15"
+            >
+              Add First Address →
             </button>
           </div>
         ) : (
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {addresses.map(
-              (address) => (
-                <section
-                  key={address.id}
-                  className={`rounded-3xl border bg-white p-5 shadow-sm ${
-                    address.isDefault
-                      ? "border-emerald-500"
-                      : "border-black/5"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-black">
-                        {address.name}
-                      </p>
+          <section className="mt-6">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-[8px] font-black uppercase tracking-[0.18em] text-zinc-400">
+                  Delivery Book
+                </p>
 
-                      <p className="mt-1 text-sm font-semibold text-zinc-600">
-                        {address.phone}
-                      </p>
-                    </div>
+                <h2 className="mt-1 text-lg font-black">
+                  Your saved locations
+                </h2>
+              </div>
 
+              {defaultAddress && (
+                <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.1em] text-emerald-700">
+                  Default Ready
+                </span>
+              )}
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {addresses.map(
+                (
+                  address,
+                  index,
+                ) => (
+                  <article
+                    key={address.id}
+                    className={`relative overflow-hidden rounded-[1.6rem] border bg-white shadow-[0_12px_35px_rgba(0,0,0,0.04)] ${
+                      address.isDefault
+                        ? "border-emerald-400/70"
+                        : "border-black/[0.06]"
+                    }`}
+                  >
                     {address.isDefault && (
-                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-700">
-                        Default
-                      </span>
+                      <div className="h-1 w-full bg-emerald-500" />
                     )}
-                  </div>
 
-                  <p className="mt-4 text-sm leading-6 text-zinc-600">
-                    {
-                      address.addressLine1
-                    }
-                    {address.addressLine2
-                      ? `, ${address.addressLine2}`
-                      : ""}
-                    , {address.city},{" "}
-                    {address.state} -{" "}
-                    {address.pincode}
+                    <div className="p-4 sm:p-5">
+                      {/* ADDRESS HEADER */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-start gap-3">
+                          <span
+                            className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-black ${
+                              address.isDefault
+                                ? "bg-emerald-600 text-white"
+                                : "bg-[#f7f6f2] text-zinc-600"
+                            }`}
+                          >
+                            ⌂
+                          </span>
+
+                          <div className="min-w-0">
+                            <p className="text-[7px] font-black uppercase tracking-[0.16em] text-zinc-400">
+                              Address{" "}
+                              {index + 1}
+                            </p>
+
+                            <h3 className="mt-1 truncate text-[15px] font-black">
+                              {
+                                address.name
+                              }
+                            </h3>
+
+                            <p className="mt-1 text-[10px] font-semibold text-zinc-500">
+                              +91{" "}
+                              {
+                                address.phone
+                              }
+                            </p>
+                          </div>
+                        </div>
+
+                        {address.isDefault ? (
+                          <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.1em] text-emerald-700">
+                            ✓ Default
+                          </span>
+                        ) : (
+                          <span className="shrink-0 rounded-full bg-zinc-100 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.1em] text-zinc-400">
+                            Saved
+                          </span>
+                        )}
+                      </div>
+
+                      {/* FULL ADDRESS */}
+                      <div className="mt-5 rounded-[1.2rem] bg-[#faf9f6] p-4">
+                        <p className="text-[7px] font-black uppercase tracking-[0.18em] text-emerald-700">
+                          Full Delivery Address
+                        </p>
+
+                        <p className="mt-2 text-[11px] leading-5 text-zinc-700">
+                          {
+                            address.addressLine1
+                          }
+                          {address.addressLine2
+                            ? `, ${address.addressLine2}`
+                            : ""}
+                        </p>
+
+                        <div className="mt-4 grid grid-cols-2 gap-2">
+                          <div className="rounded-xl bg-white px-3 py-2.5">
+                            <p className="text-[6px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                              City
+                            </p>
+
+                            <p className="mt-1 text-[9px] font-black">
+                              {
+                                address.city
+                              }
+                            </p>
+                          </div>
+
+                          <div className="rounded-xl bg-white px-3 py-2.5">
+                            <p className="text-[6px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                              Pincode
+                            </p>
+
+                            <p className="mt-1 text-[9px] font-black">
+                              {
+                                address.pincode
+                              }
+                            </p>
+                          </div>
+
+                          <div className="col-span-2 rounded-xl bg-white px-3 py-2.5">
+                            <p className="text-[6px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                              State
+                            </p>
+
+                            <p className="mt-1 text-[9px] font-black">
+                              {
+                                address.state
+                              }
+                            </p>
+                          </div>
+                        </div>
+
+                        {address.landmark && (
+                          <div className="mt-2 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2.5">
+                            <p className="text-[6px] font-black uppercase tracking-[0.12em] text-amber-700">
+                              Landmark
+                            </p>
+
+                            <p className="mt-1 text-[9px] font-semibold text-amber-900">
+                              Near{" "}
+                              {
+                                address.landmark
+                              }
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* DELIVERY READY INFO */}
+                      <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2.5">
+                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-600 text-[9px] font-black text-white">
+                          ✓
+                        </span>
+
+                        <div>
+                          <p className="text-[8px] font-black text-emerald-800">
+                            Ready for Checkout
+                          </p>
+
+                          <p className="mt-0.5 text-[7px] text-emerald-700/65">
+                            This address can be used for your next order.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* ACTIONS */}
+                      <div className="mt-4 grid gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            useAtCheckout(
+                              address,
+                            )
+                          }
+                          className="min-h-[48px] w-full rounded-[1rem] bg-emerald-600 px-4 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-[0_10px_25px_rgba(5,150,105,0.16)] transition active:scale-[0.98]"
+                        >
+                          Use at Checkout →
+                        </button>
+
+                        {!address.isDefault && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void makeDefault(
+                                address.id,
+                              )
+                            }
+                            className="min-h-[44px] w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 text-[9px] font-black uppercase tracking-[0.08em] text-zinc-700 transition active:scale-[0.98]"
+                          >
+                            Set as Default Address
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                ),
+              )}
+            </div>
+          </section>
+        )}
+      </div>
+
+      {/* ADD ADDRESS MODAL */}
+      {showForm && (
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4">
+          <div className="mx-auto my-4 max-w-xl overflow-hidden rounded-[1.8rem] bg-[#fffefa] shadow-[0_30px_90px_rgba(0,0,0,0.3)] sm:my-8">
+            <div className="border-b border-black/[0.06] bg-[#06261c] p-5 text-white sm:p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[7px] font-black uppercase tracking-[0.22em] text-emerald-300">
+                    AR Fashions · Delivery
                   </p>
 
-                  {address.landmark && (
-                    <p className="mt-2 text-xs text-zinc-500">
-                      Landmark:{" "}
-                      {address.landmark}
-                    </p>
-                  )}
+                  <h2 className="mt-2 font-serif text-[2rem] leading-none">
+                    Add Address
+                  </h2>
 
-                  {!address.isDefault && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        makeDefault(
-                          address.id,
-                        )
-                      }
-                      className="mt-5 rounded-xl border border-black/10 px-4 py-2 text-xs font-bold"
-                    >
-                      Set as Default
-                    </button>
-                  )}
-                </section>
-              ),
-            )}
-          </div>
-        )}
-
-        {showForm && (
-          <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 p-4">
-            <div className="mx-auto my-6 max-w-xl rounded-3xl bg-white p-5 shadow-xl sm:p-7">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-black">
-                  Add Address
-                </h2>
+                  <p className="mt-2 text-[10px] leading-5 text-white/45">
+                    Save a delivery location for faster checkout.
+                  </p>
+                </div>
 
                 <button
                   type="button"
                   onClick={() =>
                     setShowForm(false)
                   }
-                  className="rounded-full bg-zinc-100 px-3 py-2 font-bold"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10 text-sm font-black"
                 >
                   ✕
                 </button>
               </div>
+            </div>
 
-              <form
-                onSubmit={saveAddress}
-                className="mt-6 grid gap-4 sm:grid-cols-2"
-              >
+            <form
+              onSubmit={
+                saveAddress
+              }
+              className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6"
+            >
+              <div className="sm:col-span-2">
+                <p className="mb-2 text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                  Recipient Name
+                </p>
+
                 <input
                   required
                   value={name}
@@ -428,9 +820,15 @@ export default function AddressesPage() {
                       e.target.value,
                     )
                   }
-                  placeholder="Full Name"
-                  className="rounded-xl border border-black/10 px-4 py-3 text-sm sm:col-span-2"
+                  placeholder="Full name"
+                  className="w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
                 />
+              </div>
+
+              <div className="sm:col-span-2">
+                <p className="mb-2 text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                  Mobile Number
+                </p>
 
                 <input
                   required
@@ -442,13 +840,22 @@ export default function AddressesPage() {
                           /\D/g,
                           "",
                         )
-                        .slice(0, 10),
+                        .slice(
+                          0,
+                          10,
+                        ),
                     )
                   }
                   inputMode="numeric"
-                  placeholder="Mobile Number"
-                  className="rounded-xl border border-black/10 px-4 py-3 text-sm sm:col-span-2"
+                  placeholder="10 digit mobile number"
+                  className="w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
                 />
+              </div>
+
+              <div className="sm:col-span-2">
+                <p className="mb-2 text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                  House / Flat / Street
+                </p>
 
                 <input
                   required
@@ -460,9 +867,15 @@ export default function AddressesPage() {
                       e.target.value,
                     )
                   }
-                  placeholder="House / Flat / Street"
-                  className="rounded-xl border border-black/10 px-4 py-3 text-sm sm:col-span-2"
+                  placeholder="House no, building, street"
+                  className="w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
                 />
+              </div>
+
+              <div className="sm:col-span-2">
+                <p className="mb-2 text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                  Area / Colony
+                </p>
 
                 <input
                   value={
@@ -473,9 +886,15 @@ export default function AddressesPage() {
                       e.target.value,
                     )
                   }
-                  placeholder="Area / Colony"
-                  className="rounded-xl border border-black/10 px-4 py-3 text-sm sm:col-span-2"
+                  placeholder="Area, colony, locality"
+                  className="w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
                 />
+              </div>
+
+              <div>
+                <p className="mb-2 text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                  City
+                </p>
 
                 <input
                   required
@@ -486,8 +905,14 @@ export default function AddressesPage() {
                     )
                   }
                   placeholder="City"
-                  className="rounded-xl border border-black/10 px-4 py-3 text-sm"
+                  className="w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
                 />
+              </div>
+
+              <div>
+                <p className="mb-2 text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                  State
+                </p>
 
                 <input
                   required
@@ -498,8 +923,14 @@ export default function AddressesPage() {
                     )
                   }
                   placeholder="State"
-                  className="rounded-xl border border-black/10 px-4 py-3 text-sm"
+                  className="w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
                 />
+              </div>
+
+              <div>
+                <p className="mb-2 text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                  Pincode
+                </p>
 
                 <input
                   required
@@ -511,38 +942,61 @@ export default function AddressesPage() {
                           /\D/g,
                           "",
                         )
-                        .slice(0, 6),
+                        .slice(
+                          0,
+                          6,
+                        ),
                     )
                   }
                   inputMode="numeric"
-                  placeholder="Pincode"
-                  className="rounded-xl border border-black/10 px-4 py-3 text-sm"
+                  placeholder="6 digit pincode"
+                  className="w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
                 />
+              </div>
+
+              <div>
+                <p className="mb-2 text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                  Landmark
+                </p>
 
                 <input
-                  value={landmark}
+                  value={
+                    landmark
+                  }
                   onChange={(e) =>
                     setLandmark(
                       e.target.value,
                     )
                   }
-                  placeholder="Landmark"
-                  className="rounded-xl border border-black/10 px-4 py-3 text-sm"
+                  placeholder="Nearby landmark"
+                  className="w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
                 />
+              </div>
 
-                <button
-                  disabled={saving}
-                  className="rounded-xl bg-zinc-950 px-5 py-4 text-sm font-black text-white sm:col-span-2 disabled:bg-zinc-300"
-                >
-                  {saving
-                    ? "Saving..."
-                    : "Save Address"}
-                </button>
-              </form>
-            </div>
+              <div className="sm:col-span-2">
+                <div className="rounded-[1rem] border border-emerald-100 bg-emerald-50 px-4 py-3">
+                  <p className="text-[9px] font-black text-emerald-800">
+                    ✓ Secure Address Storage
+                  </p>
+
+                  <p className="mt-1 text-[8px] leading-4 text-emerald-700/65">
+                    Your saved address is connected to your customer session and used only for checkout and order delivery.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                disabled={saving}
+                className="min-h-[52px] rounded-[1rem] bg-emerald-600 px-5 text-[11px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-emerald-600/15 transition active:scale-[0.98] sm:col-span-2 disabled:bg-zinc-300"
+              >
+                {saving
+                  ? "Saving Address..."
+                  : "Save Delivery Address →"}
+              </button>
+            </form>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </main>
   );
 }
