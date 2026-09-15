@@ -609,6 +609,57 @@ export default function RestockQueuePage() {
     );
   }
 
+  function activeSupplierCostsFor(
+    item: InventoryVariant,
+  ) {
+    return item.supplierCosts.filter(
+      (cost) =>
+        cost.isActive &&
+        cost.supplier.isActive,
+    );
+  }
+
+  function cheapestSupplierCostFor(
+    item: InventoryVariant,
+  ) {
+    const active =
+      activeSupplierCostsFor(
+        item,
+      );
+
+    if (active.length === 0) {
+      return null;
+    }
+
+    return active.reduce(
+      (best, current) =>
+        current.supplierCost <
+        best.supplierCost
+          ? current
+          : best,
+    );
+  }
+
+  function preferredSupplierCostFor(
+    item: InventoryVariant,
+  ) {
+    if (
+      !item.preferredSupplierId
+    ) {
+      return null;
+    }
+
+    return (
+      activeSupplierCostsFor(
+        item,
+      ).find(
+        (cost) =>
+          cost.supplierId ===
+          item.preferredSupplierId,
+      ) ?? null
+    );
+  }
+
   function supplierCostDraftKey(
     variantId: string,
   ) {
@@ -871,6 +922,116 @@ export default function RestockQueuePage() {
       },
       0,
     );
+
+  const supplierBatchOptions =
+    suppliers
+      .flatMap(
+        (supplier) => {
+          if (
+            selectedQueue.length ===
+            0
+          ) {
+            return [];
+          }
+
+          let totalCost = 0;
+
+          for (
+            const item of
+            selectedQueue
+          ) {
+            const quote =
+              item.supplierCosts.find(
+                (cost) =>
+                  cost.supplierId ===
+                    supplier.id &&
+                  cost.isActive &&
+                  cost.supplier
+                    .isActive,
+              );
+
+            if (!quote) {
+              return [];
+            }
+
+            totalCost +=
+              quote.supplierCost *
+              item.recommendedReorderQty;
+          }
+
+          return [
+            {
+              supplierId:
+                supplier.id,
+
+              supplierName:
+                supplier.name,
+
+              totalCost,
+            },
+          ];
+        },
+      )
+      .sort(
+        (a, b) =>
+          a.totalCost -
+          b.totalCost,
+      );
+
+  const bestBatchSupplier =
+    supplierBatchOptions[0] ??
+    null;
+
+  const selectedBatchSupplier =
+    supplierBatchOptions.find(
+      (item) =>
+        item.supplierId ===
+        supplierId,
+    ) ?? null;
+
+  const batchPotentialSavings =
+    bestBatchSupplier &&
+    selectedBatchSupplier
+      ? Math.max(
+          0,
+          selectedBatchSupplier.totalCost -
+            bestBatchSupplier.totalCost,
+        )
+      : 0;
+
+  const selectedVariantsWithQuotes =
+    supplierId
+      ? selectedQueue.filter(
+          (item) =>
+            selectedSupplierCostFor(
+              item,
+            ) !== null,
+        ).length
+      : 0;
+
+  const selectedAboveBestCount =
+    supplierId
+      ? selectedQueue.filter(
+          (item) => {
+            const selected =
+              selectedSupplierCostFor(
+                item,
+              );
+
+            const best =
+              cheapestSupplierCostFor(
+                item,
+              );
+
+            return Boolean(
+              selected &&
+                best &&
+                selected.supplierCost >
+                  best.supplierCost,
+            );
+          },
+        ).length
+      : 0;
 
   async function createDraftPO() {
     if (!supplierId) {
@@ -1343,6 +1504,133 @@ export default function RestockQueuePage() {
               )}
             />
           </div>
+
+          {selectedQueue.length >
+            0 && (
+            <div className="mt-4 rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-[8px] font-black uppercase tracking-[0.16em] text-emerald-700">
+                    Smart Supplier Recommendation
+                  </p>
+
+                  {bestBatchSupplier ? (
+                    <>
+                      <p className="mt-1 text-sm font-black text-slate-950">
+                        Best complete quote:{" "}
+                        {
+                          bestBatchSupplier
+                            .supplierName
+                        }
+                      </p>
+
+                      <p className="mt-1 text-[10px] font-semibold text-slate-500">
+                        All{" "}
+                        {
+                          selectedQueue.length
+                        }{" "}
+                        selected variants ·{" "}
+                        {money(
+                          bestBatchSupplier
+                            .totalCost,
+                        )}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="mt-1 text-sm font-black text-slate-950">
+                        More supplier quotes needed
+                      </p>
+
+                      <p className="mt-1 text-[10px] font-semibold text-slate-500">
+                        No supplier currently has saved quotes for every selected variant.
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                {bestBatchSupplier &&
+                supplierId !==
+                  bestBatchSupplier.supplierId ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSupplierId(
+                        bestBatchSupplier.supplierId,
+                      )
+                    }
+                    className="rounded-xl bg-emerald-700 px-3 py-2 text-[9px] font-black text-white"
+                  >
+                    Use Best Supplier
+                  </button>
+                ) : null}
+              </div>
+
+              {supplierId ? (
+                <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                  <MiniStat
+                    label="Quote Coverage"
+                    value={`${selectedVariantsWithQuotes}/${selectedQueue.length}`}
+                  />
+
+                  <MiniStat
+                    label="Above Best"
+                    value={`${selectedAboveBestCount}`}
+                  />
+
+                  <MiniStat
+                    label="Possible Saving"
+                    value={money(
+                      batchPotentialSavings,
+                    )}
+                  />
+                </div>
+              ) : null}
+
+              {supplierId &&
+              bestBatchSupplier &&
+              selectedBatchSupplier &&
+              selectedBatchSupplier.supplierId ===
+                bestBatchSupplier.supplierId ? (
+                <p className="mt-3 rounded-xl bg-emerald-100 px-3 py-2 text-[9px] font-black text-emerald-800">
+                  ✓ Selected supplier is the lowest complete quote for this batch.
+                </p>
+              ) : null}
+
+              {supplierId &&
+              batchPotentialSavings >
+                0 ? (
+                <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-[9px] font-black text-amber-800">
+                  Selected supplier costs{" "}
+                  {money(
+                    batchPotentialSavings,
+                  )}{" "}
+                  more for this batch. Switch to{" "}
+                  {
+                    bestBatchSupplier
+                      ?.supplierName
+                  }{" "}
+                  to save.
+                </p>
+              ) : null}
+
+              {supplierId &&
+              selectedVariantsWithQuotes <
+                selectedQueue.length ? (
+                <p className="mt-3 rounded-xl bg-sky-50 px-3 py-2 text-[9px] font-bold leading-5 text-sky-800">
+                  Selected supplier has specific quotes for{" "}
+                  {
+                    selectedVariantsWithQuotes
+                  }{" "}
+                  of{" "}
+                  {
+                    selectedQueue.length
+                  }{" "}
+                  variants. Missing supplier quotes will still use the variant fallback cost during PO creation.
+                </p>
+              ) : null}
+            </div>
+          )}
         </section>
 
         {missingCostVariants >
@@ -1455,21 +1743,29 @@ export default function RestockQueuePage() {
                     (
                       total,
                       item,
-                    ) =>
-                      total +
-                      (item.costPrice ===
-                      null
-                        ? 0
-                        : item.costPrice *
-                          item.recommendedReorderQty),
+                    ) => {
+                      const cost =
+                        purchaseCostFor(
+                          item,
+                        );
+
+                      return (
+                        total +
+                        (cost === null
+                          ? 0
+                          : cost *
+                            item.recommendedReorderQty)
+                      );
+                    },
                     0,
                   );
 
                 const groupHasCost =
                   group.items.some(
                     (item) =>
-                      item.costPrice !==
-                      null,
+                      purchaseCostFor(
+                        item,
+                      ) !== null,
                   );
 
                 return (
@@ -1733,6 +2029,152 @@ export default function RestockQueuePage() {
                                           )}
                                         />
                                       </div>
+
+                                      {(() => {
+                                        const best =
+                                          cheapestSupplierCostFor(
+                                            item,
+                                          );
+
+                                        const preferred =
+                                          preferredSupplierCostFor(
+                                            item,
+                                          );
+
+                                        const selected =
+                                          selectedSupplierCostFor(
+                                            item,
+                                          );
+
+                                        const preferredExtra =
+                                          best &&
+                                          preferred
+                                            ? Math.max(
+                                                0,
+                                                preferred.supplierCost -
+                                                  best.supplierCost,
+                                              )
+                                            : 0;
+
+                                        const selectedSaving =
+                                          best &&
+                                          selected
+                                            ? Math.max(
+                                                0,
+                                                (selected.supplierCost -
+                                                  best.supplierCost) *
+                                                  item.recommendedReorderQty,
+                                              )
+                                            : 0;
+
+                                        return (
+                                          <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-3">
+                                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                              <div>
+                                                <p className="text-[7px] font-black uppercase tracking-[0.14em] text-emerald-700">
+                                                  Supplier Comparison
+                                                </p>
+
+                                                <p className="mt-1 text-[10px] font-black">
+                                                  {best
+                                                    ? `${best.supplier.name} · ${money(
+                                                        best.supplierCost,
+                                                      )}/pc`
+                                                    : "No supplier quotes yet"}
+                                                </p>
+                                              </div>
+
+                                              {best &&
+                                              supplierId !==
+                                                best.supplierId ? (
+                                                <button
+                                                  type="button"
+                                                  onClick={() =>
+                                                    setSupplierId(
+                                                      best.supplierId,
+                                                    )
+                                                  }
+                                                  className="rounded-lg bg-emerald-100 px-2.5 py-1.5 text-[8px] font-black text-emerald-800"
+                                                >
+                                                  Select Best
+                                                </button>
+                                              ) : null}
+                                            </div>
+
+                                            <div className="mt-3 grid grid-cols-3 gap-2">
+                                              <MiniStat
+                                                label="Best Quote"
+                                                value={
+                                                  best
+                                                    ? money(
+                                                        best.supplierCost,
+                                                      )
+                                                    : "—"
+                                                }
+                                              />
+
+                                              <MiniStat
+                                                label="Preferred"
+                                                value={
+                                                  preferred
+                                                    ? money(
+                                                        preferred.supplierCost,
+                                                      )
+                                                    : "—"
+                                                }
+                                              />
+
+                                              <MiniStat
+                                                label="Pref. Gap"
+                                                value={
+                                                  preferred &&
+                                                  best
+                                                    ? preferredExtra >
+                                                      0
+                                                      ? `+${money(
+                                                          preferredExtra,
+                                                        )}/pc`
+                                                      : "Best"
+                                                    : "—"
+                                                }
+                                              />
+                                            </div>
+
+                                            {selected &&
+                                            best &&
+                                            selected.supplierId ===
+                                              best.supplierId ? (
+                                              <p className="mt-2 text-[8px] font-black text-emerald-700">
+                                                ✓ Selected supplier is the cheapest saved quote.
+                                              </p>
+                                            ) : null}
+
+                                            {selectedSaving >
+                                            0 ? (
+                                              <p className="mt-2 text-[8px] font-black text-amber-700">
+                                                Switch to{" "}
+                                                {
+                                                  best
+                                                    ?.supplier.name
+                                                }{" "}
+                                                and save{" "}
+                                                {money(
+                                                  selectedSaving,
+                                                )}{" "}
+                                                on this reorder.
+                                              </p>
+                                            ) : null}
+
+                                            {supplierId &&
+                                            !selected &&
+                                            best ? (
+                                              <p className="mt-2 text-[8px] font-bold leading-4 text-sky-700">
+                                                Selected supplier has no saved quote for this variant. PO will use fallback cost unless you save a supplier quote.
+                                              </p>
+                                            ) : null}
+                                          </div>
+                                        );
+                                      })()}
 
                                       <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
                                         <input
