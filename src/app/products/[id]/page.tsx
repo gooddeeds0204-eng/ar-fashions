@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  buildSmartStockAllocation,
+  getSmartStockPackSize,
+} from "@/lib/smart-stock-balance";
+
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ensureUserSession } from "@/lib/user-session-init";
@@ -44,6 +49,7 @@ type Product = {
   resellerPrice: string | number | null;
   mrp: string | number | null;
   resellerMOQ: number | null;
+  smartStockBalance: boolean;
   salesMode: "RETAIL" | "BULK" | "BOTH";
   status: string;
   category: {
@@ -77,6 +83,8 @@ type CartItem = {
   quantity: number;
   mode?: "RETAIL" | "RESELLER";
   resellerMOQ?: number;
+  smartStockBalance?: boolean;
+  smartPackSize?: number;
 };
 
 function money(value: string | number | null) {
@@ -127,8 +135,29 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [isReseller, setIsReseller] = useState(false);
   const [resellerQuantities, setResellerQuantities] = useState<Record<string, number>>({});
+
+  const [
+    smartPackCount,
+    setSmartPackCount,
+  ] = useState(1);
+
   const [adding, setAdding] = useState(false);
   const [cartNotice, setCartNotice] = useState(false);
+
+  const [
+    salesAccessLoaded,
+    setSalesAccessLoaded,
+  ] = useState(false);
+
+  const [
+    purchaseClosed,
+    setPurchaseClosed,
+  ] = useState(false);
+
+  const [
+    purchaseClosedMessage,
+    setPurchaseClosedMessage,
+  ] = useState("");
 
   const [wishlisted, setWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
@@ -142,8 +171,87 @@ export default function ProductDetailPage() {
   ] = useState(0);
 
   useEffect(() => {
-    const mode = new URLSearchParams(window.location.search).get("mode");
-    setIsReseller(mode === "reseller");
+    async function resolveSalesAccess() {
+      try {
+        const [
+          sessionResponse,
+          settingsResponse,
+        ] = await Promise.all([
+          fetch(
+            "/api/session",
+            {
+              cache: "no-store",
+              credentials:
+                "same-origin",
+            },
+          ),
+
+          fetch(
+            "/api/site-settings",
+            {
+              cache: "no-store",
+            },
+          ),
+        ]);
+
+        let resellerAccount =
+          false;
+
+        if (sessionResponse.ok) {
+          const sessionData =
+            await sessionResponse.json();
+
+          resellerAccount =
+            sessionData.user
+              ?.isReseller === true;
+        }
+
+        setIsReseller(
+          resellerAccount,
+        );
+
+        if (settingsResponse.ok) {
+          const settingsData =
+            await settingsResponse.json();
+
+          const modeData =
+            settingsData.salesMode;
+
+          const status =
+            resellerAccount
+              ? modeData
+                  ?.resellerStatus
+              : modeData
+                  ?.retailStatus;
+
+          const message =
+            resellerAccount
+              ? modeData
+                  ?.resellerMessage
+              : modeData
+                  ?.retailMessage;
+
+          setPurchaseClosed(
+            status === "CLOSED",
+          );
+
+          setPurchaseClosedMessage(
+            String(
+              message ??
+                "Shopping is temporarily closed.",
+            ),
+          );
+        }
+      } catch {
+        setIsReseller(false);
+      } finally {
+        setSalesAccessLoaded(
+          true,
+        );
+      }
+    }
+
+    resolveSalesAccess();
   }, []);
 
   useEffect(() => {
@@ -403,6 +511,79 @@ export default function ProductDetailPage() {
     ? Math.max(1, product?.resellerMOQ ?? 1)
     : 1;
 
+  const smartStockVariants =
+    useMemo(() => {
+      if (!product) {
+        return [];
+      }
+
+      return product.variants.map(
+        (variant) => ({
+          id:
+            variant.id,
+          colorId:
+            variant.color.id,
+          sizeId:
+            variant.size.id,
+          stock:
+            variant.stock,
+          isActive: true,
+        }),
+      );
+    }, [product]);
+
+  const smartPackSize =
+    useMemo(() => {
+      if (
+        !product?.smartStockBalance
+      ) {
+        return 0;
+      }
+
+      return getSmartStockPackSize(
+        smartStockVariants,
+        product.resellerMOQ,
+      );
+    }, [
+      product?.smartStockBalance,
+      product?.resellerMOQ,
+      smartStockVariants,
+    ]);
+
+  const smartTargetQuantity =
+    smartPackSize *
+    smartPackCount;
+
+  const smartStockPlan =
+    useMemo(() => {
+      return buildSmartStockAllocation(
+        smartStockVariants,
+        smartTargetQuantity,
+      );
+    }, [
+      smartStockVariants,
+      smartTargetQuantity,
+    ]);
+
+  useEffect(() => {
+    if (
+      !isReseller ||
+      !product?.smartStockBalance
+    ) {
+      return;
+    }
+
+    setResellerQuantities(
+      smartStockPlan.ok
+        ? smartStockPlan.allocation
+        : {},
+    );
+  }, [
+    isReseller,
+    product?.smartStockBalance,
+    smartStockPlan,
+  ]);
+
   const currentPrice = isReseller
     ? selectedVariant?.resellerPrice !== null &&
       selectedVariant?.resellerPrice !== undefined
@@ -451,13 +632,24 @@ export default function ProductDetailPage() {
   }, [product, resellerQuantities]);
 
   const resellerMeetsMOQ =
-    totalResellerQuantity >= minimumQuantity;
+    product?.smartStockBalance
+      ? smartStockPlan.ok &&
+        totalResellerQuantity ===
+          smartTargetQuantity
+      : totalResellerQuantity >=
+        minimumQuantity;
 
   function changeResellerQuantity(
     variantId: string,
     stock: number,
     change: number,
   ) {
+    if (
+      product?.smartStockBalance
+    ) {
+      return;
+    }
+
     setResellerQuantities((current) => {
       const currentQuantity = current[variantId] ?? 0;
 
@@ -479,7 +671,26 @@ export default function ProductDetailPage() {
   }
 
   function addResellerSelectionToCart() {
+    if (purchaseClosed) {
+      alert(
+        purchaseClosedMessage ||
+          "Reseller ordering is temporarily closed.",
+      );
+      return;
+    }
+
     if (!product) return;
+
+    if (
+      product.smartStockBalance &&
+      !smartStockPlan.ok
+    ) {
+      alert(
+        smartStockPlan.reason ||
+          "Smart stock pack is currently unavailable.",
+      );
+      return;
+    }
 
     const selectedVariants = product.variants.filter(
       (variant) =>
@@ -498,7 +709,22 @@ export default function ProductDetailPage() {
       return;
     }
 
-    const cart = getCart();
+    let cart = getCart();
+
+    if (
+      product.smartStockBalance
+    ) {
+      cart = cart.filter(
+        (item) =>
+          !(
+            item.productId ===
+              product.id &&
+            (item.mode ??
+              "RETAIL") ===
+              "RESELLER"
+          ),
+      );
+    }
 
     for (const variant of selectedVariants) {
       const selectedQuantity =
@@ -584,6 +810,12 @@ export default function ProductDetailPage() {
           quantity: selectedQuantity,
           mode: "RESELLER",
           resellerMOQ: minimumQuantity,
+          smartStockBalance:
+            product.smartStockBalance,
+          smartPackSize:
+            product.smartStockBalance
+              ? smartPackSize
+              : undefined,
         });
       }
     }
@@ -617,7 +849,25 @@ export default function ProductDetailPage() {
   }
 
   function addToCart() {
+    if (purchaseClosed) {
+      alert(
+        purchaseClosedMessage ||
+          "Shopping is temporarily closed.",
+      );
+      return;
+    }
+
     if (!product) return;
+
+    if (
+      isReseller &&
+      product.smartStockBalance
+    ) {
+      alert(
+        "Use the Smart Stock Balance pack builder to order this reseller product.",
+      );
+      return;
+    }
 
     if (!selectedVariant) {
       alert("Please select color and size.");
@@ -710,7 +960,25 @@ export default function ProductDetailPage() {
   }
 
   function buyNow() {
+    if (purchaseClosed) {
+      alert(
+        purchaseClosedMessage ||
+          "Shopping is temporarily closed.",
+      );
+      return;
+    }
+
     if (!product) return;
+
+    if (
+      isReseller &&
+      product.smartStockBalance
+    ) {
+      alert(
+        "Use the Smart Stock Balance pack builder to order this reseller product.",
+      );
+      return;
+    }
 
     if (!selectedVariant) {
       alert("Please select color and size.");
@@ -1234,12 +1502,103 @@ export default function ProductDetailPage() {
               {/* RESELLER VARIANT BUILDER */}
               <div className="mb-5">
                 <h2 className="text-base font-black">
-                  Build Your Reseller Set
+                  {product.smartStockBalance
+                    ? "Smart Stock Balance Pack"
+                    : "Build Your Reseller Set"}
                 </h2>
+
                 <p className="mt-1 text-sm text-zinc-500">
-                  Mix sizes and colors. Total quantity must reach MOQ {minimumQuantity}.
+                  {product.smartStockBalance
+                    ? `AR automatically balances all available colours and sizes. One smart pack contains ${smartPackSize} pieces.`
+                    : `Mix sizes and colors. Total quantity must reach MOQ ${minimumQuantity}.`}
                 </p>
               </div>
+
+              {product.smartStockBalance ? (
+                <div className="mb-5 rounded-[1.5rem] border border-emerald-200 bg-emerald-50 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">
+                        Automatic Allocation
+                      </p>
+
+                      <p className="mt-1 text-xs leading-5 text-emerald-900/70">
+                        Every currently available
+                        colour-size combination is
+                        included first. Extra pieces
+                        are taken from higher-stock
+                        variants to keep seller stock
+                        balanced.
+                      </p>
+                    </div>
+
+                    <span className="rounded-full bg-emerald-600 px-3 py-1 text-[9px] font-black text-white">
+                      SMART
+                    </span>
+                  </div>
+
+                  <div className="mt-4">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-zinc-500">
+                      Choose Packs
+                    </p>
+
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      {[1, 2, 3].map(
+                        (count) => {
+                          const target =
+                            smartPackSize *
+                            count;
+
+                          const disabled =
+                            smartPackSize <= 0 ||
+                            target >
+                              smartStockPlan.totalStock;
+
+                          return (
+                            <button
+                              key={count}
+                              type="button"
+                              disabled={disabled}
+                              onClick={() =>
+                                setSmartPackCount(
+                                  count,
+                                )
+                              }
+                              className={`rounded-xl border px-3 py-3 text-center transition disabled:opacity-30 ${
+                                smartPackCount ===
+                                count
+                                  ? "border-emerald-600 bg-emerald-600 text-white"
+                                  : "border-emerald-200 bg-white text-zinc-700"
+                              }`}
+                            >
+                              <p className="text-sm font-black">
+                                {count} Pack
+                                {count > 1
+                                  ? "s"
+                                  : ""}
+                              </p>
+
+                              <p className="mt-1 text-[9px] font-bold opacity-70">
+                                {target} pcs
+                              </p>
+                            </button>
+                          );
+                        },
+                      )}
+                    </div>
+                  </div>
+
+                  {!smartStockPlan.ok ? (
+                    <p className="mt-4 rounded-xl bg-amber-100 px-3 py-2.5 text-xs font-bold leading-5 text-amber-800">
+                      {smartStockPlan.reason}
+                    </p>
+                  ) : (
+                    <p className="mt-4 text-[10px] font-bold text-emerald-700">
+                      ✓ {smartStockPlan.availableVariantCount} available colour-size combinations covered
+                    </p>
+                  )}
+                </div>
+              ) : null}
 
               <div className="space-y-5">
                 {colors.map((color) => {
@@ -1311,6 +1670,7 @@ export default function ProductDetailPage() {
                               <div className="flex items-center overflow-hidden rounded-xl border border-black/10 bg-white">
                                 <button
                                   disabled={
+                                    product.smartStockBalance ||
                                     variantQuantity <= 0
                                   }
                                   onClick={() =>
@@ -1331,8 +1691,9 @@ export default function ProductDetailPage() {
 
                                 <button
                                   disabled={
+                                    product.smartStockBalance ||
                                     variantQuantity >=
-                                    variant.stock
+                                      variant.stock
                                   }
                                   onClick={() =>
                                     changeResellerQuantity(
@@ -1363,7 +1724,10 @@ export default function ProductDetailPage() {
                     </p>
 
                     <p className="mt-1 text-2xl font-black">
-                      {totalResellerQuantity} / {minimumQuantity}
+                      {totalResellerQuantity} /{" "}
+                      {product.smartStockBalance
+                        ? smartTargetQuantity
+                        : minimumQuantity}
                     </p>
                   </div>
 
@@ -1380,15 +1744,20 @@ export default function ProductDetailPage() {
 
                 {!resellerMeetsMOQ ? (
                   <p className="mt-4 rounded-xl bg-amber-400/15 px-4 py-3 text-sm font-bold text-amber-300">
-                    Add {Math.max(
-                      0,
-                      minimumQuantity -
-                        totalResellerQuantity,
-                    )} more pieces to reach MOQ.
+                    {product.smartStockBalance
+                      ? smartStockPlan.reason ||
+                        "Smart pack is being prepared."
+                      : `Add ${Math.max(
+                          0,
+                          minimumQuantity -
+                            totalResellerQuantity,
+                        )} more pieces to reach MOQ.`}
                   </p>
                 ) : (
                   <p className="mt-4 rounded-xl bg-emerald-400/15 px-4 py-3 text-sm font-bold text-emerald-300">
-                    ✓ MOQ reached. You can proceed.
+                    {product.smartStockBalance
+                      ? "✓ Smart balanced pack ready. Colours and sizes are auto allocated."
+                      : "✓ MOQ reached. You can proceed."}
                   </p>
                 )}
               </div>

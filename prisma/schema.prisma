@@ -8,24 +8,25 @@ datasource db {
 }
 
 model User {
-  id             String            @id @default(cuid())
-  name           String?
-  email          String?           @unique
-  phone          String?           @unique
-  passwordHash   String?
-  role           UserRole          @default(CUSTOMER)
-  status         AccountStatus     @default(ACTIVE)
-  isReseller     Boolean           @default(false)
-  resellerLevel  String?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  addresses      Address[]
-  cart           Cart?
-  notifications  Notification[]
-  orders         Order[]
-  resellerOrders ResellerContent[]
-  reviews        Review[]
-  wishlist       WishlistItem[]
+  id                  String               @id @default(cuid())
+  name                String?
+  email               String?              @unique
+  phone               String?              @unique
+  passwordHash        String?
+  role                UserRole             @default(CUSTOMER)
+  status              AccountStatus        @default(ACTIVE)
+  isReseller          Boolean              @default(false)
+  resellerLevel       String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  addresses           Address[]
+  cart                Cart?
+  notifications       Notification[]
+  orders              Order[]
+  resellerOrders      ResellerContent[]
+  reviews             Review[]
+  wishlist            WishlistItem[]
+  resellerApplication ResellerApplication?
 }
 
 model Address {
@@ -99,34 +100,35 @@ model Size {
 }
 
 model Product {
-  id            String            @id @default(cuid())
-  name          String
-  slug          String            @unique
-  sku           String?           @unique
-  description   String?
-  fabric        String?
-  retailPrice   Decimal           @db.Decimal(10, 2)
-  resellerPrice Decimal?          @db.Decimal(10, 2)
-  mrp           Decimal?          @db.Decimal(10, 2)
-  resellerMOQ   Int?
-  status        ProductStatus     @default(DRAFT)
-  isFeatured    Boolean           @default(false)
-  isTrending    Boolean           @default(false)
-  isNewArrival  Boolean           @default(false)
-  sortOrder     Int               @default(0)
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  categoryId    String
-  salesMode     ProductSalesMode  @default(BOTH)
-  gender        ProductGender     @default(UNISEX)
-  cartItems     CartItem[]
-  orderItems    OrderItem[]
-  category      Category          @relation(fields: [categoryId], references: [id])
-  media         ProductMedia[]
-  variants      ProductVariant[]
-  resellerItems ResellerSetItem[]
-  reviews       Review[]
-  wishlistItems WishlistItem[]
+  id                String            @id @default(cuid())
+  name              String
+  slug              String            @unique
+  sku               String?           @unique
+  description       String?
+  fabric            String?
+  retailPrice       Decimal           @db.Decimal(10, 2)
+  resellerPrice     Decimal?          @db.Decimal(10, 2)
+  mrp               Decimal?          @db.Decimal(10, 2)
+  resellerMOQ       Int?
+  smartStockBalance Boolean           @default(false)
+  status            ProductStatus     @default(DRAFT)
+  isFeatured        Boolean           @default(false)
+  isTrending        Boolean           @default(false)
+  isNewArrival      Boolean           @default(false)
+  sortOrder         Int               @default(0)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  categoryId        String
+  salesMode         ProductSalesMode  @default(BOTH)
+  gender            ProductGender     @default(UNISEX)
+  cartItems         CartItem[]
+  orderItems        OrderItem[]
+  category          Category          @relation(fields: [categoryId], references: [id])
+  media             ProductMedia[]
+  variants          ProductVariant[]
+  resellerItems     ResellerSetItem[]
+  reviews           Review[]
+  wishlistItems     WishlistItem[]
 
   @@index([categoryId])
   @@index([status])
@@ -467,26 +469,26 @@ model Banner {
   id                 String            @id @default(cuid())
   title              String?
   subtitle           String?
-  imageUrl            String?
-  videoUrl            String?
-  mobileImageUrl      String?
-  mobileVideoUrl      String?
-  buttonText          String?
-  buttonUrl           String?
-  placement           BannerPlacement  @default(HOME_HERO)
-  contentType         BannerContentType @default(IMAGE)
-  audience            BannerAudience   @default(ALL)
-  backgroundColor     String?
-  backgroundGradient  String?
-  textColor           String?
-  textAlign           BannerTextAlign  @default(LEFT)
-  overlayOpacity      Int              @default(40)
-  isActive            Boolean          @default(true)
-  sortOrder           Int              @default(0)
-  startsAt            DateTime?
-  expiresAt           DateTime?
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  imageUrl           String?
+  videoUrl           String?
+  mobileImageUrl     String?
+  mobileVideoUrl     String?
+  buttonText         String?
+  buttonUrl          String?
+  placement          BannerPlacement   @default(HOME_HERO)
+  contentType        BannerContentType @default(IMAGE)
+  audience           BannerAudience    @default(ALL)
+  backgroundColor    String?
+  backgroundGradient String?
+  textColor          String?
+  textAlign          BannerTextAlign   @default(LEFT)
+  overlayOpacity     Int               @default(40)
+  isActive           Boolean           @default(true)
+  sortOrder          Int               @default(0)
+  startsAt           DateTime?
+  expiresAt          DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 
   @@index([placement, audience, isActive, sortOrder])
   @@index([isActive, sortOrder])
@@ -627,6 +629,35 @@ enum ResellerSetStatus {
   ACTIVE
   INACTIVE
   SOLD_OUT
+}
+
+enum ResellerApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ResellerApplication {
+  id              String                    @id @default(cuid())
+  userId          String                    @unique
+  businessName    String
+  businessPhone   String?
+  gstNumber       String?
+  addressLine     String?
+  city            String
+  state           String
+  pincode         String?
+  mapsUrl         String?
+  status          ResellerApplicationStatus @default(PENDING)
+  rejectionReason String?
+  reviewedAt      DateTime?
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([createdAt])
 }
 
 model ApiRateLimit {

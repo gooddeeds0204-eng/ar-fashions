@@ -23,6 +23,9 @@ type CartItem = {
   mode?: "RETAIL" | "RESELLER";
   resellerMOQ?: number;
 
+  smartStockBalance?: boolean;
+  smartPackSize?: number;
+
   resellerSetId?: string;
   resellerSetSlug?: string;
   resellerSetCount?: number;
@@ -42,6 +45,16 @@ function money(
   return `₹${Number(
     value || 0,
   ).toLocaleString("en-IN")}`;
+}
+
+function isSmartPackItem(
+  item: CartItem,
+) {
+  return (
+    item.mode === "RESELLER" &&
+    item.smartStockBalance === true &&
+    !item.resellerSetId
+  );
 }
 
 export default function CartPage() {
@@ -136,6 +149,26 @@ export default function CartPage() {
   function increase(
     itemId: string,
   ) {
+    const current =
+      cart.find(
+        (item) =>
+          item.id === itemId,
+      );
+
+    if (
+      current &&
+      isSmartPackItem(
+        current,
+      )
+    ) {
+      notify(
+        "ERROR",
+        "Smart Pack Locked",
+        "Change the number of Smart Packs from the product page.",
+      );
+      return;
+    }
+
     const nextCart =
       cart.map((item) =>
         item.id === itemId
@@ -162,6 +195,20 @@ export default function CartPage() {
           item.id ===
           itemId,
       );
+
+    if (
+      current &&
+      isSmartPackItem(
+        current,
+      )
+    ) {
+      notify(
+        "ERROR",
+        "Smart Pack Locked",
+        "Smart Stock quantities cannot be changed individually.",
+      );
+      return;
+    }
 
     const nextCart =
       cart
@@ -208,6 +255,20 @@ export default function CartPage() {
           itemId,
       );
 
+    if (
+      current &&
+      isSmartPackItem(
+        current,
+      )
+    ) {
+      notify(
+        "ERROR",
+        "Smart Pack Locked",
+        "Remove the complete Smart Pack instead of one colour or size.",
+      );
+      return;
+    }
+
     const nextCart =
       cart.filter(
         (item) =>
@@ -225,6 +286,48 @@ export default function CartPage() {
       current
         ? `${current.productName} was removed.`
         : "Item removed from your bag.",
+    );
+  }
+
+  function removeSmartPack(
+    productId: string,
+  ) {
+    const packItems =
+      cart.filter(
+        (item) =>
+          item.productId ===
+            productId &&
+          isSmartPackItem(
+            item,
+          ),
+      );
+
+    if (
+      packItems.length === 0
+    ) {
+      return;
+    }
+
+    const nextCart =
+      cart.filter(
+        (item) =>
+          !(
+            item.productId ===
+              productId &&
+            isSmartPackItem(
+              item,
+            )
+          ),
+      );
+
+    saveCart(
+      nextCart,
+    );
+
+    notify(
+      "SUCCESS",
+      "Smart Pack Removed",
+      `${packItems[0].productName} Smart Pack was removed from your bag.`,
     );
   }
 
@@ -877,10 +980,17 @@ export default function CartPage() {
                                         item.sizeName
                                       }
                                     </span>
+
+                                    {item.smartStockBalance ? (
+                                      <span className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[8px] font-black text-emerald-700">
+                                        SMART PACK · QTY FIXED
+                                      </span>
+                                    ) : null}
                                   </div>
                                 </div>
 
-                                {!item.resellerSetId && (
+                                {!item.resellerSetId &&
+                                  !item.smartStockBalance && (
                                   <button
                                     type="button"
                                     onClick={() =>
@@ -933,6 +1043,18 @@ export default function CartPage() {
                                       item.quantity
                                     }
                                   </div>
+                                ) : item.smartStockBalance ? (
+                                  <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-2 text-center">
+                                    <p className="text-[8px] font-black uppercase tracking-wider text-emerald-600">
+                                      Locked Qty
+                                    </p>
+
+                                    <p className="mt-0.5 text-sm font-black text-emerald-900">
+                                      {
+                                        item.quantity
+                                      }
+                                    </p>
+                                  </div>
                                 ) : (
                                   <div className="flex items-center overflow-hidden rounded-xl border border-black/[0.08] bg-[#faf9f6]">
                                     <button
@@ -971,17 +1093,56 @@ export default function CartPage() {
                           </div>
 
                           {!item.resellerSetId && (
-                            <div className="mt-3 flex items-center justify-between border-t border-black/[0.05] pt-3">
-                              <span className="text-[8px] font-black uppercase tracking-[0.12em] text-zinc-400">
-                                Line Total
-                              </span>
+                            <>
+                              <div className="mt-3 flex items-center justify-between border-t border-black/[0.05] pt-3">
+                                <span className="text-[8px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                                  Line Total
+                                </span>
 
-                              <span className="text-[15px] font-black">
-                                {money(
-                                  lineTotal,
-                                )}
-                              </span>
-                            </div>
+                                <span className="text-[15px] font-black">
+                                  {money(
+                                    lineTotal,
+                                  )}
+                                </span>
+                              </div>
+
+                              {item.smartStockBalance &&
+                              cart.find(
+                                (candidate) =>
+                                  candidate.productId ===
+                                    item.productId &&
+                                  isSmartPackItem(
+                                    candidate,
+                                  ),
+                              )?.id ===
+                                item.id ? (
+                                <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-emerald-700">
+                                        Smart Stock Pack
+                                      </p>
+
+                                      <p className="mt-1 text-[9px] font-semibold text-zinc-500">
+                                        Quantities are fixed as one balanced assortment.
+                                      </p>
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        removeSmartPack(
+                                          item.productId,
+                                        )
+                                      }
+                                      className="shrink-0 rounded-xl border border-red-200 bg-white px-3 py-2 text-[9px] font-black text-red-600"
+                                    >
+                                      Remove Pack
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : null}
+                            </>
                           )}
                         </div>
                       </article>

@@ -96,6 +96,11 @@ export default function ProductsPage() {
   const [resellerPrice, setResellerPrice] = useState("");
   const [resellerMOQ, setResellerMOQ] = useState("");
 
+  const [
+    smartStockBalance,
+    setSmartStockBalance,
+  ] = useState(false);
+
   const [salesMode, setSalesMode] = useState<
     "RETAIL" | "BULK" | "BOTH"
   >("BOTH");
@@ -562,6 +567,12 @@ export default function ProductsPage() {
             salesMode === "RETAIL" ? "" : resellerPrice,
           resellerMOQ:
             salesMode === "RETAIL" ? "" : resellerMOQ,
+
+          smartStockBalance:
+            salesMode === "RETAIL"
+              ? false
+              : smartStockBalance,
+
           salesMode,
           status,
           isFeatured,
@@ -954,6 +965,80 @@ export default function ProductsPage() {
               )}
 
             </div>
+
+            {(salesMode === "BULK" ||
+              salesMode === "BOTH") && (
+              <div className="mt-6 rounded-3xl border border-emerald-400/20 bg-emerald-400/[0.06] p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="max-w-xl">
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-400">
+                      Smart Stock Balance
+                    </p>
+
+                    <h3 className="mt-2 text-base font-black text-white">
+                      Auto Assorted Reseller Pack
+                    </h3>
+
+                    <p className="mt-2 text-xs leading-5 text-slate-400">
+                      Seller stock balanced ga move
+                      avvadaniki available colours
+                      and sizes automatic ga pack lo
+                      distribute avutayi.
+                    </p>
+
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                      ON unte reseller single colour
+                      or single size lo full MOQ
+                      select cheyyaleru. System
+                      current stock batti exact pack
+                      automatic ga prepare chestundi.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSmartStockBalance(
+                        (current) =>
+                          !current,
+                      )
+                    }
+                    className={`min-w-[88px] rounded-full px-4 py-3 text-xs font-black transition ${
+                      smartStockBalance
+                        ? "bg-emerald-400 text-slate-950"
+                        : "bg-slate-800 text-slate-300"
+                    }`}
+                  >
+                    {smartStockBalance
+                      ? "ON"
+                      : "OFF"}
+                  </button>
+                </div>
+
+                {smartStockBalance ? (
+                  <div className="mt-4 rounded-2xl border border-emerald-400/10 bg-slate-950/40 p-4">
+                    <p className="text-xs font-bold text-emerald-300">
+                      ✓ Balanced allocation active
+                    </p>
+
+                    <p className="mt-1 text-[11px] leading-5 text-slate-500">
+                      Every available colour-size
+                      combination gets priority.
+                      Remaining pieces move from
+                      higher-stock variants so dead
+                      stock is reduced.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-2xl border border-white/5 bg-slate-950/30 p-4">
+                    <p className="text-[11px] leading-5 text-slate-500">
+                      OFF = reseller can manually mix
+                      colours and sizes.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
 
           {/* COLORS */}

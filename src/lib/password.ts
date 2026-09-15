@@ -1,79 +1,102 @@
+import "server-only";
+
 import {
   randomBytes,
-  scryptSync,
+  scrypt as nodeScrypt,
   timingSafeEqual,
 } from "crypto";
+import { promisify } from "util";
 
-const PREFIX = "scrypt";
+const scrypt =
+  promisify(nodeScrypt);
+
 const KEY_LENGTH = 64;
 
-export function hashPassword(
+export function validatePassword(
   password: string,
 ) {
   if (password.length < 8) {
-    throw new Error(
-      "Password must be at least 8 characters.",
-    );
+    return "Password must contain at least 8 characters.";
+  }
+
+  if (password.length > 128) {
+    return "Password is too long.";
+  }
+
+  return null;
+}
+
+export async function hashPassword(
+  password: string,
+) {
+  const validation =
+    validatePassword(password);
+
+  if (validation) {
+    throw new Error(validation);
   }
 
   const salt =
     randomBytes(16).toString(
-      "base64url",
+      "hex",
     );
 
-  const derivedKey =
-    scryptSync(
+  const derived =
+    (await scrypt(
       password,
       salt,
       KEY_LENGTH,
-    ).toString("base64url");
+    )) as Buffer;
 
   return [
-    PREFIX,
+    "scrypt-v1",
     salt,
-    derivedKey,
+    derived.toString("hex"),
   ].join("$");
 }
 
-export function verifyPassword(
+export async function verifyPassword(
   password: string,
   storedHash: string,
 ) {
   try {
     const [
-      prefix,
+      version,
       salt,
-      savedKey,
+      storedKey,
     ] = storedHash.split("$");
 
     if (
-      prefix !== PREFIX ||
+      version !== "scrypt-v1" ||
       !salt ||
-      !savedKey
+      !storedKey
     ) {
       return false;
     }
 
-    const saved =
-      Buffer.from(
-        savedKey,
-        "base64url",
-      );
-
     const supplied =
-      scryptSync(
+      (await scrypt(
         password,
         salt,
-        saved.length,
+        KEY_LENGTH,
+      )) as Buffer;
+
+    const expected =
+      Buffer.from(
+        storedKey,
+        "hex",
       );
 
-    return (
-      saved.length ===
-        supplied.length &&
-      timingSafeEqual(
-        saved,
-        supplied,
-      )
+    if (
+      supplied.length !==
+      expected.length
+    ) {
+      return false;
+    }
+
+    return timingSafeEqual(
+      supplied,
+      expected,
     );
   } catch {
     return false;

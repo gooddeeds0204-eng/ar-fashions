@@ -38,6 +38,25 @@ export async function GET() {
               createdAt: true,
             },
           },
+          resellerApplication: {
+            select: {
+              id: true,
+              businessName: true,
+              businessPhone: true,
+              gstNumber: true,
+              addressLine: true,
+              city: true,
+              state: true,
+              pincode: true,
+              mapsUrl: true,
+              status: true,
+              rejectionReason: true,
+              reviewedAt: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+
           _count: {
             select: {
               addresses: true,
@@ -106,6 +125,51 @@ export async function GET() {
             user.isReseller,
           resellerLevel:
             user.resellerLevel,
+
+          resellerApplication:
+            user.resellerApplication
+              ? {
+                  id:
+                    user.resellerApplication.id,
+
+                  businessName:
+                    user.resellerApplication.businessName,
+
+                  businessPhone:
+                    user.resellerApplication.businessPhone,
+
+                  gstNumber:
+                    user.resellerApplication.gstNumber,
+
+                  addressLine:
+                    user.resellerApplication.addressLine,
+
+                  city:
+                    user.resellerApplication.city,
+
+                  state:
+                    user.resellerApplication.state,
+
+                  pincode:
+                    user.resellerApplication.pincode,
+
+                  mapsUrl:
+                    user.resellerApplication.mapsUrl,
+
+                  status:
+                    user.resellerApplication.status,
+
+                  rejectionReason:
+                    user.resellerApplication.rejectionReason,
+
+                  reviewedAt:
+                    user.resellerApplication.reviewedAt,
+
+                  createdAt:
+                    user.resellerApplication.createdAt,
+                }
+              : null,
+
           createdAt:
             user.createdAt,
           updatedAt:
@@ -184,6 +248,22 @@ export async function PATCH(
       typeof body.isReseller ===
       "boolean";
 
+    const action =
+      cleanString(
+        body.action,
+      ).toUpperCase();
+
+    const rejectionReason =
+      cleanString(
+        body.rejectionReason,
+      );
+
+    const resellerReviewAction =
+      action ===
+        "APPROVE_RESELLER" ||
+      action ===
+        "REJECT_RESELLER";
+
     if (!customerId) {
       return NextResponse.json(
         {
@@ -217,12 +297,27 @@ export async function PATCH(
 
     if (
       !status &&
-      !hasResellerValue
+      !hasResellerValue &&
+      !resellerReviewAction
     ) {
       return NextResponse.json(
         {
           error:
             "No customer changes supplied.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (
+      action ===
+        "REJECT_RESELLER" &&
+      rejectionReason.length < 3
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Enter a short reason for rejecting this retailer application.",
         },
         { status: 400 },
       );
@@ -252,6 +347,115 @@ export async function PATCH(
         },
         { status: 404 },
       );
+    }
+
+    if (resellerReviewAction) {
+      const reviewed =
+        await prisma.$transaction(
+          async (tx) => {
+            const application =
+              await tx.resellerApplication.findUnique({
+                where: {
+                  userId:
+                    customerId,
+                },
+              });
+
+            if (!application) {
+              throw new Error(
+                "Retailer application was not found.",
+              );
+            }
+
+            if (
+              application.status !==
+              "PENDING"
+            ) {
+              throw new Error(
+                `This retailer application is already ${application.status.toLowerCase()}.`,
+              );
+            }
+
+            const approved =
+              action ===
+              "APPROVE_RESELLER";
+
+            await tx.resellerApplication.update({
+              where: {
+                userId:
+                  customerId,
+              },
+              data: {
+                status:
+                  approved
+                    ? "APPROVED"
+                    : "REJECTED",
+
+                rejectionReason:
+                  approved
+                    ? null
+                    : rejectionReason,
+
+                reviewedAt:
+                  new Date(),
+              },
+            });
+
+            return tx.user.update({
+              where: {
+                id:
+                  customerId,
+              },
+
+              data: {
+                isReseller:
+                  approved,
+
+                role:
+                  approved
+                    ? "RESELLER"
+                    : "CUSTOMER",
+              },
+
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                role: true,
+                status: true,
+                isReseller: true,
+                resellerLevel: true,
+                updatedAt: true,
+
+                resellerApplication: {
+                  select: {
+                    id: true,
+                    businessName: true,
+                    gstNumber: true,
+                    city: true,
+                    state: true,
+                    status: true,
+                    rejectionReason: true,
+                    reviewedAt: true,
+                    createdAt: true,
+                  },
+                },
+              },
+            });
+          },
+        );
+
+      return NextResponse.json({
+        success: true,
+        customer:
+          reviewed,
+        message:
+          action ===
+          "APPROVE_RESELLER"
+            ? "Retailer approved. Reseller pricing is now unlocked."
+            : "Retailer application rejected.",
+      });
     }
 
     const updated =
@@ -290,6 +494,24 @@ export async function PATCH(
           isReseller: true,
           resellerLevel: true,
           updatedAt: true,
+
+          resellerApplication: {
+            select: {
+              id: true,
+              businessName: true,
+              businessPhone: true,
+              gstNumber: true,
+              addressLine: true,
+              city: true,
+              state: true,
+              pincode: true,
+              mapsUrl: true,
+              status: true,
+              rejectionReason: true,
+              reviewedAt: true,
+              createdAt: true,
+            },
+          },
         },
       });
 

@@ -958,6 +958,42 @@ export default function Home() {
   const [category, setCategory] = useState("ALL");
 
   useEffect(() => {
+    async function loadAccountMode() {
+      try {
+        const response =
+          await fetch(
+            "/api/session",
+            {
+              cache:
+                "no-store",
+              credentials:
+                "same-origin",
+            },
+          );
+
+        if (!response.ok) {
+          setMode("RETAIL");
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        setMode(
+          data.user?.isReseller ===
+            true
+            ? "RESELLER"
+            : "RETAIL",
+        );
+      } catch {
+        setMode("RETAIL");
+      }
+    }
+
+    loadAccountMode();
+  }, []);
+
+  useEffect(() => {
     async function loadSiteSettings() {
       try {
         const response =
@@ -1416,33 +1452,23 @@ export default function Home() {
         </div>
       ) : null}
 
-      {/* MODE SWITCH */}
+      {/* ACCOUNT SALES CHANNEL */}
       <section className="border-b border-white/[0.06] bg-[#071b14]">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
-          <div className="flex rounded-full border border-white/[0.08] bg-black/20 p-1">
-            <button
-              type="button"
-              onClick={() => setMode("RETAIL")}
-              className={`rounded-full px-5 py-2 text-[9px] font-black uppercase tracking-[0.08em] transition ${
-                mode === "RETAIL"
-                  ? "bg-white text-[#061711]"
-                  : "text-white/45"
-              }`}
-            >
-              Retail
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setMode("RESELLER")}
-              className={`rounded-full px-5 py-2 text-[9px] font-black uppercase tracking-[0.08em] transition ${
+          <div className="flex items-center gap-2">
+            <span
+              className={`h-2 w-2 rounded-full ${
                 mode === "RESELLER"
-                  ? "bg-emerald-500 text-[#04120d]"
-                  : "text-white/45"
+                  ? "bg-emerald-400"
+                  : "bg-white/60"
               }`}
-            >
-              Reseller
-            </button>
+            />
+
+            <p className="text-[8px] font-black uppercase tracking-[0.14em] text-white/70">
+              {mode === "RESELLER"
+                ? "Approved Reseller Account"
+                : "Retail Shopping"}
+            </p>
           </div>
 
           <p className="text-[7px] font-black uppercase tracking-[0.2em] text-emerald-300/70">
@@ -1473,7 +1499,7 @@ export default function Home() {
             </p>
 
             <p className="mt-6 text-xs text-zinc-400">
-              You can switch to another available shopping mode above.
+              This shopping channel is currently disabled by AR Fashions.
             </p>
           </div>
         </section>
@@ -1993,7 +2019,11 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() =>
-                  setMode("RESELLER")
+                  router.push(
+                    mode === "RESELLER"
+                      ? "/reseller-sets"
+                      : "/account",
+                  )
                 }
                 className="mt-6 rounded-full bg-white px-5 py-3 text-[8px] font-black uppercase tracking-[0.1em] text-[#063326]"
               >
@@ -2056,7 +2086,15 @@ export default function Home() {
             <button onClick={() => setCategory("KIDS")}>
               Kids
             </button>
-            <button onClick={() => setMode("RESELLER")}>
+            <button
+              onClick={() =>
+                router.push(
+                  mode === "RESELLER"
+                    ? "/reseller-sets"
+                    : "/account",
+                )
+              }
+            >
               Reseller
             </button>
           </div>

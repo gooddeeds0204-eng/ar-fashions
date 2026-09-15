@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSalesAccess } from "@/lib/sales-access";
 
 export async function GET(
   _request: Request,
@@ -12,6 +13,40 @@ export async function GET(
   },
 ) {
   try {
+    const access =
+      await getSalesAccess();
+
+    if (
+      !access.isAdmin &&
+      !access.isReseller
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Approved reseller account required.",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
+
+    if (
+      !access.isAdmin &&
+      !access.resellerOpen
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            access.resellerMessage ||
+            "Reseller ordering is temporarily closed.",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
+
     const { slug } = await params;
 
     const set =

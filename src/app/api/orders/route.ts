@@ -2,6 +2,10 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
+  buildSmartStockAllocation,
+  getSmartStockPackSize,
+} from "@/lib/smart-stock-balance";
+import {
   getAuthenticatedCustomerId,
 } from "@/lib/customer-auth";
 import {
@@ -992,6 +996,33 @@ export async function POST(request: Request) {
                 });
 
         /*
+         * Account type is the final authority.
+         *
+         * Browser/cart/order type cannot unlock
+         * reseller pricing.
+         */
+        const accountIsReseller =
+          user.isReseller === true;
+
+        if (
+          type === "RESELLER" &&
+          !accountIsReseller
+        ) {
+          throw new Error(
+            "Approved reseller account required to place reseller orders.",
+          );
+        }
+
+        if (
+          type === "RETAIL" &&
+          accountIsReseller
+        ) {
+          throw new Error(
+            "This reseller account can only place reseller orders.",
+          );
+        }
+
+        /*
          * 2. Resolve delivery address.
          *
          * A selected saved address must
@@ -1175,6 +1206,12 @@ export async function POST(request: Request) {
             }
           >();
 
+        const smartResellerSelections =
+          new Map<
+            string,
+            Map<string, number>
+          >();
+
         for (const item of items) {
           const productId = cleanString(
             item.productId,
@@ -1351,6 +1388,33 @@ export async function POST(request: Request) {
                 },
               );
             }
+
+            if (
+              variant.product
+                .smartStockBalance
+            ) {
+              const selection =
+                smartResellerSelections.get(
+                  productId,
+                ) ??
+                new Map<
+                  string,
+                  number
+                >();
+
+              selection.set(
+                variantId,
+                (selection.get(
+                  variantId,
+                ) ?? 0) +
+                  quantity,
+              );
+
+              smartResellerSelections.set(
+                productId,
+                selection,
+              );
+            }
           }
 
           const totalPrice =
@@ -1385,6 +1449,166 @@ export async function POST(request: Request) {
               throw new Error(
                 `Reseller MOQ not reached for ${group.productName}: ${group.quantity}/${group.moq} pieces.`,
               );
+            }
+          }
+        }
+
+        /*
+         * Smart Stock Balance verification.
+         *
+         * Client quantities are not trusted.
+         * Current database stock is used to
+         * rebuild the exact balanced pack.
+         */
+        if (
+          type === "RESELLER" &&
+          !resellerSet
+        ) {
+          for (
+            const [
+              productId,
+              submittedSelection,
+            ] of
+            smartResellerSelections.entries()
+          ) {
+            const smartProduct =
+              await tx.product.findUnique({
+                where: {
+                  id:
+                    productId,
+                },
+
+                select: {
+                  name: true,
+                  resellerMOQ: true,
+                  smartStockBalance:
+                    true,
+
+                  variants: {
+                    where: {
+                      isActive:
+                        true,
+                      stock: {
+                        gt: 0,
+                      },
+                    },
+
+                    select: {
+                      id: true,
+                      colorId: true,
+                      sizeId: true,
+                      stock: true,
+                      isActive: true,
+                    },
+                  },
+                },
+              });
+
+            if (
+              !smartProduct ||
+              !smartProduct.smartStockBalance
+            ) {
+              continue;
+            }
+
+            const packSize =
+              getSmartStockPackSize(
+                smartProduct.variants,
+                smartProduct.resellerMOQ,
+              );
+
+            const group =
+              resellerProductTotals.get(
+                productId,
+              );
+
+            if (
+              !group ||
+              packSize <= 0
+            ) {
+              throw new Error(
+                `Smart Stock Balance pack is unavailable for ${smartProduct.name}.`,
+              );
+            }
+
+            if (
+              group.quantity %
+                packSize !==
+              0
+            ) {
+              throw new Error(
+                `${smartProduct.name} must be ordered in complete Smart Stock Balance packs of ${packSize} pieces.`,
+              );
+            }
+
+            const expectedPlan =
+              buildSmartStockAllocation(
+                smartProduct.variants,
+                group.quantity,
+              );
+
+            if (
+              !expectedPlan.ok
+            ) {
+              throw new Error(
+                expectedPlan.reason ||
+                  `Smart Stock Balance pack is unavailable for ${smartProduct.name}.`,
+              );
+            }
+
+            const expectedIds =
+              new Set(
+                Object.keys(
+                  expectedPlan.allocation,
+                ),
+              );
+
+            for (
+              const variant of
+              smartProduct.variants
+            ) {
+              const expected =
+                expectedPlan
+                  .allocation[
+                  variant.id
+                ] ?? 0;
+
+              const submitted =
+                submittedSelection.get(
+                  variant.id,
+                ) ?? 0;
+
+              if (
+                expected !==
+                submitted
+              ) {
+                throw new Error(
+                  `Smart Stock Balance allocation changed for ${smartProduct.name}. Please rebuild the pack using the latest stock.`,
+                );
+              }
+            }
+
+            for (
+              const [
+                submittedVariantId,
+                submittedQuantity,
+              ] of
+              submittedSelection.entries()
+            ) {
+              if (
+                !expectedIds.has(
+                  submittedVariantId,
+                ) ||
+                (expectedPlan
+                  .allocation[
+                  submittedVariantId
+                ] ?? 0) !==
+                  submittedQuantity
+              ) {
+                throw new Error(
+                  `Invalid Smart Stock Balance selection for ${smartProduct.name}. Please rebuild the pack.`,
+                );
+              }
             }
           }
         }

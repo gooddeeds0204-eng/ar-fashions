@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/admin-auth";
+import { getSalesAccess } from "@/lib/sales-access";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -99,53 +100,118 @@ function getSizeSkuCode(sizeName: string) {
  */
 export async function GET(
   _request: Request,
-  context: { params: Promise<{ id: string }> },
+  context: {
+    params: Promise<{
+      id: string;
+    }>;
+  },
 ) {
   try {
-    const { id } = await context.params;
+    const access =
+      await getSalesAccess();
 
-    const product = await prisma.product.findUnique({
-      where: { id },
+    const { id } =
+      await context.params;
 
-      include: {
-        category: true,
+    const product =
+      await prisma.product.findFirst({
+        where: {
+          id,
 
-        variants: {
-          include: {
-            color: true,
-            size: true,
-          },
-          orderBy: {
-            createdAt: "asc",
-          },
+          ...(access.isAdmin
+            ? {}
+            : {
+                status:
+                  "ACTIVE",
+              }),
         },
 
-        media: {
-          where: {
-            isActive: true,
-          },
-          orderBy: {
-            sortOrder: "asc",
-          },
-        },
+        include: {
+          category: true,
 
-        _count: {
-          select: {
-            variants: true,
-            media: true,
+          variants: {
+            where: access.isAdmin
+              ? undefined
+              : {
+                  isActive: true,
+                },
+
+            include: {
+              color: true,
+              size: true,
+            },
+
+            orderBy: {
+              createdAt: "asc",
+            },
+          },
+
+          media: {
+            where: {
+              isActive: true,
+            },
+
+            orderBy: {
+              sortOrder: "asc",
+            },
+          },
+
+          _count: {
+            select: {
+              variants: true,
+              media: true,
+            },
           },
         },
-      },
-    });
+      });
 
     if (!product) {
       return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 },
+        {
+          error:
+            "Product not found",
+        },
+        {
+          status: 404,
+        },
       );
     }
 
-    return NextResponse.json(product);
+    if (access.isAdmin) {
+      return NextResponse.json(
+        product,
+      );
+    }
+
+    const canSeeResellerPricing =
+      access.isReseller &&
+      access.resellerOpen;
+
+    return NextResponse.json({
+      ...product,
+
+      resellerPrice:
+        canSeeResellerPricing
+          ? product.resellerPrice
+          : null,
+
+      resellerMOQ:
+        canSeeResellerPricing
+          ? product.resellerMOQ
+          : null,
+
+      variants:
+        product.variants.map(
+          (variant) => ({
+            ...variant,
+
+            resellerPrice:
+              canSeeResellerPricing
+                ? variant.resellerPrice
+                : null,
+          }),
+        ),
+    });
   } catch (error) {
     console.error(
       "GET /api/products/[id] failed:",
@@ -153,8 +219,13 @@ export async function GET(
     );
 
     return NextResponse.json(
-      { error: "Failed to load product" },
-      { status: 500 },
+      {
+        error:
+          "Failed to load product",
+      },
+      {
+        status: 500,
+      },
     );
   }
 }
@@ -489,6 +560,14 @@ export async function PUT(
                         resellerMOQ,
                       ),
                     ),
+
+              smartStockBalance:
+                body.smartStockBalance !==
+                undefined
+                  ? Boolean(
+                      body.smartStockBalance,
+                    )
+                  : existingProduct.smartStockBalance,
 
               salesMode,
 

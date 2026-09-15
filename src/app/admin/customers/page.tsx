@@ -29,6 +29,29 @@ type Customer = {
   addressesCount: number;
   reviewsCount: number;
   wishlistCount: number;
+
+  resellerApplication: {
+    id: string;
+    businessName: string;
+    businessPhone: string | null;
+    gstNumber: string | null;
+    addressLine: string | null;
+    city: string;
+    state: string;
+    pincode: string | null;
+    mapsUrl: string | null;
+    status:
+      | "PENDING"
+      | "APPROVED"
+      | "REJECTED";
+    rejectionReason:
+      | string
+      | null;
+    reviewedAt:
+      | string
+      | null;
+    createdAt: string;
+  } | null;
 };
 
 const statuses = [
@@ -87,6 +110,18 @@ export default function AdminCustomersPage() {
 
   const [updating, setUpdating] =
     useState<string | null>(null);
+
+  const [
+    rejectingCustomerId,
+    setRejectingCustomerId,
+  ] = useState<string | null>(
+    null,
+  );
+
+  const [
+    rejectionReason,
+    setRejectionReason,
+  ] = useState("");
 
   async function loadCustomers() {
     try {
@@ -216,6 +251,91 @@ export default function AdminCustomersPage() {
     }
   }
 
+  async function reviewRetailer(
+    customerId: string,
+    action:
+      | "APPROVE_RESELLER"
+      | "REJECT_RESELLER",
+  ) {
+    try {
+      setUpdating(
+        customerId,
+      );
+
+      const response =
+        await fetch(
+          "/api/admin/customers",
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            credentials:
+              "same-origin",
+            body: JSON.stringify({
+              customerId,
+              action,
+              rejectionReason:
+                action ===
+                "REJECT_RESELLER"
+                  ? rejectionReason
+                  : undefined,
+            }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (
+        response.status === 401
+      ) {
+        router.replace(
+          "/admin/login",
+        );
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Failed to review retailer application.",
+        );
+      }
+
+      setCustomers(
+        (current) =>
+          current.map(
+            (customer) =>
+              customer.id ===
+              customerId
+                ? {
+                    ...customer,
+                    ...data.customer,
+                  }
+                : customer,
+          ),
+      );
+
+      setRejectingCustomerId(
+        null,
+      );
+
+      setRejectionReason(
+        "",
+      );
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to review retailer application.",
+      );
+    } finally {
+      setUpdating(null);
+    }
+  }
+
   const filtered =
     useMemo(() => {
       const query =
@@ -256,6 +376,15 @@ export default function AdminCustomersPage() {
       search,
       selectedStatus,
     ]);
+
+  const pendingRetailers =
+    customers.filter(
+      (customer) =>
+        customer
+          .resellerApplication
+          ?.status ===
+        "PENDING",
+    );
 
   const totalSpend =
     customers.reduce(
@@ -370,6 +499,279 @@ export default function AdminCustomersPage() {
             </div>
           </div>
         </section>
+
+        {pendingRetailers.length >
+          0 ? (
+          <section className="mt-6 rounded-[28px] border border-amber-200 bg-amber-50/70 p-5 shadow-sm sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-700">
+                  Retailer Requests
+                </p>
+
+                <h2 className="mt-2 text-xl font-black">
+                  Pending Approvals
+                </h2>
+
+                <p className="mt-1 text-xs leading-5 text-zinc-500">
+                  Approve only verified
+                  retailers. Wholesale
+                  pricing stays locked
+                  until approval.
+                </p>
+              </div>
+
+              <span className="rounded-full bg-amber-500 px-3 py-1.5 text-xs font-black text-white">
+                {
+                  pendingRetailers.length
+                }
+              </span>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {pendingRetailers.map(
+                (customer) => {
+                  const application =
+                    customer.resellerApplication!;
+
+                  const isRejecting =
+                    rejectingCustomerId ===
+                    customer.id;
+
+                  return (
+                    <article
+                      key={
+                        customer.id
+                      }
+                      className="rounded-2xl border border-amber-200 bg-white p-4"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-black">
+                            {
+                              application.businessName
+                            }
+                          </p>
+
+                          <p className="mt-1 text-xs font-semibold text-zinc-500">
+                            {
+                              customer.name ||
+                              "Customer"
+                            }
+                          </p>
+
+                          <p className="mt-1 text-[10px] text-zinc-400">
+                            {
+                              application.city
+                            }
+                            {" · "}
+                            {
+                              application.state
+                            }
+                          </p>
+                        </div>
+
+                        <span className="rounded-full bg-amber-100 px-3 py-1 text-[9px] font-black text-amber-700">
+                          PENDING
+                        </span>
+                      </div>
+
+                      <div className="mt-4 grid gap-2 text-[10px] text-zinc-500 sm:grid-cols-2">
+                        <div className="rounded-xl bg-zinc-50 p-3">
+                          <p className="text-[8px] font-black uppercase tracking-wider text-zinc-400">
+                            Contact
+                          </p>
+
+                          <p className="mt-1 font-semibold text-zinc-700">
+                            {
+                              customer.phone ||
+                              "No phone"
+                            }
+                          </p>
+
+                          {customer.email ? (
+                            <p className="mt-1 break-all">
+                              {
+                                customer.email
+                              }
+                            </p>
+                          ) : null}
+                        </div>
+
+                        <div className="rounded-xl bg-zinc-50 p-3">
+                          <p className="text-[8px] font-black uppercase tracking-wider text-zinc-400">
+                            Business Mobile
+                          </p>
+
+                          <p className="mt-1 font-semibold text-zinc-700">
+                            {
+                              application.businessPhone ||
+                              "Not provided"
+                            }
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl bg-zinc-50 p-3">
+                          <p className="text-[8px] font-black uppercase tracking-wider text-zinc-400">
+                            GSTIN
+                          </p>
+
+                          <p className="mt-1 font-semibold text-zinc-700">
+                            {
+                              application.gstNumber ||
+                              "Not provided"
+                            }
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl bg-zinc-50 p-3 sm:col-span-2">
+                          <p className="text-[8px] font-black uppercase tracking-wider text-zinc-400">
+                            Business Address
+                          </p>
+
+                          <p className="mt-1 font-semibold leading-5 text-zinc-700">
+                            {
+                              application.addressLine ||
+                              "Address not provided"
+                            }
+                          </p>
+
+                          <p className="mt-1">
+                            {application.city}
+                            {" · "}
+                            {application.state}
+                            {application.pincode
+                              ? ` · ${application.pincode}`
+                              : ""}
+                          </p>
+                        </div>
+                      </div>
+
+                      {application.mapsUrl ? (
+                        <a
+                          href={
+                            application.mapsUrl
+                          }
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-3 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[10px] font-black text-emerald-700"
+                        >
+                          <span>
+                            📍 Open Shop in Google Maps
+                          </span>
+                          <span>↗</span>
+                        </a>
+                      ) : null}
+
+                      {isRejecting ? (
+                        <div className="mt-4 rounded-xl border border-red-100 bg-red-50 p-3">
+                          <label className="text-[9px] font-black uppercase tracking-wider text-red-700">
+                            Rejection Reason
+                          </label>
+
+                          <textarea
+                            value={
+                              rejectionReason
+                            }
+                            onChange={(
+                              event,
+                            ) =>
+                              setRejectionReason(
+                                event.target.value,
+                              )
+                            }
+                            rows={3}
+                            placeholder="Example: Please provide valid business details."
+                            className="mt-2 w-full resize-none rounded-xl border border-red-200 bg-white p-3 text-xs outline-none"
+                          />
+
+                          <div className="mt-3 grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRejectingCustomerId(
+                                  null,
+                                );
+                                setRejectionReason(
+                                  "",
+                                );
+                              }}
+                              className="rounded-xl border border-black/10 bg-white py-2.5 text-[10px] font-black"
+                            >
+                              Cancel
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={
+                                updating ===
+                                  customer.id ||
+                                rejectionReason
+                                  .trim()
+                                  .length <
+                                  3
+                              }
+                              onClick={() =>
+                                reviewRetailer(
+                                  customer.id,
+                                  "REJECT_RESELLER",
+                                )
+                              }
+                              className="rounded-xl bg-red-600 py-2.5 text-[10px] font-black text-white disabled:opacity-40"
+                            >
+                              Confirm Reject
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-4 grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            disabled={
+                              updating ===
+                              customer.id
+                            }
+                            onClick={() => {
+                              setRejectingCustomerId(
+                                customer.id,
+                              );
+                              setRejectionReason(
+                                "",
+                              );
+                            }}
+                            className="rounded-xl border border-red-200 bg-red-50 py-3 text-[10px] font-black text-red-700 disabled:opacity-40"
+                          >
+                            Reject
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={
+                              updating ===
+                              customer.id
+                            }
+                            onClick={() =>
+                              reviewRetailer(
+                                customer.id,
+                                "APPROVE_RESELLER",
+                              )
+                            }
+                            className="rounded-xl bg-emerald-600 py-3 text-[10px] font-black text-white disabled:opacity-40"
+                          >
+                            {updating ===
+                            customer.id
+                              ? "Updating..."
+                              : "Approve Retailer"}
+                          </button>
+                        </div>
+                      )}
+                    </article>
+                  );
+                },
+              )}
+            </div>
+          </section>
+        ) : null}
 
         <section className="mt-6 rounded-3xl bg-white p-4 shadow-sm">
           <input
@@ -582,31 +984,37 @@ export default function AdminCustomersPage() {
                           Reseller Access
                         </label>
 
-                        <button
-                          type="button"
-                          disabled={
-                            updating ===
-                            customer.id
-                          }
-                          onClick={() =>
-                            updateCustomer(
-                              customer.id,
-                              {
-                                isReseller:
-                                  !customer.isReseller,
-                              },
-                            )
-                          }
-                          className={`mt-2 w-full rounded-xl px-4 py-3 text-sm font-black ${
+                        <div
+                          className={`mt-2 rounded-xl px-4 py-3 text-center text-sm font-black ${
                             customer.isReseller
                               ? "bg-emerald-600 text-white"
-                              : "bg-zinc-100 text-zinc-700"
+                              : customer
+                                    .resellerApplication
+                                    ?.status ===
+                                  "PENDING"
+                                ? "bg-amber-50 text-amber-700"
+                                : customer
+                                      .resellerApplication
+                                      ?.status ===
+                                    "REJECTED"
+                                  ? "bg-red-50 text-red-700"
+                                  : "bg-zinc-100 text-zinc-500"
                           }`}
                         >
                           {customer.isReseller
-                            ? "Reseller Active"
-                            : "Enable Reseller"}
-                        </button>
+                            ? "Approved Reseller"
+                            : customer
+                                  .resellerApplication
+                                  ?.status ===
+                                "PENDING"
+                              ? "Approval Pending"
+                              : customer
+                                    .resellerApplication
+                                    ?.status ===
+                                  "REJECTED"
+                                ? "Application Rejected"
+                                : "Retail Customer"}
+                        </div>
                       </div>
                     </div>
                   </div>

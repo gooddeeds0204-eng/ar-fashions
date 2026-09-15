@@ -54,6 +54,7 @@ type Product = {
   resellerPrice?: number | string | null;
   mrp?: number | string | null;
   resellerMOQ?: number | null;
+  smartStockBalance: boolean;
   salesMode: "RETAIL" | "BULK" | "BOTH";
   status:
     | "DRAFT"
@@ -618,6 +619,8 @@ export default function EditProductPage() {
             resellerPrice: product.resellerPrice,
             mrp: product.mrp,
             resellerMOQ: product.resellerMOQ,
+            smartStockBalance:
+              product.smartStockBalance,
             salesMode: product.salesMode,
             status: product.status,
             isFeatured: product.isFeatured,
@@ -968,6 +971,65 @@ export default function EditProductPage() {
               ))}
             </div>
           </div>
+          {(product.salesMode === "BULK" ||
+            product.salesMode === "BOTH") && (
+            <div className="mt-6 rounded-3xl border border-emerald-400/20 bg-emerald-400/[0.06] p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="max-w-xl">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-400">
+                    Smart Stock Balance
+                  </p>
+
+                  <h3 className="mt-2 text-lg font-black text-white">
+                    Auto Assorted Reseller Packs
+                  </h3>
+
+                  <p className="mt-2 text-xs leading-5 text-slate-400">
+                    ON chesthe reseller single
+                    color / single size lo full
+                    MOQ select cheyyaleru.
+                    Available colors and sizes
+                    automatic ga cover ayi,
+                    extra pieces high-stock
+                    variants nunchi balanced ga
+                    allocate avutayi.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setProduct({
+                      ...product,
+                      smartStockBalance:
+                        !product.smartStockBalance,
+                    })
+                  }
+                  className={`min-w-[92px] rounded-full px-4 py-3 text-xs font-black transition ${
+                    product.smartStockBalance
+                      ? "bg-emerald-400 text-slate-950"
+                      : "bg-slate-800 text-slate-300"
+                  }`}
+                >
+                  {product.smartStockBalance
+                    ? "ON"
+                    : "OFF"}
+                </button>
+              </div>
+
+              {product.smartStockBalance ? (
+                <div className="mt-4 rounded-2xl border border-emerald-400/10 bg-slate-950/40 p-4 text-xs leading-5 text-emerald-100/70">
+                  Pack minimum =
+                  max(Reseller MOQ, currently
+                  available color-size
+                  combinations). This ensures
+                  every available combination
+                  moves before extra stock is
+                  distributed.
+                </div>
+              ) : null}
+            </div>
+          )}
         </section>
 
         {/* COLORS */}

@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/admin-auth";
+import { getSalesAccess } from "@/lib/sales-access";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -27,46 +28,114 @@ function requiredNumber(value: unknown) {
 
 export async function GET() {
   try {
-    const products = await prisma.product.findMany({
-      orderBy: [
-        { sortOrder: "asc" },
-        { createdAt: "desc" },
-      ],
-      include: {
-        category: true,
-        variants: {
-          include: {
-            color: true,
-            size: true,
-          },
-          orderBy: {
-            createdAt: "asc",
-          },
-        },
-        media: {
-          where: {
-            isActive: true,
-          },
-          orderBy: {
-            sortOrder: "asc",
-          },
-        },
-        _count: {
-          select: {
-            variants: true,
-            media: true,
-          },
-        },
-      },
-    });
+    const access =
+      await getSalesAccess();
 
-    return NextResponse.json(products);
-  } catch (error) {
-    console.error("GET /api/products failed:", error);
+    const products =
+      await prisma.product.findMany({
+        where: access.isAdmin
+          ? undefined
+          : {
+              status: "ACTIVE",
+            },
+
+        orderBy: [
+          { sortOrder: "asc" },
+          { createdAt: "desc" },
+        ],
+
+        include: {
+          category: true,
+
+          variants: {
+            where: access.isAdmin
+              ? undefined
+              : {
+                  isActive: true,
+                },
+
+            include: {
+              color: true,
+              size: true,
+            },
+
+            orderBy: {
+              createdAt: "asc",
+            },
+          },
+
+          media: {
+            where: {
+              isActive: true,
+            },
+
+            orderBy: {
+              sortOrder: "asc",
+            },
+          },
+
+          _count: {
+            select: {
+              variants: true,
+              media: true,
+            },
+          },
+        },
+      });
+
+    if (access.isAdmin) {
+      return NextResponse.json(
+        products,
+      );
+    }
+
+    const resellerPricingAllowed =
+      access.isReseller &&
+      access.resellerOpen;
 
     return NextResponse.json(
-      { error: "Failed to load products" },
-      { status: 500 },
+      products.map(
+        (product) => ({
+          ...product,
+
+          resellerPrice:
+            resellerPricingAllowed
+              ? product.resellerPrice
+              : null,
+
+          resellerMOQ:
+            resellerPricingAllowed
+              ? product.resellerMOQ
+              : null,
+
+          variants:
+            product.variants.map(
+              (variant) => ({
+                ...variant,
+
+                resellerPrice:
+                  resellerPricingAllowed
+                    ? variant.resellerPrice
+                    : null,
+              }),
+            ),
+        }),
+      ),
+    );
+  } catch (error) {
+    console.error(
+      "GET /api/products failed:",
+      error,
+    );
+
+    return NextResponse.json(
+      {
+        error:
+          "Failed to load products",
+      },
+      {
+        status: 500,
+      },
     );
   }
 }
@@ -564,6 +633,11 @@ export async function POST(request: Request) {
             resellerMOQ === null
               ? null
               : Math.floor(resellerMOQ),
+
+          smartStockBalance:
+            Boolean(
+              body.smartStockBalance,
+            ),
 
           salesMode,
 
