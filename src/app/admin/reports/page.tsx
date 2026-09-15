@@ -52,6 +52,76 @@ type CustomerItem = {
   sales: number;
 };
 
+type PurchaseSummary = {
+  purchaseOrders: number;
+  purchaseSpend: number;
+  receivedPurchaseValue: number;
+  receivedPurchasePieces: number;
+  pendingIncomingValue: number;
+  pendingIncomingPieces: number;
+  draftPurchaseValue: number;
+  draftPurchasePieces: number;
+  cancelledPurchaseOrders: number;
+};
+
+type SupplierSpendItem = {
+  supplierId: string;
+  supplierName: string;
+  purchaseOrders: number;
+  committedValue: number;
+  receivedValue: number;
+  incomingValue: number;
+  draftValue: number;
+  receivedPieces: number;
+};
+
+type PurchasedProductItem = {
+  name: string;
+  quantity: number;
+  purchaseValue: number;
+};
+
+type PurchaseTrendItem = {
+  date: string;
+  purchaseOrders: number;
+  committedValue: number;
+  receivedValue: number;
+};
+
+type CostAlertItem = {
+  supplierId: string;
+  supplierName: string;
+  variantId: string;
+  productName: string;
+  colorName: string;
+  sizeName: string;
+  sku: string | null;
+  quotedCost: number;
+  lastPurchaseCost: number;
+  difference: number;
+  percentChange: number;
+  direction:
+    | "INCREASE"
+    | "DROP"
+    | "SAME";
+  preferred: boolean;
+  lastPurchasedAt:
+    | string
+    | null;
+};
+
+type PurchaseAnalytics = {
+  summary: PurchaseSummary;
+  supplierSpend:
+    SupplierSpendItem[];
+  topPurchasedProducts:
+    PurchasedProductItem[];
+  purchaseTrend:
+    PurchaseTrendItem[];
+  costAlerts:
+    CostAlertItem[];
+};
+
 type ReportData = {
   range: {
     days: number;
@@ -78,10 +148,16 @@ type ReportData = {
   topCustomers:
     CustomerItem[];
 
+  purchaseAnalytics:
+    PurchaseAnalytics;
+
   notes: {
     salesRule: string;
     trendRule: string;
     profitRule: string;
+    purchaseRule: string;
+    purchaseTrendRule: string;
+    costAlertRule: string;
   };
 };
 
@@ -203,6 +279,22 @@ export default function ReportsPage() {
           (item) =>
             item.sales,
         ),
+      );
+    }, [data]);
+
+  const maxPurchaseTrend =
+    useMemo(() => {
+      if (!data) {
+        return 0;
+      }
+
+      return Math.max(
+        0,
+        ...data.purchaseAnalytics
+          .purchaseTrend.map(
+            (item) =>
+              item.committedValue,
+          ),
       );
     }, [data]);
 
@@ -675,6 +767,481 @@ export default function ReportsPage() {
               </section>
             </div>
 
+            <section className="mt-8 overflow-hidden rounded-[28px] bg-zinc-950 p-5 text-white shadow-xl sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-400">
+                    Purchasing Intelligence
+                  </p>
+
+                  <h2 className="mt-2 text-2xl font-black">
+                    Purchase & Supplier Analytics
+                  </h2>
+
+                  <p className="mt-1 text-xs leading-5 text-zinc-400">
+                    Supplier spend, incoming stock value, received purchases and cost movement.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                    Active POs
+                  </p>
+
+                  <p className="mt-1 text-xl font-black">
+                    {
+                      data.purchaseAnalytics
+                        .summary
+                        .purchaseOrders
+                    }
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                    Purchase Spend
+                  </p>
+
+                  <p className="mt-2 text-2xl font-black text-emerald-400">
+                    {money(
+                      data.purchaseAnalytics
+                        .summary
+                        .purchaseSpend,
+                    )}
+                  </p>
+
+                  <p className="mt-2 text-[10px] text-zinc-500">
+                    Non-cancelled PO value
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                    Received
+                  </p>
+
+                  <p className="mt-2 text-2xl font-black">
+                    {money(
+                      data.purchaseAnalytics
+                        .summary
+                        .receivedPurchaseValue,
+                    )}
+                  </p>
+
+                  <p className="mt-2 text-[10px] text-zinc-500">
+                    {
+                      data.purchaseAnalytics
+                        .summary
+                        .receivedPurchasePieces
+                    }{" "}
+                    pcs received
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-amber-400/20 bg-amber-400/[0.07] p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-amber-300/70">
+                    Incoming
+                  </p>
+
+                  <p className="mt-2 text-2xl font-black text-amber-300">
+                    {money(
+                      data.purchaseAnalytics
+                        .summary
+                        .pendingIncomingValue,
+                    )}
+                  </p>
+
+                  <p className="mt-2 text-[10px] text-zinc-500">
+                    {
+                      data.purchaseAnalytics
+                        .summary
+                        .pendingIncomingPieces
+                    }{" "}
+                    pcs on the way
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-violet-400/20 bg-violet-400/[0.07] p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-violet-300/70">
+                    Draft Purchase
+                  </p>
+
+                  <p className="mt-2 text-2xl font-black text-violet-300">
+                    {money(
+                      data.purchaseAnalytics
+                        .summary
+                        .draftPurchaseValue,
+                    )}
+                  </p>
+
+                  <p className="mt-2 text-[10px] text-zinc-500">
+                    {
+                      data.purchaseAnalytics
+                        .summary
+                        .draftPurchasePieces
+                    }{" "}
+                    pcs planned
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-sm font-black">
+                      Purchase Trend
+                    </h3>
+
+                    <p className="mt-1 text-[10px] text-zinc-500">
+                      PO committed value by creation date.
+                    </p>
+                  </div>
+
+                  <p className="text-[10px] font-bold text-zinc-500">
+                    {
+                      data.purchaseAnalytics
+                        .summary
+                        .cancelledPurchaseOrders
+                    }{" "}
+                    cancelled excluded
+                  </p>
+                </div>
+
+                <div className="mt-5 flex h-40 items-end gap-1 overflow-x-auto border-b border-white/10 pb-1">
+                  {data.purchaseAnalytics.purchaseTrend.map(
+                    (item) => {
+                      const height =
+                        maxPurchaseTrend > 0
+                          ? Math.max(
+                              3,
+                              Math.round(
+                                (item.committedValue /
+                                  maxPurchaseTrend) *
+                                  130,
+                              ),
+                            )
+                          : 3;
+
+                      return (
+                        <div
+                          key={item.date}
+                          className="flex min-w-3 flex-1 flex-col items-center justify-end"
+                          title={`${item.date} · ${money(
+                            item.committedValue,
+                          )}`}
+                        >
+                          <div
+                            className={`w-full min-w-2 rounded-t ${
+                              item.committedValue >
+                              0
+                                ? "bg-emerald-400"
+                                : "bg-white/10"
+                            }`}
+                            style={{
+                              height:
+                                `${height}px`,
+                            }}
+                          />
+                        </div>
+                      );
+                    },
+                  )}
+                </div>
+
+                <div className="mt-3 flex justify-between text-[9px] font-bold text-zinc-600">
+                  <span>
+                    {
+                      data.purchaseAnalytics
+                        .purchaseTrend[0]
+                        ?.date
+                    }
+                  </span>
+
+                  <span>
+                    {
+                      data.purchaseAnalytics
+                        .purchaseTrend[
+                          data.purchaseAnalytics
+                            .purchaseTrend
+                            .length - 1
+                        ]?.date
+                    }
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+              <section className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
+                <h2 className="text-lg font-black">
+                  Supplier Spend
+                </h2>
+
+                <p className="mt-1 text-xs text-zinc-400">
+                  Purchase performance by supplier.
+                </p>
+
+                <div className="mt-4 divide-y">
+                  {data.purchaseAnalytics.supplierSpend.map(
+                    (supplier, index) => (
+                      <div
+                        key={
+                          supplier.supplierId
+                        }
+                        className="py-4"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex min-w-0 gap-3">
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xs font-black text-emerald-700">
+                              {index + 1}
+                            </span>
+
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-black">
+                                {
+                                  supplier.supplierName
+                                }
+                              </p>
+
+                              <p className="mt-1 text-[10px] text-zinc-400">
+                                {
+                                  supplier.purchaseOrders
+                                }{" "}
+                                POs ·{" "}
+                                {
+                                  supplier.receivedPieces
+                                }{" "}
+                                pcs received
+                              </p>
+                            </div>
+                          </div>
+
+                          <p className="shrink-0 text-sm font-black text-emerald-700">
+                            {money(
+                              supplier.receivedValue,
+                            )}
+                          </p>
+                        </div>
+
+                        {(supplier.incomingValue >
+                          0 ||
+                          supplier.draftValue >
+                            0) && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {supplier.incomingValue >
+                              0 && (
+                              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[9px] font-black text-amber-700">
+                                Incoming{" "}
+                                {money(
+                                  supplier.incomingValue,
+                                )}
+                              </span>
+                            )}
+
+                            {supplier.draftValue >
+                              0 && (
+                              <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[9px] font-black text-violet-700">
+                                Draft{" "}
+                                {money(
+                                  supplier.draftValue,
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ),
+                  )}
+
+                  {data.purchaseAnalytics
+                    .supplierSpend
+                    .length === 0 && (
+                    <p className="py-8 text-center text-xs text-zinc-400">
+                      No supplier purchases in this period.
+                    </p>
+                  )}
+                </div>
+              </section>
+
+              <section className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
+                <h2 className="text-lg font-black">
+                  Top Purchased Products
+                </h2>
+
+                <p className="mt-1 text-xs text-zinc-400">
+                  Based on received purchase quantities.
+                </p>
+
+                <div className="mt-4 divide-y">
+                  {data.purchaseAnalytics.topPurchasedProducts.map(
+                    (product, index) => (
+                      <div
+                        key={`${product.name}-${index}`}
+                        className="flex items-center justify-between gap-4 py-3"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-black">
+                            {index + 1}
+                          </span>
+
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-black">
+                              {
+                                product.name
+                              }
+                            </p>
+
+                            <p className="mt-1 text-[10px] text-zinc-400">
+                              {
+                                product.quantity
+                              }{" "}
+                              pcs received
+                            </p>
+                          </div>
+                        </div>
+
+                        <p className="shrink-0 text-sm font-black">
+                          {money(
+                            product.purchaseValue,
+                          )}
+                        </p>
+                      </div>
+                    ),
+                  )}
+
+                  {data.purchaseAnalytics
+                    .topPurchasedProducts
+                    .length === 0 && (
+                    <p className="py-8 text-center text-xs text-zinc-400">
+                      No received purchases in this period.
+                    </p>
+                  )}
+                </div>
+              </section>
+            </div>
+
+            <section className="mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-black">
+                    Supplier Cost Alerts
+                  </h2>
+
+                  <p className="mt-1 text-xs text-zinc-400">
+                    Current quoted cost compared with last received purchase cost.
+                  </p>
+                </div>
+
+                <span className="rounded-full bg-zinc-100 px-3 py-1.5 text-[10px] font-black">
+                  {
+                    data.purchaseAnalytics
+                      .costAlerts.length
+                  }{" "}
+                  changes
+                </span>
+              </div>
+
+              <div className="mt-4 divide-y">
+                {data.purchaseAnalytics.costAlerts.map(
+                  (alert) => (
+                    <div
+                      key={`${alert.supplierId}-${alert.variantId}`}
+                      className="flex flex-wrap items-center justify-between gap-4 py-4"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-xs font-black">
+                            {
+                              alert.productName
+                            }
+                          </p>
+
+                          {alert.preferred && (
+                            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-emerald-700">
+                              Preferred
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="mt-1 text-[10px] text-zinc-400">
+                          {
+                            alert.colorName
+                          }{" "}
+                          ·{" "}
+                          {
+                            alert.sizeName
+                          }{" "}
+                          ·{" "}
+                          {
+                            alert.supplierName
+                          }
+                        </p>
+
+                        <p className="mt-2 text-[10px] font-bold text-zinc-500">
+                          Last{" "}
+                          {money(
+                            alert.lastPurchaseCost,
+                          )}{" "}
+                          → Quote{" "}
+                          {money(
+                            alert.quotedCost,
+                          )}
+                        </p>
+                      </div>
+
+                      <div
+                        className={`rounded-2xl px-3 py-2 text-right ${
+                          alert.direction ===
+                          "INCREASE"
+                            ? "bg-red-50 text-red-700"
+                            : "bg-emerald-50 text-emerald-700"
+                        }`}
+                      >
+                        <p className="text-xs font-black">
+                          {alert.direction ===
+                          "INCREASE"
+                            ? "▲"
+                            : "▼"}{" "}
+                          {Math.abs(
+                            alert.percentChange,
+                          )}
+                          %
+                        </p>
+
+                        <p className="mt-0.5 text-[9px] font-bold">
+                          {alert.direction ===
+                          "INCREASE"
+                            ? "+"
+                            : "-"}
+                          {money(
+                            Math.abs(
+                              alert.difference,
+                            ),
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  ),
+                )}
+
+                {data.purchaseAnalytics
+                  .costAlerts.length ===
+                  0 && (
+                  <div className="py-8 text-center">
+                    <p className="text-sm font-black text-emerald-700">
+                      Costs are stable
+                    </p>
+
+                    <p className="mt-1 text-xs text-zinc-400">
+                      No supplier quote changes against the last purchase cost.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
+
             <section className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-5">
               <p className="text-xs font-black uppercase tracking-wider text-amber-800">
                 Reporting Notes
@@ -686,6 +1253,12 @@ export default function ReportsPage() {
                 • {data.notes.trendRule}
                 <br />
                 • {data.notes.profitRule}
+                <br />
+                • {data.notes.purchaseRule}
+                <br />
+                • {data.notes.purchaseTrendRule}
+                <br />
+                • {data.notes.costAlertRule}
               </p>
             </section>
           </>
