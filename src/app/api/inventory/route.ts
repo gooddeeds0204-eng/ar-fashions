@@ -207,6 +207,41 @@ export async function GET(request: Request) {
           },
         },
 
+        preferredSupplier: {
+          select: {
+            id: true,
+            name: true,
+            isActive: true,
+          },
+        },
+
+        supplierCosts: {
+          where: {
+            isActive: true,
+          },
+
+          orderBy: {
+            updatedAt: "desc",
+          },
+
+          select: {
+            id: true,
+            supplierId: true,
+            supplierCost: true,
+            lastPurchaseCost: true,
+            lastPurchasedAt: true,
+            isActive: true,
+
+            supplier: {
+              select: {
+                id: true,
+                name: true,
+                isActive: true,
+              },
+            },
+          },
+        },
+
         orderItems: {
           where: {
             order: {
@@ -559,6 +594,45 @@ export async function GET(request: Request) {
         recommendedReorderQty:
           recommendedReorderQty(
             variant,
+          ),
+
+        preferredSupplierId:
+          variant.preferredSupplierId,
+
+        preferredSupplier:
+          variant.preferredSupplier,
+
+        supplierCosts:
+          variant.supplierCosts.map(
+            (item) => ({
+              id:
+                item.id,
+
+              supplierId:
+                item.supplierId,
+
+              supplierCost:
+                Number(
+                  item.supplierCost,
+                ),
+
+              lastPurchaseCost:
+                item.lastPurchaseCost ===
+                null
+                  ? null
+                  : Number(
+                      item.lastPurchaseCost,
+                    ),
+
+              lastPurchasedAt:
+                item.lastPurchasedAt,
+
+              isActive:
+                item.isActive,
+
+              supplier:
+                item.supplier,
+            }),
           ),
 
         costPrice: variant.costPrice

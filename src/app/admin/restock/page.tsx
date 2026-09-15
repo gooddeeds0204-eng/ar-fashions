@@ -68,6 +68,32 @@ type InventoryVariant = {
   recommendedReorderQty:
     number;
 
+  preferredSupplierId:
+    string | null;
+
+  preferredSupplier: {
+    id: string;
+    name: string;
+    isActive: boolean;
+  } | null;
+
+  supplierCosts: Array<{
+    id: string;
+    supplierId: string;
+    supplierCost: number;
+    lastPurchaseCost:
+      number | null;
+    lastPurchasedAt:
+      string | null;
+    isActive: boolean;
+
+    supplier: {
+      id: string;
+      name: string;
+      isActive: boolean;
+    };
+  }>;
+
   costPrice:
     number | null;
 
@@ -125,6 +151,25 @@ function money(
       maximumFractionDigits: 0,
     },
   ).format(value || 0);
+}
+
+function shortDate(
+  value: string | null,
+) {
+  if (!value) {
+    return "—";
+  }
+
+  return new Date(
+    value,
+  ).toLocaleDateString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    },
+  );
 }
 
 function healthLabel(
@@ -250,6 +295,20 @@ export default function RestockQueuePage() {
     creatingPO,
     setCreatingPO,
   ] = useState(false);
+
+  const [
+    supplierCostDrafts,
+    setSupplierCostDrafts,
+  ] = useState<
+    Record<string, string>
+  >({});
+
+  const [
+    savingSupplierCostKey,
+    setSavingSupplierCostKey,
+  ] = useState<
+    string | null
+  >(null);
 
   async function loadQueue(
     refresh = false,
@@ -521,6 +580,263 @@ export default function RestockQueuePage() {
     );
   }, [queue.length]);
 
+  function selectedSupplierCostFor(
+    item: InventoryVariant,
+  ) {
+    if (!supplierId) {
+      return null;
+    }
+
+    return (
+      item.supplierCosts.find(
+        (cost) =>
+          cost.supplierId ===
+            supplierId &&
+          cost.isActive &&
+          cost.supplier.isActive,
+      ) ?? null
+    );
+  }
+
+  function purchaseCostFor(
+    item: InventoryVariant,
+  ) {
+    return (
+      selectedSupplierCostFor(
+        item,
+      )?.supplierCost ??
+      item.costPrice
+    );
+  }
+
+  function supplierCostDraftKey(
+    variantId: string,
+  ) {
+    return `${supplierId}:${variantId}`;
+  }
+
+  function supplierCostInputFor(
+    item: InventoryVariant,
+  ) {
+    if (!supplierId) {
+      return "";
+    }
+
+    const key =
+      supplierCostDraftKey(
+        item.id,
+      );
+
+    if (
+      Object.prototype.hasOwnProperty.call(
+        supplierCostDrafts,
+        key,
+      )
+    ) {
+      return supplierCostDrafts[
+        key
+      ];
+    }
+
+    const mapped =
+      selectedSupplierCostFor(
+        item,
+      );
+
+    if (mapped) {
+      return String(
+        mapped.supplierCost,
+      );
+    }
+
+    return item.costPrice ===
+      null
+      ? ""
+      : String(
+          item.costPrice,
+        );
+  }
+
+  async function saveSupplierCost(
+    item: InventoryVariant,
+  ) {
+    if (!supplierId) {
+      setMessage(
+        "Select a supplier first.",
+      );
+      return;
+    }
+
+    const value =
+      supplierCostInputFor(
+        item,
+      ).trim();
+
+    const parsed =
+      Number(value);
+
+    if (
+      !value ||
+      !Number.isFinite(
+        parsed,
+      ) ||
+      parsed < 0
+    ) {
+      setMessage(
+        "Enter a valid supplier cost.",
+      );
+      return;
+    }
+
+    const key =
+      supplierCostDraftKey(
+        item.id,
+      );
+
+    try {
+      setSavingSupplierCostKey(
+        key,
+      );
+      setMessage("");
+
+      const response =
+        await fetch(
+          "/api/admin/variant-supplier-costs",
+          {
+            method: "PATCH",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            credentials:
+              "same-origin",
+
+            body:
+              JSON.stringify({
+                action:
+                  "UPSERT_COST",
+
+                variantId:
+                  item.id,
+
+                supplierId,
+
+                supplierCost:
+                  parsed,
+              }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Failed to save supplier cost.",
+        );
+      }
+
+      setMessage(
+        "Supplier cost saved successfully.",
+      );
+
+      await loadQueue(
+        true,
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to save supplier cost.",
+      );
+    } finally {
+      setSavingSupplierCostKey(
+        null,
+      );
+    }
+  }
+
+  async function setPreferredSupplier(
+    item: InventoryVariant,
+  ) {
+    if (!supplierId) {
+      setMessage(
+        "Select a supplier first.",
+      );
+      return;
+    }
+
+    const key =
+      supplierCostDraftKey(
+        item.id,
+      );
+
+    try {
+      setSavingSupplierCostKey(
+        key,
+      );
+      setMessage("");
+
+      const response =
+        await fetch(
+          "/api/admin/variant-supplier-costs",
+          {
+            method: "PATCH",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            credentials:
+              "same-origin",
+
+            body:
+              JSON.stringify({
+                action:
+                  "SET_PREFERRED",
+
+                variantId:
+                  item.id,
+
+                supplierId,
+              }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Failed to set preferred supplier.",
+        );
+      }
+
+      setMessage(
+        "Preferred supplier updated successfully.",
+      );
+
+      await loadQueue(
+        true,
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to set preferred supplier.",
+      );
+    } finally {
+      setSavingSupplierCostKey(
+        null,
+      );
+    }
+  }
+
   const selectedQueue =
     queue.filter(
       (item) =>
@@ -539,13 +855,20 @@ export default function RestockQueuePage() {
 
   const selectedCost =
     selectedQueue.reduce(
-      (total, item) =>
-        total +
-        (item.costPrice ===
-        null
-          ? 0
-          : item.costPrice *
-            item.recommendedReorderQty),
+      (total, item) => {
+        const cost =
+          purchaseCostFor(
+            item,
+          );
+
+        return (
+          total +
+          (cost === null
+            ? 0
+            : cost *
+              item.recommendedReorderQty)
+        );
+      },
       0,
     );
 
@@ -570,12 +893,13 @@ export default function RestockQueuePage() {
     if (
       selectedQueue.some(
         (item) =>
-          item.costPrice ===
-          null,
+          purchaseCostFor(
+            item,
+          ) === null,
       )
     ) {
       setMessage(
-        "Every selected item needs a cost price before creating a purchase order.",
+        "Every selected item needs a supplier cost or fallback cost price before creating a purchase order.",
       );
       return;
     }
@@ -655,21 +979,29 @@ export default function RestockQueuePage() {
 
   const estimatedPurchaseCost =
     queue.reduce(
-      (total, item) =>
-        total +
-        (item.costPrice ===
-        null
-          ? 0
-          : item.costPrice *
-            item.recommendedReorderQty),
+      (total, item) => {
+        const cost =
+          purchaseCostFor(
+            item,
+          );
+
+        return (
+          total +
+          (cost === null
+            ? 0
+            : cost *
+              item.recommendedReorderQty)
+        );
+      },
       0,
     );
 
   const pricedVariants =
     queue.filter(
       (item) =>
-        item.costPrice !==
-        null,
+        purchaseCostFor(
+          item,
+        ) !== null,
     ).length;
 
   const missingCostVariants =
@@ -1301,11 +1633,14 @@ export default function RestockQueuePage() {
                                   <MiniStat
                                     label="Cost / pc"
                                     value={
-                                      item.costPrice ===
-                                      null
+                                      purchaseCostFor(
+                                        item,
+                                      ) === null
                                         ? "—"
                                         : money(
-                                            item.costPrice,
+                                            purchaseCostFor(
+                                              item,
+                                            )!,
                                           )
                                     }
                                   />
@@ -1313,15 +1648,182 @@ export default function RestockQueuePage() {
                                   <MiniStat
                                     label="Est."
                                     value={
-                                      item.costPrice ===
-                                      null
+                                      purchaseCostFor(
+                                        item,
+                                      ) === null
                                         ? "—"
                                         : money(
-                                            item.costPrice *
+                                            purchaseCostFor(
+                                              item,
+                                            )! *
                                               item.recommendedReorderQty,
                                           )
                                     }
                                   />
+                                </div>
+
+                                <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                                  {!supplierId ? (
+                                    <p className="text-[9px] font-bold text-slate-400">
+                                      Select a supplier above to manage supplier-specific costing.
+                                    </p>
+                                  ) : (
+                                    <>
+                                      <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <p className="text-[8px] font-black uppercase tracking-wider text-slate-400">
+                                          Supplier Costing
+                                        </p>
+
+                                        {item.preferredSupplierId ===
+                                        supplierId ? (
+                                          <span className="rounded-full bg-emerald-100 px-2 py-1 text-[7px] font-black uppercase text-emerald-700">
+                                            Preferred Supplier
+                                          </span>
+                                        ) : null}
+                                      </div>
+
+                                      <div className="mt-3 grid grid-cols-3 gap-2">
+                                        <MiniStat
+                                          label="Quoted"
+                                          value={
+                                            selectedSupplierCostFor(
+                                              item,
+                                            )
+                                              ? money(
+                                                  selectedSupplierCostFor(
+                                                    item,
+                                                  )!
+                                                    .supplierCost,
+                                                )
+                                              : "Not set"
+                                          }
+                                        />
+
+                                        <MiniStat
+                                          label="Last Purchase"
+                                          value={
+                                            selectedSupplierCostFor(
+                                              item,
+                                            )
+                                              ?.lastPurchaseCost ===
+                                            null ||
+                                            selectedSupplierCostFor(
+                                              item,
+                                            )
+                                              ?.lastPurchaseCost ===
+                                            undefined
+                                              ? "—"
+                                              : money(
+                                                  selectedSupplierCostFor(
+                                                    item,
+                                                  )!
+                                                    .lastPurchaseCost!,
+                                                )
+                                          }
+                                        />
+
+                                        <MiniStat
+                                          label="Last Bought"
+                                          value={shortDate(
+                                            selectedSupplierCostFor(
+                                              item,
+                                            )
+                                              ?.lastPurchasedAt ??
+                                              null,
+                                          )}
+                                        />
+                                      </div>
+
+                                      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          step="0.01"
+                                          value={
+                                            supplierCostInputFor(
+                                              item,
+                                            )
+                                          }
+                                          onChange={(
+                                            event,
+                                          ) => {
+                                            const key =
+                                              supplierCostDraftKey(
+                                                item.id,
+                                              );
+
+                                            setSupplierCostDrafts(
+                                              (
+                                                current,
+                                              ) => ({
+                                                ...current,
+                                                [key]:
+                                                  event
+                                                    .target
+                                                    .value,
+                                              }),
+                                            );
+                                          }}
+                                          placeholder="Supplier cost / pc"
+                                          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black outline-none focus:border-emerald-400"
+                                        />
+
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            saveSupplierCost(
+                                              item,
+                                            )
+                                          }
+                                          disabled={
+                                            savingSupplierCostKey ===
+                                            supplierCostDraftKey(
+                                              item.id,
+                                            )
+                                          }
+                                          className="rounded-xl bg-slate-900 px-3 py-2 text-[9px] font-black text-white disabled:opacity-50"
+                                        >
+                                          Save Cost
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setPreferredSupplier(
+                                              item,
+                                            )
+                                          }
+                                          disabled={
+                                            savingSupplierCostKey ===
+                                              supplierCostDraftKey(
+                                                item.id,
+                                              ) ||
+                                            item.preferredSupplierId ===
+                                              supplierId
+                                          }
+                                          className="rounded-xl bg-emerald-100 px-3 py-2 text-[9px] font-black text-emerald-800 disabled:opacity-50"
+                                        >
+                                          {item.preferredSupplierId ===
+                                          supplierId
+                                            ? "Preferred"
+                                            : "Set Preferred"}
+                                        </button>
+                                      </div>
+
+                                      {item.preferredSupplier &&
+                                      item.preferredSupplierId !==
+                                        supplierId ? (
+                                        <p className="mt-2 text-[8px] font-bold text-slate-400">
+                                          Current preferred:{" "}
+                                          {
+                                            item
+                                              .preferredSupplier
+                                              .name
+                                          }
+                                        </p>
+                                      ) : null}
+                                    </>
+                                  )}
                                 </div>
                               </div>
 

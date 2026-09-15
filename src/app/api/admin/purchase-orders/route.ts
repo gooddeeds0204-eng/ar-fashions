@@ -453,6 +453,21 @@ export async function POST(
                 costPrice:
                   true,
 
+                supplierCosts: {
+                  where: {
+                    supplierId,
+                    isActive:
+                      true,
+                  },
+
+                  take: 1,
+
+                  select: {
+                    supplierCost:
+                      true,
+                  },
+                },
+
                 product: {
                   select: {
                     name:
@@ -616,18 +631,27 @@ export async function POST(
                   );
                 }
 
+                const supplierCost =
+                  variant.supplierCosts[0]
+                    ?.supplierCost ??
+                  null;
+
+                const costSource =
+                  supplierCost ??
+                  variant.costPrice;
+
                 if (
-                  variant.costPrice ===
+                  costSource ===
                   null
                 ) {
                   throw new Error(
-                    `VALIDATION:${variant.product.name} · ${variant.color.name} · ${variant.size.name} has no cost price.`,
+                    `VALIDATION:${variant.product.name} · ${variant.color.name} · ${variant.size.name} has no supplier cost or fallback cost price.`,
                   );
                 }
 
                 const unitCost =
                   Number(
-                    variant.costPrice,
+                    costSource,
                   );
 
                 if (
@@ -637,7 +661,7 @@ export async function POST(
                   unitCost < 0
                 ) {
                   throw new Error(
-                    "VALIDATION:Invalid variant cost price.",
+                    "VALIDATION:Invalid purchase cost.",
                   );
                 }
 
@@ -1294,6 +1318,7 @@ export async function PATCH(
       id: string;
       poNumber: string;
       status: string;
+      supplierId: string;
     };
 
     type ChangedPurchaseItem = {
@@ -1324,7 +1349,8 @@ export async function PATCH(
               SELECT
                 id,
                 "poNumber",
-                status::text AS status
+                status::text AS status,
+                "supplierId"
               FROM "PurchaseOrder"
               WHERE id = ${purchaseOrderId}
               FOR UPDATE
@@ -1373,6 +1399,7 @@ export async function PATCH(
                 variantId: true,
                 orderedQty: true,
                 receivedQty: true,
+                unitCost: true,
                 productName: true,
                 colorName: true,
                 sizeName: true,
@@ -1496,6 +1523,72 @@ export async function PATCH(
 
                 reason:
                   `PURCHASE_ORDER_RECEIPT:${purchaseOrder.poNumber}`,
+              },
+            });
+
+            const actualUnitCost =
+              Number(
+                item.unitCost,
+              );
+
+            if (
+              !Number.isFinite(
+                actualUnitCost,
+              ) ||
+              actualUnitCost < 0
+            ) {
+              throw new Error(
+                "Invalid purchase order unit cost.",
+              );
+            }
+
+            const receivedAt =
+              new Date();
+
+            await tx.supplierVariantCost.upsert({
+              where: {
+                supplierId_variantId:
+                  {
+                    supplierId:
+                      purchaseOrder.supplierId,
+
+                    variantId:
+                      item.variantId,
+                  },
+              },
+
+              create: {
+                supplierId:
+                  purchaseOrder.supplierId,
+
+                variantId:
+                  item.variantId,
+
+                supplierCost:
+                  actualUnitCost.toFixed(
+                    2,
+                  ),
+
+                lastPurchaseCost:
+                  actualUnitCost.toFixed(
+                    2,
+                  ),
+
+                lastPurchasedAt:
+                  receivedAt,
+
+                isActive:
+                  true,
+              },
+
+              update: {
+                lastPurchaseCost:
+                  actualUnitCost.toFixed(
+                    2,
+                  ),
+
+                lastPurchasedAt:
+                  receivedAt,
               },
             });
 
