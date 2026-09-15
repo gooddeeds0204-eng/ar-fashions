@@ -596,6 +596,21 @@ export default function AccountPage() {
     orders.slice(0, 2);
 
   const quickLinks = [
+    ...(profile?.isReseller
+      ? [
+          {
+            title:
+              "Reseller Dashboard",
+            subtitle:
+              "Wholesale stats, Smart Packs and business profile",
+            icon: "◆",
+            onClick: () =>
+              router.push(
+                "/reseller-dashboard",
+              ),
+          },
+        ]
+      : []),
     {
       title: "My Orders",
       subtitle:
