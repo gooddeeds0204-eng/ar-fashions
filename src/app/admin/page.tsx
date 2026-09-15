@@ -41,6 +41,32 @@ type SalesMode = {
     | "CLOSED";
 };
 
+type InventoryAlert = {
+  variantId: string;
+  productId: string;
+  productName: string;
+  sku: string | null;
+  colorName: string;
+  sizeName: string;
+  availableStock: number;
+  health:
+    | "OUT_OF_STOCK"
+    | "CRITICAL"
+    | "LOW";
+  recentSalesQty: number;
+  recommendedReorderQty: number;
+};
+
+type InventorySummary = {
+  lowStock: number;
+  criticalStock: number;
+  outOfStock: number;
+  alertCount: number;
+  lowStockThreshold: number;
+  criticalStockThreshold: number;
+  alerts: InventoryAlert[];
+};
+
 export default function AdminDashboard() {
   const pathname = usePathname();
   const router = useRouter();
@@ -58,6 +84,14 @@ export default function AdminDashboard() {
   ] = useState<SalesMode | null>(
     null,
   );
+
+  const [
+    inventorySummary,
+    setInventorySummary,
+  ] =
+    useState<InventorySummary | null>(
+      null,
+    );
 
   useEffect(() => {
     async function loadDashboardStats() {
@@ -107,6 +141,16 @@ export default function AdminDashboard() {
             data.salesMode,
           );
         }
+
+        if (
+          data.inventory &&
+          typeof data.inventory ===
+            "object"
+        ) {
+          setInventorySummary(
+            data.inventory,
+          );
+        }
       } catch (error) {
         console.error(
           "Dashboard stats failed:",
@@ -116,6 +160,20 @@ export default function AdminDashboard() {
     }
 
     loadDashboardStats();
+
+    const timer =
+      window.setInterval(
+        () => {
+          void loadDashboardStats();
+        },
+        60_000,
+      );
+
+    return () => {
+      window.clearInterval(
+        timer,
+      );
+    };
   }, [router]);
 
   const stats = [
@@ -339,6 +397,184 @@ export default function AdminDashboard() {
               </div>
             ))}
           </section>
+
+          {inventorySummary ? (
+            <section className="mt-7 overflow-hidden rounded-[24px] border border-black/5 bg-white shadow-sm">
+              <div className="flex flex-col gap-4 border-b border-black/5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-semibold">
+                      Inventory Alerts
+                    </h3>
+
+                    {inventorySummary.alertCount >
+                    0 ? (
+                      <span className="rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-bold text-red-600">
+                        {
+                          inventorySummary.alertCount
+                        }{" "}
+                        ACTIVE
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-600">
+                        HEALTHY
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="mt-1 text-xs text-[#9ba2ae]">
+                    Automatic stock watch · refreshes every 60 seconds
+                  </p>
+                </div>
+
+                <Link
+                  href="/admin/inventory"
+                  className="rounded-xl bg-[#111827] px-4 py-2.5 text-center text-xs font-semibold text-white"
+                >
+                  Open Inventory →
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-3 gap-px bg-black/5">
+                <div className="bg-white p-4 sm:p-5">
+                  <div className="text-[9px] font-semibold uppercase tracking-wider text-red-500">
+                    Out
+                  </div>
+
+                  <div className="mt-1 text-2xl font-semibold">
+                    {
+                      inventorySummary.outOfStock
+                    }
+                  </div>
+                </div>
+
+                <div className="bg-white p-4 sm:p-5">
+                  <div className="text-[9px] font-semibold uppercase tracking-wider text-rose-500">
+                    Critical
+                  </div>
+
+                  <div className="mt-1 text-2xl font-semibold">
+                    {
+                      inventorySummary.criticalStock
+                    }
+                  </div>
+                </div>
+
+                <div className="bg-white p-4 sm:p-5">
+                  <div className="text-[9px] font-semibold uppercase tracking-wider text-amber-500">
+                    Low
+                  </div>
+
+                  <div className="mt-1 text-2xl font-semibold">
+                    {
+                      inventorySummary.lowStock
+                    }
+                  </div>
+                </div>
+              </div>
+
+              {inventorySummary.alerts.length >
+              0 ? (
+                <div className="divide-y divide-black/5">
+                  {inventorySummary.alerts.map(
+                    (alert) => (
+                      <div
+                        key={
+                          alert.variantId
+                        }
+                        className="flex items-center gap-3 p-4 sm:p-5"
+                      >
+                        <div
+                          className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl text-sm font-black ${
+                            alert.health ===
+                            "OUT_OF_STOCK"
+                              ? "bg-red-50 text-red-600"
+                              : alert.health ===
+                                  "CRITICAL"
+                                ? "bg-rose-50 text-rose-600"
+                                : "bg-amber-50 text-amber-600"
+                          }`}
+                        >
+                          !
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-semibold">
+                            {
+                              alert.productName
+                            }
+                          </div>
+
+                          <div className="mt-1 truncate text-[10px] text-[#9ba2ae]">
+                            {
+                              alert.colorName
+                            }{" "}
+                            ·{" "}
+                            {
+                              alert.sizeName
+                            }{" "}
+                            · Available{" "}
+                            {
+                              alert.availableStock
+                            }
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          <div
+                            className={`text-[9px] font-bold uppercase ${
+                              alert.health ===
+                              "OUT_OF_STOCK"
+                                ? "text-red-600"
+                                : alert.health ===
+                                    "CRITICAL"
+                                  ? "text-rose-600"
+                                  : "text-amber-600"
+                            }`}
+                          >
+                            {alert.health ===
+                            "OUT_OF_STOCK"
+                              ? "Out"
+                              : alert.health ===
+                                  "CRITICAL"
+                                ? "Critical"
+                                : "Low"}
+                          </div>
+
+                          <div className="mt-1 text-xs font-semibold">
+                            +{
+                              alert.recommendedReorderQty
+                            } pcs
+                          </div>
+                        </div>
+                      </div>
+                    ),
+                  )}
+                </div>
+              ) : (
+                <div className="p-6 text-center">
+                  <div className="text-sm font-semibold text-emerald-600">
+                    Inventory healthy ✓
+                  </div>
+
+                  <p className="mt-1 text-xs text-[#9ba2ae]">
+                    No low, critical or out-of-stock variants.
+                  </p>
+                </div>
+              )}
+
+              <div className="border-t border-black/5 bg-[#fafafa] px-5 py-3 text-[10px] text-[#9ba2ae]">
+                Alert rules: Low ≤{" "}
+                {
+                  inventorySummary.lowStockThreshold
+                }{" "}
+                · Critical ≤{" "}
+                {
+                  inventorySummary.criticalStockThreshold
+                }
+              </div>
+            </section>
+          ) : null}
 
           <section className="mt-7 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
             <div className="rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
