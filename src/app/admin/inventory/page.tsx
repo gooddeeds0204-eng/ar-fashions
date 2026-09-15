@@ -32,6 +32,12 @@ type InventoryVariant = {
   recentSalesQty: number;
   isSlowStock: boolean;
   slowStockDays: number;
+  stockHealth:
+    | "HEALTHY"
+    | "LOW"
+    | "CRITICAL"
+    | "OUT_OF_STOCK";
+  recommendedReorderQty: number;
   costPrice: number | null;
   retailPrice: number | null;
   resellerPrice: number | null;
@@ -47,14 +53,23 @@ type InventoryResponse = {
     totalReserved: number;
     totalAvailable: number;
     lowStock: number;
+    criticalStock: number;
     outOfStock: number;
     slowStock: number;
+  };
+  settings: {
+    lowStockThreshold: number;
+    criticalStockThreshold: number;
   };
 };
 
 const FILTERS = [
   { value: "ALL", label: "All" },
   { value: "IN_STOCK", label: "In Stock" },
+  {
+    value: "CRITICAL_STOCK",
+    label: "Critical",
+  },
   { value: "LOW_STOCK", label: "Low Stock" },
   { value: "OUT_OF_STOCK", label: "Out of Stock" },
   { value: "SLOW_STOCK", label: "Slow Stock" },
@@ -66,17 +81,49 @@ function money(value: number | null) {
 }
 
 function stockLabel(item: InventoryVariant) {
-  if (item.availableStock <= 0) return "OUT OF STOCK";
-  if (item.availableStock <= 5) return "LOW STOCK";
+  if (
+    item.stockHealth ===
+    "OUT_OF_STOCK"
+  ) {
+    return "OUT OF STOCK";
+  }
+
+  if (
+    item.stockHealth ===
+    "CRITICAL"
+  ) {
+    return "CRITICAL";
+  }
+
+  if (
+    item.stockHealth ===
+    "LOW"
+  ) {
+    return "LOW STOCK";
+  }
+
   return "IN STOCK";
 }
 
 function stockClass(item: InventoryVariant) {
-  if (item.availableStock <= 0) {
-    return "bg-red-50 text-red-700";
+  if (
+    item.stockHealth ===
+    "OUT_OF_STOCK"
+  ) {
+    return "bg-red-100 text-red-800";
   }
 
-  if (item.availableStock <= 5) {
+  if (
+    item.stockHealth ===
+    "CRITICAL"
+  ) {
+    return "bg-rose-50 text-rose-700";
+  }
+
+  if (
+    item.stockHealth ===
+    "LOW"
+  ) {
     return "bg-amber-50 text-amber-700";
   }
 
@@ -92,8 +139,13 @@ export default function InventoryPage() {
       totalReserved: 0,
       totalAvailable: 0,
       lowStock: 0,
+      criticalStock: 0,
       outOfStock: 0,
       slowStock: 0,
+    },
+    settings: {
+      lowStockThreshold: 5,
+      criticalStockThreshold: 2,
     },
   });
 
@@ -109,6 +161,21 @@ export default function InventoryPage() {
   const [reason, setReason] = useState("MANUAL_ADJUSTMENT");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+
+  const [
+    lowStockThreshold,
+    setLowStockThreshold,
+  ] = useState("5");
+
+  const [
+    criticalStockThreshold,
+    setCriticalStockThreshold,
+  ] = useState("2");
+
+  const [
+    savingAutomation,
+    setSavingAutomation,
+  ] = useState(false);
 
   async function loadInventory(showRefresh = false) {
     if (showRefresh) {
@@ -144,6 +211,22 @@ export default function InventoryPage() {
       }
 
       setData(result);
+
+      if (result.settings) {
+        setLowStockThreshold(
+          String(
+            result.settings
+              .lowStockThreshold,
+          ),
+        );
+
+        setCriticalStockThreshold(
+          String(
+            result.settings
+              .criticalStockThreshold,
+          ),
+        );
+      }
     } catch (error) {
       console.error(error);
       setMessage(
@@ -169,6 +252,96 @@ export default function InventoryPage() {
     () => data.variants,
     [data.variants],
   );
+
+  async function saveAutomationSettings() {
+    const low =
+      Number(
+        lowStockThreshold,
+      );
+
+    const critical =
+      Number(
+        criticalStockThreshold,
+      );
+
+    if (
+      !Number.isInteger(low) ||
+      low < 1 ||
+      low > 100
+    ) {
+      setMessage(
+        "Low stock threshold must be between 1 and 100.",
+      );
+      return;
+    }
+
+    if (
+      !Number.isInteger(
+        critical,
+      ) ||
+      critical < 0 ||
+      critical >= low
+    ) {
+      setMessage(
+        "Critical threshold must be lower than the low stock threshold.",
+      );
+      return;
+    }
+
+    try {
+      setSavingAutomation(
+        true,
+      );
+
+      setMessage("");
+
+      const response =
+        await fetch(
+          "/api/inventory",
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              lowStockThreshold:
+                low,
+              criticalStockThreshold:
+                critical,
+            }),
+          },
+        );
+
+      const result =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+            "Failed to save automation settings.",
+        );
+      }
+
+      setMessage(
+        "Stock automation thresholds saved successfully.",
+      );
+
+      await loadInventory(
+        true,
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to save automation settings.",
+      );
+    } finally {
+      setSavingAutomation(
+        false,
+      );
+    }
+  }
 
   async function adjustStock(amount: number) {
     if (!selected) return;
@@ -260,7 +433,7 @@ export default function InventoryPage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
           <SummaryCard
             label="Variants"
             value={data.summary.totalVariants}
@@ -287,6 +460,14 @@ export default function InventoryPage() {
           />
 
           <SummaryCard
+            label="Critical"
+            value={
+              data.summary
+                .criticalStock
+            }
+          />
+
+          <SummaryCard
             label="Out of Stock"
             value={data.summary.outOfStock}
           />
@@ -297,7 +478,83 @@ export default function InventoryPage() {
           />
         </div>
 
-        <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mt-6 rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">
+                Stock Automation
+              </p>
+
+              <h2 className="mt-1 text-xl font-black text-slate-950">
+                Low Stock Alert Rules
+              </h2>
+
+              <p className="mt-1 max-w-xl text-xs font-semibold leading-5 text-slate-500">
+                AR Fashions automatically marks variants as Critical or Low Stock and calculates a suggested restock quantity from live stock and recent 30-day sales.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:flex">
+              <label className="block">
+                <span className="text-[9px] font-black uppercase tracking-wider text-slate-500">
+                  Low At
+                </span>
+
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={
+                    lowStockThreshold
+                  }
+                  onChange={(event) =>
+                    setLowStockThreshold(
+                      event.target.value,
+                    )
+                  }
+                  className="mt-1 w-full rounded-xl border border-emerald-100 bg-white px-3 py-2.5 text-sm font-black outline-none focus:border-emerald-400 sm:w-24"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-[9px] font-black uppercase tracking-wider text-slate-500">
+                  Critical At
+                </span>
+
+                <input
+                  type="number"
+                  min="0"
+                  value={
+                    criticalStockThreshold
+                  }
+                  onChange={(event) =>
+                    setCriticalStockThreshold(
+                      event.target.value,
+                    )
+                  }
+                  className="mt-1 w-full rounded-xl border border-emerald-100 bg-white px-3 py-2.5 text-sm font-black outline-none focus:border-emerald-400 sm:w-24"
+                />
+              </label>
+
+              <button
+                type="button"
+                onClick={
+                  saveAutomationSettings
+                }
+                disabled={
+                  savingAutomation
+                }
+                className="col-span-2 mt-auto rounded-xl bg-[#06261c] px-4 py-3 text-[10px] font-black uppercase tracking-wider text-white disabled:opacity-50"
+              >
+                {savingAutomation
+                  ? "Saving..."
+                  : "Save Rules"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-3 lg:flex-row">
             <input
               value={search}
@@ -351,7 +608,7 @@ export default function InventoryPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px]">
+              <table className="w-full min-w-[1020px]">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50 text-left">
                     <th className="px-5 py-4 text-[10px] font-black uppercase tracking-wider text-slate-500">
@@ -376,6 +633,10 @@ export default function InventoryPage() {
 
                     <th className="px-5 py-4 text-[10px] font-black uppercase tracking-wider text-slate-500">
                       Status
+                    </th>
+
+                    <th className="px-5 py-4 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                      Restock
                     </th>
 
                     <th className="px-5 py-4 text-right text-[10px] font-black uppercase tracking-wider text-slate-500">
@@ -469,6 +730,27 @@ export default function InventoryPage() {
                             SLOW
                           </span>
                         ) : null}
+                      </td>
+
+                      <td className="px-5 py-5">
+                        {item.recommendedReorderQty >
+                        0 ? (
+                          <div>
+                            <p className="text-sm font-black text-slate-950">
+                              +{
+                                item.recommendedReorderQty
+                              } pcs
+                            </p>
+
+                            <p className="mt-1 text-[9px] font-semibold text-slate-400">
+                              Suggested
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-xs font-bold text-emerald-600">
+                            Healthy
+                          </span>
+                        )}
                       </td>
 
                       <td className="px-5 py-5 text-right">

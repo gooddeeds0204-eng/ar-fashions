@@ -19,6 +19,15 @@ function toInt(value: unknown) {
 const SLOW_STOCK_DAYS = 30;
 const SLOW_STOCK_MAX_SALES = 1;
 
+const DEFAULT_LOW_STOCK_THRESHOLD = 5;
+const DEFAULT_CRITICAL_STOCK_THRESHOLD = 2;
+
+const LOW_STOCK_SETTING_KEY =
+  "inventoryLowStockThreshold";
+
+const CRITICAL_STOCK_SETTING_KEY =
+  "inventoryCriticalStockThreshold";
+
 const SALES_MOVEMENT_STATUSES = [
   "CONFIRMED",
   "PACKED",
@@ -45,6 +54,68 @@ export async function GET(request: Request) {
 
     const search = cleanString(searchParams.get("search"));
     const filter = cleanString(searchParams.get("filter"));
+
+    const inventorySettings =
+      await prisma.siteSetting.findMany({
+        where: {
+          key: {
+            in: [
+              LOW_STOCK_SETTING_KEY,
+              CRITICAL_STOCK_SETTING_KEY,
+            ],
+          },
+        },
+        select: {
+          key: true,
+          value: true,
+        },
+      });
+
+    const settingMap =
+      new Map(
+        inventorySettings.map(
+          (item) => [
+            item.key,
+            item.value,
+          ],
+        ),
+      );
+
+    const parsedLowThreshold =
+      Number(
+        settingMap.get(
+          LOW_STOCK_SETTING_KEY,
+        ),
+      );
+
+    const lowStockThreshold =
+      Number.isInteger(
+        parsedLowThreshold,
+      ) &&
+      parsedLowThreshold >= 1 &&
+      parsedLowThreshold <= 100
+        ? parsedLowThreshold
+        : DEFAULT_LOW_STOCK_THRESHOLD;
+
+    const parsedCriticalThreshold =
+      Number(
+        settingMap.get(
+          CRITICAL_STOCK_SETTING_KEY,
+        ),
+      );
+
+    const criticalStockThreshold =
+      Number.isInteger(
+        parsedCriticalThreshold,
+      ) &&
+      parsedCriticalThreshold >= 0 &&
+      parsedCriticalThreshold <
+        lowStockThreshold
+        ? parsedCriticalThreshold
+        : Math.min(
+            DEFAULT_CRITICAL_STOCK_THRESHOLD,
+            lowStockThreshold - 1,
+          );
 
     const slowStockCutoff =
       new Date(
@@ -201,6 +272,70 @@ export async function GET(request: Request) {
       );
     }
 
+    function stockHealth(
+      variant: (typeof variants)[number],
+    ) {
+      const availableStock =
+        variant.stock -
+        variant.reservedStock;
+
+      if (availableStock <= 0) {
+        return "OUT_OF_STOCK";
+      }
+
+      if (
+        availableStock <=
+        criticalStockThreshold
+      ) {
+        return "CRITICAL";
+      }
+
+      if (
+        availableStock <=
+        lowStockThreshold
+      ) {
+        return "LOW";
+      }
+
+      return "HEALTHY";
+    }
+
+    function recommendedReorderQty(
+      variant: (typeof variants)[number],
+    ) {
+      const availableStock =
+        Math.max(
+          0,
+          variant.stock -
+            variant.reservedStock,
+        );
+
+      if (
+        availableStock >
+        lowStockThreshold
+      ) {
+        return 0;
+      }
+
+      const thirtyDaySales =
+        recentSalesQty(
+          variant,
+        );
+
+      const targetStock =
+        Math.max(
+          lowStockThreshold * 2,
+          thirtyDaySales,
+          lowStockThreshold + 1,
+        );
+
+      return Math.max(
+        0,
+        targetStock -
+          availableStock,
+      );
+    }
+
     const filtered = variants.filter((variant) => {
       const availableStock =
         variant.stock - variant.reservedStock;
@@ -209,8 +344,20 @@ export async function GET(request: Request) {
         return availableStock > 0;
       }
 
+      if (filter === "CRITICAL_STOCK") {
+        return (
+          availableStock > 0 &&
+          availableStock <=
+            criticalStockThreshold
+        );
+      }
+
       if (filter === "LOW_STOCK") {
-        return availableStock > 0 && availableStock <= 5;
+        return (
+          availableStock > 0 &&
+          availableStock <=
+            lowStockThreshold
+        );
       }
 
       if (filter === "OUT_OF_STOCK") {
@@ -236,12 +383,36 @@ export async function GET(request: Request) {
       0,
     );
 
-    const lowStock = variants.filter((variant) => {
-      const available =
-        variant.stock - variant.reservedStock;
+    const criticalStock =
+      variants.filter(
+        (variant) => {
+          const available =
+            variant.stock -
+            variant.reservedStock;
 
-      return available > 0 && available <= 5;
-    }).length;
+          return (
+            available > 0 &&
+            available <=
+              criticalStockThreshold
+          );
+        },
+      ).length;
+
+    const lowStock =
+      variants.filter(
+        (variant) => {
+          const available =
+            variant.stock -
+            variant.reservedStock;
+
+          return (
+            available >
+              criticalStockThreshold &&
+            available <=
+              lowStockThreshold
+          );
+        },
+      ).length;
 
     const outOfStock = variants.filter(
       (variant) =>
@@ -278,6 +449,14 @@ export async function GET(request: Request) {
           ),
         slowStockDays:
           SLOW_STOCK_DAYS,
+        stockHealth:
+          stockHealth(
+            variant,
+          ),
+        recommendedReorderQty:
+          recommendedReorderQty(
+            variant,
+          ),
         costPrice: variant.costPrice
           ? Number(variant.costPrice)
           : null,
@@ -298,8 +477,14 @@ export async function GET(request: Request) {
         totalAvailable:
           totalStock - totalReserved,
         lowStock,
+        criticalStock,
         outOfStock,
         slowStock,
+      },
+
+      settings: {
+        lowStockThreshold,
+        criticalStockThreshold,
       },
     });
   } catch (error) {
@@ -308,6 +493,129 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         error: "Failed to load inventory.",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * PUT /api/inventory
+ *
+ * Updates automatic inventory alert thresholds.
+ */
+export async function PUT(request: Request) {
+  const adminError =
+    await requireAdmin();
+
+  if (adminError) {
+    return adminError;
+  }
+
+  try {
+    const body =
+      await request.json();
+
+    const lowStockThreshold =
+      toInt(
+        body.lowStockThreshold,
+      );
+
+    const criticalStockThreshold =
+      toInt(
+        body.criticalStockThreshold,
+      );
+
+    if (
+      lowStockThreshold === null ||
+      lowStockThreshold < 1 ||
+      lowStockThreshold > 100
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Low stock threshold must be between 1 and 100.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (
+      criticalStockThreshold === null ||
+      criticalStockThreshold < 0 ||
+      criticalStockThreshold >=
+        lowStockThreshold
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Critical threshold must be lower than the low stock threshold.",
+        },
+        { status: 400 },
+      );
+    }
+
+    await prisma.$transaction([
+      prisma.siteSetting.upsert({
+        where: {
+          key:
+            LOW_STOCK_SETTING_KEY,
+        },
+        update: {
+          value:
+            String(
+              lowStockThreshold,
+            ),
+        },
+        create: {
+          key:
+            LOW_STOCK_SETTING_KEY,
+          value:
+            String(
+              lowStockThreshold,
+            ),
+        },
+      }),
+
+      prisma.siteSetting.upsert({
+        where: {
+          key:
+            CRITICAL_STOCK_SETTING_KEY,
+        },
+        update: {
+          value:
+            String(
+              criticalStockThreshold,
+            ),
+        },
+        create: {
+          key:
+            CRITICAL_STOCK_SETTING_KEY,
+          value:
+            String(
+              criticalStockThreshold,
+            ),
+        },
+      }),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      settings: {
+        lowStockThreshold,
+        criticalStockThreshold,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "PUT /api/inventory failed:",
+      error,
+    );
+
+    return NextResponse.json(
+      {
+        error:
+          "Failed to save inventory automation settings.",
       },
       { status: 500 },
     );
