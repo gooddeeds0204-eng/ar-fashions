@@ -587,3 +587,576 @@ export async function POST(
     );
   }
 }
+
+
+export async function PATCH(
+  request: Request,
+) {
+  const adminError =
+    await requireAdmin();
+
+  if (adminError) {
+    return adminError;
+  }
+
+  const requestGuard =
+    requireSameOriginJson(
+      request,
+    );
+
+  if (requestGuard) {
+    return requestGuard;
+  }
+
+  try {
+    const body =
+      await request.json();
+
+    const action =
+      cleanString(
+        body.action,
+      ).toUpperCase();
+
+    const purchaseOrderId =
+      cleanString(
+        body.purchaseOrderId,
+      );
+
+    if (!purchaseOrderId) {
+      return NextResponse.json(
+        {
+          error:
+            "Purchase order ID is required.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (
+      action ===
+      "MARK_ORDERED"
+    ) {
+      const now =
+        new Date();
+
+      const changed =
+        await prisma.purchaseOrder.updateMany({
+          where: {
+            id:
+              purchaseOrderId,
+
+            status:
+              "DRAFT",
+          },
+
+          data: {
+            status:
+              "ORDERED",
+
+            orderedAt:
+              now,
+          },
+        });
+
+      if (
+        changed.count !== 1
+      ) {
+        const current =
+          await prisma.purchaseOrder.findUnique({
+            where: {
+              id:
+                purchaseOrderId,
+            },
+
+            select: {
+              status: true,
+            },
+          });
+
+        if (!current) {
+          return NextResponse.json(
+            {
+              error:
+                "Purchase order not found.",
+            },
+            {
+              status: 404,
+            },
+          );
+        }
+
+        return NextResponse.json(
+          {
+            error:
+              `Only Draft purchase orders can be marked Ordered. Current status: ${current.status}.`,
+          },
+          {
+            status: 409,
+          },
+        );
+      }
+
+      const updated =
+        await prisma.purchaseOrder.findUnique({
+          where: {
+            id:
+              purchaseOrderId,
+          },
+
+          select: {
+            id: true,
+            poNumber: true,
+            status: true,
+            orderedAt: true,
+          },
+        });
+
+      return NextResponse.json({
+        success: true,
+        purchaseOrder:
+          updated,
+      });
+    }
+
+    if (
+      action !==
+      "RECEIVE"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid purchase order action.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    const rawItems =
+      Array.isArray(
+        body.items,
+      )
+        ? body.items
+        : [];
+
+    if (
+      rawItems.length === 0
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Enter at least one received quantity.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    const requested =
+      new Map<
+        string,
+        number
+      >();
+
+    for (
+      const raw of rawItems
+    ) {
+      const itemId =
+        cleanString(
+          raw.itemId,
+        );
+
+      const quantity =
+        positiveInt(
+          raw.quantity,
+        );
+
+      if (
+        !itemId ||
+        !quantity
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Received quantities must be positive whole numbers.",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      if (
+        requested.has(
+          itemId,
+        )
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Duplicate purchase order item.",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      requested.set(
+        itemId,
+        quantity,
+      );
+    }
+
+    type LockedPurchaseOrder = {
+      id: string;
+      poNumber: string;
+      status: string;
+    };
+
+    type ChangedPurchaseItem = {
+      id: string;
+      variantId: string;
+      orderedQty: number;
+      receivedQty: number;
+    };
+
+    type ChangedStock = {
+      id: string;
+      stock: number;
+      reservedStock: number;
+    };
+
+    const result =
+      await prisma.$transaction(
+        async (tx) => {
+          /*
+           * Lock the PO row for the whole receipt.
+           * This serializes simultaneous receive requests
+           * and prevents duplicate inventory additions.
+           */
+          const locked =
+            await tx.$queryRaw<
+              LockedPurchaseOrder[]
+            >`
+              SELECT
+                id,
+                "poNumber",
+                status::text AS status
+              FROM "PurchaseOrder"
+              WHERE id = ${purchaseOrderId}
+              FOR UPDATE
+            `;
+
+          if (
+            locked.length !== 1
+          ) {
+            throw new Error(
+              "Purchase order not found.",
+            );
+          }
+
+          const purchaseOrder =
+            locked[0];
+
+          if (
+            purchaseOrder.status !==
+              "ORDERED" &&
+            purchaseOrder.status !==
+              "PARTIALLY_RECEIVED"
+          ) {
+            throw new Error(
+              `Stock can only be received for Ordered purchase orders. Current status: ${purchaseOrder.status}.`,
+            );
+          }
+
+          const itemIds =
+            Array.from(
+              requested.keys(),
+            );
+
+          const purchaseItems =
+            await tx.purchaseOrderItem.findMany({
+              where: {
+                purchaseOrderId,
+
+                id: {
+                  in:
+                    itemIds,
+                },
+              },
+
+              select: {
+                id: true,
+                variantId: true,
+                orderedQty: true,
+                receivedQty: true,
+                productName: true,
+                colorName: true,
+                sizeName: true,
+              },
+            });
+
+          if (
+            purchaseItems.length !==
+            itemIds.length
+          ) {
+            throw new Error(
+              "One or more purchase order items are invalid.",
+            );
+          }
+
+          let receivedThisTime =
+            0;
+
+          for (
+            const item of purchaseItems
+          ) {
+            const quantity =
+              requested.get(
+                item.id,
+              )!;
+
+            /*
+             * Atomic PO-item receive.
+             *
+             * The WHERE clause prevents receivedQty
+             * from ever exceeding orderedQty.
+             */
+            const changedItem =
+              await tx.$queryRaw<
+                ChangedPurchaseItem[]
+              >`
+                UPDATE "PurchaseOrderItem"
+                SET
+                  "receivedQty" =
+                    "receivedQty" +
+                    ${quantity},
+                  "updatedAt" =
+                    NOW()
+                WHERE
+                  id = ${item.id}
+                  AND
+                  "purchaseOrderId" =
+                    ${purchaseOrderId}
+                  AND
+                  "receivedQty" +
+                    ${quantity}
+                    <=
+                    "orderedQty"
+                RETURNING
+                  id,
+                  "variantId",
+                  "orderedQty",
+                  "receivedQty"
+              `;
+
+            if (
+              changedItem.length !==
+              1
+            ) {
+              throw new Error(
+                `${item.productName} · ${item.colorName} · ${item.sizeName}: received quantity exceeds the remaining PO quantity.`,
+              );
+            }
+
+            /*
+             * Atomic stock addition.
+             */
+            const changedStock =
+              await tx.$queryRaw<
+                ChangedStock[]
+              >`
+                UPDATE "ProductVariant"
+                SET
+                  stock =
+                    stock +
+                    ${quantity},
+                  "updatedAt" =
+                    NOW()
+                WHERE
+                  id =
+                    ${item.variantId}
+                RETURNING
+                  id,
+                  stock,
+                  "reservedStock"
+              `;
+
+            if (
+              changedStock.length !==
+              1
+            ) {
+              throw new Error(
+                `${item.productName} · ${item.colorName} · ${item.sizeName}: inventory variant no longer exists.`,
+              );
+            }
+
+            const stock =
+              changedStock[0];
+
+            const previousStock =
+              stock.stock -
+              quantity;
+
+            await tx.inventoryAdjustment.create({
+              data: {
+                variantId:
+                  item.variantId,
+
+                adjustment:
+                  quantity,
+
+                previousStock,
+
+                newStock:
+                  stock.stock,
+
+                reason:
+                  `PURCHASE_ORDER_RECEIPT:${purchaseOrder.poNumber}`,
+              },
+            });
+
+            receivedThisTime +=
+              quantity;
+          }
+
+          const allItems =
+            await tx.purchaseOrderItem.findMany({
+              where: {
+                purchaseOrderId,
+              },
+
+              select: {
+                orderedQty:
+                  true,
+
+                receivedQty:
+                  true,
+              },
+            });
+
+          const allReceived =
+            allItems.length >
+              0 &&
+            allItems.every(
+              (item) =>
+                item.receivedQty >=
+                item.orderedQty,
+            );
+
+          const totalOrdered =
+            allItems.reduce(
+              (
+                total,
+                item,
+              ) =>
+                total +
+                item.orderedQty,
+              0,
+            );
+
+          const totalReceived =
+            allItems.reduce(
+              (
+                total,
+                item,
+              ) =>
+                total +
+                item.receivedQty,
+              0,
+            );
+
+          const updatedPO =
+            await tx.purchaseOrder.update({
+              where: {
+                id:
+                  purchaseOrderId,
+              },
+
+              data: {
+                status:
+                  allReceived
+                    ? "RECEIVED"
+                    : "PARTIALLY_RECEIVED",
+
+                receivedAt:
+                  allReceived
+                    ? new Date()
+                    : null,
+              },
+
+              select: {
+                id: true,
+                poNumber: true,
+                status: true,
+                orderedAt: true,
+                receivedAt: true,
+              },
+            });
+
+          return {
+            purchaseOrder:
+              updatedPO,
+
+            receivedThisTime,
+
+            totalOrdered,
+
+            totalReceived,
+          };
+        },
+      );
+
+    return NextResponse.json({
+      success: true,
+
+      purchaseOrder:
+        result.purchaseOrder,
+
+      receivedThisTime:
+        result.receivedThisTime,
+
+      totalOrdered:
+        result.totalOrdered,
+
+      totalReceived:
+        result.totalReceived,
+    });
+  } catch (error) {
+    console.error(
+      "PATCH /api/admin/purchase-orders failed:",
+      error,
+    );
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to update purchase order.";
+
+    const conflict =
+      message.includes(
+        "exceeds the remaining",
+      ) ||
+      message.includes(
+        "can only be received",
+      );
+
+    return NextResponse.json(
+      {
+        error:
+          message,
+      },
+      {
+        status:
+          conflict
+            ? 409
+            : 500,
+      },
+    );
+  }
+}
