@@ -186,6 +186,35 @@ export async function GET() {
               quantity: true,
             },
           },
+
+          purchaseOrderItems: {
+            where: {
+              purchaseOrder: {
+                status: {
+                  in: [
+                    "DRAFT",
+                    "ORDERED",
+                    "PARTIALLY_RECEIVED",
+                  ],
+                },
+              },
+            },
+
+            select: {
+              orderedQty:
+                true,
+
+              receivedQty:
+                true,
+
+              purchaseOrder: {
+                select: {
+                  status:
+                    true,
+                },
+              },
+            },
+          },
         },
       });
 
@@ -247,7 +276,7 @@ export async function GET() {
                 1,
             );
 
-          const recommendedReorderQty =
+          const grossRecommendedReorderQty =
             Math.max(
               0,
               targetStock -
@@ -255,6 +284,43 @@ export async function GET() {
                   0,
                   availableStock,
                 ),
+            );
+
+          let draftStock = 0;
+          let incomingStock = 0;
+
+          for (
+            const item of
+            variant.purchaseOrderItems
+          ) {
+            const remaining =
+              Math.max(
+                0,
+                item.orderedQty -
+                  item.receivedQty,
+              );
+
+            if (
+              item.purchaseOrder.status ===
+              "DRAFT"
+            ) {
+              draftStock +=
+                remaining;
+            } else {
+              incomingStock +=
+                remaining;
+            }
+          }
+
+          const protectedStock =
+            draftStock +
+            incomingStock;
+
+          const recommendedReorderQty =
+            Math.max(
+              0,
+              grossRecommendedReorderQty -
+                protectedStock,
             );
 
           return {
@@ -274,6 +340,15 @@ export async function GET() {
             availableStock,
             health,
             recentSalesQty,
+
+            grossRecommendedReorderQty,
+
+            draftStock,
+
+            incomingStock,
+
+            protectedStock,
+
             recommendedReorderQty,
           };
         })
@@ -354,6 +429,31 @@ export async function GET() {
 
         alertCount:
           inventoryAlerts.length,
+
+        incomingProtectedCount:
+          inventoryAlerts.filter(
+            (item) =>
+              item.protectedStock >
+                0 &&
+              item.recommendedReorderQty ===
+                0,
+          ).length,
+
+        totalIncomingStock:
+          inventoryAlerts.reduce(
+            (total, item) =>
+              total +
+              item.incomingStock,
+            0,
+          ),
+
+        totalDraftStock:
+          inventoryAlerts.reduce(
+            (total, item) =>
+              total +
+              item.draftStock,
+            0,
+          ),
 
         lowStockThreshold,
         criticalStockThreshold,

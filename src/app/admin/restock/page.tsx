@@ -53,6 +53,18 @@ type InventoryVariant = {
   stockHealth:
     StockHealth;
 
+  grossRecommendedReorderQty:
+    number;
+
+  draftStock:
+    number;
+
+  incomingStock:
+    number;
+
+  protectedStock:
+    number;
+
   recommendedReorderQty:
     number;
 
@@ -75,6 +87,17 @@ type InventoryResponse = {
       number;
 
     criticalStockThreshold:
+      number;
+  };
+
+  summary?: {
+    totalDraftStock?:
+      number;
+
+    totalIncomingStock?:
+      number;
+
+    incomingProtectedVariants?:
       number;
   };
 };
@@ -172,6 +195,15 @@ export default function RestockQueuePage() {
   ] = useState({
     lowStockThreshold: 5,
     criticalStockThreshold: 2,
+  });
+
+  const [
+    protectionSummary,
+    setProtectionSummary,
+  ] = useState({
+    totalDraftStock: 0,
+    totalIncomingStock: 0,
+    incomingProtectedVariants: 0,
   });
 
   const [
@@ -276,6 +308,31 @@ export default function RestockQueuePage() {
         setSettings(
           data.settings,
         );
+      }
+
+      if (data.summary) {
+        setProtectionSummary({
+          totalDraftStock:
+            Number(
+              data.summary
+                .totalDraftStock ??
+                0,
+            ),
+
+          totalIncomingStock:
+            Number(
+              data.summary
+                .totalIncomingStock ??
+                0,
+            ),
+
+          incomingProtectedVariants:
+            Number(
+              data.summary
+                .incomingProtectedVariants ??
+                0,
+            ),
+        });
       }
     } catch (error) {
       setMessage(
@@ -744,7 +801,7 @@ export default function RestockQueuePage() {
           </div>
         </header>
 
-        <section className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <section className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
           <SummaryCard
             label="Variants To Restock"
             value={
@@ -782,7 +839,55 @@ export default function RestockQueuePage() {
               ).size
             }
           />
+
+          <SummaryCard
+            label="Incoming / Planned"
+            value={
+              `${
+                protectionSummary.totalIncomingStock +
+                protectionSummary.totalDraftStock
+              } pcs`
+            }
+          />
         </section>
+
+        {(
+          protectionSummary.totalDraftStock >
+            0 ||
+          protectionSummary.totalIncomingStock >
+            0
+        ) && (
+          <section className="mt-4 rounded-3xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-4 shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-sky-700">
+                  Incoming Stock Protection
+                </p>
+
+                <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
+                  Open purchase orders are already deducted from new reorder suggestions to prevent duplicate buying.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 sm:min-w-[320px]">
+                <MiniStat
+                  label="Draft"
+                  value={`${protectionSummary.totalDraftStock}`}
+                />
+
+                <MiniStat
+                  label="Incoming"
+                  value={`${protectionSummary.totalIncomingStock}`}
+                />
+
+                <MiniStat
+                  label="Protected"
+                  value={`${protectionSummary.incomingProtectedVariants}`}
+                />
+              </div>
+            </div>
+          </section>
+        )}
 
         <section className="mt-4 overflow-hidden rounded-3xl border border-black/[0.05] bg-[#06261c] text-white shadow-sm">
           <div className="grid grid-cols-3 gap-px bg-white/10">
@@ -1167,9 +1272,29 @@ export default function RestockQueuePage() {
                                   }
                                 </p>
 
+                                {item.protectedStock > 0 && (
+                                  <div className="mt-2 flex flex-wrap gap-1.5">
+                                    {item.draftStock > 0 && (
+                                      <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[8px] font-black uppercase text-violet-700">
+                                        Draft PO · {item.draftStock}
+                                      </span>
+                                    )}
+
+                                    {item.incomingStock > 0 && (
+                                      <span className="rounded-full bg-sky-50 px-2.5 py-1 text-[8px] font-black uppercase text-sky-700">
+                                        Incoming · {item.incomingStock}
+                                      </span>
+                                    )}
+
+                                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[8px] font-black uppercase text-emerald-700">
+                                      Protected · {item.protectedStock}
+                                    </span>
+                                  </div>
+                                )}
+
                                 <div className="mt-3 grid grid-cols-3 gap-2">
                                   <MiniStat
-                                    label="Add"
+                                    label="Suggested"
                                     value={`+${item.recommendedReorderQty}`}
                                   />
 

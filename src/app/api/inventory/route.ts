@@ -227,6 +227,29 @@ export async function GET(request: Request) {
             quantity: true,
           },
         },
+
+        purchaseOrderItems: {
+          where: {
+            purchaseOrder: {
+              status: {
+                in: [
+                  "DRAFT",
+                  "ORDERED",
+                  "PARTIALLY_RECEIVED",
+                ],
+              },
+            },
+          },
+          select: {
+            orderedQty: true,
+            receivedQty: true,
+            purchaseOrder: {
+              select: {
+                status: true,
+              },
+            },
+          },
+        },
       },
 
       orderBy: [
@@ -249,6 +272,44 @@ export async function GET(request: Request) {
           sum + item.quantity,
         0,
       );
+    }
+
+    function purchaseCoverage(
+      variant: (typeof variants)[number],
+    ) {
+      let draftStock = 0;
+      let incomingStock = 0;
+
+      for (
+        const item of
+        variant.purchaseOrderItems
+      ) {
+        const remaining =
+          Math.max(
+            0,
+            item.orderedQty -
+              item.receivedQty,
+          );
+
+        if (
+          item.purchaseOrder.status ===
+          "DRAFT"
+        ) {
+          draftStock +=
+            remaining;
+        } else {
+          incomingStock +=
+            remaining;
+        }
+      }
+
+      return {
+        draftStock,
+        incomingStock,
+        protectedStock:
+          draftStock +
+          incomingStock,
+      };
     }
 
     function isSlowStock(
@@ -300,7 +361,7 @@ export async function GET(request: Request) {
       return "HEALTHY";
     }
 
-    function recommendedReorderQty(
+    function grossRecommendedReorderQty(
       variant: (typeof variants)[number],
     ) {
       const availableStock =
@@ -333,6 +394,28 @@ export async function GET(request: Request) {
         0,
         targetStock -
           availableStock,
+      );
+    }
+
+    function recommendedReorderQty(
+      variant: (typeof variants)[number],
+    ) {
+      const gross =
+        grossRecommendedReorderQty(
+          variant,
+        );
+
+      const {
+        protectedStock,
+      } =
+        purchaseCoverage(
+          variant,
+        );
+
+      return Math.max(
+        0,
+        gross -
+          protectedStock,
       );
     }
 
@@ -453,10 +536,31 @@ export async function GET(request: Request) {
           stockHealth(
             variant,
           ),
+        grossRecommendedReorderQty:
+          grossRecommendedReorderQty(
+            variant,
+          ),
+
+        draftStock:
+          purchaseCoverage(
+            variant,
+          ).draftStock,
+
+        incomingStock:
+          purchaseCoverage(
+            variant,
+          ).incomingStock,
+
+        protectedStock:
+          purchaseCoverage(
+            variant,
+          ).protectedStock,
+
         recommendedReorderQty:
           recommendedReorderQty(
             variant,
           ),
+
         costPrice: variant.costPrice
           ? Number(variant.costPrice)
           : null,
@@ -480,6 +584,40 @@ export async function GET(request: Request) {
         criticalStock,
         outOfStock,
         slowStock,
+
+        totalDraftStock:
+          variants.reduce(
+            (total, variant) =>
+              total +
+              purchaseCoverage(
+                variant,
+              ).draftStock,
+            0,
+          ),
+
+        totalIncomingStock:
+          variants.reduce(
+            (total, variant) =>
+              total +
+              purchaseCoverage(
+                variant,
+              ).incomingStock,
+            0,
+          ),
+
+        incomingProtectedVariants:
+          variants.filter(
+            (variant) =>
+              grossRecommendedReorderQty(
+                variant,
+              ) > 0 &&
+              recommendedReorderQty(
+                variant,
+              ) === 0 &&
+              purchaseCoverage(
+                variant,
+              ).protectedStock > 0,
+          ).length,
       },
 
       settings: {

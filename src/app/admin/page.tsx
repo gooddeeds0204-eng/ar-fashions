@@ -57,7 +57,21 @@ type InventoryAlert = {
     | "CRITICAL"
     | "LOW";
   recentSalesQty: number;
-  recommendedReorderQty: number;
+
+  grossRecommendedReorderQty:
+    number;
+
+  draftStock:
+    number;
+
+  incomingStock:
+    number;
+
+  protectedStock:
+    number;
+
+  recommendedReorderQty:
+    number;
 };
 
 type InventorySummary = {
@@ -65,6 +79,16 @@ type InventorySummary = {
   criticalStock: number;
   outOfStock: number;
   alertCount: number;
+
+  incomingProtectedCount:
+    number;
+
+  totalIncomingStock:
+    number;
+
+  totalDraftStock:
+    number;
+
   lowStockThreshold: number;
   criticalStockThreshold: number;
   alerts: InventoryAlert[];
@@ -438,7 +462,7 @@ export default function AdminDashboard() {
                 </Link>
               </div>
 
-              <div className="grid grid-cols-3 gap-px bg-black/5">
+              <div className="grid grid-cols-2 gap-px bg-black/5 sm:grid-cols-4">
                 <div className="bg-white p-4 sm:p-5">
                   <div className="text-[9px] font-semibold uppercase tracking-wider text-red-500">
                     Out
@@ -471,6 +495,26 @@ export default function AdminDashboard() {
                   <div className="mt-1 text-2xl font-semibold">
                     {
                       inventorySummary.lowStock
+                    }
+                  </div>
+                </div>
+
+                <div className="bg-white p-4 sm:p-5">
+                  <div className="text-[9px] font-semibold uppercase tracking-wider text-sky-600">
+                    PO Protected
+                  </div>
+
+                  <div className="mt-1 text-2xl font-semibold">
+                    {
+                      inventorySummary.incomingProtectedCount
+                    }
+                  </div>
+
+                  <div className="mt-1 text-[9px] text-[#9ba2ae]">
+                    Draft {
+                      inventorySummary.totalDraftStock
+                    } · Incoming {
+                      inventorySummary.totalIncomingStock
                     }
                   </div>
                 </div>
@@ -521,6 +565,18 @@ export default function AdminDashboard() {
                               alert.availableStock
                             }
                           </div>
+
+                          {alert.protectedStock > 0 && (
+                            <div className="mt-1 text-[9px] font-semibold text-sky-600">
+                              {alert.draftStock > 0
+                                ? `Draft ${alert.draftStock} · `
+                                : ""}
+                              {alert.incomingStock > 0
+                                ? `Incoming ${alert.incomingStock} · `
+                                : ""}
+                              Protected {alert.protectedStock}
+                            </div>
+                          )}
                         </div>
 
                         <div className="shrink-0 text-right">
@@ -544,20 +600,37 @@ export default function AdminDashboard() {
                                 : "Low"}
                           </div>
 
-                          <div className="mt-1 text-xs font-semibold">
-                            +{
-                              alert.recommendedReorderQty
-                            } pcs
-                          </div>
+                          {alert.recommendedReorderQty > 0 ? (
+                            <>
+                              <div className="mt-1 text-xs font-semibold">
+                                +{
+                                  alert.recommendedReorderQty
+                                } pcs
+                              </div>
 
-                          <Link
-                            href={`/admin/inventory?variant=${encodeURIComponent(
-                              alert.variantId,
-                            )}&action=restock`}
-                            className="mt-2 inline-flex rounded-lg bg-[#111827] px-3 py-1.5 text-[9px] font-semibold text-white"
-                          >
-                            Restock →
-                          </Link>
+                              <Link
+                                href={`/admin/inventory?variant=${encodeURIComponent(
+                                  alert.variantId,
+                                )}&action=restock`}
+                                className="mt-2 inline-flex rounded-lg bg-[#111827] px-3 py-1.5 text-[9px] font-semibold text-white"
+                              >
+                                Restock →
+                              </Link>
+                            </>
+                          ) : (
+                            <>
+                              <div className="mt-1 text-xs font-semibold text-sky-600">
+                                PO Covered
+                              </div>
+
+                              <Link
+                                href="/admin/purchase-orders"
+                                className="mt-2 inline-flex rounded-lg bg-sky-50 px-3 py-1.5 text-[9px] font-semibold text-sky-700"
+                              >
+                                View PO →
+                              </Link>
+                            </>
+                          )}
                         </div>
                       </div>
                     ),

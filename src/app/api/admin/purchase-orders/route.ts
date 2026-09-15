@@ -33,6 +33,19 @@ function positiveInt(
   return number;
 }
 
+const LOW_STOCK_SETTING_KEY =
+  "inventoryLowStockThreshold";
+
+const DEFAULT_LOW_STOCK_THRESHOLD =
+  5;
+
+const SALES_MOVEMENT_STATUSES = [
+  "CONFIRMED",
+  "PACKED",
+  "SHIPPED",
+  "DELIVERED",
+] as const;
+
 function createPoNumber() {
   const now =
     new Date();
@@ -335,144 +348,341 @@ export async function POST(
     const variantIds =
       Array.from(
         requested.keys(),
-      );
+      ).sort();
 
-    const variants =
-      await prisma.productVariant.findMany({
-        where: {
-          id: {
-            in:
-              variantIds,
-          },
-
-          isActive:
-            true,
-        },
-
-        select: {
-          id: true,
-          sku: true,
-          costPrice: true,
-
-          product: {
-            select: {
-              name: true,
-            },
-          },
-
-          color: {
-            select: {
-              name: true,
-            },
-          },
-
-          size: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      });
-
-    if (
-      variants.length !==
-      variantIds.length
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "One or more inventory variants are invalid.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-
-    const items =
-      variants.map(
-        (variant) => {
-          const orderedQty =
-            requested.get(
-              variant.id,
-            )!;
-
-          if (
-            variant.costPrice ===
-            null
+    const created =
+      await prisma.$transaction(
+        async (tx) => {
+          /*
+           * Lock every requested inventory row in a
+           * deterministic order.
+           *
+           * Two admins cannot create overlapping
+           * purchase orders from stale restock data.
+           */
+          for (
+            const variantId of
+            variantIds
           ) {
-            throw new Error(
-              `${variant.product.name} · ${variant.color.name} · ${variant.size.name} has no cost price.`,
-            );
+            const locked =
+              await tx.$queryRaw<
+                Array<{
+                  id: string;
+                }>
+              >`
+                SELECT id
+                FROM "ProductVariant"
+                WHERE
+                  id = ${variantId}
+                  AND "isActive" = true
+                FOR UPDATE
+              `;
+
+            if (
+              locked.length !==
+              1
+            ) {
+              throw new Error(
+                "VALIDATION:One or more inventory variants are invalid.",
+              );
+            }
           }
 
-          const unitCost =
+          const settings =
+            await tx.siteSetting.findMany({
+              where: {
+                key: {
+                  in: [
+                    LOW_STOCK_SETTING_KEY,
+                  ],
+                },
+              },
+
+              select: {
+                key: true,
+                value: true,
+              },
+            });
+
+          const rawLow =
             Number(
-              variant.costPrice,
+              settings.find(
+                (item) =>
+                  item.key ===
+                  LOW_STOCK_SETTING_KEY,
+              )?.value,
             );
 
+          const lowStockThreshold =
+            Number.isInteger(
+              rawLow,
+            ) &&
+            rawLow >= 1 &&
+            rawLow <= 100
+              ? rawLow
+              : DEFAULT_LOW_STOCK_THRESHOLD;
+
+          const salesCutoff =
+            new Date(
+              Date.now() -
+                30 *
+                  24 *
+                  60 *
+                  60 *
+                  1000,
+            );
+
+          const variants =
+            await tx.productVariant.findMany({
+              where: {
+                id: {
+                  in:
+                    variantIds,
+                },
+
+                isActive:
+                  true,
+              },
+
+              select: {
+                id: true,
+                sku: true,
+                stock: true,
+                reservedStock:
+                  true,
+                costPrice:
+                  true,
+
+                product: {
+                  select: {
+                    name:
+                      true,
+                  },
+                },
+
+                color: {
+                  select: {
+                    name:
+                      true,
+                  },
+                },
+
+                size: {
+                  select: {
+                    name:
+                      true,
+                  },
+                },
+
+                orderItems: {
+                  where: {
+                    order: {
+                      createdAt: {
+                        gte:
+                          salesCutoff,
+                      },
+
+                      status: {
+                        in: [
+                          "CONFIRMED",
+                          "PACKED",
+                          "SHIPPED",
+                          "DELIVERED",
+                        ],
+                      },
+                    },
+                  },
+
+                  select: {
+                    quantity:
+                      true,
+                  },
+                },
+
+                purchaseOrderItems: {
+                  where: {
+                    purchaseOrder: {
+                      status: {
+                        in: [
+                          "DRAFT",
+                          "ORDERED",
+                          "PARTIALLY_RECEIVED",
+                        ],
+                      },
+                    },
+                  },
+
+                  select: {
+                    orderedQty:
+                      true,
+
+                    receivedQty:
+                      true,
+                  },
+                },
+              },
+            });
+
           if (
-            !Number.isFinite(
-              unitCost,
-            ) ||
-            unitCost < 0
+            variants.length !==
+            variantIds.length
           ) {
             throw new Error(
-              "Invalid variant cost price.",
+              "VALIDATION:One or more inventory variants are invalid.",
             );
           }
 
-          return {
-            variantId:
-              variant.id,
+          const items =
+            variants.map(
+              (variant) => {
+                const orderedQty =
+                  requested.get(
+                    variant.id,
+                  )!;
 
-            productName:
-              variant.product
-                .name,
+                const availableStock =
+                  Math.max(
+                    0,
+                    variant.stock -
+                      variant.reservedStock,
+                  );
 
-            colorName:
-              variant.color.name,
+                const recentSalesQty =
+                  variant.orderItems.reduce(
+                    (
+                      total,
+                      item,
+                    ) =>
+                      total +
+                      item.quantity,
+                    0,
+                  );
 
-            sizeName:
-              variant.size.name,
+                const targetStock =
+                  Math.max(
+                    lowStockThreshold *
+                      2,
+                    recentSalesQty,
+                    lowStockThreshold +
+                      1,
+                  );
 
-            sku:
-              variant.sku,
+                const grossNeed =
+                  availableStock >
+                  lowStockThreshold
+                    ? 0
+                    : Math.max(
+                        0,
+                        targetStock -
+                          availableStock,
+                      );
 
-            orderedQty,
+                const protectedStock =
+                  variant.purchaseOrderItems.reduce(
+                    (
+                      total,
+                      item,
+                    ) =>
+                      total +
+                      Math.max(
+                        0,
+                        item.orderedQty -
+                          item.receivedQty,
+                      ),
+                    0,
+                  );
 
-            unitCost,
+                const netNeed =
+                  Math.max(
+                    0,
+                    grossNeed -
+                      protectedStock,
+                  );
 
-            totalCost:
-              unitCost *
-              orderedQty,
-          };
-        },
-      );
+                if (
+                  netNeed <= 0
+                ) {
+                  throw new Error(
+                    `RESTOCK_CONFLICT:${variant.product.name} · ${variant.color.name} · ${variant.size.name} is already covered by current stock or an open purchase order.`,
+                  );
+                }
 
-    const subtotal =
-      items.reduce(
-        (total, item) =>
-          total +
-          item.totalCost,
-        0,
-      );
+                if (
+                  orderedQty >
+                  netNeed
+                ) {
+                  throw new Error(
+                    `RESTOCK_CONFLICT:${variant.product.name} · ${variant.color.name} · ${variant.size.name}: only ${netNeed} pcs are currently needed after planned/incoming stock.`,
+                  );
+                }
 
-    let created:
-      Awaited<
-        ReturnType<
-          typeof prisma.purchaseOrder.create
-        >
-      > | null = null;
+                if (
+                  variant.costPrice ===
+                  null
+                ) {
+                  throw new Error(
+                    `VALIDATION:${variant.product.name} · ${variant.color.name} · ${variant.size.name} has no cost price.`,
+                  );
+                }
 
-    for (
-      let attempt = 0;
-      attempt < 3;
-      attempt += 1
-    ) {
-      try {
-        created =
-          await prisma.purchaseOrder.create({
+                const unitCost =
+                  Number(
+                    variant.costPrice,
+                  );
+
+                if (
+                  !Number.isFinite(
+                    unitCost,
+                  ) ||
+                  unitCost < 0
+                ) {
+                  throw new Error(
+                    "VALIDATION:Invalid variant cost price.",
+                  );
+                }
+
+                return {
+                  variantId:
+                    variant.id,
+
+                  productName:
+                    variant.product
+                      .name,
+
+                  colorName:
+                    variant.color
+                      .name,
+
+                  sizeName:
+                    variant.size
+                      .name,
+
+                  sku:
+                    variant.sku,
+
+                  orderedQty,
+
+                  unitCost,
+
+                  totalCost:
+                    unitCost *
+                    orderedQty,
+                };
+              },
+            );
+
+          const subtotal =
+            items.reduce(
+              (
+                total,
+                item,
+              ) =>
+                total +
+                item.totalCost,
+              0,
+            );
+
+          return tx.purchaseOrder.create({
             data: {
               poNumber:
                 createPoNumber(),
@@ -527,22 +737,8 @@ export async function POST(
               },
             },
           });
-
-        break;
-      } catch (error) {
-        if (
-          attempt === 2
-        ) {
-          throw error;
-        }
-      }
-    }
-
-    if (!created) {
-      throw new Error(
-        "Purchase order could not be created.",
+        },
       );
-    }
 
     return NextResponse.json(
       {
@@ -574,20 +770,48 @@ export async function POST(
       error,
     );
 
+    const rawMessage =
+      error instanceof Error
+        ? error.message
+        : "Failed to create purchase order.";
+
+    const isConflict =
+      rawMessage.startsWith(
+        "RESTOCK_CONFLICT:",
+      );
+
+    const isValidation =
+      rawMessage.startsWith(
+        "VALIDATION:",
+      );
+
+    const message =
+      rawMessage
+        .replace(
+          /^RESTOCK_CONFLICT:/,
+          "",
+        )
+        .replace(
+          /^VALIDATION:/,
+          "",
+        );
+
     return NextResponse.json(
       {
         error:
-          error instanceof Error
-            ? error.message
-            : "Failed to create purchase order.",
+          message,
       },
       {
-        status: 500,
+        status:
+          isConflict
+            ? 409
+            : isValidation
+              ? 400
+              : 500,
       },
     );
   }
 }
-
 
 export async function PATCH(
   request: Request,
