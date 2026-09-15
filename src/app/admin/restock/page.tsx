@@ -85,6 +85,12 @@ type QueueFilter =
   | "CRITICAL"
   | "LOW";
 
+type Supplier = {
+  id: string;
+  name: string;
+  isActive: boolean;
+};
+
 function money(
   value: number,
 ) {
@@ -191,6 +197,28 @@ export default function RestockQueuePage() {
     setMessage,
   ] = useState("");
 
+  const [
+    suppliers,
+    setSuppliers,
+  ] = useState<Supplier[]>([]);
+
+  const [
+    supplierId,
+    setSupplierId,
+  ] = useState("");
+
+  const [
+    selectedIds,
+    setSelectedIds,
+  ] = useState<Set<string>>(
+    new Set(),
+  );
+
+  const [
+    creatingPO,
+    setCreatingPO,
+  ] = useState(false);
+
   async function loadQueue(
     refresh = false,
   ) {
@@ -263,6 +291,55 @@ export default function RestockQueuePage() {
 
   useEffect(() => {
     void loadQueue();
+
+    async function loadSuppliers() {
+      try {
+        const response =
+          await fetch(
+            "/api/admin/suppliers",
+            {
+              cache: "no-store",
+              credentials:
+                "same-origin",
+            },
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          return;
+        }
+
+        const active =
+          Array.isArray(
+            data.suppliers,
+          )
+            ? data.suppliers.filter(
+                (
+                  supplier: Supplier,
+                ) =>
+                  supplier.isActive,
+              )
+            : [];
+
+        setSuppliers(
+          active,
+        );
+
+        if (
+          active.length === 1
+        ) {
+          setSupplierId(
+            active[0].id,
+          );
+        }
+      } catch {
+        // Supplier load failure is shown during PO creation.
+      }
+    }
+
+    void loadSuppliers();
   }, []);
 
   const queue =
@@ -375,6 +452,141 @@ export default function RestockQueuePage() {
         map.values(),
       );
     }, [visibleQueue]);
+
+  useEffect(() => {
+    setSelectedIds(
+      new Set(
+        queue.map(
+          (item) =>
+            item.id,
+        ),
+      ),
+    );
+  }, [queue.length]);
+
+  const selectedQueue =
+    queue.filter(
+      (item) =>
+        selectedIds.has(
+          item.id,
+        ),
+    );
+
+  const selectedPieces =
+    selectedQueue.reduce(
+      (total, item) =>
+        total +
+        item.recommendedReorderQty,
+      0,
+    );
+
+  const selectedCost =
+    selectedQueue.reduce(
+      (total, item) =>
+        total +
+        (item.costPrice ===
+        null
+          ? 0
+          : item.costPrice *
+            item.recommendedReorderQty),
+      0,
+    );
+
+  async function createDraftPO() {
+    if (!supplierId) {
+      setMessage(
+        "Select an active supplier first.",
+      );
+      return;
+    }
+
+    if (
+      selectedQueue.length ===
+      0
+    ) {
+      setMessage(
+        "Select at least one restock item.",
+      );
+      return;
+    }
+
+    if (
+      selectedQueue.some(
+        (item) =>
+          item.costPrice ===
+          null,
+      )
+    ) {
+      setMessage(
+        "Every selected item needs a cost price before creating a purchase order.",
+      );
+      return;
+    }
+
+    try {
+      setCreatingPO(
+        true,
+      );
+
+      setMessage("");
+
+      const response =
+        await fetch(
+          "/api/admin/purchase-orders",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            credentials:
+              "same-origin",
+
+            body:
+              JSON.stringify({
+                supplierId,
+
+                items:
+                  selectedQueue.map(
+                    (item) => ({
+                      variantId:
+                        item.id,
+
+                      quantity:
+                        item.recommendedReorderQty,
+                    }),
+                  ),
+              }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Failed to create purchase order.",
+        );
+      }
+
+      router.push(
+        "/admin/purchase-orders",
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to create purchase order.",
+      );
+    } finally {
+      setCreatingPO(
+        false,
+      );
+    }
+  }
 
   const totalRequiredPieces =
     queue.reduce(
@@ -619,6 +831,83 @@ export default function RestockQueuePage() {
           </div>
         </section>
 
+        <section className="mt-4 rounded-3xl border border-emerald-100 bg-white p-5 shadow-sm">
+          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-emerald-700">
+            Create Purchase Order
+          </p>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
+            <select
+              value={
+                supplierId
+              }
+              onChange={(event) =>
+                setSupplierId(
+                  event.target.value,
+                )
+              }
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-black outline-none"
+            >
+              <option value="">
+                Select Supplier
+              </option>
+
+              {suppliers.map(
+                (supplier) => (
+                  <option
+                    key={
+                      supplier.id
+                    }
+                    value={
+                      supplier.id
+                    }
+                  >
+                    {
+                      supplier.name
+                    }
+                  </option>
+                ),
+              )}
+            </select>
+
+            <button
+              type="button"
+              onClick={
+                createDraftPO
+              }
+              disabled={
+                creatingPO ||
+                selectedQueue.length ===
+                  0
+              }
+              className="rounded-2xl bg-[#06261c] px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-white disabled:opacity-50"
+            >
+              {creatingPO
+                ? "Creating..."
+                : "Create Draft PO"}
+            </button>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <MiniStat
+              label="Selected"
+              value={`${selectedQueue.length}`}
+            />
+
+            <MiniStat
+              label="Pieces"
+              value={`${selectedPieces}`}
+            />
+
+            <MiniStat
+              label="Cost"
+              value={money(
+                selectedCost,
+              )}
+            />
+          </div>
+        </section>
+
         {missingCostVariants >
         0 ? (
           <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
@@ -799,6 +1088,41 @@ export default function RestockQueuePage() {
                             className="p-4 sm:p-5"
                           >
                             <div className="flex items-start gap-3">
+                              <input
+                                type="checkbox"
+                                checked={
+                                  selectedIds.has(
+                                    item.id,
+                                  )
+                                }
+                                onChange={(event) => {
+                                  setSelectedIds(
+                                    (current) => {
+                                      const next =
+                                        new Set(
+                                          current,
+                                        );
+
+                                      if (
+                                        event.target
+                                          .checked
+                                      ) {
+                                        next.add(
+                                          item.id,
+                                        );
+                                      } else {
+                                        next.delete(
+                                          item.id,
+                                        );
+                                      }
+
+                                      return next;
+                                    },
+                                  );
+                                }}
+                                className="mt-2 h-4 w-4 shrink-0 accent-emerald-700"
+                              />
+
                               <span
                                 className="mt-0.5 h-8 w-8 shrink-0 rounded-full border border-slate-200"
                                 style={{

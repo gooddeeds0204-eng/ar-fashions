@@ -16,6 +16,7 @@ const menu = [
   { label: "Inventory", href: "/admin/inventory", icon: "▥" },
   { label: "Restock Queue", href: "/admin/restock", icon: "↟" },
   { label: "Suppliers", href: "/admin/suppliers", icon: "◈" },
+  { label: "Purchase Orders", href: "/admin/purchase-orders", icon: "▧" },
   { label: "Coupons", href: "/admin/coupons", icon: "%" },
   { label: "Banners", href: "/admin/banners", icon: "▱" },
   { label: "Home Content", href: "/admin/home-content", icon: "⌂" },
