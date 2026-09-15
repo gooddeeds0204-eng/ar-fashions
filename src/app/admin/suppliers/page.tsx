@@ -25,6 +25,30 @@ type Supplier = {
   notes: string | null;
   isActive: boolean;
   purchaseOrderCount: number;
+  totalPurchaseValue: number;
+  orderedPieces: number;
+  receivedPieces: number;
+  pendingPieces: number;
+  activeIncomingPOCount: number;
+  draftPOCount: number;
+  receivedPOCount: number;
+  cancelledPOCount: number;
+  lastPurchaseAt: string | null;
+
+  purchaseHistory: Array<{
+    id: string;
+    poNumber: string;
+    status: string;
+    subtotal: number;
+    orderedPieces: number;
+    receivedPieces: number;
+    pendingPieces: number;
+    expectedAt: string | null;
+    orderedAt: string | null;
+    receivedAt: string | null;
+    createdAt: string;
+  }>;
+
   createdAt: string;
   updatedAt: string;
 };
@@ -42,6 +66,59 @@ const emptyForm = {
   pincode: "",
   notes: "",
 };
+
+function money(
+  value: number,
+) {
+  return new Intl.NumberFormat(
+    "en-IN",
+    {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    },
+  ).format(value || 0);
+}
+
+function formatDate(
+  value: string | null,
+) {
+  if (!value) {
+    return "No purchases yet";
+  }
+
+  return new Date(
+    value,
+  ).toLocaleDateString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    },
+  );
+}
+
+function poStatusClass(
+  status: string,
+) {
+  if (status === "RECEIVED") {
+    return "bg-emerald-50 text-emerald-700";
+  }
+
+  if (
+    status === "ORDERED" ||
+    status === "PARTIALLY_RECEIVED"
+  ) {
+    return "bg-sky-50 text-sky-700";
+  }
+
+  if (status === "CANCELLED") {
+    return "bg-red-50 text-red-600";
+  }
+
+  return "bg-slate-100 text-slate-600";
+}
 
 export default function SuppliersPage() {
   const router =
@@ -89,6 +166,13 @@ export default function SuppliersPage() {
     message,
     setMessage,
   ] = useState("");
+
+  const [
+    expandedSupplierId,
+    setExpandedSupplierId,
+  ] = useState<
+    string | null
+  >(null);
 
   async function loadSuppliers() {
     try {
@@ -191,6 +275,14 @@ export default function SuppliersPage() {
       (total, supplier) =>
         total +
         supplier.purchaseOrderCount,
+      0,
+    );
+
+  const totalPurchaseValue =
+    suppliers.reduce(
+      (total, supplier) =>
+        total +
+        supplier.totalPurchaseValue,
       0,
     );
 
@@ -418,7 +510,7 @@ export default function SuppliersPage() {
           </p>
         </div>
 
-        <section className="mt-6 grid grid-cols-3 gap-3">
+        <section className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <SummaryCard
             label="Suppliers"
             value={
@@ -437,6 +529,15 @@ export default function SuppliersPage() {
             label="Purchase Orders"
             value={
               totalPOs
+            }
+          />
+
+          <SummaryCard
+            label="Purchase Value"
+            value={
+              money(
+                totalPurchaseValue,
+              )
             }
           />
         </section>
@@ -808,6 +909,50 @@ export default function SuppliersPage() {
                       />
                     </div>
 
+                    <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      <Info
+                        label="Purchase Value"
+                        value={
+                          money(
+                            supplier.totalPurchaseValue,
+                          )
+                        }
+                      />
+
+                      <Info
+                        label="Received"
+                        value={`${supplier.receivedPieces} pcs`}
+                      />
+
+                      <Info
+                        label="Pending"
+                        value={`${supplier.pendingPieces} pcs`}
+                      />
+
+                      <Info
+                        label="Incoming POs"
+                        value={String(
+                          supplier.activeIncomingPOCount,
+                        )}
+                      />
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <Info
+                        label="Last Purchase"
+                        value={
+                          formatDate(
+                            supplier.lastPurchaseAt,
+                          )
+                        }
+                      />
+
+                      <Info
+                        label="PO Status"
+                        value={`Draft ${supplier.draftPOCount} · Received ${supplier.receivedPOCount} · Cancelled ${supplier.cancelledPOCount}`}
+                      />
+                    </div>
+
                     {supplier.addressLine ? (
                       <div className="mt-3 rounded-2xl bg-slate-50 p-3">
                         <p className="text-[8px] font-black uppercase tracking-wider text-slate-400">
@@ -822,6 +967,123 @@ export default function SuppliersPage() {
                             ? ` · ${supplier.pincode}`
                             : ""}
                         </p>
+                      </div>
+                    ) : null}
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedSupplierId(
+                          expandedSupplierId ===
+                            supplier.id
+                            ? null
+                            : supplier.id,
+                        )
+                      }
+                      className="mt-4 w-full rounded-xl bg-[#06261c] px-4 py-3 text-[10px] font-black uppercase tracking-[0.08em] text-white"
+                    >
+                      {expandedSupplierId ===
+                      supplier.id
+                        ? "Hide Purchase History"
+                        : "View Purchase History"}
+                    </button>
+
+                    {expandedSupplierId ===
+                      supplier.id ? (
+                      <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200">
+                        <div className="border-b border-slate-100 bg-slate-50 px-4 py-3">
+                          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-emerald-700">
+                            Purchase History
+                          </p>
+
+                          <p className="mt-1 text-[10px] font-semibold text-slate-400">
+                            Latest purchase orders from this supplier
+                          </p>
+                        </div>
+
+                        {supplier.purchaseHistory.length ===
+                        0 ? (
+                          <div className="p-5 text-center text-xs font-bold text-slate-400">
+                            No purchase orders yet.
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-slate-100">
+                            {supplier.purchaseHistory.map(
+                              (po) => (
+                                <div
+                                  key={
+                                    po.id
+                                  }
+                                  className="p-4"
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <p className="truncate text-[11px] font-black text-slate-900">
+                                          {
+                                            po.poNumber
+                                          }
+                                        </p>
+
+                                        <span
+                                          className={`rounded-full px-2 py-1 text-[7px] font-black uppercase ${poStatusClass(
+                                            po.status,
+                                          )}`}
+                                        >
+                                          {po.status.replaceAll(
+                                            "_",
+                                            " ",
+                                          )}
+                                        </span>
+                                      </div>
+
+                                      <p className="mt-1 text-[9px] font-semibold text-slate-400">
+                                        {formatDate(
+                                          po.createdAt,
+                                        )}
+                                      </p>
+                                    </div>
+
+                                    <p className="shrink-0 text-sm font-black">
+                                      {money(
+                                        po.subtotal,
+                                      )}
+                                    </p>
+                                  </div>
+
+                                  <div className="mt-3 grid grid-cols-3 gap-2">
+                                    <Info
+                                      label="Ordered"
+                                      value={`${po.orderedPieces}`}
+                                    />
+
+                                    <Info
+                                      label="Received"
+                                      value={`${po.receivedPieces}`}
+                                    />
+
+                                    <Info
+                                      label="Pending"
+                                      value={`${po.pendingPieces}`}
+                                    />
+                                  </div>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            router.push(
+                              "/admin/purchase-orders",
+                            )
+                          }
+                          className="w-full border-t border-slate-100 bg-slate-50 px-4 py-3 text-[9px] font-black uppercase tracking-wider text-emerald-700"
+                        >
+                          Open All Purchase Orders →
+                        </button>
                       </div>
                     ) : null}
 
@@ -915,7 +1177,8 @@ function SummaryCard({
   value,
 }: {
   label: string;
-  value: number;
+  value:
+    number | string;
 }) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">

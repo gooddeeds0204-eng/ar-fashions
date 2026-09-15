@@ -73,20 +73,288 @@ export async function GET() {
                 true,
             },
           },
+
+          purchaseOrders: {
+            orderBy: {
+              createdAt:
+                "desc",
+            },
+
+            take: 20,
+
+            select: {
+              id: true,
+              poNumber: true,
+              status: true,
+              subtotal: true,
+              expectedAt: true,
+              orderedAt: true,
+              receivedAt: true,
+              createdAt: true,
+
+              items: {
+                select: {
+                  orderedQty:
+                    true,
+
+                  receivedQty:
+                    true,
+                },
+              },
+            },
+          },
         },
       });
 
     return NextResponse.json({
       success: true,
+
       suppliers:
         suppliers.map(
-          (supplier) => ({
-            ...supplier,
-            purchaseOrderCount:
+          (supplier) => {
+            const activeOrders =
+              supplier.purchaseOrders.filter(
+                (order) =>
+                  order.status !==
+                  "CANCELLED",
+              );
+
+            const purchaseOrderCount =
               supplier._count
-                .purchaseOrders,
-            _count: undefined,
-          }),
+                .purchaseOrders;
+
+            const totalPurchaseValue =
+              activeOrders.reduce(
+                (
+                  total,
+                  order,
+                ) =>
+                  total +
+                  Number(
+                    order.subtotal,
+                  ),
+                0,
+              );
+
+            const orderedPieces =
+              activeOrders.reduce(
+                (
+                  total,
+                  order,
+                ) =>
+                  total +
+                  order.items.reduce(
+                    (
+                      itemTotal,
+                      item,
+                    ) =>
+                      itemTotal +
+                      item.orderedQty,
+                    0,
+                  ),
+                0,
+              );
+
+            const receivedPieces =
+              activeOrders.reduce(
+                (
+                  total,
+                  order,
+                ) =>
+                  total +
+                  order.items.reduce(
+                    (
+                      itemTotal,
+                      item,
+                    ) =>
+                      itemTotal +
+                      item.receivedQty,
+                    0,
+                  ),
+                0,
+              );
+
+            const pendingPieces =
+              Math.max(
+                0,
+                orderedPieces -
+                  receivedPieces,
+              );
+
+            const activeIncomingPOCount =
+              supplier.purchaseOrders.filter(
+                (order) =>
+                  order.status ===
+                    "ORDERED" ||
+                  order.status ===
+                    "PARTIALLY_RECEIVED",
+              ).length;
+
+            const draftPOCount =
+              supplier.purchaseOrders.filter(
+                (order) =>
+                  order.status ===
+                  "DRAFT",
+              ).length;
+
+            const receivedPOCount =
+              supplier.purchaseOrders.filter(
+                (order) =>
+                  order.status ===
+                  "RECEIVED",
+              ).length;
+
+            const cancelledPOCount =
+              supplier.purchaseOrders.filter(
+                (order) =>
+                  order.status ===
+                  "CANCELLED",
+              ).length;
+
+            const lastPurchase =
+              activeOrders[0] ??
+              null;
+
+            const purchaseHistory =
+              supplier.purchaseOrders.map(
+                (order) => {
+                  const orderPieces =
+                    order.items.reduce(
+                      (
+                        total,
+                        item,
+                      ) =>
+                        total +
+                        item.orderedQty,
+                      0,
+                    );
+
+                  const historyReceived =
+                    order.items.reduce(
+                      (
+                        total,
+                        item,
+                      ) =>
+                        total +
+                        item.receivedQty,
+                      0,
+                    );
+
+                  return {
+                    id:
+                      order.id,
+
+                    poNumber:
+                      order.poNumber,
+
+                    status:
+                      order.status,
+
+                    subtotal:
+                      Number(
+                        order.subtotal,
+                      ),
+
+                    orderedPieces:
+                      orderPieces,
+
+                    receivedPieces:
+                      historyReceived,
+
+                    pendingPieces:
+                      Math.max(
+                        0,
+                        orderPieces -
+                          historyReceived,
+                      ),
+
+                    expectedAt:
+                      order.expectedAt,
+
+                    orderedAt:
+                      order.orderedAt,
+
+                    receivedAt:
+                      order.receivedAt,
+
+                    createdAt:
+                      order.createdAt,
+                  };
+                },
+              );
+
+            return {
+              id:
+                supplier.id,
+
+              name:
+                supplier.name,
+
+              contactName:
+                supplier.contactName,
+
+              phone:
+                supplier.phone,
+
+              whatsapp:
+                supplier.whatsapp,
+
+              email:
+                supplier.email,
+
+              gstNumber:
+                supplier.gstNumber,
+
+              addressLine:
+                supplier.addressLine,
+
+              city:
+                supplier.city,
+
+              state:
+                supplier.state,
+
+              pincode:
+                supplier.pincode,
+
+              notes:
+                supplier.notes,
+
+              isActive:
+                supplier.isActive,
+
+              createdAt:
+                supplier.createdAt,
+
+              updatedAt:
+                supplier.updatedAt,
+
+              purchaseOrderCount,
+
+              totalPurchaseValue,
+
+              orderedPieces,
+
+              receivedPieces,
+
+              pendingPieces,
+
+              activeIncomingPOCount,
+
+              draftPOCount,
+
+              receivedPOCount,
+
+              cancelledPOCount,
+
+              lastPurchaseAt:
+                lastPurchase
+                  ?.createdAt ??
+                null,
+
+              purchaseHistory,
+            };
+          },
         ),
     });
   } catch (error) {
