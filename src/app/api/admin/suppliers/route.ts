@@ -47,6 +47,54 @@ function validEmail(
   );
 }
 
+function wholeNumber(
+  value: unknown,
+  fallback: number,
+) {
+  const raw =
+    cleanString(value);
+
+  if (!raw) {
+    return fallback;
+  }
+
+  const number =
+    Number(raw);
+
+  if (
+    !Number.isInteger(number)
+  ) {
+    return null;
+  }
+
+  return number;
+}
+
+function decimalNumber(
+  value: unknown,
+  fallback: number,
+) {
+  const raw =
+    cleanString(value);
+
+  if (!raw) {
+    return fallback;
+  }
+
+  const number =
+    Number(raw);
+
+  if (
+    !Number.isFinite(number)
+  ) {
+    return null;
+  }
+
+  return Math.round(
+    number * 100,
+  ) / 100;
+}
+
 export async function GET() {
   const adminError =
     await requireAdmin();
@@ -320,6 +368,17 @@ export async function GET() {
               notes:
                 supplier.notes,
 
+              leadTimeDays:
+                supplier.leadTimeDays,
+
+              minimumOrderQty:
+                supplier.minimumOrderQty,
+
+              minimumOrderValue:
+                Number(
+                  supplier.minimumOrderValue,
+                ),
+
               isActive:
                 supplier.isActive,
 
@@ -453,6 +512,24 @@ export async function POST(
         body.notes,
       );
 
+    const leadTimeDays =
+      wholeNumber(
+        body.leadTimeDays,
+        7,
+      );
+
+    const minimumOrderQty =
+      wholeNumber(
+        body.minimumOrderQty,
+        1,
+      );
+
+    const minimumOrderValue =
+      decimalNumber(
+        body.minimumOrderValue,
+        0,
+      );
+
     if (
       name.length < 2
     ) {
@@ -530,6 +607,53 @@ export async function POST(
       );
     }
 
+    if (
+      leadTimeDays === null ||
+      leadTimeDays < 0 ||
+      leadTimeDays > 365
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Lead time must be between 0 and 365 days.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (
+      minimumOrderQty === null ||
+      minimumOrderQty < 1 ||
+      minimumOrderQty > 100000
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Minimum order quantity must be at least 1.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (
+      minimumOrderValue === null ||
+      minimumOrderValue < 0
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Minimum order value cannot be negative.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
     const existing =
       await prisma.supplier.findFirst({
         where: {
@@ -593,6 +717,12 @@ export async function POST(
 
           notes:
             notes || null,
+
+          leadTimeDays,
+
+          minimumOrderQty,
+
+          minimumOrderValue,
         },
       });
 
@@ -765,6 +895,26 @@ export async function PATCH(
         body.notes,
       );
 
+    const leadTimeDays =
+      wholeNumber(
+        body.leadTimeDays,
+        existing.leadTimeDays,
+      );
+
+    const minimumOrderQty =
+      wholeNumber(
+        body.minimumOrderQty,
+        existing.minimumOrderQty,
+      );
+
+    const minimumOrderValue =
+      decimalNumber(
+        body.minimumOrderValue,
+        Number(
+          existing.minimumOrderValue,
+        ),
+      );
+
     if (
       name.length < 2
     ) {
@@ -842,6 +992,53 @@ export async function PATCH(
       );
     }
 
+    if (
+      leadTimeDays === null ||
+      leadTimeDays < 0 ||
+      leadTimeDays > 365
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Lead time must be between 0 and 365 days.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (
+      minimumOrderQty === null ||
+      minimumOrderQty < 1 ||
+      minimumOrderQty > 100000
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Minimum order quantity must be at least 1.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (
+      minimumOrderValue === null ||
+      minimumOrderValue < 0
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Minimum order value cannot be negative.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
     const duplicate =
       await prisma.supplier.findFirst({
         where: {
@@ -911,6 +1108,12 @@ export async function PATCH(
 
           notes:
             notes || null,
+
+          leadTimeDays,
+
+          minimumOrderQty,
+
+          minimumOrderValue,
 
           isActive:
             typeof body.isActive ===

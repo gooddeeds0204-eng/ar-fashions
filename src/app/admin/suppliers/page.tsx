@@ -23,6 +23,11 @@ type Supplier = {
   state: string | null;
   pincode: string | null;
   notes: string | null;
+
+  leadTimeDays: number;
+  minimumOrderQty: number;
+  minimumOrderValue: number;
+
   isActive: boolean;
   purchaseOrderCount: number;
   totalPurchaseValue: number;
@@ -65,6 +70,10 @@ const emptyForm = {
   state: "",
   pincode: "",
   notes: "",
+
+  leadTimeDays: "7",
+  minimumOrderQty: "1",
+  minimumOrderValue: "0",
 };
 
 function money(
@@ -336,6 +345,21 @@ export default function SuppliersPage() {
       notes:
         supplier.notes ??
         "",
+
+      leadTimeDays:
+        String(
+          supplier.leadTimeDays,
+        ),
+
+      minimumOrderQty:
+        String(
+          supplier.minimumOrderQty,
+        ),
+
+      minimumOrderValue:
+        String(
+          supplier.minimumOrderValue,
+        ),
     });
 
     window.scrollTo({
@@ -741,6 +765,57 @@ export default function SuppliersPage() {
               }
             />
 
+            <Field
+              label="Lead Time (Days)"
+              value={
+                form.leadTimeDays
+              }
+              inputMode="numeric"
+              onChange={(
+                value,
+              ) =>
+                setForm({
+                  ...form,
+                  leadTimeDays:
+                    value,
+                })
+              }
+            />
+
+            <Field
+              label="Minimum Order Qty (pcs)"
+              value={
+                form.minimumOrderQty
+              }
+              inputMode="numeric"
+              onChange={(
+                value,
+              ) =>
+                setForm({
+                  ...form,
+                  minimumOrderQty:
+                    value,
+                })
+              }
+            />
+
+            <Field
+              label="Minimum Order Value (₹)"
+              value={
+                form.minimumOrderValue
+              }
+              inputMode="decimal"
+              onChange={(
+                value,
+              ) =>
+                setForm({
+                  ...form,
+                  minimumOrderValue:
+                    value,
+                })
+              }
+            />
+
             <div className="md:col-span-2">
               <label className="block">
                 <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
@@ -934,6 +1009,27 @@ export default function SuppliersPage() {
                         value={String(
                           supplier.activeIncomingPOCount,
                         )}
+                      />
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      <Info
+                        label="Lead Time"
+                        value={`${supplier.leadTimeDays} days`}
+                      />
+
+                      <Info
+                        label="MOQ"
+                        value={`${supplier.minimumOrderQty} pcs`}
+                      />
+
+                      <Info
+                        label="Min PO"
+                        value={
+                          money(
+                            supplier.minimumOrderValue,
+                          )
+                        }
                       />
                     </div>
 
@@ -1144,7 +1240,8 @@ function Field({
     | "text"
     | "tel"
     | "email"
-    | "numeric";
+    | "numeric"
+    | "decimal";
 }) {
   return (
     <label className="block">

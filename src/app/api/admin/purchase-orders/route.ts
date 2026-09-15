@@ -274,6 +274,15 @@ export async function POST(
         select: {
           id: true,
           name: true,
+
+          leadTimeDays:
+            true,
+
+          minimumOrderQty:
+            true,
+
+          minimumOrderValue:
+            true,
         },
       });
 
@@ -705,6 +714,40 @@ export async function POST(
                 item.totalCost,
               0,
             );
+
+          const totalOrderedQty =
+            items.reduce(
+              (
+                total,
+                item,
+              ) =>
+                total +
+                item.orderedQty,
+              0,
+            );
+
+          const minimumOrderValue =
+            Number(
+              supplier.minimumOrderValue,
+            );
+
+          if (
+            totalOrderedQty <
+            supplier.minimumOrderQty
+          ) {
+            throw new Error(
+              `VALIDATION:${supplier.name} requires a minimum order of ${supplier.minimumOrderQty} pcs. Current purchase order has ${totalOrderedQty} pcs.`,
+            );
+          }
+
+          if (
+            subtotal <
+            minimumOrderValue
+          ) {
+            throw new Error(
+              `VALIDATION:${supplier.name} requires a minimum purchase order value of ₹${minimumOrderValue.toLocaleString("en-IN")}. Current value is ₹${subtotal.toLocaleString("en-IN")}.`,
+            );
+          }
 
           return tx.purchaseOrder.create({
             data: {

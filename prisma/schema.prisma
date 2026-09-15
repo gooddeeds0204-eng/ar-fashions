@@ -692,6 +692,11 @@ model Supplier {
   state       String?
   pincode     String?
   notes       String?
+
+  leadTimeDays      Int     @default(7)
+  minimumOrderQty   Int     @default(1)
+  minimumOrderValue Decimal @default(0) @db.Decimal(12, 2)
+
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
