@@ -116,6 +116,38 @@ function statusClass(
   return "bg-slate-100 text-slate-600";
 }
 
+function dateInputValue(
+  value: string | null,
+) {
+  if (!value) {
+    return "";
+  }
+
+  return value.slice(
+    0,
+    10,
+  );
+}
+
+function displayDate(
+  value: string | null,
+) {
+  if (!value) {
+    return "Not set";
+  }
+
+  return new Date(
+    value,
+  ).toLocaleDateString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    },
+  );
+}
+
 export default function PurchaseOrdersPage() {
   const router =
     useRouter();
@@ -166,6 +198,23 @@ export default function PurchaseOrdersPage() {
         string
       >
     >({});
+
+  const [
+    editingOrderId,
+    setEditingOrderId,
+  ] = useState<
+    string | null
+  >(null);
+
+  const [
+    editExpectedAt,
+    setEditExpectedAt,
+  ] = useState("");
+
+  const [
+    editNotes,
+    setEditNotes,
+  ] = useState("");
 
   async function loadOrders() {
     try {
@@ -256,6 +305,17 @@ export default function PurchaseOrdersPage() {
           (order) =>
             order.status ===
             "RECEIVED",
+        ).length,
+      [orders],
+    );
+
+  const cancelledCount =
+    useMemo(
+      () =>
+        orders.filter(
+          (order) =>
+            order.status ===
+            "CANCELLED",
         ).length,
       [orders],
     );
@@ -360,6 +420,10 @@ export default function PurchaseOrdersPage() {
 
     setReceivingOrderId(
       order.id,
+    );
+
+    setEditingOrderId(
+      null,
     );
 
     setMessage("");
@@ -508,6 +572,186 @@ export default function PurchaseOrdersPage() {
     }
   }
 
+  function openEdit(
+    order:
+      PurchaseOrder,
+  ) {
+    setEditingOrderId(
+      order.id,
+    );
+
+    setReceivingOrderId(
+      null,
+    );
+
+    setEditExpectedAt(
+      dateInputValue(
+        order.expectedAt,
+      ),
+    );
+
+    setEditNotes(
+      order.notes ?? "",
+    );
+
+    setMessage("");
+  }
+
+  async function saveDetails(
+    order:
+      PurchaseOrder,
+  ) {
+    try {
+      setBusyOrderId(
+        order.id,
+      );
+
+      setMessage("");
+
+      const response =
+        await fetch(
+          "/api/admin/purchase-orders",
+          {
+            method: "PATCH",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            credentials:
+              "same-origin",
+
+            body:
+              JSON.stringify({
+                action:
+                  "UPDATE_DETAILS",
+
+                purchaseOrderId:
+                  order.id,
+
+                expectedAt:
+                  editExpectedAt,
+
+                notes:
+                  editNotes,
+              }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Failed to save purchase order details.",
+        );
+      }
+
+      setEditingOrderId(
+        null,
+      );
+
+      setMessage(
+        `${order.poNumber} details updated successfully.`,
+      );
+
+      await loadOrders();
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to save purchase order details.",
+      );
+    } finally {
+      setBusyOrderId(
+        null,
+      );
+    }
+  }
+
+  async function cancelOrder(
+    order:
+      PurchaseOrder,
+  ) {
+    const confirmed =
+      window.confirm(
+        `Cancel ${order.poNumber}? Remaining planned/incoming stock protection will be released.`,
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setBusyOrderId(
+        order.id,
+      );
+
+      setMessage("");
+
+      const response =
+        await fetch(
+          "/api/admin/purchase-orders",
+          {
+            method: "PATCH",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            credentials:
+              "same-origin",
+
+            body:
+              JSON.stringify({
+                action:
+                  "CANCEL",
+
+                purchaseOrderId:
+                  order.id,
+              }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Failed to cancel purchase order.",
+        );
+      }
+
+      setEditingOrderId(
+        null,
+      );
+
+      setReceivingOrderId(
+        null,
+      );
+
+      setMessage(
+        `${order.poNumber} cancelled. Purchase protection released.`,
+      );
+
+      await loadOrders();
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to cancel purchase order.",
+      );
+    } finally {
+      setBusyOrderId(
+        null,
+      );
+    }
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-950 md:px-8">
       <div className="mx-auto max-w-7xl">
@@ -534,7 +778,7 @@ export default function PurchaseOrdersPage() {
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              Supplier ordering, receiving and automatic inventory updates.
+              Supplier ordering, receiving, delivery planning and automatic inventory updates.
             </p>
           </div>
 
@@ -551,7 +795,7 @@ export default function PurchaseOrdersPage() {
           </button>
         </div>
 
-        <section className="mt-6 grid grid-cols-3 gap-3">
+        <section className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Summary
             label="Draft"
             value={
@@ -570,6 +814,13 @@ export default function PurchaseOrdersPage() {
             label="Received"
             value={
               receivedCount
+            }
+          />
+
+          <Summary
+            label="Cancelled"
+            value={
+              cancelledCount
             }
           />
         </section>
@@ -632,6 +883,28 @@ export default function PurchaseOrdersPage() {
                   const busy =
                     busyOrderId ===
                     order.id;
+
+                  const editing =
+                    editingOrderId ===
+                    order.id;
+
+                  const canEdit =
+                    order.status ===
+                      "DRAFT" ||
+                    order.status ===
+                      "ORDERED" ||
+                    order.status ===
+                      "PARTIALLY_RECEIVED";
+
+                  const canCancel =
+                    (
+                      order.status ===
+                        "DRAFT" ||
+                      order.status ===
+                        "ORDERED"
+                    ) &&
+                    receivedPieces ===
+                      0;
 
                   return (
                     <article
@@ -697,6 +970,106 @@ export default function PurchaseOrdersPage() {
                           value={`${remainingPieces}`}
                         />
                       </div>
+
+                      <div className="grid gap-2 border-b border-slate-100 bg-slate-50/60 p-4 sm:grid-cols-2">
+                        <InfoBox
+                          label="Expected Delivery"
+                          value={displayDate(
+                            order.expectedAt,
+                          )}
+                        />
+
+                        <InfoBox
+                          label="PO Notes"
+                          value={
+                            order.notes ||
+                            "No notes added"
+                          }
+                        />
+                      </div>
+
+                      {editing ? (
+                        <div className="border-b border-slate-100 bg-emerald-50/30 p-4">
+                          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-emerald-700">
+                            Purchase Order Details
+                          </p>
+
+                          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                            <label>
+                              <span className="text-[8px] font-black uppercase tracking-wider text-slate-400">
+                                Expected Delivery Date
+                              </span>
+
+                              <input
+                                type="date"
+                                value={
+                                  editExpectedAt
+                                }
+                                onChange={(event) =>
+                                  setEditExpectedAt(
+                                    event.target.value,
+                                  )
+                                }
+                                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-black outline-none focus:border-emerald-400"
+                              />
+                            </label>
+
+                            <label>
+                              <span className="text-[8px] font-black uppercase tracking-wider text-slate-400">
+                                Supplier / PO Notes
+                              </span>
+
+                              <textarea
+                                value={
+                                  editNotes
+                                }
+                                onChange={(event) =>
+                                  setEditNotes(
+                                    event.target.value,
+                                  )
+                                }
+                                rows={3}
+                                placeholder="Example: Call supplier before dispatch..."
+                                className="mt-1 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold outline-none focus:border-emerald-400"
+                              />
+                            </label>
+                          </div>
+
+                          <div className="mt-3 grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditingOrderId(
+                                  null,
+                                )
+                              }
+                              disabled={
+                                busy
+                              }
+                              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-black"
+                            >
+                              Cancel Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                saveDetails(
+                                  order,
+                                )
+                              }
+                              disabled={
+                                busy
+                              }
+                              className="rounded-xl bg-[#06261c] px-4 py-3 text-xs font-black text-white disabled:opacity-50"
+                            >
+                              {busy
+                                ? "Saving..."
+                                : "Save PO Details"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
 
                       <div className="divide-y divide-slate-100">
                         {order.items.map(
@@ -895,6 +1268,50 @@ export default function PurchaseOrdersPage() {
                           <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-center text-xs font-black text-emerald-700">
                             ✓ Purchase Order Fully Received
                           </div>
+                        ) : order.status ===
+                          "CANCELLED" ? (
+                          <div className="rounded-2xl bg-red-50 px-4 py-3 text-center text-xs font-black text-red-600">
+                            Purchase Order Cancelled
+                          </div>
+                        ) : null}
+
+                        {canEdit &&
+                        !receiving &&
+                        !editing ? (
+                          <div className="mt-2 grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openEdit(
+                                  order,
+                                )
+                              }
+                              className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-black"
+                            >
+                              Edit Details
+                            </button>
+
+                            {canCancel ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  cancelOrder(
+                                    order,
+                                  )
+                                }
+                                disabled={
+                                  busy
+                                }
+                                className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-xs font-black text-red-600 disabled:opacity-50"
+                              >
+                                Cancel PO
+                              </button>
+                            ) : (
+                              <div className="grid place-items-center rounded-xl bg-slate-50 px-3 py-2 text-center text-[8px] font-black uppercase tracking-wider text-slate-400">
+                                Cancel Locked After Receipt
+                              </div>
+                            )}
+                          </div>
                         ) : null}
                       </div>
                     </article>
@@ -943,6 +1360,27 @@ function MiniStat({
       </p>
 
       <p className="mt-1 text-lg font-black">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+
+function InfoBox({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-white p-3">
+      <p className="text-[8px] font-black uppercase tracking-wider text-slate-400">
+        {label}
+      </p>
+
+      <p className="mt-1 text-[11px] font-black text-slate-700">
         {value}
       </p>
     </div>

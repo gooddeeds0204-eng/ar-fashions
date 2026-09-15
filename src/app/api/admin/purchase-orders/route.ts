@@ -860,6 +860,260 @@ export async function PATCH(
 
     if (
       action ===
+      "UPDATE_DETAILS"
+    ) {
+      const notes =
+        cleanString(
+          body.notes,
+        );
+
+      const expectedAtRaw =
+        cleanString(
+          body.expectedAt,
+        );
+
+      let expectedAt:
+        Date | null =
+        null;
+
+      if (expectedAtRaw) {
+        if (
+          !/^\d{4}-\d{2}-\d{2}$/.test(
+            expectedAtRaw,
+          )
+        ) {
+          return NextResponse.json(
+            {
+              error:
+                "Expected delivery date is invalid.",
+            },
+            {
+              status: 400,
+            },
+          );
+        }
+
+        expectedAt =
+          new Date(
+            `${expectedAtRaw}T00:00:00.000Z`,
+          );
+
+        if (
+          Number.isNaN(
+            expectedAt.getTime(),
+          )
+        ) {
+          return NextResponse.json(
+            {
+              error:
+                "Expected delivery date is invalid.",
+            },
+            {
+              status: 400,
+            },
+          );
+        }
+      }
+
+      const changed =
+        await prisma.purchaseOrder.updateMany({
+          where: {
+            id:
+              purchaseOrderId,
+
+            status: {
+              in: [
+                "DRAFT",
+                "ORDERED",
+                "PARTIALLY_RECEIVED",
+              ],
+            },
+          },
+
+          data: {
+            notes:
+              notes ||
+              null,
+
+            expectedAt,
+          },
+        });
+
+      if (
+        changed.count !==
+        1
+      ) {
+        const current =
+          await prisma.purchaseOrder.findUnique({
+            where: {
+              id:
+                purchaseOrderId,
+            },
+
+            select: {
+              status: true,
+            },
+          });
+
+        if (!current) {
+          return NextResponse.json(
+            {
+              error:
+                "Purchase order not found.",
+            },
+            {
+              status: 404,
+            },
+          );
+        }
+
+        return NextResponse.json(
+          {
+            error:
+              `Details cannot be changed for a ${current.status} purchase order.`,
+          },
+          {
+            status: 409,
+          },
+        );
+      }
+
+      const updated =
+        await prisma.purchaseOrder.findUnique({
+          where: {
+            id:
+              purchaseOrderId,
+          },
+
+          select: {
+            id: true,
+            poNumber: true,
+            status: true,
+            notes: true,
+            expectedAt: true,
+          },
+        });
+
+      return NextResponse.json({
+        success: true,
+        purchaseOrder:
+          updated,
+      });
+    }
+
+    if (
+      action ===
+      "CANCEL"
+    ) {
+      type LockedCancelPO = {
+        id: string;
+        poNumber: string;
+        status: string;
+      };
+
+      const cancelled =
+        await prisma.$transaction(
+          async (tx) => {
+            /*
+             * Lock PO before cancellation so a
+             * receive request cannot race with cancel.
+             */
+            const locked =
+              await tx.$queryRaw<
+                LockedCancelPO[]
+              >`
+                SELECT
+                  id,
+                  "poNumber",
+                  status::text AS status
+                FROM "PurchaseOrder"
+                WHERE id = ${purchaseOrderId}
+                FOR UPDATE
+              `;
+
+            if (
+              locked.length !==
+              1
+            ) {
+              throw new Error(
+                "PO_NOT_FOUND",
+              );
+            }
+
+            const current =
+              locked[0];
+
+            if (
+              current.status !==
+                "DRAFT" &&
+              current.status !==
+                "ORDERED"
+            ) {
+              throw new Error(
+                `CANCEL_CONFLICT:Only Draft or unreceived Ordered purchase orders can be cancelled. Current status: ${current.status}.`,
+              );
+            }
+
+            const items =
+              await tx.purchaseOrderItem.findMany({
+                where: {
+                  purchaseOrderId,
+                },
+
+                select: {
+                  receivedQty:
+                    true,
+                },
+              });
+
+            const receivedQty =
+              items.reduce(
+                (
+                  total,
+                  item,
+                ) =>
+                  total +
+                  item.receivedQty,
+                0,
+              );
+
+            if (
+              receivedQty > 0
+            ) {
+              throw new Error(
+                "CANCEL_CONFLICT:This purchase order already has received stock and cannot be cancelled.",
+              );
+            }
+
+            return tx.purchaseOrder.update({
+              where: {
+                id:
+                  purchaseOrderId,
+              },
+
+              data: {
+                status:
+                  "CANCELLED",
+              },
+
+              select: {
+                id: true,
+                poNumber: true,
+                status: true,
+              },
+            });
+          },
+        );
+
+      return NextResponse.json({
+        success: true,
+        purchaseOrder:
+          cancelled,
+      });
+    }
+
+    if (
+      action ===
       "MARK_ORDERED"
     ) {
       const now =
@@ -1362,18 +1616,45 @@ export async function PATCH(
         ? error.message
         : "Failed to update purchase order.";
 
+    if (
+      message ===
+      "PO_NOT_FOUND"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Purchase order not found.",
+        },
+        {
+          status: 404,
+        },
+      );
+    }
+
+    const cancelConflict =
+      message.startsWith(
+        "CANCEL_CONFLICT:",
+      );
+
+    const cleanMessage =
+      message.replace(
+        /^CANCEL_CONFLICT:/,
+        "",
+      );
+
     const conflict =
-      message.includes(
+      cancelConflict ||
+      cleanMessage.includes(
         "exceeds the remaining",
       ) ||
-      message.includes(
+      cleanMessage.includes(
         "can only be received",
       );
 
     return NextResponse.json(
       {
         error:
-          message,
+          cleanMessage,
       },
       {
         status:
