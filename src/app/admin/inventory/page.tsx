@@ -177,6 +177,11 @@ export default function InventoryPage() {
     setSavingAutomation,
   ] = useState(false);
 
+  const [
+    restockIntentHandled,
+    setRestockIntentHandled,
+  ] = useState(false);
+
   async function loadInventory(showRefresh = false) {
     if (showRefresh) {
       setRefreshing(true);
@@ -252,6 +257,110 @@ export default function InventoryPage() {
     () => data.variants,
     [data.variants],
   );
+
+  useEffect(() => {
+    if (
+      restockIntentHandled ||
+      loading ||
+      typeof window ===
+        "undefined"
+    ) {
+      return;
+    }
+
+    const params =
+      new URLSearchParams(
+        window.location.search,
+      );
+
+    const variantId =
+      params.get("variant");
+
+    const action =
+      params.get("action");
+
+    if (
+      action !== "restock" ||
+      !variantId
+    ) {
+      setRestockIntentHandled(
+        true,
+      );
+      return;
+    }
+
+    const target =
+      data.variants.find(
+        (item) =>
+          item.id ===
+          variantId,
+      );
+
+    if (target) {
+      const suggested =
+        Math.max(
+          1,
+          Number(
+            target.recommendedReorderQty ||
+              1,
+          ),
+        );
+
+      setSelected(target);
+
+      setAdjustment(
+        String(suggested),
+      );
+
+      setReason(
+        "NEW_STOCK",
+      );
+
+      setMessage(
+        `Restock ready for ${target.product.name} · ${target.color.name} · ${target.size.name}. Suggested quantity: +${suggested} pcs.`,
+      );
+    } else {
+      setMessage(
+        "This inventory variant could not be loaded. Refresh and try again.",
+      );
+    }
+
+    setRestockIntentHandled(
+      true,
+    );
+
+    window.history.replaceState(
+      {},
+      "",
+      "/admin/inventory",
+    );
+  }, [
+    data.variants,
+    loading,
+    restockIntentHandled,
+  ]);
+
+  function openRestock(
+    item: InventoryVariant,
+  ) {
+    setSelected(item);
+
+    setAdjustment(
+      String(
+        Math.max(
+          1,
+          item.recommendedReorderQty ||
+            1,
+        ),
+      ),
+    );
+
+    setReason(
+      "NEW_STOCK",
+    );
+
+    setMessage("");
+  }
 
   async function saveAutomationSettings() {
     const low =
@@ -756,12 +865,34 @@ export default function InventoryPage() {
                       <td className="px-5 py-5 text-right">
                         <button
                           type="button"
-                          onClick={() =>
-                            setSelected(item)
-                          }
+                          onClick={() => {
+                            if (
+                              item.recommendedReorderQty >
+                              0
+                            ) {
+                              openRestock(
+                                item,
+                              );
+                            } else {
+                              setSelected(
+                                item,
+                              );
+
+                              setAdjustment(
+                                "1",
+                              );
+
+                              setReason(
+                                "MANUAL_ADJUSTMENT",
+                              );
+                            }
+                          }}
                           className="rounded-xl bg-slate-950 px-4 py-2 text-xs font-black text-white hover:bg-slate-800"
                         >
-                          Adjust Stock
+                          {item.recommendedReorderQty >
+                          0
+                            ? "Restock"
+                            : "Adjust Stock"}
                         </button>
                       </td>
                     </tr>
@@ -810,6 +941,27 @@ export default function InventoryPage() {
                   ×
                 </button>
               </div>
+
+              {reason ===
+              "NEW_STOCK" &&
+              selected.recommendedReorderQty >
+                0 ? (
+                <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-emerald-700">
+                    Restock Recommendation
+                  </p>
+
+                  <p className="mt-1 text-sm font-black text-slate-950">
+                    Add +{
+                      selected.recommendedReorderQty
+                    } pcs
+                  </p>
+
+                  <p className="mt-1 text-[10px] font-semibold leading-4 text-slate-500">
+                    Suggested from current stock level and recent sales.
+                  </p>
+                </div>
+              ) : null}
 
               <div className="mt-6 grid grid-cols-3 gap-3">
                 <MiniStat

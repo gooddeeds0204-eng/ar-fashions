@@ -546,6 +546,15 @@ export default function AdminDashboard() {
                               alert.recommendedReorderQty
                             } pcs
                           </div>
+
+                          <Link
+                            href={`/admin/inventory?variant=${encodeURIComponent(
+                              alert.variantId,
+                            )}&action=restock`}
+                            className="mt-2 inline-flex rounded-lg bg-[#111827] px-3 py-1.5 text-[9px] font-semibold text-white"
+                          >
+                            Restock →
+                          </Link>
                         </div>
                       </div>
                     ),
