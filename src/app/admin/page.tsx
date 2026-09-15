@@ -14,6 +14,7 @@ const menu = [
   { label: "Reviews", href: "/admin/reviews", icon: "★" },
   { label: "Customers", href: "/admin/customers", icon: "◎" },
   { label: "Inventory", href: "/admin/inventory", icon: "▥" },
+  { label: "Restock Queue", href: "/admin/restock", icon: "↟" },
   { label: "Coupons", href: "/admin/coupons", icon: "%" },
   { label: "Banners", href: "/admin/banners", icon: "▱" },
   { label: "Home Content", href: "/admin/home-content", icon: "⌂" },
@@ -603,6 +604,7 @@ export default function AdminDashboard() {
                   ["Colors", "/admin/colors", "Manage product colors"],
                   ["Sizes", "/admin/sizes", "Manage available sizes"],
                   ["Inventory", "/admin/inventory", "Manage stock and variants"],
+                  ["Restock Queue", "/admin/restock", "Purchase planning and reorder batches"],
                 ].map(([title, href, description]) => (
                   <Link
                     key={href}
