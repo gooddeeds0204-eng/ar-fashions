@@ -280,6 +280,8 @@ model OrderItem {
   quantity          Int
   unitPrice         Decimal         @db.Decimal(10, 2)
   totalPrice        Decimal         @db.Decimal(10, 2)
+  unitCostSnapshot  Decimal?        @db.Decimal(10, 2)
+  totalCostSnapshot Decimal?        @db.Decimal(12, 2)
   inventoryRestored Boolean         @default(false)
   order             Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product           Product         @relation(fields: [productId], references: [id])
