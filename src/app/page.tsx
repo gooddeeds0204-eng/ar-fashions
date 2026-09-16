@@ -5,6 +5,7 @@ import { ensureUserSession } from "@/lib/user-session-init";
 import { useRouter } from "next/navigation";
 import PromoSlot from "@/components/PromoSlot";
 import BrandLogo from "@/components/BrandLogo";
+import StorefrontDrawer from "@/components/StorefrontDrawer";
 
 type Media = {
   id: string;
@@ -38,6 +39,21 @@ type Product = {
     name: string;
   };
   media: Media[];
+};
+
+type StoreCategoryChild = {
+  id: string;
+  name: string;
+  slug: string;
+  imageUrl: string | null;
+};
+
+type StoreCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  imageUrl: string | null;
+  children: StoreCategoryChild[];
 };
 
 type Banner = {
@@ -933,6 +949,11 @@ export default function Home() {
   const [mode, setMode] = useState<Mode>("RETAIL");
 
   const [
+    customerLoggedIn,
+    setCustomerLoggedIn,
+  ] = useState(false);
+
+  const [
     siteSettings,
     setSiteSettings,
   ] =
@@ -957,6 +978,31 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("ALL");
 
+  const [
+    menuOpen,
+    setMenuOpen,
+  ] = useState(false);
+
+  const [
+    menuCategories,
+    setMenuCategories,
+  ] = useState<StoreCategory[]>([]);
+
+  const [
+    expandedMenuCategory,
+    setExpandedMenuCategory,
+  ] = useState<string | null>(null);
+
+  const [
+    selectedMenuCategoryIds,
+    setSelectedMenuCategoryIds,
+  ] = useState<string[]>([]);
+
+  const [
+    selectedMenuCategoryName,
+    setSelectedMenuCategoryName,
+  ] = useState<string | null>(null);
+
   useEffect(() => {
     async function loadAccountMode() {
       try {
@@ -972,12 +1018,15 @@ export default function Home() {
           );
 
         if (!response.ok) {
+          setCustomerLoggedIn(false);
           setMode("RETAIL");
           return;
         }
 
         const data =
           await response.json();
+
+        setCustomerLoggedIn(true);
 
         setMode(
           data.user?.isReseller ===
@@ -986,12 +1035,64 @@ export default function Home() {
             : "RETAIL",
         );
       } catch {
+        setCustomerLoggedIn(false);
         setMode("RETAIL");
       }
     }
 
     loadAccountMode();
   }, []);
+
+  useEffect(() => {
+    if (
+      !menuOpen ||
+      mode !== "RETAIL"
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadMenuCategories() {
+      try {
+        const response =
+          await fetch(
+            "/api/storefront/categories",
+            {
+              cache: "no-store",
+            },
+          );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        if (!cancelled) {
+          setMenuCategories(
+            Array.isArray(
+              data.categories,
+            )
+              ? data.categories
+              : [],
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Storefront categories failed:",
+          error,
+        );
+      }
+    }
+
+    loadMenuCategories();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [menuOpen, mode]);
 
   useEffect(() => {
     async function loadSiteSettings() {
@@ -1243,6 +1344,75 @@ export default function Home() {
         ]
       : null;
 
+  function applyGenderCategory(
+    value: string,
+  ) {
+    setSelectedMenuCategoryIds([]);
+    setSelectedMenuCategoryName(null);
+    setCategory(value);
+  }
+
+  function applyMenuCategory(
+    ids: string[],
+    name: string,
+  ) {
+    setSelectedMenuCategoryIds(ids);
+    setSelectedMenuCategoryName(name);
+    setCategory("ALL");
+    setMenuOpen(false);
+
+    window.setTimeout(() => {
+      document
+        .getElementById(
+          "shop-categories",
+        )
+        ?.scrollIntoView({
+          behavior: "smooth",
+        });
+    }, 50);
+  }
+
+  function clearMenuCategory() {
+    setSelectedMenuCategoryIds([]);
+    setSelectedMenuCategoryName(null);
+    setCategory("ALL");
+    setMenuOpen(false);
+  }
+
+  async function logoutCustomer() {
+    try {
+      const response =
+        await fetch(
+          "/api/auth/logout",
+          {
+            method: "POST",
+            credentials:
+              "same-origin",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: "{}",
+          },
+        );
+
+      if (!response.ok) {
+        return;
+      }
+
+      setCustomerLoggedIn(false);
+      setMode("RETAIL");
+      setMenuOpen(false);
+
+      window.location.href = "/";
+    } catch (error) {
+      console.error(
+        "Customer logout failed:",
+        error,
+      );
+    }
+  }
+
   const visibleProducts = useMemo(() => {
     const query = search.trim().toLowerCase();
 
@@ -1252,13 +1422,32 @@ export default function Home() {
         product.name.toLowerCase().includes(query) ||
         product.category.name.toLowerCase().includes(query);
 
-      const matchesCategory =
-        category === "ALL" ||
-        product.gender === category;
+      const matchesMenuCategory =
+        selectedMenuCategoryIds.length ===
+          0 ||
+        selectedMenuCategoryIds.includes(
+          product.category.id,
+        );
 
-      return matchesSearch && matchesCategory;
+      const matchesGenderCategory =
+        selectedMenuCategoryIds.length >
+        0
+          ? true
+          : category === "ALL" ||
+            product.gender === category;
+
+      return (
+        matchesSearch &&
+        matchesMenuCategory &&
+        matchesGenderCategory
+      );
     });
-  }, [products, search, category]);
+  }, [
+    products,
+    search,
+    category,
+    selectedMenuCategoryIds,
+  ]);
 
   const heroProduct = useMemo(
     () =>
@@ -1380,6 +1569,78 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#061711] pb-24 text-white sm:pb-0">
+      <StorefrontDrawer
+        open={menuOpen}
+        mode={mode}
+        categories={menuCategories}
+        expandedCategory={
+          expandedMenuCategory
+        }
+        selectedCategoryName={
+          selectedMenuCategoryName
+        }
+        loggedIn={
+          customerLoggedIn
+        }
+        onClose={() =>
+          setMenuOpen(false)
+        }
+        onToggleCategory={(id) =>
+          setExpandedMenuCategory(
+            expandedMenuCategory ===
+              id
+              ? null
+              : id,
+          )
+        }
+        onSelectParent={
+          applyMenuCategory
+        }
+        onSelectChild={(
+          id,
+          name,
+        ) =>
+          applyMenuCategory(
+            [id],
+            name,
+          )
+        }
+        onClearCategory={
+          clearMenuCategory
+        }
+        onWishlist={() => {
+          setMenuOpen(false);
+          router.push(
+            "/wishlist",
+          );
+        }}
+        onCart={() => {
+          setMenuOpen(false);
+          router.push("/cart");
+        }}
+        onOrders={() => {
+          setMenuOpen(false);
+          router.push(
+            "/orders",
+          );
+        }}
+        onAccount={() => {
+          setMenuOpen(false);
+          router.push(
+            "/account",
+          );
+        }}
+        onResellerDashboard={() => {
+          setMenuOpen(false);
+          router.push(
+            "/reseller-sets",
+          );
+        }}
+        onLogout={
+          logoutCustomer
+        }
+      />
+
       {/* HEADER */}
       <header className="sticky top-0 z-50 border-b border-white/[0.07] bg-[#061711]/95 backdrop-blur-2xl">
         <div className="mx-auto max-w-7xl px-4 pb-3 pt-2 sm:px-6 lg:px-8">
@@ -1387,11 +1648,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() =>
-                document
-                  .getElementById("shop-categories")
-                  ?.scrollIntoView({
-                    behavior: "smooth",
-                  })
+                setMenuOpen(true)
               }
               aria-label="Menu"
               className="grid h-10 w-10 place-items-center rounded-full border border-white/10 text-xl text-white"
@@ -1768,7 +2025,7 @@ export default function Home() {
                 key={value}
                 type="button"
                 onClick={() =>
-                  setCategory(value)
+                  applyGenderCategory(value)
                 }
                 className={`group overflow-hidden rounded-xl border text-left transition ${
                   active
@@ -2077,13 +2334,13 @@ export default function Home() {
           </p>
 
           <div className="mt-6 flex justify-center gap-5 text-[9px] font-semibold text-white/45">
-            <button onClick={() => setCategory("WOMEN")}>
+            <button onClick={() => applyGenderCategory("WOMEN")}>
               Women
             </button>
-            <button onClick={() => setCategory("MEN")}>
+            <button onClick={() => applyGenderCategory("MEN")}>
               Men
             </button>
-            <button onClick={() => setCategory("KIDS")}>
+            <button onClick={() => applyGenderCategory("KIDS")}>
               Kids
             </button>
             <button
