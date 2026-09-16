@@ -142,6 +142,14 @@ type Supplier = {
   leadTimeDays: number;
   minimumOrderQty: number;
   minimumOrderValue: number;
+
+  completedDeliveryCount: number;
+  etaTrackedDeliveryCount: number;
+  onTimeDeliveryRate: number | null;
+  lateDeliveryCount: number;
+  averageDelayDays: number;
+  averageActualLeadTimeDays: number | null;
+  reliabilityLevel: string;
 };
 
 function money(
@@ -224,6 +232,55 @@ function healthClass(
   }
 
   return "bg-emerald-50 text-emerald-700";
+}
+
+function supplierReliabilityLabel(
+  value: string,
+) {
+  if (value === "EXCELLENT") {
+    return "Excellent";
+  }
+
+  if (value === "RELIABLE") {
+    return "Reliable";
+  }
+
+  if (value === "WATCH") {
+    return "Watch";
+  }
+
+  if (
+    value ===
+    "NEEDS_ATTENTION"
+  ) {
+    return "Needs Attention";
+  }
+
+  return "Building History";
+}
+
+function supplierReliabilityClass(
+  value: string,
+) {
+  if (
+    value === "EXCELLENT" ||
+    value === "RELIABLE"
+  ) {
+    return "bg-emerald-100 text-emerald-800";
+  }
+
+  if (value === "WATCH") {
+    return "bg-amber-100 text-amber-800";
+  }
+
+  if (
+    value ===
+    "NEEDS_ATTENTION"
+  ) {
+    return "bg-red-100 text-red-700";
+  }
+
+  return "bg-slate-100 text-slate-600";
 }
 
 export default function RestockQueuePage() {
@@ -1197,6 +1254,21 @@ export default function RestockQueuePage() {
               minimumOrderValue:
                 supplier.minimumOrderValue,
 
+              reliabilityLevel:
+                supplier.reliabilityLevel,
+
+              onTimeDeliveryRate:
+                supplier.onTimeDeliveryRate,
+
+              etaTrackedDeliveryCount:
+                supplier.etaTrackedDeliveryCount,
+
+              averageActualLeadTimeDays:
+                supplier.averageActualLeadTimeDays,
+
+              lateDeliveryCount:
+                supplier.lateDeliveryCount,
+
               meetsMOQ,
 
               meetsMinimumValue,
@@ -1831,6 +1903,58 @@ export default function RestockQueuePage() {
                 />
               </div>
 
+              <div className="mt-3 rounded-xl border border-white/70 bg-white/60 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[8px] font-black uppercase tracking-[0.14em] text-slate-500">
+                    Delivery Reliability
+                  </p>
+
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-[7px] font-black uppercase ${supplierReliabilityClass(
+                      selectedSupplier.reliabilityLevel,
+                    )}`}
+                  >
+                    {supplierReliabilityLabel(
+                      selectedSupplier.reliabilityLevel,
+                    )}
+                  </span>
+                </div>
+
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  <MiniStat
+                    label="On-Time"
+                    value={
+                      selectedSupplier.onTimeDeliveryRate ===
+                      null
+                        ? "No data"
+                        : `${selectedSupplier.onTimeDeliveryRate}%`
+                    }
+                  />
+
+                  <MiniStat
+                    label="ETA Samples"
+                    value={`${selectedSupplier.etaTrackedDeliveryCount}`}
+                  />
+
+                  <MiniStat
+                    label="Actual Lead"
+                    value={
+                      selectedSupplier.averageActualLeadTimeDays ===
+                      null
+                        ? "—"
+                        : `${selectedSupplier.averageActualLeadTimeDays} days`
+                    }
+                  />
+                </div>
+
+                {selectedSupplier.etaTrackedDeliveryCount <
+                2 ? (
+                  <p className="mt-2 text-[8px] font-semibold leading-4 text-slate-500">
+                    Reliability history is still building. Price ranking remains unchanged until more delivery data is available.
+                  </p>
+                ) : null}
+              </div>
+
               <div className="mt-3 grid grid-cols-3 gap-2">
                 <MiniStat
                   label="Order Now"
@@ -1898,7 +2022,7 @@ export default function RestockQueuePage() {
                       <p className="mt-1 text-sm font-black text-slate-950">
                         {bestBatchSupplier
                           .termsMet
-                          ? "Best eligible supplier: "
+                          ? "Best eligible price: "
                           : "Lowest quote: "}
                         {
                           bestBatchSupplier
@@ -1941,6 +2065,44 @@ export default function RestockQueuePage() {
                           ? "Terms met"
                           : "Terms not met"}
                       </p>
+
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[7px] font-black uppercase ${supplierReliabilityClass(
+                            bestBatchSupplier.reliabilityLevel,
+                          )}`}
+                        >
+                          {supplierReliabilityLabel(
+                            bestBatchSupplier.reliabilityLevel,
+                          )}
+                        </span>
+
+                        <span className="text-[9px] font-semibold text-slate-500">
+                          On-time{" "}
+                          {bestBatchSupplier.onTimeDeliveryRate ===
+                          null
+                            ? "—"
+                            : `${bestBatchSupplier.onTimeDeliveryRate}%`}
+                          {" · "}
+                          ETA samples{" "}
+                          {
+                            bestBatchSupplier.etaTrackedDeliveryCount
+                          }
+                          {" · "}
+                          Actual lead{" "}
+                          {bestBatchSupplier.averageActualLeadTimeDays ===
+                          null
+                            ? "—"
+                            : `${bestBatchSupplier.averageActualLeadTimeDays} days`}
+                        </span>
+                      </div>
+
+                      {bestBatchSupplier.etaTrackedDeliveryCount <
+                      2 ? (
+                        <p className="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-[8px] font-semibold leading-4 text-slate-500">
+                          Delivery history is still building. Recommendation remains price-and-terms based; reliability is shown as decision context.
+                        </p>
+                      ) : null}
                     </>
                   ) : (
                     <>

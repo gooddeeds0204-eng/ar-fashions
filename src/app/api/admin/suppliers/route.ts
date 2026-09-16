@@ -95,6 +95,39 @@ function decimalNumber(
   ) / 100;
 }
 
+const DAY_MS =
+  24 *
+  60 *
+  60 *
+  1000;
+
+function calendarDayStamp(
+  value: Date,
+) {
+  return Date.UTC(
+    value.getUTCFullYear(),
+    value.getUTCMonth(),
+    value.getUTCDate(),
+  );
+}
+
+function calendarDayDifference(
+  from: Date,
+  to: Date,
+) {
+  return Math.round(
+    (
+      calendarDayStamp(
+        to,
+      ) -
+      calendarDayStamp(
+        from,
+      )
+    ) /
+      DAY_MS,
+  );
+}
+
 export async function GET() {
   const adminError =
     await requireAdmin();
@@ -263,9 +296,179 @@ export async function GET() {
               activeOrders[0] ??
               null;
 
+            const completedDeliveries =
+              supplier.purchaseOrders.filter(
+                (order) =>
+                  order.status ===
+                    "RECEIVED" &&
+                  Boolean(
+                    order.orderedAt,
+                  ) &&
+                  Boolean(
+                    order.receivedAt,
+                  ),
+              );
+
+            const etaTrackedDeliveries =
+              completedDeliveries.filter(
+                (order) =>
+                  Boolean(
+                    order.expectedAt,
+                  ),
+              );
+
+            const onTimeDeliveryCount =
+              etaTrackedDeliveries.filter(
+                (order) =>
+                  calendarDayDifference(
+                    order.expectedAt!,
+                    order.receivedAt!,
+                  ) <= 0,
+              ).length;
+
+            const lateDeliveryCount =
+              etaTrackedDeliveries.length -
+              onTimeDeliveryCount;
+
+            const onTimeDeliveryRate =
+              etaTrackedDeliveries.length >
+              0
+                ? Math.round(
+                    (
+                      onTimeDeliveryCount /
+                      etaTrackedDeliveries.length
+                    ) *
+                      100,
+                  )
+                : null;
+
+            const totalLateDelayDays =
+              etaTrackedDeliveries.reduce(
+                (
+                  total,
+                  order,
+                ) => {
+                  const delay =
+                    calendarDayDifference(
+                      order.expectedAt!,
+                      order.receivedAt!,
+                    );
+
+                  return (
+                    total +
+                    Math.max(
+                      0,
+                      delay,
+                    )
+                  );
+                },
+                0,
+              );
+
+            const averageDelayDays =
+              lateDeliveryCount > 0
+                ? Math.round(
+                    (
+                      totalLateDelayDays /
+                      lateDeliveryCount
+                    ) *
+                      10,
+                  ) / 10
+                : 0;
+
+            const totalActualLeadDays =
+              completedDeliveries.reduce(
+                (
+                  total,
+                  order,
+                ) =>
+                  total +
+                  Math.max(
+                    0,
+                    calendarDayDifference(
+                      order.orderedAt!,
+                      order.receivedAt!,
+                    ),
+                  ),
+                0,
+              );
+
+            const averageActualLeadTimeDays =
+              completedDeliveries.length >
+              0
+                ? Math.round(
+                    (
+                      totalActualLeadDays /
+                      completedDeliveries.length
+                    ) *
+                      10,
+                  ) / 10
+                : null;
+
+            const reliabilityLevel =
+              etaTrackedDeliveries.length <
+              2
+                ? "BUILDING_HISTORY"
+                : onTimeDeliveryRate !==
+                      null &&
+                    onTimeDeliveryRate >=
+                      90
+                  ? "EXCELLENT"
+                  : onTimeDeliveryRate !==
+                        null &&
+                      onTimeDeliveryRate >=
+                        75
+                    ? "RELIABLE"
+                    : onTimeDeliveryRate !==
+                          null &&
+                        onTimeDeliveryRate >=
+                          50
+                      ? "WATCH"
+                      : "NEEDS_ATTENTION";
+
             const purchaseHistory =
               supplier.purchaseOrders.map(
                 (order) => {
+                  const deliveryDelayDays =
+                    order.status ===
+                        "RECEIVED" &&
+                    order.expectedAt &&
+                    order.receivedAt
+                      ? calendarDayDifference(
+                          order.expectedAt,
+                          order.receivedAt,
+                        )
+                      : null;
+
+                  const actualLeadTimeDays =
+                    order.status ===
+                        "RECEIVED" &&
+                    order.orderedAt &&
+                    order.receivedAt
+                      ? Math.max(
+                          0,
+                          calendarDayDifference(
+                            order.orderedAt,
+                            order.receivedAt,
+                          ),
+                        )
+                      : null;
+
+                  const deliveryOutcome =
+                    order.status ===
+                    "CANCELLED"
+                      ? "CANCELLED"
+                      : order.status !==
+                          "RECEIVED"
+                        ? "PENDING"
+                        : deliveryDelayDays ===
+                            null
+                          ? "RECEIVED_NO_ETA"
+                          : deliveryDelayDays <=
+                              0
+                            ? "ON_TIME"
+                            : "LATE";
+
                   const orderPieces =
                     order.items.reduce(
                       (
@@ -327,6 +530,19 @@ export async function GET() {
 
                     createdAt:
                       order.createdAt,
+
+                    deliveryOutcome,
+
+                    delayDays:
+                      deliveryDelayDays ===
+                      null
+                        ? null
+                        : Math.max(
+                            0,
+                            deliveryDelayDays,
+                          ),
+
+                    actualLeadTimeDays,
                   };
                 },
               );
@@ -410,6 +626,24 @@ export async function GET() {
                 lastPurchase
                   ?.createdAt ??
                 null,
+
+              completedDeliveryCount:
+                completedDeliveries.length,
+
+              etaTrackedDeliveryCount:
+                etaTrackedDeliveries.length,
+
+              onTimeDeliveryCount,
+
+              lateDeliveryCount,
+
+              onTimeDeliveryRate,
+
+              averageDelayDays,
+
+              averageActualLeadTimeDays,
+
+              reliabilityLevel,
 
               purchaseHistory,
             };

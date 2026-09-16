@@ -40,6 +40,15 @@ type Supplier = {
   cancelledPOCount: number;
   lastPurchaseAt: string | null;
 
+  completedDeliveryCount: number;
+  etaTrackedDeliveryCount: number;
+  onTimeDeliveryCount: number;
+  lateDeliveryCount: number;
+  onTimeDeliveryRate: number | null;
+  averageDelayDays: number;
+  averageActualLeadTimeDays: number | null;
+  reliabilityLevel: string;
+
   purchaseHistory: Array<{
     id: string;
     poNumber: string;
@@ -52,6 +61,10 @@ type Supplier = {
     orderedAt: string | null;
     receivedAt: string | null;
     createdAt: string;
+
+    deliveryOutcome: string;
+    delayDays: number | null;
+    actualLeadTimeDays: number | null;
   }>;
 
   createdAt: string;
@@ -127,6 +140,95 @@ function poStatusClass(
   }
 
   return "bg-slate-100 text-slate-600";
+}
+
+function reliabilityLabel(
+  value: string,
+) {
+  if (value === "EXCELLENT") {
+    return "Excellent";
+  }
+
+  if (value === "RELIABLE") {
+    return "Reliable";
+  }
+
+  if (value === "WATCH") {
+    return "Watch";
+  }
+
+  if (
+    value ===
+    "NEEDS_ATTENTION"
+  ) {
+    return "Needs Attention";
+  }
+
+  return "Building History";
+}
+
+function reliabilityClass(
+  value: string,
+) {
+  if (
+    value === "EXCELLENT" ||
+    value === "RELIABLE"
+  ) {
+    return "bg-emerald-100 text-emerald-800";
+  }
+
+  if (value === "WATCH") {
+    return "bg-amber-100 text-amber-800";
+  }
+
+  if (
+    value ===
+    "NEEDS_ATTENTION"
+  ) {
+    return "bg-red-100 text-red-700";
+  }
+
+  return "bg-slate-100 text-slate-600";
+}
+
+function deliveryOutcomeLabel(
+  po: Supplier["purchaseHistory"][number],
+) {
+  if (
+    po.deliveryOutcome ===
+    "CANCELLED"
+  ) {
+    return "Cancelled";
+  }
+
+  if (
+    po.deliveryOutcome ===
+    "ON_TIME"
+  ) {
+    return "On Time";
+  }
+
+  if (
+    po.deliveryOutcome ===
+    "LATE"
+  ) {
+    return `Late · ${
+      po.delayDays ?? 0
+    } day${
+      po.delayDays === 1
+        ? ""
+        : "s"
+    }`;
+  }
+
+  if (
+    po.deliveryOutcome ===
+    "RECEIVED_NO_ETA"
+  ) {
+    return "Received · ETA not tracked";
+  }
+
+  return "In Progress";
 }
 
 export default function SuppliersPage() {
@@ -1033,6 +1135,84 @@ export default function SuppliersPage() {
                       />
                     </div>
 
+                    <div className="mt-3 rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/70 to-white p-3">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <p className="text-[8px] font-black uppercase tracking-[0.14em] text-emerald-700">
+                            Delivery Reliability
+                          </p>
+
+                          <p className="mt-1 text-[9px] font-semibold text-slate-500">
+                            Based on received purchase orders with delivery dates.
+                          </p>
+                        </div>
+
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[8px] font-black uppercase ${reliabilityClass(
+                            supplier.reliabilityLevel,
+                          )}`}
+                        >
+                          {reliabilityLabel(
+                            supplier.reliabilityLevel,
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        <Info
+                          label="On-Time Rate"
+                          value={
+                            supplier.onTimeDeliveryRate ===
+                            null
+                              ? "No ETA data"
+                              : `${supplier.onTimeDeliveryRate}%`
+                          }
+                        />
+
+                        <Info
+                          label="ETA Tracked"
+                          value={`${supplier.etaTrackedDeliveryCount}`}
+                        />
+
+                        <Info
+                          label="Late"
+                          value={`${supplier.lateDeliveryCount}`}
+                        />
+
+                        <Info
+                          label="Avg Delay"
+                          value={
+                            supplier.etaTrackedDeliveryCount >
+                            0
+                              ? `${supplier.averageDelayDays} days`
+                              : "—"
+                          }
+                        />
+
+                        <Info
+                          label="Actual Lead"
+                          value={
+                            supplier.averageActualLeadTimeDays ===
+                            null
+                              ? "—"
+                              : `${supplier.averageActualLeadTimeDays} days`
+                          }
+                        />
+
+                        <Info
+                          label="Completed"
+                          value={`${supplier.completedDeliveryCount}`}
+                        />
+                      </div>
+
+                      {supplier.etaTrackedDeliveryCount <
+                      2 ? (
+                        <p className="mt-3 rounded-xl bg-white/80 px-3 py-2 text-[8px] font-bold leading-4 text-slate-500">
+                          Reliability rating will become stronger after at least 2 ETA-tracked deliveries are completed.
+                        </p>
+                      ) : null}
+                    </div>
+
                     <div className="mt-3 grid grid-cols-2 gap-2">
                       <Info
                         label="Last Purchase"
@@ -1161,6 +1341,25 @@ export default function SuppliersPage() {
                                     <Info
                                       label="Pending"
                                       value={`${po.pendingPieces}`}
+                                    />
+                                  </div>
+
+                                  <div className="mt-2 grid grid-cols-2 gap-2">
+                                    <Info
+                                      label="Delivery"
+                                      value={deliveryOutcomeLabel(
+                                        po,
+                                      )}
+                                    />
+
+                                    <Info
+                                      label="Actual Lead"
+                                      value={
+                                        po.actualLeadTimeDays ===
+                                        null
+                                          ? "—"
+                                          : `${po.actualLeadTimeDays} days`
+                                      }
                                     />
                                   </div>
                                 </div>
