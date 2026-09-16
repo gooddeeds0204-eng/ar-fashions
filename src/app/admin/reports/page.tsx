@@ -52,6 +52,69 @@ type CustomerItem = {
   sales: number;
 };
 
+type ProfitSummary = {
+  merchandiseRevenue: number;
+  snapshotCoveredRevenue: number;
+  cogs: number;
+  grossProfit: number;
+  grossMarginPercent: number;
+
+  snapshotCoveragePercent:
+    number;
+
+  snapshotPieceCoveragePercent:
+    number;
+
+  deliveredItemPieces: number;
+  snapshotCoveredPieces: number;
+
+  negativeMarginProducts:
+    number;
+
+  lowMarginProductCount:
+    number;
+};
+
+type ProfitTypeStats = {
+  revenue: number;
+  coveredRevenue: number;
+  cogs: number;
+  profit: number;
+  marginPercent: number;
+  coveragePercent: number;
+};
+
+type ProfitProductItem = {
+  productId: string;
+  name: string;
+  quantity: number;
+  coveredQuantity: number;
+  revenue: number;
+  coveredRevenue: number;
+  cogs: number;
+  profit: number;
+  marginPercent: number;
+  coveragePercent: number;
+};
+
+type ProfitAnalytics = {
+  summary: ProfitSummary;
+
+  byType: {
+    RETAIL:
+      ProfitTypeStats;
+
+    RESELLER:
+      ProfitTypeStats;
+  };
+
+  topProfitProducts:
+    ProfitProductItem[];
+
+  lowMarginProducts:
+    ProfitProductItem[];
+};
+
 type PurchaseSummary = {
   purchaseOrders: number;
   purchaseSpend: number;
@@ -147,6 +210,9 @@ type ReportData = {
 
   topCustomers:
     CustomerItem[];
+
+  profitAnalytics:
+    ProfitAnalytics;
 
   purchaseAnalytics:
     PurchaseAnalytics;
@@ -762,6 +828,359 @@ export default function ReportsPage() {
                     <p className="py-8 text-center text-xs text-zinc-400">
                       No delivered customers yet.
                     </p>
+                  )}
+                </div>
+              </section>
+            </div>
+
+            <section className="mt-8 overflow-hidden rounded-[28px] border border-emerald-100 bg-white p-5 shadow-sm sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-600">
+                    Profit Intelligence
+                  </p>
+
+                  <h2 className="mt-2 text-2xl font-black">
+                    Margin & Profitability
+                  </h2>
+
+                  <p className="mt-1 text-xs leading-5 text-zinc-400">
+                    Delivered merchandise revenue compared with historical cost snapshots.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-right">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-emerald-600">
+                    Cost Coverage
+                  </p>
+
+                  <p className="mt-1 text-xl font-black text-emerald-800">
+                    {
+                      data.profitAnalytics
+                        .summary
+                        .snapshotCoveragePercent
+                    }%
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-2 gap-3 xl:grid-cols-4">
+                <div className="rounded-2xl bg-emerald-50 p-4">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-emerald-600">
+                    Gross Profit
+                  </p>
+
+                  <p className="mt-2 text-2xl font-black text-emerald-800">
+                    {money(
+                      data.profitAnalytics
+                        .summary
+                        .grossProfit,
+                    )}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-zinc-50 p-4">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-500">
+                    COGS
+                  </p>
+
+                  <p className="mt-2 text-2xl font-black">
+                    {money(
+                      data.profitAnalytics
+                        .summary
+                        .cogs,
+                    )}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-violet-50 p-4">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-violet-600">
+                    Gross Margin
+                  </p>
+
+                  <p className="mt-2 text-2xl font-black text-violet-800">
+                    {
+                      data.profitAnalytics
+                        .summary
+                        .grossMarginPercent
+                    }%
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-sky-50 p-4">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-sky-600">
+                    Covered Revenue
+                  </p>
+
+                  <p className="mt-2 text-2xl font-black text-sky-800">
+                    {money(
+                      data.profitAnalytics
+                        .summary
+                        .snapshotCoveredRevenue,
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-black/5 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-black">
+                        Retail Margin
+                      </p>
+
+                      <p className="mt-1 text-[10px] text-zinc-400">
+                        Covered revenue{" "}
+                        {money(
+                          data.profitAnalytics
+                            .byType
+                            .RETAIL
+                            .coveredRevenue,
+                        )}
+                      </p>
+                    </div>
+
+                    <p className="text-xl font-black text-emerald-700">
+                      {
+                        data.profitAnalytics
+                          .byType
+                          .RETAIL
+                          .marginPercent
+                      }%
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-black/5 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-black">
+                        Reseller Margin
+                      </p>
+
+                      <p className="mt-1 text-[10px] text-zinc-400">
+                        Covered revenue{" "}
+                        {money(
+                          data.profitAnalytics
+                            .byType
+                            .RESELLER
+                            .coveredRevenue,
+                        )}
+                      </p>
+                    </div>
+
+                    <p className="text-xl font-black text-emerald-700">
+                      {
+                        data.profitAnalytics
+                          .byType
+                          .RESELLER
+                          .marginPercent
+                      }%
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl bg-zinc-50 px-4 py-3 text-[10px] font-bold text-zinc-500">
+                Snapshot coverage{" "}
+                {
+                  data.profitAnalytics
+                    .summary
+                    .snapshotCoveredPieces
+                }{" "}
+                /{" "}
+                {
+                  data.profitAnalytics
+                    .summary
+                    .deliveredItemPieces
+                }{" "}
+                pcs · Negative-margin products{" "}
+                {
+                  data.profitAnalytics
+                    .summary
+                    .negativeMarginProducts
+                }{" "}
+                · Low-margin products{" "}
+                {
+                  data.profitAnalytics
+                    .summary
+                    .lowMarginProductCount
+                }
+              </div>
+            </section>
+
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+              <section className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-black">
+                      Top Profit Products
+                    </h2>
+
+                    <p className="mt-1 text-xs text-zinc-400">
+                      Highest gross profit from snapshot-covered sales.
+                    </p>
+                  </div>
+
+                  <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-black text-emerald-700">
+                    {
+                      data.profitAnalytics
+                        .topProfitProducts
+                        .length
+                    }{" "}
+                    products
+                  </span>
+                </div>
+
+                <div className="mt-4 divide-y">
+                  {data.profitAnalytics.topProfitProducts.map(
+                    (product, index) => (
+                      <div
+                        key={product.productId}
+                        className="flex items-center justify-between gap-4 py-4"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xs font-black text-emerald-700">
+                            {index + 1}
+                          </span>
+
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-black">
+                              {product.name}
+                            </p>
+
+                            <p className="mt-1 text-[10px] text-zinc-400">
+                              {
+                                product.coveredQuantity
+                              }{" "}
+                              pcs · Revenue{" "}
+                              {money(
+                                product.coveredRevenue,
+                              )}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          <p className={`text-sm font-black ${
+                            product.profit >= 0
+                              ? "text-emerald-700"
+                              : "text-red-700"
+                          }`}>
+                            {money(
+                              product.profit,
+                            )}
+                          </p>
+
+                          <p className="mt-1 text-[9px] font-bold text-zinc-400">
+                            {
+                              product.marginPercent
+                            }% margin
+                          </p>
+                        </div>
+                      </div>
+                    ),
+                  )}
+
+                  {data.profitAnalytics
+                    .topProfitProducts
+                    .length === 0 && (
+                    <div className="py-10 text-center">
+                      <p className="text-sm font-black text-zinc-500">
+                        No profit data yet
+                      </p>
+
+                      <p className="mt-1 text-xs text-zinc-400">
+                        New delivered orders with cost snapshots will appear here.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <section className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-black">
+                      Low Margin Products
+                    </h2>
+
+                    <p className="mt-1 text-xs text-zinc-400">
+                      Snapshot-covered products below 20% gross margin.
+                    </p>
+                  </div>
+
+                  <span className="rounded-full bg-amber-50 px-3 py-1.5 text-[10px] font-black text-amber-700">
+                    {
+                      data.profitAnalytics
+                        .lowMarginProducts
+                        .length
+                    }{" "}
+                    alerts
+                  </span>
+                </div>
+
+                <div className="mt-4 divide-y">
+                  {data.profitAnalytics.lowMarginProducts.map(
+                    (product) => (
+                      <div
+                        key={product.productId}
+                        className="flex items-center justify-between gap-4 py-4"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-black">
+                            {product.name}
+                          </p>
+
+                          <p className="mt-1 text-[10px] text-zinc-400">
+                            Revenue{" "}
+                            {money(
+                              product.coveredRevenue,
+                            )}{" "}
+                            · COGS{" "}
+                            {money(
+                              product.cogs,
+                            )}
+                          </p>
+                        </div>
+
+                        <div
+                          className={`shrink-0 rounded-xl px-3 py-2 text-right ${
+                            product.marginPercent < 0
+                              ? "bg-red-50 text-red-700"
+                              : "bg-amber-50 text-amber-700"
+                          }`}
+                        >
+                          <p className="text-sm font-black">
+                            {
+                              product.marginPercent
+                            }%
+                          </p>
+
+                          <p className="mt-0.5 text-[9px] font-bold">
+                            {money(
+                              product.profit,
+                            )}{" "}
+                            profit
+                          </p>
+                        </div>
+                      </div>
+                    ),
+                  )}
+
+                  {data.profitAnalytics
+                    .lowMarginProducts
+                    .length === 0 && (
+                    <div className="py-10 text-center">
+                      <p className="text-sm font-black text-emerald-700">
+                        No low-margin alerts
+                      </p>
+
+                      <p className="mt-1 text-xs text-zinc-400">
+                        Only snapshot-covered delivered products are evaluated.
+                      </p>
+                    </div>
                   )}
                 </div>
               </section>

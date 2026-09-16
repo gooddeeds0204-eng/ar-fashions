@@ -316,6 +316,410 @@ export async function GET(
       );
 
     /*
+     * Profitability intelligence.
+     *
+     * Product margin uses merchandise item revenue,
+     * excluding delivery charges.
+     *
+     * Profit is calculated only for items with a
+     * historical cost snapshot, so missing cost data
+     * is never treated as zero cost.
+     */
+    let merchandiseRevenue = 0;
+    let snapshotCoveredRevenue = 0;
+    let cogs = 0;
+
+    let deliveredItemPieces = 0;
+    let snapshotCoveredPieces = 0;
+
+    const profitByType = {
+      RETAIL: {
+        revenue: 0,
+        coveredRevenue: 0,
+        cogs: 0,
+        profit: 0,
+        marginPercent: 0,
+        coveragePercent: 0,
+      },
+
+      RESELLER: {
+        revenue: 0,
+        coveredRevenue: 0,
+        cogs: 0,
+        profit: 0,
+        marginPercent: 0,
+        coveragePercent: 0,
+      },
+    };
+
+    const productProfitMap =
+      new Map<
+        string,
+        {
+          productId: string;
+          name: string;
+          quantity: number;
+          coveredQuantity: number;
+          revenue: number;
+          coveredRevenue: number;
+          cogs: number;
+        }
+      >();
+
+    for (
+      const order of
+      deliveredOrders
+    ) {
+      const type =
+        order.type ===
+        "RESELLER"
+          ? "RESELLER"
+          : "RETAIL";
+
+      const orderMerchandiseGross =
+        order.items.reduce(
+          (total, item) =>
+            total +
+            amount(
+              item.totalPrice,
+            ),
+          0,
+        );
+
+      const orderDiscount =
+        Math.min(
+          Math.max(
+            0,
+            amount(
+              order.discountAmount,
+            ),
+          ),
+          orderMerchandiseGross,
+        );
+
+      for (
+        const item of
+        order.items
+      ) {
+        const itemGrossRevenue =
+          amount(
+            item.totalPrice,
+          );
+
+        const allocatedDiscount =
+          orderMerchandiseGross > 0
+            ? (
+                orderDiscount *
+                itemGrossRevenue
+              ) /
+              orderMerchandiseGross
+            : 0;
+
+        const itemRevenue =
+          Math.max(
+            0,
+            itemGrossRevenue -
+              allocatedDiscount,
+          );
+
+        merchandiseRevenue +=
+          itemRevenue;
+
+        deliveredItemPieces +=
+          item.quantity;
+
+        profitByType[type].revenue +=
+          itemRevenue;
+
+        const snapshotCost =
+          item.totalCostSnapshot !=
+          null
+            ? amount(
+                item.totalCostSnapshot,
+              )
+            : item.unitCostSnapshot !=
+                null
+              ? round(
+                  amount(
+                    item.unitCostSnapshot,
+                  ) *
+                    item.quantity,
+                )
+              : null;
+
+        const current =
+          productProfitMap.get(
+            item.productId,
+          ) ?? {
+            productId:
+              item.productId,
+            name:
+              item.productName,
+            quantity: 0,
+            coveredQuantity: 0,
+            revenue: 0,
+            coveredRevenue: 0,
+            cogs: 0,
+          };
+
+        current.quantity +=
+          item.quantity;
+
+        current.revenue +=
+          itemRevenue;
+
+        if (
+          snapshotCost !==
+          null
+        ) {
+          snapshotCoveredRevenue +=
+            itemRevenue;
+
+          snapshotCoveredPieces +=
+            item.quantity;
+
+          cogs +=
+            snapshotCost;
+
+          profitByType[
+            type
+          ].coveredRevenue +=
+            itemRevenue;
+
+          profitByType[
+            type
+          ].cogs +=
+            snapshotCost;
+
+          current.coveredQuantity +=
+            item.quantity;
+
+          current.coveredRevenue +=
+            itemRevenue;
+
+          current.cogs +=
+            snapshotCost;
+        }
+
+        productProfitMap.set(
+          item.productId,
+          current,
+        );
+      }
+    }
+
+    merchandiseRevenue =
+      round(
+        merchandiseRevenue,
+      );
+
+    snapshotCoveredRevenue =
+      round(
+        snapshotCoveredRevenue,
+      );
+
+    cogs =
+      round(
+        cogs,
+      );
+
+    const grossProfit =
+      round(
+        snapshotCoveredRevenue -
+          cogs,
+      );
+
+    const grossMarginPercent =
+      snapshotCoveredRevenue >
+      0
+        ? round(
+            (
+              grossProfit /
+              snapshotCoveredRevenue
+            ) *
+              100,
+          )
+        : 0;
+
+    const snapshotCoveragePercent =
+      merchandiseRevenue > 0
+        ? round(
+            (
+              snapshotCoveredRevenue /
+              merchandiseRevenue
+            ) *
+              100,
+          )
+        : 0;
+
+    const snapshotPieceCoveragePercent =
+      deliveredItemPieces > 0
+        ? round(
+            (
+              snapshotCoveredPieces /
+              deliveredItemPieces
+            ) *
+              100,
+          )
+        : 0;
+
+    for (
+      const type of [
+        "RETAIL",
+        "RESELLER",
+      ] as const
+    ) {
+      const stats =
+        profitByType[type];
+
+      stats.revenue =
+        round(
+          stats.revenue,
+        );
+
+      stats.coveredRevenue =
+        round(
+          stats.coveredRevenue,
+        );
+
+      stats.cogs =
+        round(
+          stats.cogs,
+        );
+
+      stats.profit =
+        round(
+          stats.coveredRevenue -
+            stats.cogs,
+        );
+
+      stats.marginPercent =
+        stats.coveredRevenue >
+        0
+          ? round(
+              (
+                stats.profit /
+                stats.coveredRevenue
+              ) *
+                100,
+            )
+          : 0;
+
+      stats.coveragePercent =
+        stats.revenue > 0
+          ? round(
+              (
+                stats.coveredRevenue /
+                stats.revenue
+              ) *
+                100,
+            )
+          : 0;
+    }
+
+    const productProfitability =
+      Array.from(
+        productProfitMap.values(),
+      )
+        .map((item) => {
+          const profit =
+            round(
+              item.coveredRevenue -
+                item.cogs,
+            );
+
+          const marginPercent =
+            item.coveredRevenue >
+            0
+              ? round(
+                  (
+                    profit /
+                    item.coveredRevenue
+                  ) *
+                    100,
+                )
+              : 0;
+
+          const coveragePercent =
+            item.revenue > 0
+              ? round(
+                  (
+                    item.coveredRevenue /
+                    item.revenue
+                  ) *
+                    100,
+                )
+              : 0;
+
+          return {
+            ...item,
+
+            revenue:
+              round(
+                item.revenue,
+              ),
+
+            coveredRevenue:
+              round(
+                item.coveredRevenue,
+              ),
+
+            cogs:
+              round(
+                item.cogs,
+              ),
+
+            profit,
+            marginPercent,
+            coveragePercent,
+          };
+        });
+
+    const topProfitProducts =
+      productProfitability
+        .filter(
+          (item) =>
+            item.coveredRevenue >
+            0,
+        )
+        .sort(
+          (a, b) =>
+            b.profit -
+            a.profit,
+        )
+        .slice(
+          0,
+          10,
+        );
+
+    const lowMarginProducts =
+      productProfitability
+        .filter(
+          (item) =>
+            item.coveredRevenue >
+              0 &&
+            item.marginPercent <
+              20,
+        )
+        .sort(
+          (a, b) =>
+            a.marginPercent -
+            b.marginPercent,
+        )
+        .slice(
+          0,
+          10,
+        );
+
+    const negativeMarginProducts =
+      productProfitability.filter(
+        (item) =>
+          item.coveredRevenue >
+            0 &&
+          item.profit < 0,
+      ).length;
+
+    /*
      * Current status breakdown.
      */
     const statusMap =
@@ -1068,6 +1472,38 @@ export async function GET(
       costAlerts,
     };
 
+    const profitAnalytics = {
+      summary: {
+        merchandiseRevenue,
+        snapshotCoveredRevenue,
+        cogs,
+        grossProfit,
+        grossMarginPercent,
+
+        snapshotCoveragePercent,
+        snapshotPieceCoveragePercent,
+
+        deliveredItemPieces,
+        snapshotCoveredPieces,
+
+        negativeMarginProducts,
+        lowMarginProductCount:
+          lowMarginProducts.length,
+      },
+
+      byType: {
+        RETAIL:
+          profitByType.RETAIL,
+
+        RESELLER:
+          profitByType.RESELLER,
+      },
+
+      topProfitProducts,
+
+      lowMarginProducts,
+    };
+
     return NextResponse.json({
       success: true,
 
@@ -1110,6 +1546,8 @@ export async function GET(
 
       topCustomers,
 
+      profitAnalytics,
+
       purchaseAnalytics,
 
       notes: {
@@ -1120,7 +1558,7 @@ export async function GET(
           "Trend uses order creation date because deliveredAt is not currently stored.",
 
         profitRule:
-          "Profit is intentionally not shown because historical sales order-item cost snapshots are not currently stored.",
+          "Gross profit uses delivered merchandise items with historical cost snapshots. Order-level discounts are proportionally allocated across merchandise items, delivery charges are excluded from product margin, and missing cost snapshots are excluded rather than treated as zero cost.",
 
         purchaseRule:
           "Purchase spend excludes cancelled purchase orders. Received purchase value uses purchase-order item unit-cost snapshots.",

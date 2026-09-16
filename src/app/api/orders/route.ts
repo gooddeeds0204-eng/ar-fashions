@@ -1192,6 +1192,10 @@ export async function POST(request: Request) {
           quantity: number;
           unitPrice: number;
           totalPrice: number;
+          unitCostSnapshot:
+            number | null;
+          totalCostSnapshot:
+            number | null;
         }> = [];
 
         let subtotal = 0;
@@ -1417,6 +1421,45 @@ export async function POST(request: Request) {
             }
           }
 
+          const rawCost =
+            variant.costPrice ===
+                null ||
+              variant.costPrice ===
+                undefined
+              ? null
+              : Number(
+                  variant.costPrice,
+                );
+
+          if (
+            rawCost !== null &&
+            (!Number.isFinite(
+              rawCost,
+            ) ||
+              rawCost < 0)
+          ) {
+            throw new Error(
+              `Invalid cost configuration for ${variant.product.name}.`,
+            );
+          }
+
+          const unitCostSnapshot =
+            rawCost === null
+              ? null
+              : Math.round(
+                  rawCost * 100,
+                ) / 100;
+
+          const totalCostSnapshot =
+            unitCostSnapshot ===
+            null
+              ? null
+              : Math.round(
+                  unitCostSnapshot *
+                    quantity *
+                    100,
+                ) / 100;
+
           const totalPrice =
             price * quantity;
 
@@ -1437,6 +1480,8 @@ export async function POST(request: Request) {
             quantity,
             unitPrice: price,
             totalPrice,
+            unitCostSnapshot,
+            totalCostSnapshot,
           });
         }
 
@@ -2023,6 +2068,10 @@ export async function POST(request: Request) {
                     item.unitPrice,
                   totalPrice:
                     item.totalPrice,
+                  unitCostSnapshot:
+                    item.unitCostSnapshot,
+                  totalCostSnapshot:
+                    item.totalCostSnapshot,
                 }),
               ),
             },
