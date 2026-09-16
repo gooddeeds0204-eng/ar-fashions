@@ -44,6 +44,50 @@ type SalesMode = {
     | "CLOSED";
 };
 
+type ProcurementAlert = {
+  id: string;
+  severity:
+    | "HIGH"
+    | "MEDIUM"
+    | "LOW";
+  title: string;
+  detail: string;
+  href: string;
+};
+
+type ProcurementSummary = {
+  riskLevel:
+    | "HIGH"
+    | "MEDIUM"
+    | "LOW";
+
+  alertCount: number;
+  incomingPOCount: number;
+  overduePOCount: number;
+  dueSoonPOCount: number;
+
+  highValuePendingPOCount:
+    number;
+
+  pendingIncomingValue:
+    number;
+
+  pendingIncomingPieces:
+    number;
+
+  needsAttentionSupplierCount:
+    number;
+
+  supplierReliabilityRiskCount:
+    number;
+
+  costIncreaseSupplierCount:
+    number;
+
+  alerts:
+    ProcurementAlert[];
+};
+
 type InventoryAlert = {
   variantId: string;
   productId: string;
@@ -94,6 +138,21 @@ type InventorySummary = {
   alerts: InventoryAlert[];
 };
 
+function formatMoney(
+  value: number,
+) {
+  return new Intl.NumberFormat(
+    "en-IN",
+    {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    },
+  ).format(
+    value || 0,
+  );
+}
+
 export default function AdminDashboard() {
   const pathname = usePathname();
   const router = useRouter();
@@ -117,6 +176,14 @@ export default function AdminDashboard() {
     setInventorySummary,
   ] =
     useState<InventorySummary | null>(
+      null,
+    );
+
+  const [
+    procurementSummary,
+    setProcurementSummary,
+  ] =
+    useState<ProcurementSummary | null>(
       null,
     );
 
@@ -166,6 +233,16 @@ export default function AdminDashboard() {
         ) {
           setSalesMode(
             data.salesMode,
+          );
+        }
+
+        if (
+          data.procurement &&
+          typeof data.procurement ===
+            "object"
+        ) {
+          setProcurementSummary(
+            data.procurement,
           );
         }
 
@@ -657,6 +734,157 @@ export default function AdminDashboard() {
                 {
                   inventorySummary.criticalStockThreshold
                 }
+              </div>
+            </section>
+          ) : null}
+
+          {procurementSummary ? (
+            <section className="mt-7 overflow-hidden rounded-[24px] border border-black/5 bg-white shadow-sm">
+              <div className="flex flex-col gap-4 border-b border-black/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold">
+                      Procurement Alerts
+                    </h3>
+
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                        procurementSummary.riskLevel === "HIGH"
+                          ? "bg-red-50 text-red-600"
+                          : procurementSummary.riskLevel === "MEDIUM"
+                            ? "bg-amber-50 text-amber-700"
+                            : "bg-emerald-50 text-emerald-600"
+                      }`}
+                    >
+                      {procurementSummary.riskLevel === "LOW"
+                        ? "HEALTHY"
+                        : `${procurementSummary.riskLevel} RISK`}
+                    </span>
+                  </div>
+
+                  <p className="mt-1 text-xs text-[#9ba2ae]">
+                    Purchase timing, supplier reliability and cost movement
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Link
+                    href="/admin/purchase-orders"
+                    className="rounded-xl border border-black/5 px-3 py-2 text-xs font-semibold"
+                  >
+                    Purchase Orders
+                  </Link>
+
+                  <Link
+                    href="/admin/suppliers"
+                    className="rounded-xl bg-[#111827] px-3 py-2 text-xs font-semibold text-white"
+                  >
+                    Suppliers →
+                  </Link>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-px bg-black/5 lg:grid-cols-4">
+                <div className="bg-white p-4">
+                  <div className="text-[9px] font-semibold uppercase text-red-500">
+                    Overdue
+                  </div>
+                  <div className="mt-1 text-2xl font-semibold">
+                    {procurementSummary.overduePOCount}
+                  </div>
+                </div>
+
+                <div className="bg-white p-4">
+                  <div className="text-[9px] font-semibold uppercase text-amber-600">
+                    Due Soon
+                  </div>
+                  <div className="mt-1 text-2xl font-semibold">
+                    {procurementSummary.dueSoonPOCount}
+                  </div>
+                </div>
+
+                <div className="bg-white p-4">
+                  <div className="text-[9px] font-semibold uppercase text-sky-600">
+                    Pending Exposure
+                  </div>
+                  <div className="mt-1 text-xl font-semibold">
+                    {formatMoney(
+                      procurementSummary.pendingIncomingValue,
+                    )}
+                  </div>
+                  <div className="mt-1 text-[9px] text-[#9ba2ae]">
+                    {procurementSummary.pendingIncomingPieces} pcs ·{" "}
+                    {procurementSummary.incomingPOCount} POs
+                  </div>
+                </div>
+
+                <div className="bg-white p-4">
+                  <div className="text-[9px] font-semibold uppercase text-rose-600">
+                    Supplier Risk
+                  </div>
+                  <div className="mt-1 text-2xl font-semibold">
+                    {procurementSummary.supplierReliabilityRiskCount}
+                  </div>
+                  <div className="mt-1 text-[9px] text-[#9ba2ae]">
+                    Cost risk {procurementSummary.costIncreaseSupplierCount}
+                  </div>
+                </div>
+              </div>
+
+              {procurementSummary.alerts.length > 0 ? (
+                <div className="divide-y divide-black/5">
+                  {procurementSummary.alerts.map((alert) => (
+                    <div
+                      key={alert.id}
+                      className="flex items-start gap-3 p-4"
+                    >
+                      <div
+                        className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl font-black ${
+                          alert.severity === "HIGH"
+                            ? "bg-red-50 text-red-600"
+                            : "bg-amber-50 text-amber-700"
+                        }`}
+                      >
+                        !
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold">
+                          {alert.title}
+                        </div>
+                        <div className="mt-1 text-[10px] leading-5 text-[#9ba2ae]">
+                          {alert.detail}
+                        </div>
+                      </div>
+
+                      <Link
+                        href={alert.href}
+                        className="shrink-0 rounded-lg bg-[#111827] px-3 py-2 text-[9px] font-semibold text-white"
+                      >
+                        Review →
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-6 text-center">
+                  <div className="text-sm font-semibold text-emerald-600">
+                    Procurement healthy ✓
+                  </div>
+                  <p className="mt-1 text-xs text-[#9ba2ae]">
+                    No overdue purchase orders or active supplier risks.
+                  </p>
+                </div>
+              )}
+
+              <div className="border-t border-black/5 bg-[#fafafa] px-5 py-3 text-[10px] text-[#9ba2ae]">
+                Needs attention suppliers{" "}
+                {procurementSummary.needsAttentionSupplierCount}
+                {" · "}
+                High-value pending POs{" "}
+                {procurementSummary.highValuePendingPOCount}
+                {" · "}
+                Alerts {procurementSummary.alertCount}
               </div>
             </section>
           ) : null}

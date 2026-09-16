@@ -155,6 +155,17 @@ export async function GET() {
             },
           },
 
+          variantCosts: {
+            where: {
+              isActive: true,
+            },
+
+            select: {
+              supplierCost: true,
+              lastPurchaseCost: true,
+            },
+          },
+
           purchaseOrders: {
             orderBy: {
               createdAt:
@@ -179,6 +190,9 @@ export async function GET() {
                     true,
 
                   receivedQty:
+                    true,
+
+                  unitCost:
                     true,
                 },
               },
@@ -426,6 +440,142 @@ export async function GET() {
                       ? "WATCH"
                       : "NEEDS_ATTENTION";
 
+            const activeExposureValue =
+              supplier.purchaseOrders
+                .filter(
+                  (order) =>
+                    order.status ===
+                      "ORDERED" ||
+                    order.status ===
+                      "PARTIALLY_RECEIVED",
+                )
+                .reduce(
+                  (
+                    total,
+                    order,
+                  ) =>
+                    total +
+                    order.items.reduce(
+                      (
+                        itemTotal,
+                        item,
+                      ) =>
+                        itemTotal +
+                        Math.max(
+                          0,
+                          item.orderedQty -
+                            item.receivedQty,
+                        ) *
+                          Number(
+                            item.unitCost,
+                          ),
+                      0,
+                    ),
+                  0,
+                );
+
+            const comparableCosts =
+              supplier.variantCosts.filter(
+                (cost) =>
+                  cost.lastPurchaseCost !==
+                    null &&
+                  Number(
+                    cost.lastPurchaseCost,
+                  ) > 0,
+              );
+
+            const costIncreases =
+              comparableCosts
+                .map((cost) => {
+                  const previous =
+                    Number(
+                      cost.lastPurchaseCost,
+                    );
+
+                  const current =
+                    Number(
+                      cost.supplierCost,
+                    );
+
+                  if (
+                    !Number.isFinite(
+                      previous,
+                    ) ||
+                    previous <= 0 ||
+                    !Number.isFinite(
+                      current,
+                    ) ||
+                    current <= previous
+                  ) {
+                    return null;
+                  }
+
+                  const percent =
+                    (
+                      (current -
+                        previous) /
+                      previous
+                    ) *
+                    100;
+
+                  return percent >= 5
+                    ? percent
+                    : null;
+                })
+                .filter(
+                  (
+                    value,
+                  ): value is number =>
+                    value !== null,
+                );
+
+            const costIncreaseCount =
+              costIncreases.length;
+
+            const maxCostIncreasePercent =
+              costIncreases.length >
+              0
+                ? Math.round(
+                    Math.max(
+                      ...costIncreases,
+                    ) *
+                      100,
+                  ) / 100
+                : 0;
+
+            const costStabilityLevel =
+              comparableCosts.length ===
+              0
+                ? "BUILDING_HISTORY"
+                : costIncreaseCount ===
+                    0
+                  ? "STABLE"
+                  : maxCostIncreasePercent <
+                      10
+                    ? "WATCH"
+                    : "RISING_COST";
+
+            const highExposure =
+              activeExposureValue >=
+              10000;
+
+            const procurementRiskLevel =
+              reliabilityLevel ===
+                "NEEDS_ATTENTION" ||
+              costStabilityLevel ===
+                "RISING_COST"
+                ? "HIGH"
+                : reliabilityLevel ===
+                      "WATCH" ||
+                    costStabilityLevel ===
+                      "WATCH" ||
+                    highExposure
+                  ? "MEDIUM"
+                  : reliabilityLevel ===
+                      "BUILDING_HISTORY"
+                    ? "BUILDING_HISTORY"
+                    : "LOW";
+
             const purchaseHistory =
               supplier.purchaseOrders.map(
                 (order) => {
@@ -644,6 +794,23 @@ export async function GET() {
               averageActualLeadTimeDays,
 
               reliabilityLevel,
+
+              activeExposureValue:
+                Math.round(
+                  activeExposureValue *
+                    100,
+                ) / 100,
+
+              costComparisonCount:
+                comparableCosts.length,
+
+              costIncreaseCount,
+
+              maxCostIncreasePercent,
+
+              costStabilityLevel,
+
+              procurementRiskLevel,
 
               purchaseHistory,
             };

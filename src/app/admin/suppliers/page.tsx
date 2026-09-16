@@ -49,6 +49,13 @@ type Supplier = {
   averageActualLeadTimeDays: number | null;
   reliabilityLevel: string;
 
+  activeExposureValue: number;
+  costComparisonCount: number;
+  costIncreaseCount: number;
+  maxCostIncreasePercent: number;
+  costStabilityLevel: string;
+  procurementRiskLevel: string;
+
   purchaseHistory: Array<{
     id: string;
     poNumber: string;
@@ -140,6 +147,78 @@ function poStatusClass(
   }
 
   return "bg-slate-100 text-slate-600";
+}
+
+function procurementRiskLabel(
+  value: string,
+) {
+  if (value === "HIGH") {
+    return "High Risk";
+  }
+
+  if (value === "MEDIUM") {
+    return "Medium Risk";
+  }
+
+  if (value === "BUILDING_HISTORY") {
+    return "Building History";
+  }
+
+  return "Low Risk";
+}
+
+function procurementRiskClass(
+  value: string,
+) {
+  if (value === "HIGH") {
+    return "bg-red-100 text-red-700";
+  }
+
+  if (value === "MEDIUM") {
+    return "bg-amber-100 text-amber-800";
+  }
+
+  if (value === "BUILDING_HISTORY") {
+    return "bg-slate-100 text-slate-600";
+  }
+
+  return "bg-emerald-100 text-emerald-800";
+}
+
+function costStabilityLabel(
+  value: string,
+) {
+  if (value === "STABLE") {
+    return "Stable";
+  }
+
+  if (value === "WATCH") {
+    return "Watch";
+  }
+
+  if (value === "RISING_COST") {
+    return "Rising Cost";
+  }
+
+  return "Building History";
+}
+
+function costStabilityClass(
+  value: string,
+) {
+  if (value === "STABLE") {
+    return "text-emerald-700";
+  }
+
+  if (value === "RISING_COST") {
+    return "text-red-600";
+  }
+
+  if (value === "WATCH") {
+    return "text-amber-700";
+  }
+
+  return "text-slate-500";
 }
 
 function reliabilityLabel(
@@ -1209,6 +1288,81 @@ export default function SuppliersPage() {
                       2 ? (
                         <p className="mt-3 rounded-xl bg-white/80 px-3 py-2 text-[8px] font-bold leading-4 text-slate-500">
                           Reliability rating will become stronger after at least 2 ETA-tracked deliveries are completed.
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-[8px] font-black uppercase tracking-[0.14em] text-slate-700">
+                            Procurement Scorecard
+                          </p>
+                          <p className="mt-1 text-[9px] font-semibold text-slate-400">
+                            Delivery, cost and active purchase exposure
+                          </p>
+                        </div>
+
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[8px] font-black uppercase ${procurementRiskClass(
+                            supplier.procurementRiskLevel,
+                          )}`}
+                        >
+                          {procurementRiskLabel(
+                            supplier.procurementRiskLevel,
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <Info
+                          label="Active Exposure"
+                          value={money(
+                            supplier.activeExposureValue,
+                          )}
+                        />
+
+                        <Info
+                          label="Purchase Volume"
+                          value={money(
+                            supplier.totalPurchaseValue,
+                          )}
+                        />
+
+                        <Info
+                          label="Cost Stability"
+                          value={costStabilityLabel(
+                            supplier.costStabilityLevel,
+                          )}
+                        />
+
+                        <Info
+                          label="Purchase Orders"
+                          value={`${supplier.purchaseOrderCount}`}
+                        />
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-2 text-[8px] font-bold">
+                        <span className={costStabilityClass(
+                          supplier.costStabilityLevel,
+                        )}>
+                          Cost comparisons {supplier.costComparisonCount}
+                        </span>
+
+                        <span className="text-slate-400">
+                          Cost increases {supplier.costIncreaseCount}
+                        </span>
+
+                        {supplier.costIncreaseCount > 0 ? (
+                          <span className="text-red-600">
+                            Max +{supplier.maxCostIncreasePercent}%
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {supplier.costComparisonCount === 0 ? (
+                        <p className="mt-3 rounded-xl bg-white px-3 py-2 text-[8px] font-bold leading-4 text-slate-500">
+                          Cost stability is building history until comparable purchase-cost data is available.
                         </p>
                       ) : null}
                     </div>
