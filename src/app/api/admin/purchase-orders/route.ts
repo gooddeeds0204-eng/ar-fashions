@@ -97,6 +97,9 @@ export async function GET() {
               whatsapp: true,
               city: true,
               state: true,
+
+              leadTimeDays:
+                true,
             },
           },
 
@@ -1186,6 +1189,85 @@ export async function PATCH(
       const now =
         new Date();
 
+      const current =
+        await prisma.purchaseOrder.findFirst({
+          where: {
+            id:
+              purchaseOrderId,
+
+            status:
+              "DRAFT",
+          },
+
+          select: {
+            id: true,
+            expectedAt: true,
+
+            supplier: {
+              select: {
+                leadTimeDays:
+                  true,
+              },
+            },
+          },
+        });
+
+      if (!current) {
+        const existing =
+          await prisma.purchaseOrder.findUnique({
+            where: {
+              id:
+                purchaseOrderId,
+            },
+
+            select: {
+              status: true,
+            },
+          });
+
+        if (!existing) {
+          return NextResponse.json(
+            {
+              error:
+                "Purchase order not found.",
+            },
+            {
+              status: 404,
+            },
+          );
+        }
+
+        return NextResponse.json(
+          {
+            error:
+              `Only Draft purchase orders can be marked Ordered. Current status: ${existing.status}.`,
+          },
+          {
+            status: 409,
+          },
+        );
+      }
+
+      let expectedAt =
+        current.expectedAt;
+
+      if (!expectedAt) {
+        const leadTimeDays =
+          Math.max(
+            0,
+            current.supplier
+              .leadTimeDays,
+          );
+
+        expectedAt =
+          new Date(now);
+
+        expectedAt.setDate(
+          expectedAt.getDate() +
+            leadTimeDays,
+        );
+      }
+
       const changed =
         await prisma.purchaseOrder.updateMany({
           where: {
@@ -1202,13 +1284,15 @@ export async function PATCH(
 
             orderedAt:
               now,
+
+            expectedAt,
           },
         });
 
       if (
         changed.count !== 1
       ) {
-        const current =
+        const existing =
           await prisma.purchaseOrder.findUnique({
             where: {
               id:
@@ -1220,7 +1304,7 @@ export async function PATCH(
             },
           });
 
-        if (!current) {
+        if (!existing) {
           return NextResponse.json(
             {
               error:
@@ -1235,7 +1319,7 @@ export async function PATCH(
         return NextResponse.json(
           {
             error:
-              `Only Draft purchase orders can be marked Ordered. Current status: ${current.status}.`,
+              `Only Draft purchase orders can be marked Ordered. Current status: ${existing.status}.`,
           },
           {
             status: 409,
@@ -1255,6 +1339,7 @@ export async function PATCH(
             poNumber: true,
             status: true,
             orderedAt: true,
+            expectedAt: true,
           },
         });
 

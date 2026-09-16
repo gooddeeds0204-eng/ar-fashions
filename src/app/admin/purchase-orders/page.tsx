@@ -45,6 +45,7 @@ type PurchaseOrder = {
     whatsapp: string | null;
     city: string | null;
     state: string | null;
+    leadTimeDays: number;
   };
 
   items:
@@ -146,6 +147,220 @@ function displayDate(
       year: "numeric",
     },
   );
+}
+
+function dateDayStamp(
+  value: string | Date,
+) {
+  const date =
+    value instanceof Date
+      ? value
+      : new Date(value);
+
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  ).getTime();
+}
+
+function deliveryIntelligence(
+  order: PurchaseOrder,
+) {
+  if (
+    order.status ===
+    "CANCELLED"
+  ) {
+    return {
+      code:
+        "CANCELLED" as const,
+      label:
+        "Cancelled",
+      detail:
+        "Delivery tracking stopped",
+      className:
+        "bg-red-50 text-red-700",
+    };
+  }
+
+  if (
+    order.status ===
+    "DRAFT"
+  ) {
+    return {
+      code:
+        "DRAFT" as const,
+      label:
+        "Not Ordered",
+      detail:
+        "ETA starts after ordering",
+      className:
+        "bg-slate-100 text-slate-600",
+    };
+  }
+
+  if (!order.expectedAt) {
+    return {
+      code:
+        "NO_ETA" as const,
+      label:
+        "ETA Not Set",
+      detail:
+        "Add expected delivery date",
+      className:
+        "bg-slate-100 text-slate-600",
+    };
+  }
+
+  const dayMs =
+    24 *
+    60 *
+    60 *
+    1000;
+
+  const expected =
+    dateDayStamp(
+      order.expectedAt,
+    );
+
+  if (
+    order.status ===
+      "RECEIVED" &&
+    order.receivedAt
+  ) {
+    const received =
+      dateDayStamp(
+        order.receivedAt,
+      );
+
+    const difference =
+      Math.round(
+        (received -
+          expected) /
+          dayMs,
+      );
+
+    if (
+      difference <= 0
+    ) {
+      return {
+        code:
+          "ON_TIME" as const,
+        label:
+          "On Time",
+        detail:
+          difference < 0
+            ? `${Math.abs(
+                difference,
+              )} day${
+                Math.abs(
+                  difference,
+                ) === 1
+                  ? ""
+                  : "s"
+              } early`
+            : "Received on expected date",
+        className:
+          "bg-emerald-50 text-emerald-700",
+      };
+    }
+
+    return {
+      code:
+        "LATE" as const,
+      label:
+        "Late",
+      detail:
+        `${difference} day${
+          difference === 1
+            ? ""
+            : "s"
+        } late`,
+      className:
+        "bg-red-50 text-red-700",
+    };
+  }
+
+  const today =
+    dateDayStamp(
+      new Date(),
+    );
+
+  const daysRemaining =
+    Math.round(
+      (expected -
+        today) /
+        dayMs,
+    );
+
+  if (
+    daysRemaining < 0
+  ) {
+    const overdueDays =
+      Math.abs(
+        daysRemaining,
+      );
+
+    return {
+      code:
+        "OVERDUE" as const,
+      label:
+        "Overdue",
+      detail:
+        `${overdueDays} day${
+          overdueDays === 1
+            ? ""
+            : "s"
+        } overdue`,
+      className:
+        "bg-red-50 text-red-700",
+    };
+  }
+
+  if (
+    daysRemaining === 0
+  ) {
+    return {
+      code:
+        "DUE_TODAY" as const,
+      label:
+        "Due Today",
+      detail:
+        "Expected today",
+      className:
+        "bg-amber-50 text-amber-700",
+    };
+  }
+
+  if (
+    daysRemaining <= 2
+  ) {
+    return {
+      code:
+        "DUE_SOON" as const,
+      label:
+        "Due Soon",
+      detail:
+        `${daysRemaining} day${
+          daysRemaining === 1
+            ? ""
+            : "s"
+        } remaining`,
+      className:
+        "bg-amber-50 text-amber-700",
+    };
+  }
+
+  return {
+    code:
+      "ON_TRACK" as const,
+    label:
+      "On Track",
+    detail:
+      `${daysRemaining} days remaining`,
+    className:
+      "bg-emerald-50 text-emerald-700",
+  };
 }
 
 export default function PurchaseOrdersPage() {
@@ -305,6 +520,40 @@ export default function PurchaseOrdersPage() {
           (order) =>
             order.status ===
             "RECEIVED",
+        ).length,
+      [orders],
+    );
+
+  const overdueCount =
+    useMemo(
+      () =>
+        orders.filter(
+          (order) =>
+            deliveryIntelligence(
+              order,
+            ).code ===
+            "OVERDUE",
+        ).length,
+      [orders],
+    );
+
+  const dueSoonCount =
+    useMemo(
+      () =>
+        orders.filter(
+          (order) => {
+            const code =
+              deliveryIntelligence(
+                order,
+              ).code;
+
+            return (
+              code ===
+                "DUE_SOON" ||
+              code ===
+                "DUE_TODAY"
+            );
+          },
         ).length,
       [orders],
     );
@@ -795,7 +1044,7 @@ export default function PurchaseOrdersPage() {
           </button>
         </div>
 
-        <section className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <section className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-6">
           <Summary
             label="Draft"
             value={
@@ -814,6 +1063,20 @@ export default function PurchaseOrdersPage() {
             label="Received"
             value={
               receivedCount
+            }
+          />
+
+          <Summary
+            label="Overdue"
+            value={
+              overdueCount
+            }
+          />
+
+          <Summary
+            label="Due Soon"
+            value={
+              dueSoonCount
             }
           />
 
@@ -888,6 +1151,11 @@ export default function PurchaseOrdersPage() {
                     editingOrderId ===
                     order.id;
 
+                  const delivery =
+                    deliveryIntelligence(
+                      order,
+                    );
+
                   const canEdit =
                     order.status ===
                       "DRAFT" ||
@@ -936,6 +1204,22 @@ export default function PurchaseOrdersPage() {
                               order.supplier.name
                             }
                           </p>
+
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span
+                              className={`rounded-full px-2.5 py-1 text-[8px] font-black uppercase ${delivery.className}`}
+                            >
+                              {
+                                delivery.label
+                              }
+                            </span>
+
+                            <span className="text-[9px] font-semibold text-slate-400">
+                              {
+                                delivery.detail
+                              }
+                            </span>
+                          </div>
                         </div>
 
                         <div className="text-right">
@@ -971,12 +1255,22 @@ export default function PurchaseOrdersPage() {
                         />
                       </div>
 
-                      <div className="grid gap-2 border-b border-slate-100 bg-slate-50/60 p-4 sm:grid-cols-2">
+                      <div className="grid gap-2 border-b border-slate-100 bg-slate-50/60 p-4 sm:grid-cols-2 lg:grid-cols-4">
                         <InfoBox
                           label="Expected Delivery"
                           value={displayDate(
                             order.expectedAt,
                           )}
+                        />
+
+                        <InfoBox
+                          label="Delivery Status"
+                          value={`${delivery.label} · ${delivery.detail}`}
+                        />
+
+                        <InfoBox
+                          label="Supplier Lead Time"
+                          value={`${order.supplier.leadTimeDays} days`}
                         />
 
                         <InfoBox
