@@ -595,6 +595,9 @@ export default function AccountPage() {
   const recentOrders =
     orders.slice(0, 2);
 
+  const latestOrder =
+    recentOrders[0] ?? null;
+
   const quickLinks = [
     ...(profile?.isReseller
       ? [
@@ -759,477 +762,297 @@ export default function AccountPage() {
             </button>
           </div>
         ) : (
-          <div className="space-y-5">
-            {/* PROFILE HERO */}
-            <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#03140e] via-[#051d15] to-black p-5 text-white shadow-[0_25px_70px_rgba(0,0,0,0.22)] sm:p-7">
-              <div className="pointer-events-none absolute -right-16 -top-10 h-40 w-40 rounded-full bg-emerald-400/10 blur-3xl" />
+          <div className="space-y-4">
+            {/* CLEAN PROFILE HERO */}
+            <section className="relative overflow-hidden rounded-[1.8rem] bg-[#0b0b0c] text-white shadow-[0_20px_55px_rgba(0,0,0,0.18)]">
+              <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-[#7C2732]/35 blur-3xl" />
+              <div className="pointer-events-none absolute bottom-[-90px] left-[-50px] h-48 w-48 rounded-full bg-[#D4AF37]/10 blur-3xl" />
 
-              <div className="relative flex items-start gap-4">
-                <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full border border-white/15 bg-white text-2xl font-black text-[#052219] shadow-lg">
-                  {customerInitial}
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <p className="text-[8px] font-black uppercase tracking-[0.28em] text-white/45">
-                    Customer Profile
-                  </p>
-
-                  <h1 className="mt-2 truncate text-[2rem] font-black leading-none tracking-[-0.045em] text-white">
-                    {customerName}
-                  </h1>
-
-                  <p className="mt-2 text-sm text-white/70">
-                    {customerPhone}
-                  </p>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-white">
-                      Customer
-                    </span>
-
-                    <span className="rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-white/80">
-                      {customerType}
-                    </span>
-
-                    {primaryAddress && (
-                      <span className="rounded-full bg-emerald-400/15 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-emerald-300">
-                        Default Address Added
-                      </span>
-                    )}
+              <div className="relative p-5 sm:p-7">
+                <div className="flex items-center gap-4">
+                  <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-[#D4AF37]/35 bg-[#181313] font-serif text-2xl text-[#D4AF37]">
+                    {customerInitial}
                   </div>
-                </div>
-              </div>
 
-              <div className="relative mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {[
-                  [
-                    String(
-                      orders.length,
-                    ),
-                    "My Orders",
-                  ],
-                  [
-                    String(
-                      addresses.length,
-                    ),
-                    "Saved Addresses",
-                  ],
-                  [
-                    String(
-                      wishlistCount,
-                    ),
-                    "Saved Products",
-                  ],
-                  [
-                    formatMoney(
-                      totalSpend,
-                    ),
-                    "Total Spend",
-                  ],
-                ].map(
-                  ([
-                    value,
-                    label,
-                  ]) => (
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[7px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">
+                      My AR Account
+                    </p>
+
+                    <h1 className="mt-1 truncate text-[1.65rem] font-black tracking-[-0.035em]">
+                      {customerName}
+                    </h1>
+
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-white/50">
+                      <span>{customerPhone}</span>
+                      <span>•</span>
+                      <span>{customerType}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={openProfileEditor}
+                    className="shrink-0 rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-2 text-[8px] font-black uppercase tracking-[0.1em] text-white"
+                  >
+                    Edit
+                  </button>
+                </div>
+
+                <div className="mt-5 grid grid-cols-4 divide-x divide-white/10 rounded-[1.1rem] border border-white/[0.07] bg-white/[0.04]">
+                  {[
+                    [
+                      String(orders.length),
+                      "Orders",
+                    ],
+                    [
+                      String(wishlistCount),
+                      "Wishlist",
+                    ],
+                    [
+                      String(cartCount),
+                      "Cart",
+                    ],
+                    [
+                      formatMoney(totalSpend),
+                      "Spent",
+                    ],
+                  ].map(([value, label]) => (
                     <div
                       key={label}
-                      className="rounded-[1.2rem] border border-white/10 bg-white/[0.06] px-4 py-4 backdrop-blur"
+                      className="min-w-0 px-2 py-3 text-center"
                     >
-                      <p className="text-[1.7rem] font-black leading-none text-white">
+                      <p className="truncate text-[13px] font-black text-white sm:text-lg">
                         {value}
                       </p>
 
-                      <p className="mt-2 text-[10px] font-bold text-white/50">
+                      <p className="mt-1 text-[6px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[7px]">
                         {label}
                       </p>
                     </div>
-                  ),
-                )}
+                  ))}
+                </div>
               </div>
             </section>
 
-            {/* QUICK ACTIONS */}
-            <section className="rounded-[1.7rem] border border-black/[0.05] bg-white shadow-sm">
-              <div className="border-b border-black/[0.05] px-5 py-4">
-                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-700">
-                  Quick Access
-                </p>
+            {/* QUICK ACTION TILES */}
+            <section>
+              <div className="mb-3 flex items-end justify-between">
+                <div>
+                  <p className="text-[7px] font-black uppercase tracking-[0.22em] text-[#7C2732]">
+                    Account
+                  </p>
 
-                <h2 className="mt-2 text-[1.55rem] font-black tracking-[-0.03em]">
-                  Account Hub
-                </h2>
+                  <h2 className="mt-1 text-[1.3rem] font-black tracking-[-0.03em]">
+                    Quick Access
+                  </h2>
+                </div>
               </div>
 
-              <div className="divide-y divide-black/[0.05]">
-                {quickLinks.map(
-                  (item) => (
-                    <button
-                      key={item.title}
-                      type="button"
-                      onClick={
-                        item.onClick
-                      }
-                      className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-[#faf9f6]"
-                    >
-                      <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#f6f6f2] text-lg">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {quickLinks.map((item) => (
+                  <button
+                    key={item.title}
+                    type="button"
+                    onClick={item.onClick}
+                    className="group min-h-[112px] rounded-[1.25rem] border border-black/[0.06] bg-white p-4 text-left shadow-[0_7px_20px_rgba(0,0,0,0.035)] transition active:scale-[0.98]"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#f7f3ee] text-base">
                         {item.icon}
                       </div>
 
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[18px] font-black leading-none">
-                          {item.title}
-                        </p>
-
-                        <p className="mt-1 text-sm text-zinc-500">
-                          {item.subtitle}
-                        </p>
-                      </div>
-
-                      <span className="text-lg text-zinc-300">
+                      <span className="text-sm text-zinc-300 transition group-hover:translate-x-0.5">
                         →
                       </span>
-                    </button>
-                  ),
-                )}
+                    </div>
+
+                    <p className="mt-3 text-[13px] font-black leading-tight">
+                      {item.title}
+                    </p>
+
+                    <p className="mt-1 line-clamp-2 text-[8px] leading-4 text-zinc-400">
+                      {item.subtitle}
+                    </p>
+                  </button>
+                ))}
               </div>
             </section>
 
-            {/* RECENT ORDERS */}
-            <section className="rounded-[1.7rem] border border-black/[0.05] bg-white shadow-sm">
-              <div className="flex items-center justify-between gap-3 border-b border-black/[0.05] px-5 py-4">
-                <div>
-                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-700">
-                    Order Activity
-                  </p>
+            {/* ORDER + ACCOUNT INFO */}
+            <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+              {/* LATEST ORDER */}
+              <section className="overflow-hidden rounded-[1.5rem] border border-black/[0.06] bg-white shadow-sm">
+                <div className="flex items-center justify-between border-b border-black/[0.05] px-4 py-4 sm:px-5">
+                  <div>
+                    <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#7C2732]">
+                      Orders
+                    </p>
 
-                  <h2 className="mt-2 text-[1.55rem] font-black tracking-[-0.03em]">
-                    Recent Orders
-                  </h2>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    router.push(
-                      "/my-orders",
-                    )
-                  }
-                  className="rounded-full border border-black/[0.08] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.08em]"
-                >
-                  View All
-                </button>
-              </div>
-
-              {recentOrders.length ===
-              0 ? (
-                <div className="px-5 py-8 text-center">
-                  <p className="text-lg font-black">
-                    No orders yet
-                  </p>
-
-                  <p className="mt-2 text-sm text-zinc-500">
-                    Start shopping and your orders will appear here.
-                  </p>
+                    <h2 className="mt-1 text-[1.2rem] font-black">
+                      Latest Order
+                    </h2>
+                  </div>
 
                   <button
                     type="button"
                     onClick={() =>
                       router.push(
-                        "/",
+                        "/my-orders",
                       )
                     }
-                    className="mt-5 rounded-full bg-zinc-950 px-5 py-3 text-sm font-black text-white"
+                    className="rounded-full border border-black/[0.07] px-3 py-2 text-[8px] font-black uppercase tracking-[0.08em]"
                   >
-                    Explore Collection
+                    View All
                   </button>
                 </div>
-              ) : (
-                <div className="space-y-4 p-4 sm:p-5">
-                  {recentOrders.map(
-                    (order) => {
-                      const step =
-                        orderStepIndex(
-                          order.status,
-                        );
 
-                      return (
-                        <article
-                          key={
-                            order.id
-                          }
-                          className="overflow-hidden rounded-[1.4rem] border border-black/[0.05] bg-[#faf9f6]"
+                {latestOrder ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(
+                        "/my-orders",
+                      )
+                    }
+                    className="w-full p-4 text-left sm:p-5"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-[7px] font-black uppercase tracking-[0.14em] text-zinc-400">
+                          Order ID
+                        </p>
+
+                        <p className="mt-1 truncate text-[13px] font-black">
+                          {latestOrder.orderNumber}
+                        </p>
+
+                        <p className="mt-1 text-[9px] text-zinc-400">
+                          {formatDate(
+                            latestOrder.createdAt,
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="shrink-0 text-right">
+                        <span
+                          className={`inline-flex rounded-full border px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.08em] ${statusTone(
+                            latestOrder.status,
+                          )}`}
                         >
-                          <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-4">
-                            <div>
-                              <p className="text-[8px] font-black uppercase tracking-[0.16em] text-zinc-400">
-                                Order
-                              </p>
+                          {statusText(
+                            latestOrder.status,
+                          )}
+                        </span>
 
-                              <p className="mt-1 text-[15px] font-black">
-                                {
-                                  order.orderNumber
-                                }
-                              </p>
+                        <p className="mt-2 text-lg font-black">
+                          {formatMoney(
+                            latestOrder.totalAmount,
+                          )}
+                        </p>
+                      </div>
+                    </div>
 
-                              <p className="mt-2 text-[11px] text-zinc-500">
-                                {formatDate(
-                                  order.createdAt,
-                                )}
-                              </p>
-                            </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <div className="rounded-xl bg-[#faf9f6] p-3">
+                        <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                          Payment
+                        </p>
 
-                            <div className="text-right">
-                              <div className="flex flex-wrap justify-end gap-2">
-                                <span className="rounded-full bg-white px-3 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-zinc-600">
-                                  {
-                                    order.type
-                                  }
-                                </span>
+                        <p className="mt-1 text-[10px] font-black">
+                          {statusText(
+                            latestOrder.paymentMethod,
+                          )}{" "}
+                          ·{" "}
+                          {statusText(
+                            latestOrder.paymentStatus,
+                          )}
+                        </p>
+                      </div>
 
-                                <span
-                                  className={`rounded-full border px-3 py-1 text-[9px] font-black uppercase tracking-[0.08em] ${statusTone(
-                                    order.status,
-                                  )}`}
-                                >
-                                  {statusText(
-                                    order.status,
-                                  )}
-                                </span>
-                              </div>
+                      <div className="rounded-xl bg-[#faf9f6] p-3">
+                        <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                          Delivery
+                        </p>
 
-                              <p className="mt-3 text-[1.45rem] font-black leading-none">
-                                {formatMoney(
-                                  order.totalAmount,
-                                )}
-                              </p>
-                            </div>
-                          </div>
+                        <p className="mt-1 truncate text-[10px] font-black">
+                          {latestOrder.address
+                            ? `${latestOrder.address.city} · ${latestOrder.address.pincode}`
+                            : "Address unavailable"}
+                        </p>
+                      </div>
+                    </div>
 
-                          <div className="px-4 pb-4">
-                            <div className="grid grid-cols-4 gap-2">
-                              {[
-                                "Placed",
-                                "Confirmed",
-                                "Shipped",
-                                "Delivered",
-                              ].map(
-                                (
-                                  label,
-                                  index,
-                                ) => (
-                                  <div
-                                    key={
-                                      label
-                                    }
-                                    className="text-center"
-                                  >
-                                    <div
-                                      className={`mx-auto h-2.5 w-full rounded-full ${
-                                        index <=
-                                        step
-                                          ? "bg-emerald-500"
-                                          : "bg-zinc-200"
-                                      }`}
-                                    />
+                    <div className="mt-4 flex items-center justify-between rounded-xl bg-[#0b0b0c] px-4 py-3 text-white">
+                      <span className="text-[8px] font-semibold text-white/55">
+                        Track order details
+                      </span>
 
-                                    <p
-                                      className={`mt-2 text-[8px] font-black uppercase tracking-[0.08em] ${
-                                        index <=
-                                        step
-                                          ? "text-emerald-700"
-                                          : "text-zinc-400"
-                                      }`}
-                                    >
-                                      {
-                                        label
-                                      }
-                                    </p>
-                                  </div>
-                                ),
-                              )}
-                            </div>
-
-                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                              <div className="rounded-[1rem] bg-white px-4 py-3">
-                                <p className="text-[8px] font-black uppercase tracking-[0.14em] text-zinc-400">
-                                  Payment
-                                </p>
-
-                                <p className="mt-1 text-sm font-black">
-                                  {statusText(
-                                    order.paymentMethod,
-                                  )}{" "}
-                                  ·{" "}
-                                  {statusText(
-                                    order.paymentStatus,
-                                  )}
-                                </p>
-                              </div>
-
-                              <div className="rounded-[1rem] bg-white px-4 py-3">
-                                <p className="text-[8px] font-black uppercase tracking-[0.14em] text-zinc-400">
-                                  Delivery To
-                                </p>
-
-                                <p className="mt-1 text-sm font-black">
-                                  {order.address
-                                    ? `${order.address.city} - ${order.address.pincode}`
-                                    : "Address not available"}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </article>
-                      );
-                    },
-                  )}
-                </div>
-              )}
-            </section>
-
-            {/* PROFILE + ADDRESS */}
-            <div className="grid gap-5 lg:grid-cols-[1fr_1fr]">
-              <section className="rounded-[1.7rem] border border-black/[0.05] bg-white shadow-sm">
-                <div className="flex items-center justify-between gap-3 border-b border-black/[0.05] px-5 py-4">
-                  <div>
-                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-700">
-                      Personal Information
+                      <span className="text-[#D4AF37]">
+                        →
+                      </span>
+                    </div>
+                  </button>
+                ) : (
+                  <div className="p-6 text-center">
+                    <p className="text-sm font-black">
+                      No orders yet
                     </p>
 
-                    <h2 className="mt-2 text-[1.4rem] font-black tracking-[-0.03em]">
-                      Profile Details
+                    <p className="mt-1 text-[9px] text-zinc-400">
+                      Your latest order will appear here.
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        router.push("/")
+                      }
+                      className="mt-4 rounded-full bg-zinc-950 px-5 py-2.5 text-[9px] font-black text-white"
+                    >
+                      Start Shopping
+                    </button>
+                  </div>
+                )}
+              </section>
+
+              {/* ACCOUNT INFORMATION */}
+              <section className="overflow-hidden rounded-[1.5rem] border border-black/[0.06] bg-white shadow-sm">
+                <div className="flex items-center justify-between border-b border-black/[0.05] px-4 py-4 sm:px-5">
+                  <div>
+                    <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#7C2732]">
+                      Personal
+                    </p>
+
+                    <h2 className="mt-1 text-[1.2rem] font-black">
+                      Account Details
                     </h2>
                   </div>
 
                   <button
                     type="button"
                     onClick={openProfileEditor}
-                    className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.08em] text-emerald-700 transition active:scale-[0.98]"
+                    className="text-[8px] font-black uppercase tracking-[0.08em] text-[#7C2732]"
                   >
-                    Edit Profile
+                    Edit
                   </button>
                 </div>
 
-                <div className="space-y-4 p-5">
-                  {[
-                    [
-                      "Full Name",
-                      customerName,
-                    ],
-                    [
-                      "Mobile Number",
-                      customerPhone,
-                    ],
-                    [
-                      "Email",
-                      customerEmail,
-                    ],
-                    [
-                      "Customer Type",
-                      customerType,
-                    ],
-                  ].map(
-                    ([
-                      label,
-                      value,
-                    ]) => (
-                      <div
-                        key={label}
-                        className="rounded-[1.1rem] bg-[#faf9f6] px-4 py-4"
-                      >
-                        <p className="text-[8px] font-black uppercase tracking-[0.14em] text-zinc-400">
-                          {label}
-                        </p>
-
-                        <p className="mt-2 text-[15px] font-black">
-                          {value}
-                        </p>
-                      </div>
-                    ),
-                  )}
-                </div>
-              </section>
-
-              <section className="rounded-[1.7rem] border border-black/[0.05] bg-white shadow-sm">
-                <div className="flex items-center justify-between gap-3 border-b border-black/[0.05] px-5 py-4">
-                  <div>
-                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-700">
-                      Delivery
+                <div className="divide-y divide-black/[0.05] px-4 sm:px-5">
+                  <div className="py-4">
+                    <p className="text-[7px] font-black uppercase tracking-[0.13em] text-zinc-400">
+                      Email
                     </p>
 
-                    <h2 className="mt-2 text-[1.4rem] font-black tracking-[-0.03em]">
-                      Saved Address
-                    </h2>
+                    <p className="mt-1 break-all text-[11px] font-black text-zinc-800">
+                      {customerEmail}
+                    </p>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      router.push(
-                        "/addresses",
-                      )
-                    }
-                    className="rounded-full border border-black/[0.08] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.08em]"
-                  >
-                    Manage
-                  </button>
-                </div>
-
-                <div className="p-5">
-                  {primaryAddress ? (
-                    <div className="rounded-[1.35rem] border border-emerald-200 bg-emerald-50/50 p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-[16px] font-black">
-                            {
-                              primaryAddress.name
-                            }
-                          </p>
-
-                          <p className="mt-1 text-sm font-semibold text-zinc-600">
-                            {
-                              primaryAddress.phone
-                            }
-                          </p>
-                        </div>
-
-                        <span className="rounded-full bg-white px-3 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-emerald-700">
-                          Default
-                        </span>
-                      </div>
-
-                      <p className="mt-4 text-sm leading-6 text-zinc-700">
-                        {
-                          primaryAddress.addressLine1
-                        }
-                        {primaryAddress.addressLine2
-                          ? `, ${primaryAddress.addressLine2}`
-                          : ""}
-                        {primaryAddress.landmark
-                          ? `, Near ${primaryAddress.landmark}`
-                          : ""}
-                        ,{" "}
-                        {
-                          primaryAddress.city
-                        }
-                        ,{" "}
-                        {
-                          primaryAddress.state
-                        }{" "}
-                        -{" "}
-                        {
-                          primaryAddress.pincode
-                        }
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="rounded-[1.35rem] bg-[#faf9f6] p-5 text-center">
-                      <p className="text-lg font-black">
-                        No saved addresses
-                      </p>
-
-                      <p className="mt-2 text-sm text-zinc-500">
-                        Add an address for faster checkout.
+                  <div className="py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-[7px] font-black uppercase tracking-[0.13em] text-zinc-400">
+                        Default Address
                       </p>
 
                       <button
@@ -1239,65 +1062,108 @@ export default function AccountPage() {
                             "/addresses",
                           )
                         }
-                        className="mt-5 rounded-full bg-zinc-950 px-5 py-3 text-sm font-black text-white"
+                        className="text-[7px] font-black uppercase tracking-[0.08em] text-[#7C2732]"
                       >
-                        Add Address
+                        Manage
                       </button>
                     </div>
-                  )}
+
+                    {primaryAddress ? (
+                      <>
+                        <p className="mt-2 text-[11px] font-black">
+                          {primaryAddress.name}
+                        </p>
+
+                        <p className="mt-1 text-[9px] leading-4 text-zinc-500">
+                          {primaryAddress.addressLine1}
+                          {primaryAddress.addressLine2
+                            ? `, ${primaryAddress.addressLine2}`
+                            : ""}
+                          ,{" "}
+                          {primaryAddress.city},{" "}
+                          {primaryAddress.state}{" "}
+                          -{" "}
+                          {primaryAddress.pincode}
+                        </p>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          router.push(
+                            "/addresses",
+                          )
+                        }
+                        className="mt-2 text-[10px] font-black text-[#7C2732]"
+                      >
+                        + Add delivery address
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between py-4">
+                    <div>
+                      <p className="text-[7px] font-black uppercase tracking-[0.13em] text-zinc-400">
+                        Account Type
+                      </p>
+
+                      <p className="mt-1 text-[11px] font-black">
+                        {customerType}
+                      </p>
+                    </div>
+
+                    <span className="rounded-full bg-[#f7f3ee] px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.08em] text-[#7C2732]">
+                      Active
+                    </span>
+                  </div>
                 </div>
               </section>
             </div>
 
-            {/* RESELLER CTA */}
-            <section className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-[#dff4ea] via-[#d2eee2] to-[#ecfaf3] p-5 shadow-sm sm:p-6">
-              <div className="pointer-events-none absolute -right-16 top-0 h-36 w-36 rounded-full bg-emerald-400/15 blur-3xl" />
+            {/* RESELLER */}
+            <section className="relative overflow-hidden rounded-[1.5rem] border border-[#D4AF37]/15 bg-gradient-to-r from-[#291117] via-[#170d10] to-[#0b0b0c] p-5 text-white">
+              <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-[#D4AF37]/10 blur-3xl" />
 
-              <div className="relative max-w-xl">
-                <p className="text-[8px] font-black uppercase tracking-[0.28em] text-emerald-700">
-                  Reseller Zone
-                </p>
+              <div className="relative flex items-center gap-4">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[7px] font-black uppercase tracking-[0.22em] text-[#D4AF37]">
+                    AR Reseller
+                  </p>
 
-                <h2 className="mt-3 text-[2rem] font-black leading-[0.95] tracking-[-0.04em] text-zinc-950">
-                  Wholesale shopping
-                  <br />
-                  is available.
-                </h2>
+                  <h2 className="mt-2 font-serif text-[1.55rem] leading-none">
+                    {profile?.isReseller
+                      ? "Your wholesale workspace"
+                      : "Wholesale shopping"}
+                  </h2>
 
-                <p className="mt-3 text-sm leading-6 text-zinc-600">
-                  Shop eligible products using reseller pricing, MOQ-based quantities and bulk-friendly ordering.
-                </p>
-
-                <div className="mt-5 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      router.push(
-                        "/",
-                      )
-                    }
-                    className="rounded-full bg-emerald-600 px-5 py-3 text-[11px] font-black text-white shadow-sm"
-                  >
-                    Shop Reseller Products
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      router.push(
-                        "/my-orders",
-                      )
-                    }
-                    className="rounded-full border border-emerald-200 bg-white px-5 py-3 text-[11px] font-black text-emerald-700"
-                  >
-                    View Order History
-                  </button>
+                  <p className="mt-2 max-w-xl text-[9px] leading-4 text-white/45">
+                    {profile?.isReseller
+                      ? "Manage reseller orders, bulk shopping and business activity."
+                      : "Explore reseller pricing, MOQ-based quantities and bulk-friendly ordering."}
+                  </p>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(
+                      profile?.isReseller
+                        ? "/reseller-dashboard"
+                        : "/",
+                    )
+                  }
+                  className="shrink-0 rounded-full bg-[#D4AF37] px-4 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] text-black"
+                >
+                  {profile?.isReseller
+                    ? "Open"
+                    : "Explore"}
+                </button>
               </div>
             </section>
           </div>
         )}
       </div>
+
 
       {editProfileOpen && (
         <div className="fixed inset-0 z-[120] overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4">
