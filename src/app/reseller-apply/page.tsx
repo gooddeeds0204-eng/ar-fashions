@@ -403,19 +403,87 @@ export default function ResellerApplyPage() {
     );
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
+        const currentLatitude =
+          position.coords.latitude;
+
+        const currentLongitude =
+          position.coords.longitude;
+
         setLatitude(
-          position.coords.latitude,
+          currentLatitude,
         );
 
         setLongitude(
-          position.coords.longitude,
+          currentLongitude,
         );
 
         setLocationAccuracy(
           position.coords.accuracy ??
             null,
         );
+
+        try {
+          const response =
+            await fetch(
+              "/api/reverse-geocode",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+                credentials:
+                  "same-origin",
+                body:
+                  JSON.stringify({
+                    latitude:
+                      currentLatitude,
+                    longitude:
+                      currentLongitude,
+                  }),
+              },
+            );
+
+          const data =
+            await response.json();
+
+          if (response.ok) {
+            if (
+              data.addressLine
+            ) {
+              setAddressLine(
+                data.addressLine,
+              );
+            }
+
+            if (data.city) {
+              setCity(
+                data.city,
+              );
+            }
+
+            if (data.state) {
+              setState(
+                data.state,
+              );
+            }
+
+            if (data.pincode) {
+              setPincode(
+                data.pincode,
+              );
+            }
+          } else {
+            setError(
+              "Location captured. Address automaticగా detect కాలేదు; address manually edit చేయవచ్చు.",
+            );
+          }
+        } catch {
+          setError(
+            "Location captured. Address automaticగా detect కాలేదు; address manually edit చేయవచ్చు.",
+          );
+        }
 
         setLocationStatus(
           "SUCCESS",
@@ -679,7 +747,7 @@ export default function ResellerApplyPage() {
                   </p>
 
                   <p className="mt-1 text-[9px] leading-4 text-white/35">
-                    Shop location వద్ద ఉండి current location capture చేయండి.
+                    Current location capture చేస్తే address, city, state, pincode automaticగా fill అవుతాయి.
                   </p>
                 </div>
 
