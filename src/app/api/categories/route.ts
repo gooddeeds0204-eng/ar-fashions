@@ -365,6 +365,15 @@ export async function PATCH(
             undefined && {
             sortOrder,
           }),
+
+          ...(body.imageUrl !==
+            undefined && {
+            imageUrl:
+              String(
+                body.imageUrl ?? "",
+              ).trim() ||
+              null,
+          }),
         },
       });
 

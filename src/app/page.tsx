@@ -336,7 +336,7 @@ function ProductCard({
       onClick={() => router.push(`/products/${product.id}?mode=${mode.toLowerCase()}`)}
       className="group min-w-0 cursor-pointer overflow-hidden bg-transparent transition duration-300 active:scale-[0.985]"
     >
-      <div className="relative aspect-[3/4] overflow-hidden rounded-[1rem] border border-white/10 bg-[#0b2119] shadow-[0_14px_34px_rgba(0,0,0,0.25)]">
+      <div className="relative aspect-[3/4] overflow-hidden rounded-[1rem] border border-white/10 bg-[#171313] shadow-[0_14px_34px_rgba(0,0,0,0.25)]">
         {media?.type === "VIDEO" ? (
           <video
             src={media.url}
@@ -359,7 +359,7 @@ function ProductCard({
         )}
 
         {product.isNewArrival && (
-          <span className="absolute left-2 top-2 rounded-full bg-emerald-600 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-white shadow-sm">
+          <span className="absolute left-2 top-2 rounded-full bg-[#7C2732] px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-white shadow-sm">
             New
           </span>
         )}
@@ -391,7 +391,7 @@ function ProductCard({
       </div>
 
       <div className="px-1 pb-2 pt-2.5 sm:px-1.5 sm:pt-3">
-        <p className="mb-1 text-[8px] font-black uppercase tracking-[0.18em] text-emerald-400">
+        <p className="mb-1 text-[8px] font-black uppercase tracking-[0.18em] text-[#D4AF37]">
           {product.category.name}
         </p>
 
@@ -412,14 +412,14 @@ function ProductCard({
             )}
 
           {discountPercent > 0 && (
-            <span className="text-[9px] font-black text-emerald-600 sm:text-[10px]">
+            <span className="text-[9px] font-black text-[#D4AF37] sm:text-[10px]">
               ({discountPercent}% OFF)
             </span>
           )}
         </div>
 
         <div className="mt-2.5 flex items-center justify-between gap-2">
-          <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.08em] text-emerald-300">
+          <span className="rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.08em] text-[#D4AF37]">
             {mode === "RESELLER"
               ? "Bulk Ready"
               : product.isNewArrival
@@ -429,7 +429,7 @@ function ProductCard({
                   : "AR Pick"}
           </span>
 
-          <span className="text-[8px] font-bold text-emerald-400">
+          <span className="text-[8px] font-bold text-[#D4AF37]">
             {product.isFeatured
               ? "Signature Edit"
               : "Curated Style"}
@@ -437,7 +437,7 @@ function ProductCard({
         </div>
 
         {mode === "RESELLER" && product.resellerPrice !== null && (
-          <p className="mt-1 text-[11px] font-semibold text-emerald-600">
+          <p className="mt-1 text-[11px] font-semibold text-[#D4AF37]">
             MOQ {product.resellerMOQ ?? 1} pcs
           </p>
         )}
@@ -466,7 +466,7 @@ function ProductSection({
     <section className="mx-auto w-full max-w-7xl px-4 py-9 sm:px-6 sm:py-11 lg:px-8">
       <div className="mb-6 flex items-end justify-between gap-4 sm:mb-7">
         <div>
-          <p className="mb-2 text-[8px] font-black uppercase tracking-[0.28em] text-emerald-700">
+          <p className="mb-2 text-[8px] font-black uppercase tracking-[0.28em] text-[#B9912E]">
             AR Fashions
           </p>
 
@@ -549,7 +549,7 @@ function BrandHighlights({
             key={item.title}
             className="flex items-center gap-3 rounded-[1.15rem] border border-black/[0.05] bg-white p-3 shadow-[0_6px_24px_rgba(0,0,0,0.035)] sm:p-4"
           >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#f2f0eb] text-sm font-black text-emerald-700">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#f2f0eb] text-sm font-black text-[#B9912E]">
               {item.icon}
             </span>
 
@@ -655,15 +655,15 @@ function FashionReelsSection({
   return (
     <section
       id="fashion-reels"
-      className="mx-3 overflow-hidden rounded-[1.8rem] border border-emerald-300/10 bg-[#010906] py-8 text-white shadow-[0_30px_80px_rgba(0,0,0,0.42)] sm:mx-6 sm:py-10 lg:mx-auto lg:max-w-7xl"
+      className="mx-3 overflow-hidden rounded-[1.8rem] border border-[#D4AF37]/10 bg-[#050506] py-8 text-white shadow-[0_30px_80px_rgba(0,0,0,0.42)] sm:mx-6 sm:py-10 lg:mx-auto lg:max-w-7xl"
     >
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="mb-5 flex items-end justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="h-px w-5 bg-emerald-300" />
+              <span className="h-px w-5 bg-[#D4AF37]" />
 
-              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-300">
+              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#D4AF37]">
                 AR Live Looks
               </p>
             </div>
@@ -716,7 +716,7 @@ function FashionReelsSection({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full items-center justify-center bg-gradient-to-b from-emerald-900 to-black">
+                <div className="flex h-full items-center justify-center bg-gradient-to-b from-[#4B1821] to-black">
                   <span className="text-4xl">
                     ▶
                   </span>
@@ -725,7 +725,7 @@ function FashionReelsSection({
 
               <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/70 to-transparent p-3">
                 <div className="flex items-center justify-between">
-                  <span className="rounded-full border border-white/10 bg-black/45 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.16em] text-emerald-300 backdrop-blur">
+                  <span className="rounded-full border border-white/10 bg-black/45 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.16em] text-[#D4AF37] backdrop-blur">
                     {selectedReel.source === "UPLOAD"
                       ? "AR Original"
                       : "Instagram"}
@@ -742,7 +742,7 @@ function FashionReelsSection({
                   {selectedReel.product.name}
                 </p>
 
-                <p className="mt-2 text-[15px] font-black text-emerald-300">
+                <p className="mt-2 text-[15px] font-black text-[#D4AF37]">
                   {money(selectedPrice)}
                 </p>
               </div>
@@ -769,11 +769,11 @@ function FashionReelsSection({
                     }
                     className={`relative block w-full overflow-hidden rounded-xl border transition active:scale-[0.97] ${
                       active
-                        ? "border-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.22)]"
+                        ? "border-[#D4AF37] shadow-[0_0_18px_rgba(212,175,55,0.22)]"
                         : "border-white/10"
                     }`}
                   >
-                    <div className="relative aspect-[9/14] bg-[#071710]">
+                    <div className="relative aspect-[9/14] bg-[#181313]">
                       {reel.thumbnailUrl ? (
                         <img
                           src={reel.thumbnailUrl}
@@ -789,7 +789,7 @@ function FashionReelsSection({
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-full items-center justify-center bg-gradient-to-b from-[#124b38] to-black">
+                        <div className="flex h-full items-center justify-center bg-gradient-to-b from-[#5A1D28] to-black">
                           <span className="text-xl">
                             ▶
                           </span>
@@ -802,7 +802,7 @@ function FashionReelsSection({
                         <span
                           className={`grid h-8 w-8 place-items-center rounded-full text-[9px] shadow-lg ${
                             active
-                              ? "bg-emerald-300 text-[#03140e]"
+                              ? "bg-[#D4AF37] text-[#080B0D]"
                               : "bg-white/90 text-black"
                           }`}
                         >
@@ -811,7 +811,7 @@ function FashionReelsSection({
                       </div>
 
                       {active && (
-                        <span className="absolute left-1.5 top-1.5 rounded-full bg-emerald-300 px-1.5 py-0.5 text-[6px] font-black uppercase text-[#03140e]">
+                        <span className="absolute left-1.5 top-1.5 rounded-full bg-[#D4AF37] px-1.5 py-0.5 text-[6px] font-black uppercase text-[#080B0D]">
                           Live
                         </span>
                       )}
@@ -828,7 +828,7 @@ function FashionReelsSection({
           {/* PRODUCT PANEL - DESKTOP */}
           <div className="hidden flex-col justify-between rounded-[1.5rem] border border-white/10 bg-white/[0.045] p-6 lg:flex">
             <div>
-              <p className="text-[8px] font-black uppercase tracking-[0.24em] text-emerald-300">
+              <p className="text-[8px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">
                 Shop the reel
               </p>
 
@@ -870,7 +870,7 @@ function FashionReelsSection({
                   selectedReel,
                 )
               }
-              className="mt-8 w-full rounded-2xl bg-emerald-300 py-4 text-[10px] font-black uppercase tracking-[0.1em] text-[#03140e]"
+              className="mt-8 w-full rounded-2xl bg-[#D4AF37] py-4 text-[10px] font-black uppercase tracking-[0.1em] text-[#080B0D]"
             >
               Shop This Look →
             </button>
@@ -885,10 +885,10 @@ function FashionReelsSection({
               selectedReel,
             )
           }
-          className="mt-4 flex w-full items-center justify-between gap-3 rounded-[1.2rem] border border-emerald-300/15 bg-emerald-300/[0.07] p-4 text-left lg:hidden"
+          className="mt-4 flex w-full items-center justify-between gap-3 rounded-[1.2rem] border border-[#D4AF37]/15 bg-[#D4AF37]/[0.07] p-4 text-left lg:hidden"
         >
           <div className="min-w-0">
-            <p className="text-[7px] font-black uppercase tracking-[0.2em] text-emerald-300">
+            <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">
               Featured Look
             </p>
 
@@ -902,7 +902,7 @@ function FashionReelsSection({
               {money(selectedPrice)}
             </p>
 
-            <p className="mt-1 text-[8px] font-black text-emerald-300">
+            <p className="mt-1 text-[8px] font-black text-[#D4AF37]">
               Shop Now →
             </p>
           </div>
@@ -1643,6 +1643,88 @@ export default function Home() {
     (product) => product.isNewArrival,
   );
 
+  const homeCategoryItems = useMemo(() => {
+    const allItems: Array<{
+      key: string;
+      name: string;
+      imageUrl: string | null;
+      ids: string[];
+    }> = [];
+
+    menuCategories.forEach((main) => {
+      allItems.push({
+        key: `main-${main.id}`,
+        name: main.name,
+        imageUrl: main.imageUrl,
+        ids: [
+          main.id,
+          ...main.children.map(
+            (child) => child.id,
+          ),
+        ],
+      });
+
+      main.children.forEach(
+        (child) => {
+          allItems.push({
+            key: `child-${child.id}`,
+            name: child.name,
+            imageUrl:
+              child.imageUrl,
+            ids: [child.id],
+          });
+        },
+      );
+    });
+
+    const preferred = [
+      "women",
+      "men",
+      "kids",
+      "ethnic",
+      "western",
+      "accessor",
+    ];
+
+    const picked: typeof allItems = [];
+
+    for (const needle of preferred) {
+      const item = allItems.find(
+        (candidate) =>
+          !picked.some(
+            (selected) =>
+              selected.key ===
+              candidate.key,
+          ) &&
+          candidate.name
+            .toLowerCase()
+            .includes(needle),
+      );
+
+      if (item) {
+        picked.push(item);
+      }
+    }
+
+    for (const item of allItems) {
+      if (picked.length >= 6) {
+        break;
+      }
+
+      if (
+        !picked.some(
+          (selected) =>
+            selected.key ===
+            item.key,
+        )
+      ) {
+        picked.push(item);
+      }
+    }
+
+    return picked.slice(0, 6);
+  }, [menuCategories]);
+
   const defaultHomeSections:
     HomeSection[] = [
       {
@@ -1710,7 +1792,7 @@ export default function Home() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-5 text-white">
         <div className="w-full max-w-xl rounded-[2rem] border border-white/10 bg-white/5 p-8 text-center shadow-2xl backdrop-blur sm:p-12">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37]">
             {siteSettings.storeName ||
               "AR FASHIONS"}
           </p>
@@ -1741,7 +1823,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[#061711] pb-24 text-white sm:pb-0">
+    <main className="min-h-screen bg-[#080B0D] pb-24 text-white sm:pb-0">
       <StorefrontDrawer
         open={menuOpen}
         mode={mode}
@@ -1814,98 +1896,277 @@ export default function Home() {
         }
       />
 
-      {/* HEADER */}
-      <header className="sticky top-0 z-50 border-b border-white/[0.07] bg-[#061711]/95 backdrop-blur-2xl">
-        <div className="mx-auto max-w-7xl px-4 pb-3 pt-2 sm:px-6 lg:px-8">
-          <div className="relative flex h-14 items-center justify-between">
+      {/* IMAGE 2 LUXURY HEADER */}
+      <div className="border-b border-[#D4AF37]/10 bg-[#7C2732] px-4 py-2 text-center text-[8px] font-bold tracking-[0.08em] text-[#F7F5EF] sm:text-[10px]">
+        <div className="mx-auto flex max-w-7xl items-center justify-center gap-3 sm:justify-between">
+          <p>
+            ✦{" "}
+            {siteSettings.storeNotice ||
+              "Premium fashion for every mood, every moment."}
+          </p>
+
+          <div className="hidden items-center gap-4 text-[8px] text-white/75 sm:flex">
+            <button
+              type="button"
+              onClick={() =>
+                router.push(
+                  "/my-orders",
+                )
+              }
+            >
+              Track Order
+            </button>
+
+            <span className="text-white/25">
+              |
+            </span>
+
+            <span>
+              Shop Smart. Dress Better.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <header className="sticky top-0 z-50 border-b border-[#D4AF37]/10 bg-[#080B0D]/95 text-[#F7F5EF] backdrop-blur-2xl">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-[68px] items-center gap-5">
             <button
               type="button"
               onClick={() =>
                 setMenuOpen(true)
               }
               aria-label="Menu"
-              className="grid h-10 w-10 place-items-center rounded-full border border-white/10 text-xl text-white"
+              className="grid h-10 w-10 shrink-0 place-items-center text-xl text-[#F7F5EF] lg:hidden"
             >
               ☰
             </button>
 
-            <div className="absolute left-1/2 -translate-x-1/2">
-              <BrandLogo
-                light
-                compact
-                onClick={() => router.push("/")}
-              />
-            </div>
+            <button
+              type="button"
+              onClick={() =>
+                router.push("/")
+              }
+              className="shrink-0 text-center"
+            >
+              <span className="block font-serif text-[31px] leading-[0.8] tracking-[-0.04em] text-[#D4AF37]">
+                AR
+              </span>
 
-            <div className="flex items-center gap-1">
+              <span className="mt-1 block text-[5px] font-black uppercase tracking-[0.42em] text-[#D4AF37]">
+                Fashions
+              </span>
+            </button>
+
+            <nav className="hidden items-center gap-6 lg:flex">
               <button
                 type="button"
-                onClick={() => router.push("/cart")}
-                aria-label="Bag"
-                className="grid h-10 w-10 place-items-center rounded-full border border-white/10 text-lg text-white"
+                onClick={() =>
+                  router.push("/")
+                }
+                className="text-[10px] font-semibold text-[#D4AF37]"
               >
-                ♢
+                Home
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  document
+                    .getElementById(
+                      "shop-categories",
+                    )
+                    ?.scrollIntoView({
+                      behavior:
+                        "smooth",
+                    })
+                }
+                className="text-[10px] font-semibold text-white/75 transition hover:text-[#D4AF37]"
+              >
+                Shop
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  document
+                    .getElementById(
+                      "shop-categories",
+                    )
+                    ?.scrollIntoView({
+                      behavior:
+                        "smooth",
+                    })
+                }
+                className="text-[10px] font-semibold text-white/75 transition hover:text-[#D4AF37]"
+              >
+                Categories
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    mode ===
+                      "RESELLER"
+                      ? "/reseller-sets"
+                      : "/account",
+                  )
+                }
+                className="text-[10px] font-semibold text-white/75 transition hover:text-[#D4AF37]"
+              >
+                Reseller
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    `/reels?mode=${mode.toLowerCase()}`,
+                  )
+                }
+                className="text-[10px] font-semibold text-white/75 transition hover:text-[#D4AF37]"
+              >
+                Reels
+              </button>
+            </nav>
+
+            <div className="ml-auto hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex">
+              <div className="flex w-full max-w-[330px] items-center rounded-full border border-white/10 bg-white/[0.055] px-4 py-2.5">
+                <span className="mr-2 text-[#D4AF37]">
+                  ⌕
+                </span>
+
+                <input
+                  value={search}
+                  onChange={(event) =>
+                    setSearch(
+                      event.target
+                        .value,
+                    )
+                  }
+                  placeholder="Search for products..."
+                  className="min-w-0 flex-1 bg-transparent text-[10px] text-white outline-none placeholder:text-white/30"
+                />
+
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSearch("")
+                    }
+                    className="text-white/45"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    "/wishlist",
+                  )
+                }
+                aria-label="Wishlist"
+                className="grid h-9 w-9 shrink-0 place-items-center text-xl text-[#F7F5EF]"
+              >
+                ♡
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    customerLoggedIn
+                      ? "/account"
+                      : "/login",
+                  )
+                }
+                aria-label="Account"
+                className="grid h-9 w-9 shrink-0 place-items-center text-lg text-[#F7F5EF]"
+              >
+                ♙
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    "/cart",
+                  )
+                }
+                aria-label="Cart"
+                className="relative grid h-9 w-9 shrink-0 place-items-center text-lg text-[#F7F5EF]"
+              >
+                ◇
+                <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-[#7C2732]" />
+              </button>
+            </div>
+
+            <div className="ml-auto flex items-center gap-1 md:hidden">
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    "/wishlist",
+                  )
+                }
+                className="grid h-9 w-9 place-items-center text-xl"
+                aria-label="Wishlist"
+              >
+                ♡
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    "/cart",
+                  )
+                }
+                className="relative grid h-9 w-9 place-items-center text-lg"
+                aria-label="Cart"
+              >
+                ◇
+                <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-[#7C2732]" />
               </button>
             </div>
           </div>
 
-          <div className="mt-1 flex items-center rounded-xl border border-white/[0.08] bg-white/[0.06] px-4 py-2.5">
-            <span className="mr-2 text-base text-emerald-300">
-              ⌕
-            </span>
+          <div className="pb-3 md:hidden">
+            <div className="flex items-center rounded-full border border-white/10 bg-white/[0.055] px-4 py-2.5">
+              <span className="mr-2 text-[#D4AF37]">
+                ⌕
+              </span>
 
-            <input
-              value={search}
-              onChange={(event) =>
-                setSearch(event.target.value)
-              }
-              placeholder="Search the AR collection..."
-              className="min-w-0 flex-1 bg-transparent text-[11px] font-medium text-white outline-none placeholder:text-white/35 sm:text-xs"
-            />
+              <input
+                value={search}
+                onChange={(event) =>
+                  setSearch(
+                    event.target.value,
+                  )
+                }
+                placeholder="Search for products..."
+                className="min-w-0 flex-1 bg-transparent text-[10px] text-white outline-none placeholder:text-white/30"
+              />
 
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                className="grid h-6 w-6 place-items-center rounded-full bg-white/10 text-xs font-black text-white"
-              >
-                ×
-              </button>
-            )}
+              {search && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSearch("")
+                  }
+                  className="text-white/45"
+                >
+                  ×
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </header>
-
-      {siteSettings.storeNotice ? (
-        <div className="border-b border-emerald-700/20 bg-emerald-600 px-4 py-2.5 text-center text-[11px] font-bold text-white">
-          {siteSettings.storeNotice}
-        </div>
-      ) : null}
-
-      {/* ACCOUNT SALES CHANNEL */}
-      <section className="border-b border-white/[0.06] bg-[#071b14]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2">
-            <span
-              className={`h-2 w-2 rounded-full ${
-                mode === "RESELLER"
-                  ? "bg-emerald-400"
-                  : "bg-white/60"
-              }`}
-            />
-
-            <p className="text-[8px] font-black uppercase tracking-[0.14em] text-white/70">
-              {mode === "RESELLER"
-                ? "Approved Reseller Account"
-                : "Retail Shopping"}
-            </p>
-          </div>
-
-          <p className="text-[7px] font-black uppercase tracking-[0.2em] text-emerald-300/70">
-            Wear Your Story
-          </p>
-        </div>
-      </section>
 
       {activeModeClosed ? (
         <section className="mx-auto flex min-h-[58vh] max-w-7xl items-center justify-center px-4 py-14 sm:px-6 lg:px-8">
@@ -1938,7 +2199,7 @@ export default function Home() {
       {/* PRODUCT-CONNECTED HERO SLIDER */}
       <section className="mx-auto max-w-7xl px-3 pt-3 sm:px-6 sm:pt-5 lg:px-8">
         <div
-          className="relative min-h-[565px] touch-pan-y overflow-hidden rounded-[1.6rem] border border-white/[0.09] bg-[#04120d] shadow-[0_35px_90px_rgba(0,0,0,0.44)] sm:min-h-[640px] sm:rounded-[2.2rem]"
+          className="relative min-h-[565px] touch-pan-y overflow-hidden rounded-[1.6rem] border border-white/[0.09] bg-[#080B0D] shadow-[0_35px_90px_rgba(0,0,0,0.44)] sm:min-h-[640px] sm:rounded-[2.2rem]"
           style={{
             background:
               !heroSlideProduct
@@ -2083,7 +2344,7 @@ export default function Home() {
                 />
               </picture>
             ) : (
-              <div className="h-full w-full bg-[radial-gradient(circle_at_75%_20%,rgba(52,211,153,0.22),transparent_32%),linear-gradient(135deg,#0b3528,#04120d_58%,#010806)]" />
+              <div className="h-full w-full bg-[radial-gradient(circle_at_75%_20%,rgba(212,175,55,0.22),transparent_32%),linear-gradient(135deg,#3A1119,#080B0D_58%,#010806)]" />
             )}
 
             <div className="absolute inset-0 bg-gradient-to-t from-[#02100b] via-black/20 to-black/20 sm:bg-gradient-to-r sm:from-[#02100b]/95 sm:via-[#02100b]/35 sm:to-black/10" />
@@ -2130,7 +2391,7 @@ export default function Home() {
           <div className="pointer-events-none relative z-20 flex min-h-[565px] items-end p-5 pb-20 sm:min-h-[640px] sm:items-center sm:p-11 lg:p-14">
             <div className="max-w-[560px]">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.18em] text-emerald-200 backdrop-blur">
+                <span className="rounded-full border border-[#D4AF37]/25 bg-[#D4AF37]/10 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.18em] text-emerald-200 backdrop-blur">
                   {heroSlideProduct
                     ? heroSlideProduct.isFeatured
                       ? "AR Signature"
@@ -2152,7 +2413,7 @@ export default function Home() {
                 )}
               </div>
 
-              <p className="mt-5 text-[8px] font-black uppercase tracking-[0.32em] text-emerald-300">
+              <p className="mt-5 text-[8px] font-black uppercase tracking-[0.32em] text-[#D4AF37]">
                 {heroSlideProduct
                   ? heroSlideProduct.category.name
                   : "Wear Your Story"}
@@ -2209,7 +2470,7 @@ export default function Home() {
 
                     {heroDiscount >
                       0 && (
-                      <span className="mb-0.5 rounded-full bg-emerald-300 px-2.5 py-1 text-[8px] font-black text-[#032116]">
+                      <span className="mb-0.5 rounded-full bg-[#D4AF37] px-2.5 py-1 text-[8px] font-black text-[#080B0D]">
                         {
                           heroDiscount
                         }
@@ -2222,7 +2483,7 @@ export default function Home() {
               {heroSlideProduct && (
                 <div className="mt-3 flex items-center gap-3 text-[8px] font-bold uppercase tracking-[0.12em] text-white/55">
                   <span className="flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
                     {heroAvailableStock} in stock
                   </span>
 
@@ -2248,10 +2509,10 @@ export default function Home() {
                     onClick={
                       openHeroProduct
                     }
-                    className="group inline-flex items-center gap-4 rounded-full bg-emerald-300 py-2 pl-5 pr-2 text-[9px] font-black uppercase tracking-[0.12em] text-[#03160f] shadow-[0_14px_35px_rgba(52,211,153,0.22)] transition active:scale-[0.97]"
+                    className="group inline-flex items-center gap-4 rounded-full bg-[#D4AF37] py-2 pl-5 pr-2 text-[9px] font-black uppercase tracking-[0.12em] text-[#03160f] shadow-[0_14px_35px_rgba(212,175,55,0.22)] transition active:scale-[0.97]"
                   >
                     Shop Now
-                    <span className="grid h-9 w-9 place-items-center rounded-full bg-[#05241a] text-base text-white transition group-hover:translate-x-0.5">
+                    <span className="grid h-9 w-9 place-items-center rounded-full bg-[#7C2732] text-base text-white transition group-hover:translate-x-0.5">
                       →
                     </span>
                   </button>
@@ -2263,7 +2524,7 @@ export default function Home() {
                         activeBanner.buttonUrl!,
                       )
                     }
-                    className="rounded-full bg-emerald-300 px-6 py-3 text-[9px] font-black uppercase tracking-[0.1em] text-[#03160f]"
+                    className="rounded-full bg-[#D4AF37] px-6 py-3 text-[9px] font-black uppercase tracking-[0.1em] text-[#03160f]"
                   >
                     {activeBanner.buttonText ||
                       "Explore"}
@@ -2350,11 +2611,11 @@ export default function Home() {
                       }
                       className={`relative w-[82px] overflow-hidden rounded-xl border text-left transition ${
                         active
-                          ? "border-emerald-300 shadow-[0_0_0_1px_rgba(110,231,183,0.32)]"
+                          ? "border-[#D4AF37] shadow-[0_0_0_1px_rgba(212,175,55,0.32)]"
                           : "border-white/15 opacity-70 hover:opacity-100"
                       }`}
                     >
-                      <div className="aspect-[4/5] bg-[#0a2018]">
+                      <div className="aspect-[4/5] bg-[#181313]">
                         {media?.type ===
                         "IMAGE" ? (
                           <img
@@ -2413,7 +2674,7 @@ export default function Home() {
                       index ===
                       heroSlideIndex %
                         heroProducts.length
-                        ? "w-8 bg-emerald-300"
+                        ? "w-8 bg-[#D4AF37]"
                         : "w-2 bg-white/35"
                     }`}
                   />
@@ -2428,106 +2689,135 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CATEGORIES */}
+      {/* DEDICATED CATEGORY IMAGE RAIL */}
       <section
         id="shop-categories"
-        className="mx-auto max-w-7xl scroll-mt-36 px-4 py-9 sm:px-6 sm:py-11 lg:px-8"
+        className="border-b border-white/[0.06] bg-[#080B0D]"
       >
-        <div className="mb-5 flex items-end justify-between gap-3">
-          <div>
-            <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-400">
-              The Runway
-            </p>
+        <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-9 lg:px-8">
+          <div className="grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-6 sm:gap-5">
+            {homeCategoryItems.map(
+              (item) => {
+                const active =
+                  selectedMenuCategoryName ===
+                  item.name;
 
-            <h2 className="mt-2 font-serif text-[1.8rem] leading-none text-white sm:text-3xl">
-              Choose your edit
-            </h2>
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() =>
+                      applyMenuCategory(
+                        item.ids,
+                        item.name,
+                      )
+                    }
+                    className="group min-w-0 text-center"
+                  >
+                    <div
+                      className={`mx-auto aspect-square w-full max-w-[92px] overflow-hidden rounded-full border-2 bg-[#171313] p-[3px] transition sm:max-w-[112px] ${
+                        active
+                          ? "border-[#D4AF37] shadow-[0_0_0_3px_rgba(124,39,50,0.38)]"
+                          : "border-[#D4AF37]/55 group-hover:border-[#D4AF37]"
+                      }`}
+                    >
+                      <div className="h-full w-full overflow-hidden rounded-full bg-[#1A1A1A]">
+                        {item.imageUrl ? (
+                          <img
+                            src={
+                              item.imageUrl
+                            }
+                            alt={
+                              item.name
+                            }
+                            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full flex-col items-center justify-center bg-[radial-gradient(circle_at_50%_25%,#7C2732_0%,#261317_45%,#0B0B0B_100%)]">
+                            <span className="font-serif text-2xl text-[#D4AF37] sm:text-3xl">
+                              AR
+                            </span>
+
+                            <span className="mt-1 max-w-[70px] truncate text-[5px] font-black uppercase tracking-[0.18em] text-white/45">
+                              {item.name}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <p
+                      className={`mt-3 truncate text-[9px] font-semibold sm:text-[10px] ${
+                        active
+                          ? "text-[#D4AF37]"
+                          : "text-[#F7F5EF]"
+                      }`}
+                    >
+                      {item.name}
+                    </p>
+                  </button>
+                );
+              },
+            )}
           </div>
-
-          <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-white/35">
-            AR · 2026
-          </p>
         </div>
+      </section>
 
-        <div className="grid grid-cols-4 gap-2 sm:gap-4">
+      {/* IMAGE 2 BENEFIT STRIP */}
+      <section className="border-y border-white/[0.055] bg-[#111112]">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-white/[0.06] px-4 sm:grid-cols-4 sm:px-6 lg:px-8">
           {[
-            ["WOMEN", "Women", "For Her"],
-            ["MEN", "Men", "For Him"],
-            ["KIDS", "Kids", "Little Ones"],
-            ["UNISEX", "Accessories", "Final Touch"],
-          ].map(([value, label, caption]) => {
-            const sampleProduct =
-              products.find(
-                (item) =>
-                  item.gender === value &&
-                  item.media.length > 0,
-              );
-
-            const sampleMedia =
-              sampleProduct?.media.find(
-                (item) =>
-                  item.type === "IMAGE",
-              ) ??
-              sampleProduct?.media[0];
-
-            const active =
-              category === value;
-
-            return (
-              <button
-                key={value}
-                type="button"
-                onClick={() =>
-                  applyGenderCategory(value)
-                }
-                className={`group overflow-hidden rounded-xl border text-left transition ${
-                  active
-                    ? "border-emerald-400 shadow-[0_0_0_1px_rgba(52,211,153,0.25)]"
-                    : "border-white/10"
-                }`}
+            [
+              "✦",
+              "Premium Quality",
+              "AR curated fashion",
+            ],
+            [
+              "▣",
+              siteSettings.codEnabled
+                ? "Cash on Delivery"
+                : "Easy Checkout",
+              siteSettings.codEnabled
+                ? "COD available"
+                : "Simple checkout",
+            ],
+            [
+              "↻",
+              "Retail + Reseller",
+              "Two shopping modes",
+            ],
+            [
+              "◉",
+              "Customer Support",
+              siteSettings.supportPhone ||
+                "AR Fashions support",
+            ],
+          ].map(
+            ([
+              icon,
+              title,
+              subtitle,
+            ]) => (
+              <div
+                key={title}
+                className="flex min-h-[82px] items-center gap-3 px-3 py-4 sm:px-5"
               >
-                <div className="relative aspect-[3/4] bg-[#0b2119]">
-                  {sampleMedia?.type === "IMAGE" ? (
-                    <img
-                      src={sampleMedia.url}
-                      alt={label}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : null}
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#D4AF37]/30 text-sm text-[#D4AF37]">
+                  {icon}
+                </span>
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
+                <div className="min-w-0">
+                  <p className="text-[8px] font-bold text-[#F7F5EF] sm:text-[9px]">
+                    {title}
+                  </p>
 
-                  <div className="absolute inset-x-0 bottom-0 p-2">
-                    <p className="font-serif text-[10px] text-white sm:text-base">
-                      {caption}
-                    </p>
-
-                    <p className="mt-0.5 text-[6px] font-black uppercase tracking-[0.12em] text-emerald-300">
-                      {label}
-                    </p>
-                  </div>
+                  <p className="mt-1 truncate text-[6px] text-white/40 sm:text-[7px]">
+                    {subtitle}
+                  </p>
                 </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="mt-5 flex items-center justify-between border-y border-white/[0.07] py-3">
-          {[
-            "New Drop",
-            "Premium",
-            mode === "RESELLER"
-              ? "Bulk Ready"
-              : "COD",
-            "AR Curated",
-          ].map((item) => (
-            <span
-              key={item}
-              className="text-[7px] font-black uppercase tracking-[0.12em] text-white/50"
-            >
-              {item}
-            </span>
-          ))}
+              </div>
+            ),
+          )}
         </div>
       </section>
 
@@ -2659,13 +2949,13 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-r from-[#e9d5bc]/95 via-[#d7bea0]/70 to-transparent" />
 
           <div className="relative z-10 flex min-h-[280px] max-w-[62%] flex-col justify-center p-5 sm:min-h-[370px] sm:p-10">
-            <p className="font-serif text-[2.25rem] leading-[0.82] tracking-[-0.05em] text-[#0a251c] sm:text-5xl">
+            <p className="font-serif text-[2.25rem] leading-[0.82] tracking-[-0.05em] text-[#1A1A1A] sm:text-5xl">
               AR
               <br />
               Edit
             </p>
 
-            <p className="mt-4 max-w-[180px] text-[8px] font-black uppercase leading-4 tracking-[0.16em] text-[#315a4c]">
+            <p className="mt-4 max-w-[180px] text-[8px] font-black uppercase leading-4 tracking-[0.16em] text-[#7C2732]">
               Fashion for
               <br />
               real people
@@ -2680,7 +2970,7 @@ export default function Home() {
                     behavior: "smooth",
                   })
               }
-              className="mt-5 w-fit rounded-full bg-[#0a251c] px-5 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] text-white"
+              className="mt-5 w-fit rounded-full bg-[#1A1A1A] px-5 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] text-white"
             >
               Discover →
             </button>
@@ -2696,12 +2986,12 @@ export default function Home() {
 
       {/* RESELLER CTA */}
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-        <div className="relative overflow-hidden rounded-[1.7rem] border border-emerald-300/15 bg-gradient-to-br from-[#0b3528] via-[#073024] to-[#031710] text-white shadow-[0_30px_70px_rgba(0,0,0,0.32)]">
-          <div className="pointer-events-none absolute right-[-60px] top-[-80px] h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
+        <div className="relative overflow-hidden rounded-[1.7rem] border border-[#D4AF37]/15 bg-gradient-to-br from-[#3A1119] via-[#211014] to-[#080B0D] text-white shadow-[0_30px_70px_rgba(0,0,0,0.32)]">
+          <div className="pointer-events-none absolute right-[-60px] top-[-80px] h-56 w-56 rounded-full bg-[#D4AF37]/10 blur-3xl" />
 
           <div className="relative grid gap-6 p-6 sm:p-9 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
             <div>
-              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-300">
+              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#D4AF37]">
                 AR Reseller Studio
               </p>
 
@@ -2778,7 +3068,7 @@ export default function Home() {
             AR
           </p>
 
-          <p className="mt-1 text-[7px] font-black uppercase tracking-[0.35em] text-emerald-300">
+          <p className="mt-1 text-[7px] font-black uppercase tracking-[0.35em] text-[#D4AF37]">
             Fashions
           </p>
 
@@ -2816,7 +3106,7 @@ export default function Home() {
       </footer>
 
       {/* MOBILE NAV */}
-      <nav className="fixed bottom-2 left-3 right-3 z-50 rounded-[1.35rem] border border-emerald-200/10 bg-[#03140e]/95 px-1 pb-1.5 pt-1 shadow-[0_18px_55px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:hidden">
+      <nav className="fixed bottom-2 left-3 right-3 z-50 rounded-[1.35rem] border border-emerald-200/10 bg-[#080B0D]/95 px-1 pb-1.5 pt-1 shadow-[0_18px_55px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:hidden">
         <div className="grid grid-cols-5 items-end">
           <button
             type="button"
@@ -2826,7 +3116,7 @@ export default function Home() {
                 behavior: "smooth",
               })
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-emerald-300"
+            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#D4AF37]"
           >
             <span className="text-lg">⌂</span>
             <span className="text-[7px] font-black">
@@ -2860,7 +3150,7 @@ export default function Home() {
             }
             className="relative flex min-h-[52px] flex-col items-center justify-center"
           >
-            <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-[4px] border-[#03140e] bg-emerald-400 font-serif text-[15px] font-black text-[#03140e] shadow-[0_0_28px_rgba(52,211,153,0.3)]">
+            <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-[4px] border-[#080B0D] bg-[#D4AF37] font-serif text-[15px] font-black text-[#080B0D] shadow-[0_0_28px_rgba(212,175,55,0.3)]">
               AR
             </span>
 

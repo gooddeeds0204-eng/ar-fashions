@@ -12,6 +12,7 @@ type CategoryItem = {
   isActive: boolean;
   parentId?: string | null;
   sortOrder?: number;
+  imageUrl?: string | null;
 
   _count?: {
     products: number;
@@ -84,6 +85,16 @@ export default function CategoriesPage() {
     editSortOrder,
     setEditSortOrder,
   ] = useState("0");
+
+  const [
+    editImageUrl,
+    setEditImageUrl,
+  ] = useState("");
+
+  const [
+    uploadingImage,
+    setUploadingImage,
+  ] = useState(false);
 
   async function loadCategories() {
     setLoading(true);
@@ -239,6 +250,11 @@ export default function CategoriesPage() {
       ),
     );
 
+    setEditImageUrl(
+      category.imageUrl ??
+        "",
+    );
+
     setMessage("");
   }
 
@@ -247,6 +263,69 @@ export default function CategoriesPage() {
     setEditName("");
     setEditParentId("");
     setEditSortOrder("0");
+    setEditImageUrl("");
+  }
+
+  async function uploadCategoryImage(
+    file: File,
+  ) {
+    setUploadingImage(true);
+    setMessage("");
+
+    try {
+      const formData =
+        new FormData();
+
+      formData.append(
+        "file",
+        file,
+      );
+
+      const response =
+        await fetch(
+          "/api/upload",
+          {
+            method: "POST",
+            credentials:
+              "same-origin",
+            body: formData,
+          },
+        );
+
+      if (
+        response.status === 401
+      ) {
+        window.location.href =
+          "/admin/login";
+        return;
+      }
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Image upload failed",
+        );
+      }
+
+      setEditImageUrl(
+        data.url ?? "",
+      );
+
+      setMessage(
+        "Category image uploaded. Save changes to apply it.",
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Image upload failed",
+      );
+    } finally {
+      setUploadingImage(false);
+    }
   }
 
   async function saveEdit(
@@ -312,6 +391,10 @@ export default function CategoriesPage() {
                   null,
 
                 sortOrder,
+
+                imageUrl:
+                  editImageUrl ||
+                  null,
               }),
           },
         );
@@ -624,6 +707,79 @@ export default function CategoriesPage() {
               }
               className="w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-amber-400"
             />
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-xl border border-[#D4AF37]/15 bg-black/20 p-4">
+          <p className="text-xs font-semibold text-[#D4AF37]">
+            Category Display Image
+          </p>
+
+          <p className="mt-1 text-[11px] text-slate-500">
+            This dedicated image is used on the storefront category circles. Product images are not used here. Recommended: square 800 × 800 px, WebP/JPG.
+          </p>
+
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <div className="h-24 w-24 overflow-hidden rounded-full border-2 border-[#D4AF37]/50 bg-slate-900">
+              {editImageUrl ? (
+                <img
+                  src={editImageUrl}
+                  alt="Category preview"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#7C2732] to-black font-serif text-xl text-[#D4AF37]">
+                  AR
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <label className="cursor-pointer rounded-lg bg-[#D4AF37] px-4 py-2 text-xs font-bold text-[#080B0D]">
+                {uploadingImage
+                  ? "Uploading..."
+                  : "Upload Image"}
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={
+                    uploadingImage
+                  }
+                  className="hidden"
+                  onChange={async (
+                    event,
+                  ) => {
+                    const file =
+                      event.target
+                        .files?.[0];
+
+                    if (file) {
+                      await uploadCategoryImage(
+                        file,
+                      );
+                    }
+
+                    event.target.value =
+                      "";
+                  }}
+                />
+              </label>
+
+              {editImageUrl && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEditImageUrl(
+                      "",
+                    )
+                  }
+                  className="rounded-lg border border-white/10 px-4 py-2 text-xs text-slate-300"
+                >
+                  Remove Image
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
