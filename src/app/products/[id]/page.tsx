@@ -69,6 +69,17 @@ type ProductReview = {
   customerName: string;
 };
 
+type ProductTransitionPreview = {
+  id: string;
+  name: string;
+  category: string;
+  image: string | null;
+  price: string | number | null;
+  mrp: string | number | null;
+  mode: "RETAIL" | "RESELLER";
+  savedAt?: number;
+};
+
 type CartItem = {
   id: string;
   productId: string;
@@ -128,6 +139,14 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [
+    transitionPreview,
+    setTransitionPreview,
+  ] =
+    useState<ProductTransitionPreview | null>(
+      null,
+    );
+
   const [selectedColorId, setSelectedColorId] = useState("");
   const [selectedSizeId, setSelectedSizeId] = useState("");
   const [selectedMedia, setSelectedMedia] = useState(0);
@@ -171,6 +190,38 @@ export default function ProductDetailPage() {
   ] = useState(0);
 
   useEffect(() => {
+    try {
+      const raw =
+        sessionStorage.getItem(
+          "ar-fashions-product-transition",
+        );
+
+      if (!raw) {
+        return;
+      }
+
+      const preview =
+        JSON.parse(
+          raw,
+        ) as ProductTransitionPreview;
+
+      if (
+        preview.id === productId
+      ) {
+        setTransitionPreview(
+          preview,
+        );
+      }
+    } catch {
+      setTransitionPreview(
+        null,
+      );
+    }
+  }, [productId]);
+
+  useEffect(() => {
+    if (!product) return;
+
     async function resolveSalesAccess() {
       try {
         const [
@@ -252,7 +303,7 @@ export default function ProductDetailPage() {
     }
 
     resolveSalesAccess();
-  }, []);
+  }, [product?.id]);
 
   useEffect(() => {
     async function loadProduct() {
@@ -275,6 +326,14 @@ export default function ProductDetailPage() {
         }
 
         setProduct(data);
+
+        try {
+          sessionStorage.removeItem(
+            "ar-fashions-product-transition",
+          );
+        } catch {
+          // Ignore storage cleanup errors.
+        }
 
         const firstVariant = data.variants?.find(
           (item: Variant) => item.stock > 0,
@@ -303,6 +362,8 @@ export default function ProductDetailPage() {
   }, [productId]);
 
   useEffect(() => {
+    if (!product) return;
+
     async function loadWishlistState() {
       try {
         const userId =
@@ -338,9 +399,11 @@ export default function ProductDetailPage() {
     }
 
     loadWishlistState();
-  }, [productId]);
+  }, [product?.id, productId]);
 
   useEffect(() => {
+    if (!product) return;
+
     async function loadReviews() {
       try {
         const response =
@@ -385,7 +448,7 @@ export default function ProductDetailPage() {
     if (productId) {
       loadReviews();
     }
-  }, [productId]);
+  }, [product?.id, productId]);
 
   async function toggleWishlist() {
     if (wishlistLoading || !product) return;
@@ -1073,11 +1136,151 @@ export default function ProductDetailPage() {
   }
 
   if (loading) {
+    const previewPrice =
+      transitionPreview?.price ??
+      null;
+
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f7f7f5]">
-        <div className="text-sm font-semibold text-zinc-500">
-          Loading product...
-        </div>
+      <main className="min-h-screen bg-[#080B0D] text-[#F7F5EF]">
+        <header className="border-b border-[#D4AF37]/10 bg-[#080B0D]">
+          <div className="mx-auto flex h-[68px] max-w-7xl items-center px-5">
+            <button
+              type="button"
+              onClick={() =>
+                router.back()
+              }
+              className="grid h-9 w-9 place-items-center rounded-full border border-white/10 text-sm text-white"
+            >
+              ←
+            </button>
+
+            <div className="ml-4">
+              <p className="font-serif text-[28px] leading-none text-[#D4AF37]">
+                AR
+              </p>
+
+              <p className="mt-1 text-[5px] font-black uppercase tracking-[0.4em] text-[#D4AF37]">
+                Fashions
+              </p>
+            </div>
+
+            <p className="ml-auto text-[7px] font-black uppercase tracking-[0.18em] text-white/35">
+              Product View
+            </p>
+          </div>
+        </header>
+
+        <section className="mx-auto grid min-h-[calc(100vh-68px)] max-w-5xl items-center gap-7 px-5 py-8 sm:grid-cols-2 sm:px-8">
+          <div className="relative mx-auto w-full max-w-[430px] overflow-hidden rounded-[1.8rem] border border-white/10 bg-[#171313] shadow-[0_28px_80px_rgba(0,0,0,0.45)]">
+            <div className="aspect-[4/5]">
+              {transitionPreview?.image ? (
+                <img
+                  src={
+                    transitionPreview.image
+                  }
+                  alt={
+                    transitionPreview.name
+                  }
+                  className="h-full w-full scale-[1.02] object-cover opacity-80"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_50%_28%,#7C2732_0%,#241418_38%,#080B0D_100%)]">
+                  <div className="text-center">
+                    <p className="font-serif text-6xl text-[#D4AF37]">
+                      AR
+                    </p>
+
+                    <p className="mt-3 text-[7px] font-black uppercase tracking-[0.35em] text-white/35">
+                      Your Style Is Loading
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent" />
+
+            <div className="absolute inset-x-0 bottom-0 p-5">
+              <span className="rounded-full border border-[#D4AF37]/25 bg-black/40 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.15em] text-[#D4AF37] backdrop-blur">
+                Opening your selection
+              </span>
+
+              <h1 className="mt-4 font-serif text-[2rem] leading-[0.95] text-white">
+                {transitionPreview?.name ||
+                  "AR Fashions Product"}
+              </h1>
+
+              {transitionPreview?.category && (
+                <p className="mt-2 text-[9px] uppercase tracking-[0.16em] text-white/45">
+                  {
+                    transitionPreview.category
+                  }
+                </p>
+              )}
+
+              {previewPrice !== null && (
+                <p className="mt-3 text-xl font-black text-[#D4AF37]">
+                  {money(
+                    previewPrice,
+                  )}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="pb-6 sm:pb-0">
+            <p className="text-[8px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">
+              AR Fashions
+            </p>
+
+            <h2 className="mt-3 font-serif text-3xl leading-tight sm:text-5xl">
+              {transitionPreview?.name
+                ? `Getting ${transitionPreview.name} ready`
+                : "Preparing your product"}
+            </h2>
+
+            <p className="mt-4 max-w-md text-sm leading-6 text-white/45">
+              Loading the latest sizes,
+              colours, stock and purchase
+              options for you.
+            </p>
+
+            <div className="mt-8 space-y-3">
+              {[
+                "Checking available stock",
+                "Preparing size & colour options",
+                "Getting checkout ready",
+              ].map(
+                (text, index) => (
+                  <div
+                    key={text}
+                    className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.025] px-4 py-3"
+                  >
+                    <span
+                      className={`h-2 w-2 rounded-full bg-[#D4AF37] ${
+                        index === 0
+                          ? "animate-pulse"
+                          : "opacity-40"
+                      }`}
+                    />
+
+                    <span className="text-[10px] font-semibold text-white/55">
+                      {text}
+                    </span>
+                  </div>
+                ),
+              )}
+            </div>
+
+            <div className="mt-7 h-1 overflow-hidden rounded-full bg-white/[0.06]">
+              <div className="h-full w-2/3 animate-pulse rounded-full bg-gradient-to-r from-[#7C2732] to-[#D4AF37]" />
+            </div>
+
+            <p className="mt-3 text-[8px] uppercase tracking-[0.15em] text-white/25">
+              Almost there · AR Fashions
+            </p>
+          </div>
+        </section>
       </main>
     );
   }

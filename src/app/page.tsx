@@ -131,6 +131,32 @@ type Reel = {
 };
 
 type Mode = "RETAIL" | "RESELLER";
+type ProductTransitionPreview = {
+  id: string;
+  name: string;
+  category: string;
+  image: string | null;
+  price: string | number | null;
+  mrp: string | number | null;
+  mode: Mode;
+};
+
+function saveProductTransitionPreview(
+  preview: ProductTransitionPreview,
+) {
+  try {
+    sessionStorage.setItem(
+      "ar-fashions-product-transition",
+      JSON.stringify({
+        ...preview,
+        savedAt: Date.now(),
+      }),
+    );
+  } catch {
+    // Navigation still works if storage is unavailable.
+  }
+}
+
 
 type PublicSiteSettings = {
   storeName: string;
@@ -333,7 +359,36 @@ function ProductCard({
 
   return (
     <article
-      onClick={() => router.push(`/products/${product.id}?mode=${mode.toLowerCase()}`)}
+      onClick={() => {
+        saveProductTransitionPreview({
+          id: product.id,
+          name: product.name,
+          category:
+            product.category.name,
+          image:
+            media?.type === "IMAGE"
+              ? media.url
+              : media?.thumbnailUrl ??
+                null,
+          price,
+          mrp: product.mrp,
+          mode,
+        });
+
+        router.push(
+          `/products/${product.id}?mode=${mode.toLowerCase()}`,
+        );
+      }}
+      onPointerEnter={() =>
+        router.prefetch(
+          `/products/${product.id}?mode=${mode.toLowerCase()}`,
+        )
+      }
+      onTouchStart={() =>
+        router.prefetch(
+          `/products/${product.id}?mode=${mode.toLowerCase()}`,
+        )
+      }
       className="group min-w-0 cursor-pointer overflow-hidden bg-transparent transition duration-300 active:scale-[0.985]"
     >
       <div className="relative aspect-[3/4] overflow-hidden rounded-[1rem] border border-white/10 bg-[#171313] shadow-[0_14px_34px_rgba(0,0,0,0.25)]">
@@ -647,9 +702,31 @@ function FashionReelsSection({
   function openProduct(
     reel: Reel,
   ) {
-    router.push(
-      `/products/${reel.product.id}?mode=${mode.toLowerCase()}`,
-    );
+    const price =
+      mode === "RESELLER" &&
+      reel.product.resellerPrice !==
+        null
+        ? reel.product.resellerPrice
+        : reel.product.retailPrice;
+
+    saveProductTransitionPreview({
+      id: reel.product.id,
+      name: reel.product.name,
+      category: "AR Featured Look",
+      image:
+        reel.product.image ??
+        reel.thumbnailUrl ??
+        null,
+      price,
+      mrp: null,
+      mode,
+    });
+
+    const href =
+      `/products/${reel.product.id}?mode=${mode.toLowerCase()}`;
+
+    router.prefetch(href);
+    router.push(href);
   }
 
   return (
@@ -1192,14 +1269,19 @@ export default function Home() {
       }
     }
 
-    loadReels();
+    const timer =
+      window.setTimeout(
+        loadReels,
+        500,
+      );
+
+    return () =>
+      window.clearTimeout(
+        timer,
+      );
   }, []);
 
   useEffect(() => {
-    ensureUserSession().catch((error) => {
-      console.error("Session bridge failed:", error);
-    });
-
     async function loadProducts() {
       try {
         const response = await fetch("/api/products");
@@ -1263,7 +1345,16 @@ export default function Home() {
       }
     }
 
-    loadHomeSections();
+    const sectionsTimer =
+      window.setTimeout(
+        loadHomeSections,
+        450,
+      );
+
+    return () =>
+      window.clearTimeout(
+        sectionsTimer,
+      );
   }, []);
 
   useEffect(() => {
@@ -1313,10 +1404,17 @@ export default function Home() {
       }
     }
 
-    loadHeroBanners();
+    const bannerTimer =
+      window.setTimeout(
+        loadHeroBanners,
+        550,
+      );
 
     return () => {
       cancelled = true;
+      window.clearTimeout(
+        bannerTimer,
+      );
     };
   }, [mode]);
 
@@ -1619,9 +1717,27 @@ export default function Home() {
       return;
     }
 
-    router.push(
-      `/products/${heroSlideProduct.id}?mode=${mode.toLowerCase()}`,
-    );
+    saveProductTransitionPreview({
+      id: heroSlideProduct.id,
+      name: heroSlideProduct.name,
+      category:
+        heroSlideProduct.category.name,
+      image:
+        heroSlideMedia?.type ===
+        "IMAGE"
+          ? heroSlideMedia.url
+          : heroSlideMedia?.thumbnailUrl ??
+            null,
+      price: heroSlidePrice,
+      mrp: heroSlideProduct.mrp,
+      mode,
+    });
+
+    const href =
+      `/products/${heroSlideProduct.id}?mode=${mode.toLowerCase()}`;
+
+    router.prefetch(href);
+    router.push(href);
   }
 
   const featured = visibleProducts.filter(
@@ -2765,12 +2881,48 @@ export default function Home() {
       />
 
       {loading ? (
-        <section className="mx-auto max-w-7xl px-4 py-20 text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-emerald-500" />
+        <section
+          aria-busy="true"
+          className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8"
+        >
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-[8px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">
+                AR Fashions
+              </p>
 
-          <p className="mt-4 text-sm text-zinc-400">
-            Loading AR Fashions...
-          </p>
+              <h2 className="mt-2 font-serif text-[1.9rem] text-[#F7F5EF]">
+                Preparing your latest styles
+              </h2>
+
+              <p className="mt-2 text-[10px] text-white/40">
+                New arrivals are coming into view...
+              </p>
+            </div>
+
+            <div className="flex gap-1.5">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#D4AF37]" />
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#D4AF37]/60" />
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#D4AF37]/30" />
+            </div>
+          </div>
+
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[0, 1, 2, 3].map(
+              (item) => (
+                <div
+                  key={item}
+                  className="overflow-hidden rounded-[1rem]"
+                >
+                  <div className="aspect-[3/4] animate-pulse rounded-[1rem] border border-white/[0.06] bg-gradient-to-br from-[#241418] via-[#151515] to-[#0B0B0B]" />
+
+                  <div className="mt-3 h-2 w-16 animate-pulse rounded-full bg-[#D4AF37]/15" />
+                  <div className="mt-2 h-3 w-4/5 animate-pulse rounded-full bg-white/10" />
+                  <div className="mt-2 h-3 w-1/3 animate-pulse rounded-full bg-white/[0.07]" />
+                </div>
+              ),
+            )}
+          </div>
         </section>
       ) : (
         <>
