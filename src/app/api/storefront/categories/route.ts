@@ -8,6 +8,30 @@ export async function GET() {
         where: {
           parentId: null,
           isActive: true,
+
+          OR: [
+            {
+              products: {
+                some: {
+                  status: "ACTIVE",
+                },
+              },
+            },
+
+            {
+              children: {
+                some: {
+                  isActive: true,
+
+                  products: {
+                    some: {
+                      status: "ACTIVE",
+                    },
+                  },
+                },
+              },
+            },
+          ],
         },
 
         orderBy: [
@@ -24,6 +48,12 @@ export async function GET() {
           children: {
             where: {
               isActive: true,
+
+              products: {
+                some: {
+                  status: "ACTIVE",
+                },
+              },
             },
 
             orderBy: [
