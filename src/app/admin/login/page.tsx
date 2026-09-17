@@ -2,6 +2,7 @@
 
 import {
   FormEvent,
+  Suspense,
   useState,
 } from "react";
 import {
@@ -9,7 +10,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 
-export default function AdminLoginPage() {
+function AdminLoginContent() {
   const router = useRouter();
   const searchParams =
     useSearchParams();
@@ -176,5 +177,19 @@ export default function AdminLoginPage() {
         </form>
       </section>
     </main>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-[#f6f7f9] p-4 text-[#172033]">
+          <div className="h-9 w-9 animate-spin rounded-full border-2 border-zinc-200 border-t-emerald-600" />
+        </main>
+      }
+    >
+      <AdminLoginContent />
+    </Suspense>
   );
 }
