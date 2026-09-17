@@ -102,7 +102,7 @@ export default function ResellerStatusPage() {
     isReseller
       ? "APPROVED"
       : application?.status ??
-        "PENDING";
+        "NONE";
 
   return (
     <main className="min-h-screen bg-[#03140e] px-4 py-6 text-white">
@@ -223,12 +223,47 @@ export default function ResellerStatusPage() {
                   type="button"
                   onClick={() =>
                     router.push(
-                      "/signup",
+                      "/reseller-apply",
                     )
                   }
                   className="mt-7 w-full rounded-2xl bg-white py-4 text-[10px] font-black uppercase tracking-wider text-[#03140e]"
                 >
                   Update Registration →
+                </button>
+              </div>
+            ) : status ===
+              "NONE" ? (
+              <div className="rounded-[2rem] border border-[#D4AF37]/20 bg-gradient-to-br from-[#D4AF37]/10 to-white/[0.03] p-7">
+                <div className="grid h-14 w-14 place-items-center rounded-full bg-[#D4AF37] font-serif text-xl text-[#03140e]">
+                  AR
+                </div>
+
+                <p className="mt-6 text-[9px] font-black uppercase tracking-[0.25em] text-[#D4AF37]">
+                  AR Fashions Wholesale
+                </p>
+
+                <h1 className="mt-3 font-serif text-4xl leading-none">
+                  Become an
+                  <br />
+                  AR reseller.
+                </h1>
+
+                <p className="mt-4 text-sm leading-6 text-white/45">
+                  Apply using your existing customer account.
+                  After approval, reseller pricing, MOQ ordering
+                  and curated wholesale sets will unlock.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(
+                      "/reseller-apply",
+                    )
+                  }
+                  className="mt-7 w-full rounded-2xl bg-[#D4AF37] py-4 text-[10px] font-black uppercase tracking-wider text-[#03140e]"
+                >
+                  Start Reseller Application →
                 </button>
               </div>
             ) : (

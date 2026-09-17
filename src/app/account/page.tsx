@@ -184,6 +184,16 @@ export default function AccountPage() {
     useState<Profile | null>(null);
 
   const [
+    resellerApplicationStatus,
+    setResellerApplicationStatus,
+  ] = useState<
+    "NONE" |
+    "PENDING" |
+    "APPROVED" |
+    "REJECTED"
+  >("NONE");
+
+  const [
     editProfileOpen,
     setEditProfileOpen,
   ] = useState(false);
@@ -266,6 +276,62 @@ export default function AccountPage() {
     }
 
     void loadProfile();
+  }, []);
+
+  useEffect(() => {
+    async function loadResellerApplicationStatus() {
+      try {
+        const response =
+          await fetch(
+            "/api/reseller-application",
+            {
+              cache: "no-store",
+              credentials:
+                "same-origin",
+            },
+          );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        if (
+          data.isReseller === true
+        ) {
+          setResellerApplicationStatus(
+            "APPROVED",
+          );
+          return;
+        }
+
+        const status =
+          data.application?.status;
+
+        if (
+          status === "PENDING" ||
+          status === "APPROVED" ||
+          status === "REJECTED"
+        ) {
+          setResellerApplicationStatus(
+            status,
+          );
+        } else {
+          setResellerApplicationStatus(
+            "NONE",
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Reseller application status load failed:",
+          error,
+        );
+      }
+    }
+
+    void loadResellerApplicationStatus();
   }, []);
 
   useEffect(() => {
@@ -1145,18 +1211,47 @@ export default function AccountPage() {
 
                 <button
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
+                    if (
+                      profile?.isReseller ||
+                      resellerApplicationStatus ===
+                        "APPROVED"
+                    ) {
+                      router.push(
+                        "/reseller-sets",
+                      );
+                      return;
+                    }
+
+                    if (
+                      resellerApplicationStatus ===
+                        "PENDING" ||
+                      resellerApplicationStatus ===
+                        "REJECTED"
+                    ) {
+                      router.push(
+                        "/reseller-status",
+                      );
+                      return;
+                    }
+
                     router.push(
-                      profile?.isReseller
-                        ? "/reseller-dashboard"
-                        : "/",
-                    )
-                  }
+                      "/reseller-apply",
+                    );
+                  }}
                   className="shrink-0 rounded-full bg-[#D4AF37] px-4 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] text-black"
                 >
-                  {profile?.isReseller
-                    ? "Open"
-                    : "Explore"}
+                  {profile?.isReseller ||
+                  resellerApplicationStatus ===
+                    "APPROVED"
+                    ? "Open Wholesale"
+                    : resellerApplicationStatus ===
+                        "PENDING"
+                      ? "Check Status"
+                      : resellerApplicationStatus ===
+                          "REJECTED"
+                        ? "Review"
+                        : "Become a Reseller"}
                 </button>
               </div>
             </section>
