@@ -649,21 +649,27 @@ enum ResellerApplicationStatus {
 }
 
 model ResellerApplication {
-  id              String                    @id @default(cuid())
-  userId          String                    @unique
-  businessName    String
-  businessPhone   String?
-  gstNumber       String?
-  addressLine     String?
-  city            String
-  state           String
-  pincode         String?
-  mapsUrl         String?
-  status          ResellerApplicationStatus @default(PENDING)
-  rejectionReason String?
-  reviewedAt      DateTime?
-  createdAt       DateTime                  @default(now())
-  updatedAt       DateTime                  @updatedAt
+  id                 String                    @id @default(cuid())
+  userId             String                    @unique
+  businessName       String
+  businessPhone      String?
+  gstNumber          String?
+  addressLine        String?
+  city               String
+  state              String
+  pincode            String?
+  mapsUrl            String?
+  latitude           Float?
+  longitude          Float?
+  locationAccuracy   Float?
+  locationCapturedAt DateTime?
+  visitingCardUrl    String?
+  shopPhotoUrls      String[]                  @default([])
+  status             ResellerApplicationStatus @default(PENDING)
+  rejectionReason    String?
+  reviewedAt         DateTime?
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -682,7 +688,7 @@ model ApiRateLimit {
 }
 
 model Supplier {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
   contactName String?
   phone       String?
@@ -699,9 +705,9 @@ model Supplier {
   minimumOrderQty   Int     @default(1)
   minimumOrderValue Decimal @default(0) @db.Decimal(12, 2)
 
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   purchaseOrders PurchaseOrder[]
 

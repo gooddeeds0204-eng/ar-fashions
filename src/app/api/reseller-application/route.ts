@@ -16,6 +16,24 @@ function cleanString(
   ).trim();
 }
 
+function validVerificationImageUrl(
+  value: string,
+) {
+  try {
+    const url =
+      new URL(value);
+
+    return (
+      url.protocol === "https:" &&
+      url.hostname.endsWith(
+        ".blob.vercel-storage.com",
+      )
+    );
+  } catch {
+    return false;
+  }
+}
+
 function validEmail(
   value: string,
 ) {
@@ -152,10 +170,42 @@ export async function POST(
         body.pincode,
       );
 
-    const mapsUrl =
-      cleanString(
-        body.mapsUrl,
+    const latitude =
+      Number(
+        body.latitude,
       );
+
+    const longitude =
+      Number(
+        body.longitude,
+      );
+
+    const locationAccuracy =
+      body.locationAccuracy ===
+      null ||
+      body.locationAccuracy ===
+      undefined ||
+      body.locationAccuracy ===
+      ""
+        ? null
+        : Number(
+            body.locationAccuracy,
+          );
+
+    const visitingCardUrl =
+      cleanString(
+        body.visitingCardUrl,
+      );
+
+    const shopPhotoUrls: string[] =
+      Array.isArray(
+        body.shopPhotoUrls,
+      )
+        ? body.shopPhotoUrls
+            .map(cleanString)
+            .filter(Boolean)
+            .slice(0, 3)
+        : [];
 
     if (
       !email ||
@@ -245,15 +295,79 @@ export async function POST(
     }
 
     if (
-      mapsUrl &&
-      !/^https?:\/\//i.test(
-        mapsUrl,
+      !Number.isFinite(
+        latitude,
+      ) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      !Number.isFinite(
+        longitude,
+      ) ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Please capture your live shop location.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (
+      locationAccuracy !== null &&
+      (
+        !Number.isFinite(
+          locationAccuracy,
+        ) ||
+        locationAccuracy < 0
       )
     ) {
       return NextResponse.json(
         {
           error:
-            "Enter a valid Google Maps location link.",
+            "Invalid location accuracy.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (
+      !visitingCardUrl ||
+      !validVerificationImageUrl(
+        visitingCardUrl,
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Visiting card photo is required.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (
+      shopPhotoUrls.length < 1 ||
+      shopPhotoUrls.length > 3 ||
+      shopPhotoUrls.some(
+        (url) =>
+          !validVerificationImageUrl(
+            url,
+          ),
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Upload 1 to 3 valid shop photos.",
         },
         {
           status: 400,
@@ -374,8 +488,14 @@ export async function POST(
               state,
               pincode,
               mapsUrl:
-                mapsUrl ||
                 null,
+              latitude,
+              longitude,
+              locationAccuracy,
+              locationCapturedAt:
+                new Date(),
+              visitingCardUrl,
+              shopPhotoUrls,
               status:
                 "PENDING",
             },
@@ -391,8 +511,14 @@ export async function POST(
               state,
               pincode,
               mapsUrl:
-                mapsUrl ||
                 null,
+              latitude,
+              longitude,
+              locationAccuracy,
+              locationCapturedAt:
+                new Date(),
+              visitingCardUrl,
+              shopPhotoUrls,
               status:
                 "PENDING",
               rejectionReason:

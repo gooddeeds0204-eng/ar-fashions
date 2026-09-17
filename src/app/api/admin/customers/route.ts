@@ -49,6 +49,12 @@ export async function GET() {
               state: true,
               pincode: true,
               mapsUrl: true,
+              latitude: true,
+              longitude: true,
+              locationAccuracy: true,
+              locationCapturedAt: true,
+              visitingCardUrl: true,
+              shopPhotoUrls: true,
               status: true,
               rejectionReason: true,
               reviewedAt: true,
@@ -155,6 +161,24 @@ export async function GET() {
 
                   mapsUrl:
                     user.resellerApplication.mapsUrl,
+
+                  latitude:
+                    user.resellerApplication.latitude,
+
+                  longitude:
+                    user.resellerApplication.longitude,
+
+                  locationAccuracy:
+                    user.resellerApplication.locationAccuracy,
+
+                  locationCapturedAt:
+                    user.resellerApplication.locationCapturedAt,
+
+                  visitingCardUrl:
+                    user.resellerApplication.visitingCardUrl,
+
+                  shopPhotoUrls:
+                    user.resellerApplication.shopPhotoUrls,
 
                   status:
                     user.resellerApplication.status,
@@ -506,6 +530,12 @@ export async function PATCH(
               state: true,
               pincode: true,
               mapsUrl: true,
+              latitude: true,
+              longitude: true,
+              locationAccuracy: true,
+              locationCapturedAt: true,
+              visitingCardUrl: true,
+              shopPhotoUrls: true,
               status: true,
               rejectionReason: true,
               reviewedAt: true,

@@ -40,6 +40,12 @@ type Customer = {
     state: string;
     pincode: string | null;
     mapsUrl: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    locationAccuracy: number | null;
+    locationCapturedAt: string | null;
+    visitingCardUrl: string | null;
+    shopPhotoUrls: string[];
     status:
       | "PENDING"
       | "APPROVED"
@@ -646,6 +652,97 @@ export default function AdminCustomersPage() {
                           </p>
                         </div>
                       </div>
+
+                      {(application.visitingCardUrl ||
+                        application.shopPhotoUrls?.length >
+                          0) ? (
+                        <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+                          <p className="text-[8px] font-black uppercase tracking-wider text-zinc-400">
+                            Verification Photos
+                          </p>
+
+                          {application.visitingCardUrl ? (
+                            <div className="mt-3">
+                              <p className="mb-2 text-[9px] font-black text-zinc-600">
+                                Visiting Card
+                              </p>
+
+                              <a
+                                href={
+                                  application.visitingCardUrl
+                                }
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <img
+                                  src={
+                                    application.visitingCardUrl
+                                  }
+                                  alt="Visiting card"
+                                  className="h-32 w-full rounded-xl border border-zinc-200 object-cover"
+                                />
+                              </a>
+                            </div>
+                          ) : null}
+
+                          {application.shopPhotoUrls?.length >
+                          0 ? (
+                            <div className="mt-3">
+                              <p className="mb-2 text-[9px] font-black text-zinc-600">
+                                Shop Photos
+                              </p>
+
+                              <div className="grid grid-cols-3 gap-2">
+                                {application.shopPhotoUrls.map(
+                                  (
+                                    url,
+                                    index,
+                                  ) => (
+                                    <a
+                                      key={url}
+                                      href={url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                    >
+                                      <img
+                                        src={url}
+                                        alt={`Shop ${
+                                          index + 1
+                                        }`}
+                                        className="aspect-square w-full rounded-lg border border-zinc-200 object-cover"
+                                      />
+                                    </a>
+                                  ),
+                                )}
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      {application.latitude !==
+                        null &&
+                      application.longitude !==
+                        null ? (
+                        <div className="mt-3 overflow-hidden rounded-xl border border-emerald-200 bg-white">
+                          <iframe
+                            title="Verified shop location"
+                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${application.longitude - 0.004}%2C${application.latitude - 0.004}%2C${application.longitude + 0.004}%2C${application.latitude + 0.004}&layer=mapnik&marker=${application.latitude}%2C${application.longitude}`}
+                            className="h-44 w-full border-0"
+                            loading="lazy"
+                          />
+
+                          <div className="px-3 py-2 text-[9px] font-semibold text-emerald-700">
+                            Live shop location captured
+                            {application.locationAccuracy !==
+                            null
+                              ? ` · ~${Math.round(
+                                  application.locationAccuracy,
+                                )}m accuracy`
+                              : ""}
+                          </div>
+                        </div>
+                      ) : null}
 
                       {application.mapsUrl ? (
                         <a

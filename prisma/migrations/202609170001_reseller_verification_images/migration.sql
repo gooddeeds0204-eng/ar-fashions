@@ -1,0 +1,3 @@
+ALTER TABLE "ResellerApplication"
+ADD COLUMN IF NOT EXISTS "visitingCardUrl" TEXT,
+ADD COLUMN IF NOT EXISTS "shopPhotoUrls" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];

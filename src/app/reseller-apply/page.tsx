@@ -16,7 +16,11 @@ type ExistingApplication = {
   city?: string;
   state?: string;
   pincode?: string;
-  mapsUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  locationAccuracy?: number | null;
+  visitingCardUrl?: string | null;
+  shopPhotoUrls?: string[];
   status?: string;
 };
 
@@ -39,8 +43,45 @@ export default function ResellerApplyPage() {
     useState("");
   const [pincode, setPincode] =
     useState("");
-  const [mapsUrl, setMapsUrl] =
-    useState("");
+  const [latitude, setLatitude] =
+    useState<number | null>(null);
+
+  const [longitude, setLongitude] =
+    useState<number | null>(null);
+
+  const [
+    locationAccuracy,
+    setLocationAccuracy,
+  ] = useState<number | null>(
+    null,
+  );
+
+  const [
+    locationStatus,
+    setLocationStatus,
+  ] = useState<
+    "IDLE" |
+    "LOADING" |
+    "SUCCESS" |
+    "ERROR"
+  >("IDLE");
+
+  const [
+    visitingCardUrl,
+    setVisitingCardUrl,
+  ] = useState("");
+
+  const [
+    shopPhotoUrls,
+    setShopPhotoUrls,
+  ] = useState<string[]>([]);
+
+  const [
+    uploadingDocument,
+    setUploadingDocument,
+  ] = useState<
+    "" | "CARD" | "SHOP"
+  >("");
 
   const [loading, setLoading] =
     useState(true);
@@ -141,8 +182,38 @@ export default function ResellerApplyPage() {
           setPincode(
             application.pincode ?? "",
           );
-          setMapsUrl(
-            application.mapsUrl ?? "",
+          if (
+            typeof application.latitude ===
+              "number" &&
+            typeof application.longitude ===
+              "number"
+          ) {
+            setLatitude(
+              application.latitude,
+            );
+            setLongitude(
+              application.longitude,
+            );
+            setLocationAccuracy(
+              application.locationAccuracy ??
+                null,
+            );
+            setLocationStatus(
+              "SUCCESS",
+            );
+          }
+
+          setVisitingCardUrl(
+            application.visitingCardUrl ??
+              "",
+          );
+
+          setShopPhotoUrls(
+            Array.isArray(
+              application.shopPhotoUrls,
+            )
+              ? application.shopPhotoUrls
+              : [],
           );
         }
       } catch {
@@ -156,6 +227,218 @@ export default function ResellerApplyPage() {
 
     void load();
   }, [router]);
+
+  async function uploadVerificationImage(
+    file: File,
+    kind:
+      | "VISITING_CARD"
+      | "SHOP_PHOTO",
+  ) {
+    if (
+      ![
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+      ].includes(file.type)
+    ) {
+      throw new Error(
+        "JPG, PNG లేదా WebP image మాత్రమే upload చేయండి.",
+      );
+    }
+
+    if (
+      file.size >
+      5 * 1024 * 1024
+    ) {
+      throw new Error(
+        "Image 5MB కంటే తక్కువ ఉండాలి.",
+      );
+    }
+
+    const formData =
+      new FormData();
+
+    formData.append(
+      "file",
+      file,
+    );
+
+    formData.append(
+      "kind",
+      kind,
+    );
+
+    const response =
+      await fetch(
+        "/api/reseller-upload",
+        {
+          method: "POST",
+          credentials:
+            "same-origin",
+          body: formData,
+        },
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ??
+          "Image upload failed.",
+      );
+    }
+
+    return String(
+      data.url ?? "",
+    );
+  }
+
+  async function uploadVisitingCard(
+    file: File,
+  ) {
+    try {
+      setError("");
+      setUploadingDocument(
+        "CARD",
+      );
+
+      const url =
+        await uploadVerificationImage(
+          file,
+          "VISITING_CARD",
+        );
+
+      setVisitingCardUrl(
+        url,
+      );
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Visiting card upload failed.",
+      );
+    } finally {
+      setUploadingDocument("");
+    }
+  }
+
+  async function uploadShopPhotos(
+    files: FileList,
+  ) {
+    try {
+      setError("");
+
+      const available =
+        3 -
+        shopPhotoUrls.length;
+
+      const selected =
+        Array.from(files).slice(
+          0,
+          available,
+        );
+
+      if (
+        selected.length === 0
+      ) {
+        return;
+      }
+
+      setUploadingDocument(
+        "SHOP",
+      );
+
+      const urls: string[] =
+        [];
+
+      for (
+        const file of selected
+      ) {
+        urls.push(
+          await uploadVerificationImage(
+            file,
+            "SHOP_PHOTO",
+          ),
+        );
+      }
+
+      setShopPhotoUrls(
+        (current) =>
+          [
+            ...current,
+            ...urls,
+          ].slice(0, 3),
+      );
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Shop photo upload failed.",
+      );
+    } finally {
+      setUploadingDocument("");
+    }
+  }
+
+  function captureLiveLocation() {
+    setError("");
+
+    if (
+      typeof navigator ===
+        "undefined" ||
+      !navigator.geolocation
+    ) {
+      setLocationStatus(
+        "ERROR",
+      );
+      setError(
+        "Location is not supported on this device.",
+      );
+      return;
+    }
+
+    setLocationStatus(
+      "LOADING",
+    );
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(
+          position.coords.latitude,
+        );
+
+        setLongitude(
+          position.coords.longitude,
+        );
+
+        setLocationAccuracy(
+          position.coords.accuracy ??
+            null,
+        );
+
+        setLocationStatus(
+          "SUCCESS",
+        );
+      },
+
+      () => {
+        setLocationStatus(
+          "ERROR",
+        );
+
+        setError(
+          "Location permission allow చేసి, shop location వద్ద మళ్లీ try చేయండి.",
+        );
+      },
+
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      },
+    );
+  }
 
   async function submit(
     event: FormEvent,
@@ -186,7 +469,11 @@ export default function ResellerApplyPage() {
               city,
               state,
               pincode,
-              mapsUrl,
+              latitude,
+              longitude,
+              locationAccuracy,
+              visitingCardUrl,
+              shopPhotoUrls,
             }),
           },
         );
@@ -384,16 +671,271 @@ export default function ResellerApplyPage() {
               className={inputClass}
             />
 
-            <input
-              value={mapsUrl}
-              onChange={(event) =>
-                setMapsUrl(
-                  event.target.value,
-                )
-              }
-              placeholder="Google Maps link (optional)"
-              className={inputClass}
-            />
+            <div className="rounded-[1.2rem] border border-[#D4AF37]/25 bg-[#D4AF37]/[0.04] p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#D4AF37]">
+                    Live Shop Location *
+                  </p>
+
+                  <p className="mt-1 text-[9px] leading-4 text-white/35">
+                    Shop location వద్ద ఉండి current location capture చేయండి.
+                  </p>
+                </div>
+
+                {locationStatus ===
+                "SUCCESS" ? (
+                  <span className="rounded-full bg-emerald-400 px-2.5 py-1 text-[8px] font-black text-black">
+                    CAPTURED
+                  </span>
+                ) : null}
+              </div>
+
+              {latitude !== null &&
+              longitude !== null ? (
+                <div className="mt-4 overflow-hidden rounded-[1rem] border border-white/10 bg-black">
+                  <iframe
+                    title="Shop live location"
+                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${longitude - 0.004}%2C${latitude - 0.004}%2C${longitude + 0.004}%2C${latitude + 0.004}&layer=mapnik&marker=${latitude}%2C${longitude}`}
+                    className="h-52 w-full border-0"
+                    loading="lazy"
+                  />
+
+                  <div className="border-t border-white/10 px-3 py-2.5">
+                    <p className="text-[8px] font-semibold text-white/45">
+                      Location captured
+                      {locationAccuracy !==
+                      null
+                        ? ` · Accuracy ~${Math.round(
+                            locationAccuracy,
+                          )}m`
+                        : ""}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+
+              {locationStatus ===
+              "LOADING" ? (
+                <div className="mt-3 rounded-xl bg-white/[0.04] p-3 text-[9px] text-white/55">
+                  📍 Getting live location...
+                </div>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={
+                  captureLiveLocation
+                }
+                disabled={
+                  locationStatus ===
+                  "LOADING"
+                }
+                className="mt-3 w-full rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 py-3 text-[9px] font-black uppercase tracking-wider text-[#D4AF37] disabled:opacity-40"
+              >
+                {locationStatus ===
+                "SUCCESS"
+                  ? "↻ Update Live Location"
+                  : "◎ Use Current Shop Location"}
+              </button>
+            </div>
+
+            <div className="rounded-[1.2rem] border border-white/10 bg-white/[0.03] p-4">
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#D4AF37]">
+                Verification Photos
+              </p>
+
+              <p className="mt-1 text-[9px] leading-4 text-white/35">
+                Visiting card + actual shop photos upload చేయండి.
+              </p>
+
+              {/* VISITING CARD */}
+              <div className="mt-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-[9px] font-black text-white/70">
+                    Visiting Card *
+                  </p>
+
+                  {visitingCardUrl ? (
+                    <span className="text-[8px] font-black text-emerald-400">
+                      ✓ UPLOADED
+                    </span>
+                  ) : null}
+                </div>
+
+                {visitingCardUrl ? (
+                  <div className="relative mt-2 overflow-hidden rounded-xl border border-white/10">
+                    <img
+                      src={
+                        visitingCardUrl
+                      }
+                      alt="Visiting card"
+                      className="h-40 w-full object-cover"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setVisitingCardUrl(
+                          "",
+                        )
+                      }
+                      className="absolute right-2 top-2 rounded-full bg-black/75 px-3 py-1.5 text-[8px] font-black text-white"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <label className="mt-2 flex min-h-[110px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#D4AF37]/35 bg-[#D4AF37]/[0.04] text-center">
+                    <span className="text-2xl">
+                      ▣
+                    </span>
+
+                    <span className="mt-2 text-[9px] font-black text-[#D4AF37]">
+                      {uploadingDocument ===
+                      "CARD"
+                        ? "Uploading..."
+                        : "Upload Visiting Card"}
+                    </span>
+
+                    <span className="mt-1 text-[8px] text-white/30">
+                      Camera / Gallery
+                    </span>
+
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      capture="environment"
+                      disabled={
+                        uploadingDocument !==
+                        ""
+                      }
+                      onChange={(
+                        event,
+                      ) => {
+                        const file =
+                          event.target
+                            .files?.[0];
+
+                        if (file) {
+                          void uploadVisitingCard(
+                            file,
+                          );
+                        }
+
+                        event.target.value =
+                          "";
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* SHOP PHOTOS */}
+              <div className="mt-5 border-t border-white/[0.07] pt-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-[9px] font-black text-white/70">
+                    Shop Photos *
+                  </p>
+
+                  <span className="text-[8px] text-white/35">
+                    {shopPhotoUrls.length}/3
+                  </span>
+                </div>
+
+                <p className="mt-1 text-[8px] leading-4 text-white/30">
+                  Shop front, inside view లేదా stock display photos.
+                </p>
+
+                {shopPhotoUrls.length >
+                0 ? (
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {shopPhotoUrls.map(
+                      (
+                        url,
+                        index,
+                      ) => (
+                        <div
+                          key={url}
+                          className="relative aspect-square overflow-hidden rounded-xl border border-white/10"
+                        >
+                          <img
+                            src={url}
+                            alt={`Shop photo ${
+                              index + 1
+                            }`}
+                            className="h-full w-full object-cover"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShopPhotoUrls(
+                                (
+                                  current,
+                                ) =>
+                                  current.filter(
+                                    (
+                                      _,
+                                      photoIndex,
+                                    ) =>
+                                      photoIndex !==
+                                      index,
+                                  ),
+                              )
+                            }
+                            className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-black/75 text-[10px] text-white"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                ) : null}
+
+                {shopPhotoUrls.length <
+                3 ? (
+                  <label className="mt-3 flex cursor-pointer items-center justify-center rounded-xl border border-dashed border-white/15 bg-white/[0.03] py-4">
+                    <span className="text-[9px] font-black text-white/60">
+                      {uploadingDocument ===
+                      "SHOP"
+                        ? "Uploading Shop Photos..."
+                        : "+ Add Shop Photos"}
+                    </span>
+
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      capture="environment"
+                      disabled={
+                        uploadingDocument !==
+                        ""
+                      }
+                      onChange={(
+                        event,
+                      ) => {
+                        if (
+                          event.target
+                            .files
+                        ) {
+                          void uploadShopPhotos(
+                            event.target
+                              .files,
+                          );
+                        }
+
+                        event.target.value =
+                          "";
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                ) : null}
+              </div>
+            </div>
 
             {error && (
               <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-xs leading-5 text-red-200">
