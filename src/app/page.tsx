@@ -1055,13 +1055,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (
-      !menuOpen ||
-      mode !== "RETAIL"
-    ) {
-      return;
-    }
-
     let cancelled = false;
 
     async function loadMenuCategories() {
@@ -1103,7 +1096,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, [menuOpen, mode]);
+  }, []);
 
   useEffect(() => {
     async function loadSiteSettings() {
