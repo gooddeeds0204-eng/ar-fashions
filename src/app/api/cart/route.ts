@@ -135,13 +135,13 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    const productId = String(body?.productId ?? "");
+    const productId = String(body?.productId ?? "").trim();
     const variantId =
       body?.variantId === null ||
       body?.variantId === undefined ||
       body?.variantId === ""
         ? null
-        : String(body.variantId);
+        : String(body.variantId).trim();
 
     const quantity = Number(body?.quantity ?? 1);
 
@@ -168,10 +168,20 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (!product) {
+    if (!product || product.status !== "ACTIVE") {
       return NextResponse.json(
-        { error: "Product not found." },
+        { error: "Product is not available." },
         { status: 404 },
+      );
+    }
+
+    if (
+      product.salesMode !== "RETAIL" &&
+      product.salesMode !== "BOTH"
+    ) {
+      return NextResponse.json(
+        { error: "This product is not available for retail purchase." },
+        { status: 409 },
       );
     }
 
@@ -183,14 +193,17 @@ export async function POST(request: NextRequest) {
         (item) => item.id === variantId,
       );
 
-      if (!variant) {
+      if (!variant || !variant.isActive) {
         return NextResponse.json(
-          { error: "Product variant not found." },
+          { error: "Product variant is not available." },
           { status: 404 },
         );
       }
 
-      unitPrice = Number(variant.retailPrice);
+      const rawPrice =
+        variant.retailPrice ?? product.retailPrice;
+
+      unitPrice = Number(rawPrice);
       stock = variant.stock;
 
       if (stock <= 0) {
@@ -199,6 +212,13 @@ export async function POST(request: NextRequest) {
           { status: 409 },
         );
       }
+    }
+
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+      return NextResponse.json(
+        { error: "Product price is not configured correctly." },
+        { status: 409 },
+      );
     }
 
     if (stock !== null && quantity > stock) {
@@ -347,6 +367,7 @@ export async function PATCH(request: NextRequest) {
         },
       },
       include: {
+        product: true,
         variant: true,
       },
     });
@@ -355,6 +376,24 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json(
         { error: "Cart item not found." },
         { status: 404 },
+      );
+    }
+
+    if (
+      item.product.status !== "ACTIVE" ||
+      (item.product.salesMode !== "RETAIL" &&
+        item.product.salesMode !== "BOTH")
+    ) {
+      return NextResponse.json(
+        { error: "This product is no longer available." },
+        { status: 409 },
+      );
+    }
+
+    if (item.variant && !item.variant.isActive) {
+      return NextResponse.json(
+        { error: "This variant is no longer available." },
+        { status: 409 },
       );
     }
 
@@ -370,12 +409,26 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    const rawPrice = item.variant
+      ? item.variant.retailPrice ?? item.product.retailPrice
+      : item.product.retailPrice;
+
+    const unitPrice = Number(rawPrice);
+
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+      return NextResponse.json(
+        { error: "Product price is not configured correctly." },
+        { status: 409 },
+      );
+    }
+
     const updated = await prisma.cartItem.update({
       where: {
         id: item.id,
       },
       data: {
         quantity,
+        unitPrice,
       },
     });
 
