@@ -1840,15 +1840,29 @@ export default function Home() {
     );
 
     return fixedNames
-      .map((name) =>
-        allItems.find(
-          (item) =>
-            item.name
-              .trim()
-              .toLowerCase() ===
-            name.toLowerCase(),
-        ),
-      )
+      .map((name) => {
+        const wanted =
+          name.toLowerCase();
+
+        const matches =
+          allItems.filter(
+            (item) =>
+              item.name
+                .trim()
+                .toLowerCase() ===
+              wanted,
+          );
+
+        return (
+          matches.find(
+            (item) =>
+              Boolean(
+                item.imageUrl,
+              ),
+          ) ??
+          matches[0]
+        );
+      })
       .filter(
         (
           item,

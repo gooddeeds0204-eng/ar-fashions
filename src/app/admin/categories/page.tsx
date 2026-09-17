@@ -984,9 +984,8 @@ export default function CategoriesPage() {
         const wanted =
           name.toLowerCase();
 
-        let match:
-          | CategoryItem
-          | null = null;
+        const matches:
+          CategoryItem[] = [];
 
         for (
           const category of
@@ -998,24 +997,36 @@ export default function CategoriesPage() {
               .toLowerCase() ===
             wanted
           ) {
-            match = category;
-            break;
+            matches.push(
+              category,
+            );
           }
 
-          const child =
-            category.children?.find(
-              (item) =>
-                item.name
+          category.children?.forEach(
+            (child) => {
+              if (
+                child.name
                   .trim()
                   .toLowerCase() ===
-                wanted,
-            );
-
-          if (child) {
-            match = child;
-            break;
-          }
+                wanted
+              ) {
+                matches.push(
+                  child,
+                );
+              }
+            },
+          );
         }
+
+        const match =
+          matches.find(
+            (item) =>
+              Boolean(
+                item.imageUrl,
+              ),
+          ) ??
+          matches[0] ??
+          null;
 
         return {
           label: name,
