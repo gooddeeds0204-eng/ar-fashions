@@ -131,6 +131,12 @@ type Reel = {
 };
 
 type Mode = "RETAIL" | "RESELLER";
+
+type BenefitKey =
+  | "QUALITY"
+  | "COD"
+  | "RESELLER"
+  | "SUPPORT";
 type ProductTransitionPreview = {
   id: string;
   name: string;
@@ -1091,6 +1097,13 @@ export default function Home() {
     setSelectedMenuCategoryName,
   ] = useState<string | null>(null);
 
+  const [
+    selectedBenefit,
+    setSelectedBenefit,
+  ] = useState<BenefitKey | null>(
+    null,
+  );
+
   useEffect(() => {
     async function loadAccountMode() {
       try {
@@ -1452,6 +1465,28 @@ export default function Home() {
     setSelectedMenuCategoryIds([]);
     setSelectedMenuCategoryName(null);
     setCategory(value);
+  }
+
+  function navigateGenderCategory(
+    value:
+      | "WOMEN"
+      | "MEN"
+      | "KIDS",
+  ) {
+    applyGenderCategory(
+      value,
+    );
+
+    window.setTimeout(() => {
+      document
+        .getElementById(
+          "shop-categories",
+        )
+        ?.scrollIntoView({
+          behavior:
+            "smooth",
+        });
+    }, 50);
   }
 
   function applyMenuCategory(
@@ -1893,6 +1928,68 @@ export default function Home() {
   const activeModeClosed =
     activeModeStatus ===
     "CLOSED";
+
+  const benefitItems: Array<{
+    key: BenefitKey;
+    icon: string;
+    title: string;
+    subtitle: string;
+    description: string;
+  }> = [
+    {
+      key: "QUALITY",
+      icon: "✦",
+      title: "Premium Quality",
+      subtitle:
+        "AR curated fashion",
+      description:
+        "AR Fashions collections are curated for quality, style and wearable everyday fashion. Open the collection to explore currently available products.",
+    },
+    {
+      key: "COD",
+      icon: "▣",
+      title:
+        siteSettings.codEnabled
+          ? "Cash on Delivery"
+          : "Easy Checkout",
+      subtitle:
+        siteSettings.codEnabled
+          ? "COD available"
+          : "Simple checkout",
+      description:
+        siteSettings.codEnabled
+          ? "Cash on Delivery is currently available on eligible AR Fashions orders. Final availability is confirmed during checkout."
+          : "Checkout is currently configured with the payment options enabled by AR Fashions.",
+    },
+    {
+      key: "RESELLER",
+      icon: "↻",
+      title:
+        "Retail + Reseller",
+      subtitle:
+        "Two shopping modes",
+      description:
+        "Shop normally as a retail customer or apply for approved reseller access to unlock wholesale pricing, MOQ ordering and reseller sets.",
+    },
+    {
+      key: "SUPPORT",
+      icon: "◉",
+      title:
+        "Customer Support",
+      subtitle:
+        siteSettings.supportPhone ||
+        "AR Fashions support",
+      description:
+        "Need help with products, orders, delivery or reseller access? Contact AR Fashions customer support using the available contact options.",
+    },
+  ];
+
+  const selectedBenefitItem =
+    benefitItems.find(
+      (item) =>
+        item.key ===
+        selectedBenefit,
+    ) ?? null;
 
   if (
     siteSettingsLoaded &&
@@ -3102,56 +3199,36 @@ export default function Home() {
       {/* IMAGE 2 BENEFIT STRIP */}
       <section className="border-y border-white/[0.055] bg-[#111112]">
         <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-white/[0.06] px-4 sm:grid-cols-4 sm:px-6 lg:px-8">
-          {[
-            [
-              "✦",
-              "Premium Quality",
-              "AR curated fashion",
-            ],
-            [
-              "▣",
-              siteSettings.codEnabled
-                ? "Cash on Delivery"
-                : "Easy Checkout",
-              siteSettings.codEnabled
-                ? "COD available"
-                : "Simple checkout",
-            ],
-            [
-              "↻",
-              "Retail + Reseller",
-              "Two shopping modes",
-            ],
-            [
-              "◉",
-              "Customer Support",
-              siteSettings.supportPhone ||
-                "AR Fashions support",
-            ],
-          ].map(
-            ([
-              icon,
-              title,
-              subtitle,
-            ]) => (
-              <div
-                key={title}
-                className="flex min-h-[82px] items-center gap-3 px-3 py-4 sm:px-5"
+          {benefitItems.map(
+            (item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() =>
+                  setSelectedBenefit(
+                    item.key,
+                  )
+                }
+                className="group flex min-h-[82px] items-center gap-3 px-3 py-4 text-left transition hover:bg-white/[0.035] sm:px-5"
               >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#D4AF37]/30 text-sm text-[#D4AF37]">
-                  {icon}
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#D4AF37]/30 text-sm text-[#D4AF37] transition group-hover:border-[#D4AF37]/70 group-hover:bg-[#D4AF37]/10">
+                  {item.icon}
                 </span>
 
                 <div className="min-w-0">
                   <p className="text-[8px] font-bold text-[#F7F5EF] sm:text-[9px]">
-                    {title}
+                    {item.title}
                   </p>
 
                   <p className="mt-1 truncate text-[6px] text-white/40 sm:text-[7px]">
-                    {subtitle}
+                    {item.subtitle}
+                  </p>
+
+                  <p className="mt-1 text-[6px] font-bold text-[#D4AF37]/60">
+                    View details →
                   </p>
                 </div>
-              </div>
+              </button>
             ),
           )}
         </div>
@@ -3172,26 +3249,82 @@ export default function Home() {
             Wear · Share · Belong
           </p>
 
-          <div className="mt-6 flex justify-center gap-5 text-[9px] font-semibold text-white/45">
-            <button onClick={() => applyGenderCategory("WOMEN")}>
+          <div className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-3 text-[9px] font-semibold text-white/45">
+            <button
+              type="button"
+              onClick={() =>
+                window.scrollTo({
+                  top: 0,
+                  behavior:
+                    "smooth",
+                })
+              }
+              className="transition hover:text-[#D4AF37]"
+            >
+              Home
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigateGenderCategory(
+                  "WOMEN",
+                )
+              }
+              className="transition hover:text-[#D4AF37]"
+            >
               Women
             </button>
-            <button onClick={() => applyGenderCategory("MEN")}>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigateGenderCategory(
+                  "MEN",
+                )
+              }
+              className="transition hover:text-[#D4AF37]"
+            >
               Men
             </button>
-            <button onClick={() => applyGenderCategory("KIDS")}>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigateGenderCategory(
+                  "KIDS",
+                )
+              }
+              className="transition hover:text-[#D4AF37]"
+            >
               Kids
             </button>
+
             <button
+              type="button"
               onClick={() =>
                 router.push(
-                  mode === "RESELLER"
+                  mode ===
+                    "RESELLER"
                     ? "/reseller-sets"
                     : "/account",
                 )
               }
+              className="transition hover:text-[#D4AF37]"
             >
               Reseller
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setSelectedBenefit(
+                  "SUPPORT",
+                )
+              }
+              className="transition hover:text-[#D4AF37]"
+            >
+              Support
             </button>
           </div>
 
@@ -3200,6 +3333,197 @@ export default function Home() {
           </p>
         </div>
       </footer>
+
+      {selectedBenefitItem ? (
+        <div
+          className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 p-3 backdrop-blur-sm sm:items-center"
+          onClick={() =>
+            setSelectedBenefit(
+              null,
+            )
+          }
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+            className="w-full max-w-md overflow-hidden rounded-[1.8rem] border border-[#D4AF37]/20 bg-[#101112] shadow-[0_30px_90px_rgba(0,0,0,0.55)]"
+          >
+            <div className="border-b border-white/[0.07] p-5">
+              <div className="flex items-start justify-between gap-4">
+                <span className="grid h-12 w-12 place-items-center rounded-full border border-[#D4AF37]/35 bg-[#D4AF37]/[0.06] text-lg text-[#D4AF37]">
+                  {
+                    selectedBenefitItem.icon
+                  }
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelectedBenefit(
+                      null,
+                    )
+                  }
+                  className="grid h-9 w-9 place-items-center rounded-full border border-white/10 text-sm text-white/50"
+                  aria-label="Close details"
+                >
+                  ×
+                </button>
+              </div>
+
+              <p className="mt-5 text-[8px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">
+                AR Fashions
+              </p>
+
+              <h3 className="mt-2 font-serif text-3xl text-white">
+                {
+                  selectedBenefitItem.title
+                }
+              </h3>
+
+              <p className="mt-3 text-sm leading-6 text-white/50">
+                {
+                  selectedBenefitItem.description
+                }
+              </p>
+            </div>
+
+            <div className="p-5">
+              {selectedBenefit ===
+              "QUALITY" ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedBenefit(
+                      null,
+                    );
+
+                    window.setTimeout(
+                      () =>
+                        document
+                          .getElementById(
+                            "shop-categories",
+                          )
+                          ?.scrollIntoView({
+                            behavior:
+                              "smooth",
+                          }),
+                      50,
+                    );
+                  }}
+                  className="w-full rounded-2xl bg-[#D4AF37] py-4 text-[9px] font-black uppercase tracking-[0.1em] text-[#080B0D]"
+                >
+                  Explore Collection →
+                </button>
+              ) : null}
+
+              {selectedBenefit ===
+              "COD" ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedBenefit(
+                      null,
+                    );
+
+                    window.setTimeout(
+                      () =>
+                        document
+                          .getElementById(
+                            "shop-categories",
+                          )
+                          ?.scrollIntoView({
+                            behavior:
+                              "smooth",
+                          }),
+                      50,
+                    );
+                  }}
+                  className="w-full rounded-2xl bg-[#D4AF37] py-4 text-[9px] font-black uppercase tracking-[0.1em] text-[#080B0D]"
+                >
+                  Start Shopping →
+                </button>
+              ) : null}
+
+              {selectedBenefit ===
+              "RESELLER" ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedBenefit(
+                      null,
+                    );
+
+                    router.push(
+                      mode ===
+                        "RESELLER"
+                        ? "/reseller-sets"
+                        : "/account",
+                    );
+                  }}
+                  className="w-full rounded-2xl bg-[#D4AF37] py-4 text-[9px] font-black uppercase tracking-[0.1em] text-[#080B0D]"
+                >
+                  {mode ===
+                  "RESELLER"
+                    ? "Open Wholesale →"
+                    : "Explore Reseller Access →"}
+                </button>
+              ) : null}
+
+              {selectedBenefit ===
+              "SUPPORT" ? (
+                <div className="space-y-3">
+                  {siteSettings.supportPhone ? (
+                    <a
+                      href={`tel:${siteSettings.supportPhone}`}
+                      className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-[10px] font-black text-white"
+                    >
+                      <span>
+                        Call Support
+                      </span>
+                      <span className="text-[#D4AF37]">
+                        {
+                          siteSettings.supportPhone
+                        }
+                      </span>
+                    </a>
+                  ) : null}
+
+                  {siteSettings.whatsappNumber ? (
+                    <a
+                      href={`https://wa.me/${siteSettings.whatsappNumber.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex w-full items-center justify-between rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.07] px-4 py-4 text-[10px] font-black text-emerald-300"
+                    >
+                      <span>
+                        WhatsApp
+                      </span>
+                      <span>Open →</span>
+                    </a>
+                  ) : null}
+
+                  {siteSettings.supportEmail ? (
+                    <a
+                      href={`mailto:${siteSettings.supportEmail}`}
+                      className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-[10px] font-black text-white"
+                    >
+                      <span>Email</span>
+                      <span className="max-w-[190px] truncate text-white/50">
+                        {
+                          siteSettings.supportEmail
+                        }
+                      </span>
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* MOBILE NAV */}
       <nav className="fixed bottom-2 left-3 right-3 z-50 rounded-[1.35rem] border border-emerald-200/10 bg-[#080B0D]/95 px-1 pb-1.5 pt-1 shadow-[0_18px_55px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:hidden">
