@@ -2763,63 +2763,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* IMAGE 2 BENEFIT STRIP */}
-      <section className="border-y border-white/[0.055] bg-[#111112]">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-white/[0.06] px-4 sm:grid-cols-4 sm:px-6 lg:px-8">
-          {[
-            [
-              "✦",
-              "Premium Quality",
-              "AR curated fashion",
-            ],
-            [
-              "▣",
-              siteSettings.codEnabled
-                ? "Cash on Delivery"
-                : "Easy Checkout",
-              siteSettings.codEnabled
-                ? "COD available"
-                : "Simple checkout",
-            ],
-            [
-              "↻",
-              "Retail + Reseller",
-              "Two shopping modes",
-            ],
-            [
-              "◉",
-              "Customer Support",
-              siteSettings.supportPhone ||
-                "AR Fashions support",
-            ],
-          ].map(
-            ([
-              icon,
-              title,
-              subtitle,
-            ]) => (
-              <div
-                key={title}
-                className="flex min-h-[82px] items-center gap-3 px-3 py-4 sm:px-5"
-              >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#D4AF37]/30 text-sm text-[#D4AF37]">
-                  {icon}
-                </span>
 
-                <div className="min-w-0">
-                  <p className="text-[8px] font-bold text-[#F7F5EF] sm:text-[9px]">
-                    {title}
-                  </p>
-
-                  <p className="mt-1 truncate text-[6px] text-white/40 sm:text-[7px]">
-                    {subtitle}
-                  </p>
-                </div>
-              </div>
-            ),
-          )}
-        </div>
-      </section>
 
       <PromoSlot
         placement="SHOP_TOP"
@@ -3060,6 +3004,64 @@ export default function Home() {
         audience={mode}
         className="pb-10"
       />
+
+      {/* IMAGE 2 BENEFIT STRIP */}
+      <section className="border-y border-white/[0.055] bg-[#111112]">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-white/[0.06] px-4 sm:grid-cols-4 sm:px-6 lg:px-8">
+          {[
+            [
+              "✦",
+              "Premium Quality",
+              "AR curated fashion",
+            ],
+            [
+              "▣",
+              siteSettings.codEnabled
+                ? "Cash on Delivery"
+                : "Easy Checkout",
+              siteSettings.codEnabled
+                ? "COD available"
+                : "Simple checkout",
+            ],
+            [
+              "↻",
+              "Retail + Reseller",
+              "Two shopping modes",
+            ],
+            [
+              "◉",
+              "Customer Support",
+              siteSettings.supportPhone ||
+                "AR Fashions support",
+            ],
+          ].map(
+            ([
+              icon,
+              title,
+              subtitle,
+            ]) => (
+              <div
+                key={title}
+                className="flex min-h-[82px] items-center gap-3 px-3 py-4 sm:px-5"
+              >
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#D4AF37]/30 text-sm text-[#D4AF37]">
+                  {icon}
+                </span>
+
+                <div className="min-w-0">
+                  <p className="text-[8px] font-bold text-[#F7F5EF] sm:text-[9px]">
+                    {title}
+                  </p>
+
+                  <p className="mt-1 truncate text-[6px] text-white/40 sm:text-[7px]">
+                    {subtitle}
+                  </p>
+                </div>
+              </div>
+            ),
+          )}
+        </div>
+      </section>
 
       {/* FOOTER */}
       <footer className="border-t border-white/[0.07] bg-[#020c08]">
