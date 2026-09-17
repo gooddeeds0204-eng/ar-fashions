@@ -1788,6 +1788,15 @@ export default function Home() {
   );
 
   const homeCategoryItems = useMemo(() => {
+    const fixedNames = [
+      "Women",
+      "Men",
+      "Kids",
+      "Kurtis",
+      "Jeans",
+      "Girls Dresses",
+    ];
+
     const allItems: Array<{
       key: string;
       name: string;
@@ -1795,78 +1804,64 @@ export default function Home() {
       ids: string[];
     }> = [];
 
-    menuCategories.forEach((main) => {
-      allItems.push({
-        key: `main-${main.id}`,
-        name: main.name,
-        imageUrl: main.imageUrl,
-        ids: [
-          main.id,
-          ...main.children.map(
-            (child) => child.id,
-          ),
-        ],
-      });
+    menuCategories.forEach(
+      (main) => {
+        allItems.push({
+          key:
+            `main-${main.id}`,
+          name: main.name,
+          imageUrl:
+            main.imageUrl,
+          ids: [
+            main.id,
+            ...main.children.map(
+              (child) =>
+                child.id,
+            ),
+          ],
+        });
 
-      main.children.forEach(
-        (child) => {
-          allItems.push({
-            key: `child-${child.id}`,
-            name: child.name,
-            imageUrl:
-              child.imageUrl,
-            ids: [child.id],
-          });
-        },
+        main.children.forEach(
+          (child) => {
+            allItems.push({
+              key:
+                `child-${child.id}`,
+              name:
+                child.name,
+              imageUrl:
+                child.imageUrl,
+              ids: [
+                child.id,
+              ],
+            });
+          },
+        );
+      },
+    );
+
+    return fixedNames
+      .map((name) =>
+        allItems.find(
+          (item) =>
+            item.name
+              .trim()
+              .toLowerCase() ===
+            name.toLowerCase(),
+        ),
+      )
+      .filter(
+        (
+          item,
+        ): item is {
+          key: string;
+          name: string;
+          imageUrl:
+            | string
+            | null;
+          ids: string[];
+        } =>
+          Boolean(item),
       );
-    });
-
-    const preferred = [
-      "women",
-      "men",
-      "kids",
-      "ethnic",
-      "western",
-      "accessor",
-    ];
-
-    const picked: typeof allItems = [];
-
-    for (const needle of preferred) {
-      const item = allItems.find(
-        (candidate) =>
-          !picked.some(
-            (selected) =>
-              selected.key ===
-              candidate.key,
-          ) &&
-          candidate.name
-            .toLowerCase()
-            .includes(needle),
-      );
-
-      if (item) {
-        picked.push(item);
-      }
-    }
-
-    for (const item of allItems) {
-      if (picked.length >= 6) {
-        break;
-      }
-
-      if (
-        !picked.some(
-          (selected) =>
-            selected.key ===
-            item.key,
-        )
-      ) {
-        picked.push(item);
-      }
-    }
-
-    return picked.slice(0, 6);
   }, [menuCategories]);
 
   const defaultHomeSections:

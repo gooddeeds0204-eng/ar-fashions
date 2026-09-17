@@ -26,6 +26,15 @@ type Category =
     children: CategoryItem[];
   };
 
+const HOME_CATEGORY_IMAGE_NAMES = [
+  "Women",
+  "Men",
+  "Kids",
+  "Kurtis",
+  "Jeans",
+  "Girls Dresses",
+] as const;
+
 export default function CategoriesPage() {
   const [
     categories,
@@ -325,6 +334,99 @@ export default function CategoriesPage() {
       );
     } finally {
       setUploadingImage(false);
+    }
+  }
+
+  async function uploadHomeCategoryImage(
+    category: CategoryItem,
+    file: File,
+  ) {
+    setBusyId(
+      category.id,
+    );
+    setMessage("");
+
+    try {
+      const formData =
+        new FormData();
+
+      formData.append(
+        "file",
+        file,
+      );
+
+      const uploadResponse =
+        await fetch(
+          "/api/upload",
+          {
+            method: "POST",
+            credentials:
+              "same-origin",
+            body: formData,
+          },
+        );
+
+      if (
+        uploadResponse.status ===
+        401
+      ) {
+        window.location.href =
+          "/admin/login";
+        return;
+      }
+
+      const uploadData =
+        await uploadResponse.json();
+
+      if (!uploadResponse.ok) {
+        throw new Error(
+          uploadData.error ??
+            "Image upload failed",
+        );
+      }
+
+      const response =
+        await fetch(
+          "/api/categories",
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            credentials:
+              "same-origin",
+            body: JSON.stringify({
+              id: category.id,
+              imageUrl:
+                uploadData.url,
+            }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Failed to save home category image",
+        );
+      }
+
+      setMessage(
+        `${category.name} home image updated successfully.`,
+      );
+
+      await loadCategories();
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to update home category image",
+      );
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -876,6 +978,52 @@ export default function CategoriesPage() {
     );
   }
 
+  const homeCategoryImageItems =
+    HOME_CATEGORY_IMAGE_NAMES.map(
+      (name) => {
+        const wanted =
+          name.toLowerCase();
+
+        let match:
+          | CategoryItem
+          | null = null;
+
+        for (
+          const category of
+          categories
+        ) {
+          if (
+            category.name
+              .trim()
+              .toLowerCase() ===
+            wanted
+          ) {
+            match = category;
+            break;
+          }
+
+          const child =
+            category.children?.find(
+              (item) =>
+                item.name
+                  .trim()
+                  .toLowerCase() ===
+                wanted,
+            );
+
+          if (child) {
+            match = child;
+            break;
+          }
+        }
+
+        return {
+          label: name,
+          category: match,
+        };
+      },
+    );
+
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
@@ -898,6 +1046,115 @@ export default function CategoriesPage() {
             {message}
           </div>
         )}
+
+        <section className="mb-8 overflow-hidden rounded-2xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#1a1510] to-slate-950">
+          <div className="border-b border-white/10 px-5 py-5 sm:px-6">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#D4AF37]">
+              Storefront
+            </p>
+
+            <h2 className="mt-2 text-xl font-bold">
+              Home Category Images
+            </h2>
+
+            <p className="mt-1 text-xs leading-5 text-slate-400">
+              Homepageలో ఈ 6 category circles మాత్రమే కనిపిస్తాయి.
+              ఇక్కడ image upload/change చేస్తే storefrontలో update అవుతుంది.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 sm:p-6">
+            {homeCategoryImageItems.map(
+              ({
+                label,
+                category,
+              }) => (
+                <div
+                  key={label}
+                  className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-center"
+                >
+                  <div className="mx-auto h-28 w-28 overflow-hidden rounded-full border-2 border-[#D4AF37]/45 bg-slate-900 shadow-[0_0_30px_rgba(212,175,55,0.08)]">
+                    {category?.imageUrl ? (
+                      <img
+                        src={
+                          category.imageUrl
+                        }
+                        alt={label}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-[#641e2a] via-[#30131a] to-black">
+                        <span className="font-serif text-3xl text-[#D4AF37]">
+                          AR
+                        </span>
+
+                        <span className="mt-2 text-[7px] font-black uppercase tracking-[0.18em] text-white/60">
+                          {label}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="mt-3 text-sm font-bold text-white">
+                    {label}
+                  </p>
+
+                  {!category ? (
+                    <p className="mt-2 text-[9px] font-semibold text-red-300">
+                      Category not found
+                    </p>
+                  ) : (
+                    <label
+                      className={`mt-3 inline-flex cursor-pointer items-center justify-center rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-wide ${
+                        busyId ===
+                        category.id
+                          ? "pointer-events-none bg-white/10 text-white/30"
+                          : "bg-[#D4AF37] text-[#080B0D]"
+                      }`}
+                    >
+                      {busyId ===
+                      category.id
+                        ? "Uploading..."
+                        : category.imageUrl
+                          ? "Change Image"
+                          : "Upload Image"}
+
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={
+                          busyId ===
+                          category.id
+                        }
+                        onChange={async (
+                          event,
+                        ) => {
+                          const file =
+                            event.target
+                              .files?.[0];
+
+                          if (
+                            file &&
+                            category
+                          ) {
+                            await uploadHomeCategoryImage(
+                              category,
+                              file,
+                            );
+                          }
+
+                          event.target.value =
+                            "";
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+              ),
+            )}
+          </div>
+        </section>
 
         <form
           onSubmit={
