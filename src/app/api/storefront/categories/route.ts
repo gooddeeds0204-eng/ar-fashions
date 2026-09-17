@@ -71,8 +71,63 @@ export async function GET() {
         },
       });
 
+    const homeCategoryNames = [
+      "Women",
+      "Men",
+      "Kids",
+      "Kurtis",
+      "Jeans",
+      "Girls Dresses",
+    ];
+
+    const homeImageCategories =
+      await prisma.category.findMany({
+        where: {
+          isActive: true,
+          imageUrl: {
+            not: null,
+          },
+          name: {
+            in: homeCategoryNames,
+          },
+        },
+
+        select: {
+          name: true,
+          imageUrl: true,
+        },
+
+        orderBy: [
+          {
+            updatedAt: "desc",
+          },
+        ],
+      });
+
+    const homeCategoryImages:
+      Record<string, string> = {};
+
+    for (
+      const category of
+      homeImageCategories
+    ) {
+      const key =
+        category.name
+          .trim()
+          .toLowerCase();
+
+      if (
+        category.imageUrl &&
+        !homeCategoryImages[key]
+      ) {
+        homeCategoryImages[key] =
+          category.imageUrl;
+      }
+    }
+
     return NextResponse.json({
       categories,
+      homeCategoryImages,
     });
   } catch (error) {
     console.error(

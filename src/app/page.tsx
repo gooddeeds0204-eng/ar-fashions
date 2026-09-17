@@ -1083,6 +1083,13 @@ export default function Home() {
   ] = useState<StoreCategory[]>([]);
 
   const [
+    homeCategoryImages,
+    setHomeCategoryImages,
+  ] = useState<
+    Record<string, string>
+  >({});
+
+  const [
     expandedMenuCategory,
     setExpandedMenuCategory,
   ] = useState<string | null>(null);
@@ -1171,6 +1178,14 @@ export default function Home() {
             )
               ? data.categories
               : [],
+          );
+
+          setHomeCategoryImages(
+            data.homeCategoryImages &&
+            typeof data.homeCategoryImages ===
+              "object"
+              ? data.homeCategoryImages
+              : {},
           );
         }
       } catch (error) {
@@ -1788,6 +1803,13 @@ export default function Home() {
   );
 
   const homeCategoryItems = useMemo(() => {
+    type HomeCategoryItem = {
+      key: string;
+      name: string;
+      imageUrl: string | null;
+      ids: string[];
+    };
+
     const fixedNames = [
       "Women",
       "Men",
@@ -1797,19 +1819,16 @@ export default function Home() {
       "Girls Dresses",
     ];
 
-    const allItems: Array<{
-      key: string;
-      name: string;
-      imageUrl: string | null;
-      ids: string[];
-    }> = [];
+    const allItems: HomeCategoryItem[] =
+      [];
 
     menuCategories.forEach(
       (main) => {
         allItems.push({
           key:
             `main-${main.id}`,
-          name: main.name,
+          name:
+            main.name,
           imageUrl:
             main.imageUrl,
           ids: [
@@ -1839,44 +1858,78 @@ export default function Home() {
       },
     );
 
-    return fixedNames
-      .map((name) => {
-        const wanted =
-          name.toLowerCase();
+    const items:
+      Array<
+        HomeCategoryItem | null
+      > =
+      fixedNames.map(
+        (name) => {
+          const wanted =
+            name
+              .trim()
+              .toLowerCase();
 
-        const matches =
-          allItems.filter(
-            (item) =>
-              item.name
-                .trim()
-                .toLowerCase() ===
-              wanted,
-          );
+          const matches =
+            allItems.filter(
+              (item) =>
+                item.name
+                  .trim()
+                  .toLowerCase() ===
+                wanted,
+            );
 
-        return (
-          matches.find(
-            (item) =>
-              Boolean(
-                item.imageUrl,
+          if (
+            matches.length === 0
+          ) {
+            return null;
+          }
+
+          const ids =
+            Array.from(
+              new Set(
+                matches.flatMap(
+                  (item) =>
+                    item.ids,
+                ),
               ),
-          ) ??
-          matches[0]
-        );
-      })
-      .filter(
-        (
-          item,
-        ): item is {
-          key: string;
-          name: string;
-          imageUrl:
-            | string
-            | null;
-          ids: string[];
-        } =>
-          Boolean(item),
+            );
+
+          const dedicatedImage =
+            homeCategoryImages[
+              wanted
+            ] ?? null;
+
+          const fallbackImage =
+            matches.find(
+              (item) =>
+                Boolean(
+                  item.imageUrl,
+                ),
+            )?.imageUrl ??
+            null;
+
+          return {
+            key:
+              `home-${wanted}`,
+            name,
+            imageUrl:
+              dedicatedImage ??
+              fallbackImage,
+            ids,
+          };
+        },
       );
-  }, [menuCategories]);
+
+    return items.filter(
+      (
+        item,
+      ): item is HomeCategoryItem =>
+        item !== null,
+    );
+  }, [
+    menuCategories,
+    homeCategoryImages,
+  ]);
 
   const defaultHomeSections:
     HomeSection[] = [
