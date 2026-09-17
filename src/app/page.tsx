@@ -39,6 +39,11 @@ type Product = {
     name: string;
   };
   media: Media[];
+  variants?: Array<{
+    id: string;
+    stock: number;
+    isActive: boolean;
+  }>;
 };
 
 type StoreCategoryChild = {
@@ -946,6 +951,12 @@ export default function Home() {
   const [bannerIndex, setBannerIndex] =
     useState(0);
 
+  const [heroSlideIndex, setHeroSlideIndex] =
+    useState(0);
+
+  const [heroTouchStartX, setHeroTouchStartX] =
+    useState<number | null>(null);
+
   const [mode, setMode] = useState<Mode>("RETAIL");
 
   const [
@@ -1458,6 +1469,168 @@ export default function Home() {
     [visibleProducts, products],
   );
 
+  const heroProducts = useMemo(() => {
+    const eligible = products.filter(
+      (product) => {
+        const channelAllowed =
+          mode === "RESELLER"
+            ? product.salesMode === "BULK" ||
+              product.salesMode === "BOTH"
+            : product.salesMode === "RETAIL" ||
+              product.salesMode === "BOTH";
+
+        const hasMedia =
+          product.media.some(
+            (item) =>
+              item.isActive !== false,
+          );
+
+        const hasStock =
+          product.variants?.some(
+            (variant) =>
+              variant.isActive !== false &&
+              Number(variant.stock) > 0,
+          ) ?? false;
+
+        return (
+          product.status === "ACTIVE" &&
+          channelAllowed &&
+          hasMedia &&
+          hasStock
+        );
+      },
+    );
+
+    function heroScore(
+      product: Product,
+    ) {
+      return (
+        (product.isFeatured ? 100 : 0) +
+        (product.isNewArrival ? 30 : 0) +
+        (product.isTrending ? 10 : 0)
+      );
+    }
+
+    return [...eligible]
+      .sort(
+        (a, b) =>
+          heroScore(b) -
+          heroScore(a),
+      )
+      .slice(0, 5);
+  }, [products, mode]);
+
+  const heroSlideProduct =
+    heroProducts.length > 0
+      ? heroProducts[
+          heroSlideIndex %
+            heroProducts.length
+        ]
+      : null;
+
+  const heroSlideMedia =
+    heroSlideProduct?.media.find(
+      (item) =>
+        item.type === "IMAGE",
+    ) ??
+    heroSlideProduct?.media[0] ??
+    null;
+
+  const heroSlidePrice =
+    heroSlideProduct
+      ? mode === "RESELLER" &&
+        heroSlideProduct.resellerPrice !==
+          null
+        ? heroSlideProduct.resellerPrice
+        : heroSlideProduct.retailPrice
+      : null;
+
+  const heroDiscount =
+    heroSlideProduct &&
+    heroSlidePrice !== null &&
+    heroSlideProduct.mrp &&
+    Number(heroSlideProduct.mrp) >
+      Number(heroSlidePrice)
+      ? Math.round(
+          ((Number(
+            heroSlideProduct.mrp,
+          ) -
+            Number(
+              heroSlidePrice,
+            )) /
+            Number(
+              heroSlideProduct.mrp,
+            )) *
+            100,
+        )
+      : 0;
+
+  const heroAvailableStock =
+    heroSlideProduct?.variants?.reduce(
+      (total, variant) =>
+        variant.isActive !== false
+          ? total +
+            Math.max(
+              0,
+              Number(
+                variant.stock,
+              ) || 0,
+            )
+          : total,
+      0,
+    ) ?? 0;
+
+  useEffect(() => {
+    setHeroSlideIndex(0);
+  }, [
+    mode,
+    heroProducts.length,
+  ]);
+
+  useEffect(() => {
+    if (heroProducts.length <= 1) {
+      return;
+    }
+
+    const timer =
+      window.setInterval(() => {
+        setHeroSlideIndex(
+          (current) =>
+            (current + 1) %
+            heroProducts.length,
+        );
+      }, 5000);
+
+    return () =>
+      window.clearInterval(timer);
+  }, [heroProducts.length]);
+
+  function moveHeroSlide(
+    direction: number,
+  ) {
+    if (heroProducts.length <= 1) {
+      return;
+    }
+
+    setHeroSlideIndex(
+      (current) =>
+        (current +
+          direction +
+          heroProducts.length) %
+        heroProducts.length,
+    );
+  }
+
+  function openHeroProduct() {
+    if (!heroSlideProduct) {
+      return;
+    }
+
+    router.push(
+      `/products/${heroSlideProduct.id}?mode=${mode.toLowerCase()}`,
+    );
+  }
+
   const featured = visibleProducts.filter(
     (product) => product.isFeatured,
   );
@@ -1762,216 +1935,496 @@ export default function Home() {
         </section>
       ) : (
         <>
-      {/* HERO */}
+      {/* PRODUCT-CONNECTED HERO SLIDER */}
       <section className="mx-auto max-w-7xl px-3 pt-3 sm:px-6 sm:pt-5 lg:px-8">
         <div
-          className="relative min-h-[520px] overflow-hidden rounded-[1.5rem] border border-white/[0.08] bg-[#04120d] shadow-[0_30px_70px_rgba(0,0,0,0.35)] sm:min-h-[620px] sm:rounded-[2rem]"
+          className="relative min-h-[565px] touch-pan-y overflow-hidden rounded-[1.6rem] border border-white/[0.09] bg-[#04120d] shadow-[0_35px_90px_rgba(0,0,0,0.44)] sm:min-h-[640px] sm:rounded-[2.2rem]"
           style={{
             background:
-              activeBanner?.backgroundGradient ||
-              activeBanner?.backgroundColor ||
-              undefined,
+              !heroSlideProduct
+                ? activeBanner?.backgroundGradient ||
+                  activeBanner?.backgroundColor ||
+                  undefined
+                : undefined,
+          }}
+          onTouchStart={(event) => {
+            setHeroTouchStartX(
+              event.touches[0]
+                ?.clientX ?? null,
+            );
+          }}
+          onTouchEnd={(event) => {
+            if (
+              heroTouchStartX ===
+              null
+            ) {
+              return;
+            }
+
+            const endX =
+              event.changedTouches[0]
+                ?.clientX ??
+              heroTouchStartX;
+
+            const distance =
+              endX -
+              heroTouchStartX;
+
+            setHeroTouchStartX(
+              null,
+            );
+
+            if (
+              Math.abs(distance) <
+              45
+            ) {
+              return;
+            }
+
+            moveHeroSlide(
+              distance < 0
+                ? 1
+                : -1,
+            );
           }}
         >
-          {activeBanner?.contentType !== "GRAPHIC" && (
-            <div className="absolute inset-0">
-              {activeBanner?.contentType === "VIDEO" &&
+          {/* MEDIA */}
+          <div className="absolute inset-0">
+            {heroSlideMedia ? (
+              heroSlideMedia.type ===
+              "VIDEO" ? (
+                <video
+                  key={
+                    heroSlideProduct?.id
+                  }
+                  src={
+                    heroSlideMedia.url
+                  }
+                  muted
+                  autoPlay
+                  loop
+                  playsInline
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <img
+                  key={
+                    heroSlideProduct?.id
+                  }
+                  src={
+                    heroSlideMedia.url
+                  }
+                  alt={
+                    heroSlideMedia.altText ??
+                    heroSlideProduct?.name ??
+                    "AR Fashions"
+                  }
+                  className="h-full w-full object-cover"
+                />
+              )
+            ) : activeBanner?.contentType ===
+                "VIDEO" &&
               (activeBanner.videoUrl ||
                 activeBanner.mobileVideoUrl) ? (
-                <>
-                  {activeBanner.mobileVideoUrl && (
-                    <video
-                      src={activeBanner.mobileVideoUrl}
-                      muted
-                      autoPlay
-                      loop
-                      playsInline
-                      className="absolute inset-0 h-full w-full object-cover sm:hidden"
-                    />
-                  )}
-
+              <>
+                {activeBanner.mobileVideoUrl && (
                   <video
                     src={
-                      activeBanner?.videoUrl ||
-                      activeBanner?.mobileVideoUrl ||
-                      undefined
+                      activeBanner.mobileVideoUrl
                     }
                     muted
                     autoPlay
                     loop
                     playsInline
-                    className={`absolute inset-0 h-full w-full object-cover ${
-                      activeBanner?.mobileVideoUrl
-                        ? "hidden sm:block"
-                        : ""
-                    }`}
+                    className="h-full w-full object-cover sm:hidden"
                   />
-                </>
-              ) : activeBanner?.contentType === "IMAGE" &&
-                (activeBanner.imageUrl ||
-                  activeBanner.mobileImageUrl) ? (
-                <picture>
-                  {activeBanner.mobileImageUrl && (
-                    <source
-                      media="(max-width: 639px)"
-                      srcSet={activeBanner.mobileImageUrl}
-                    />
-                  )}
+                )}
 
-                  <img
-                    src={
-                      activeBanner.imageUrl ||
-                      activeBanner.mobileImageUrl ||
-                      ""
+                <video
+                  src={
+                    activeBanner.videoUrl ||
+                    activeBanner.mobileVideoUrl ||
+                    undefined
+                  }
+                  muted
+                  autoPlay
+                  loop
+                  playsInline
+                  className={`absolute inset-0 h-full w-full object-cover ${
+                    activeBanner.mobileVideoUrl
+                      ? "hidden sm:block"
+                      : ""
+                  }`}
+                />
+              </>
+            ) : activeBanner?.imageUrl ||
+              activeBanner?.mobileImageUrl ? (
+              <picture>
+                {activeBanner.mobileImageUrl && (
+                  <source
+                    media="(max-width: 639px)"
+                    srcSet={
+                      activeBanner.mobileImageUrl
                     }
-                    alt={activeBanner.title || "AR Fashions"}
-                    className="absolute inset-0 h-full w-full object-cover"
                   />
-                </picture>
-              ) : heroProduct?.media?.[0] ? (
-                heroProduct.media[0].type === "VIDEO" ? (
-                  <video
-                    src={heroProduct.media[0].url}
-                    muted
-                    autoPlay
-                    loop
-                    playsInline
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src={heroProduct.media[0].url}
-                    alt={heroProduct.name}
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                )
-              ) : null}
+                )}
 
-              <div className="absolute inset-0 bg-gradient-to-t from-[#04120d] via-black/15 to-black/15 sm:bg-gradient-to-r sm:from-[#04120d]/90 sm:via-black/20 sm:to-black/15" />
-            </div>
+                <img
+                  src={
+                    activeBanner.imageUrl ||
+                    activeBanner.mobileImageUrl ||
+                    ""
+                  }
+                  alt={
+                    activeBanner.title ??
+                    "AR Fashions"
+                  }
+                  className="h-full w-full object-cover"
+                />
+              </picture>
+            ) : (
+              <div className="h-full w-full bg-[radial-gradient(circle_at_75%_20%,rgba(52,211,153,0.22),transparent_32%),linear-gradient(135deg,#0b3528,#04120d_58%,#010806)]" />
+            )}
+
+            <div className="absolute inset-0 bg-gradient-to-t from-[#02100b] via-black/20 to-black/20 sm:bg-gradient-to-r sm:from-[#02100b]/95 sm:via-[#02100b]/35 sm:to-black/10" />
+          </div>
+
+          {/* CLICK IMAGE -> PRODUCT */}
+          {heroSlideProduct && (
+            <button
+              type="button"
+              onClick={
+                openHeroProduct
+              }
+              aria-label={`View ${heroSlideProduct.name}`}
+              className="absolute inset-0 z-10 cursor-pointer"
+            />
           )}
 
-          <div className="pointer-events-none absolute left-5 top-20 z-10 hidden sm:block">
-            <p className="font-serif text-[8rem] leading-[0.66] tracking-[-0.08em] text-white/10">
+          {/* AR MONOGRAM */}
+          <div className="pointer-events-none absolute left-6 top-24 z-20 hidden sm:block">
+            <p className="font-serif text-[9rem] leading-[0.62] tracking-[-0.08em] text-white/[0.07]">
               A
               <br />
               R
             </p>
           </div>
 
-          <div className="absolute left-5 top-8 z-20 border-l border-emerald-300/60 pl-3 sm:left-8 sm:top-10">
-            <p className="max-w-[90px] text-[7px] font-black uppercase leading-4 tracking-[0.28em] text-white/75">
-              Wear
-              <br />
-              Your
-              <br />
-              Story
-            </p>
-          </div>
+          {/* SLIDE COUNT */}
+          {heroProducts.length >
+            0 && (
+            <div className="pointer-events-none absolute right-5 top-5 z-30 rounded-full border border-white/15 bg-black/30 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.15em] text-white/75 backdrop-blur-md">
+              {String(
+                (heroSlideIndex %
+                  heroProducts.length) +
+                  1,
+              ).padStart(2, "0")}
+              {" / "}
+              {String(
+                heroProducts.length,
+              ).padStart(2, "0")}
+            </div>
+          )}
 
-          <div className="relative z-20 flex min-h-[520px] items-end p-5 pb-8 sm:min-h-[620px] sm:items-center sm:p-10 lg:p-14">
-            <div className="max-w-xl">
-              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-300">
-                The AR Runway · New Drop
+          {/* MAIN CONTENT */}
+          <div className="pointer-events-none relative z-20 flex min-h-[565px] items-end p-5 pb-20 sm:min-h-[640px] sm:items-center sm:p-11 lg:p-14">
+            <div className="max-w-[560px]">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.18em] text-emerald-200 backdrop-blur">
+                  {heroSlideProduct
+                    ? heroSlideProduct.isFeatured
+                      ? "AR Signature"
+                      : heroSlideProduct.isNewArrival
+                        ? "Fresh Drop"
+                        : heroSlideProduct.isTrending
+                          ? "Trending Now"
+                          : "AR Curated"
+                    : "The AR Runway"}
+                </span>
+
+                {heroSlideProduct && (
+                  <span className="rounded-full border border-white/15 bg-black/30 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.16em] text-white/65 backdrop-blur">
+                    {mode ===
+                    "RESELLER"
+                      ? "Reseller Edit"
+                      : "Retail Edit"}
+                  </span>
+                )}
+              </div>
+
+              <p className="mt-5 text-[8px] font-black uppercase tracking-[0.32em] text-emerald-300">
+                {heroSlideProduct
+                  ? heroSlideProduct.category.name
+                  : "Wear Your Story"}
               </p>
 
-              <h1 className="mt-4 max-w-lg font-serif text-[3rem] font-normal leading-[0.88] tracking-[-0.045em] text-white sm:text-7xl">
-                {activeBanner?.title ||
+              <h1 className="mt-3 max-w-[520px] font-serif text-[3rem] font-normal leading-[0.87] tracking-[-0.05em] text-white drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:text-7xl">
+                {heroSlideProduct?.name ||
+                  activeBanner?.title ||
                   "Style takes the spotlight."}
               </h1>
 
-              <p className="mt-5 max-w-sm text-[11px] leading-5 text-white/65 sm:text-sm">
-                {activeBanner?.subtitle ||
-                  "Curated fashion for women, men and kids — made to be noticed."}
+              <p className="mt-5 max-w-[390px] text-[11px] leading-5 text-white/70 sm:text-sm sm:leading-6">
+                {heroSlideProduct?.description
+                  ? heroSlideProduct.description
+                      .replace(
+                        /\s+/g,
+                        " ",
+                      )
+                      .slice(
+                        0,
+                        145,
+                      ) +
+                    (heroSlideProduct.description.length >
+                    145
+                      ? "…"
+                      : "")
+                  : activeBanner?.subtitle ||
+                    "Curated fashion for women, men and kids — made to be noticed."}
               </p>
 
-              <button
-                type="button"
-                onClick={() =>
-                  document
-                    .getElementById("shop-categories")
-                    ?.scrollIntoView({
-                      behavior: "smooth",
-                    })
-                }
-                className="mt-6 inline-flex items-center gap-3 rounded-full border border-emerald-300/35 bg-black/35 px-5 py-3 text-[9px] font-black uppercase tracking-[0.1em] text-white backdrop-blur"
-              >
-                Explore Drop
-                <span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-400 text-[#04120d]">
-                  →
-                </span>
-              </button>
-            </div>
-          </div>
+              {heroSlideProduct &&
+                heroSlidePrice !==
+                  null && (
+                  <div className="mt-5 flex flex-wrap items-end gap-2.5">
+                    <span className="text-2xl font-black text-white sm:text-3xl">
+                      {money(
+                        heroSlidePrice,
+                      )}
+                    </span>
 
-          <div className="absolute bottom-7 right-4 z-20 hidden w-[105px] space-y-2 sm:block lg:right-8 lg:w-[125px]">
-            {products
-              .filter(
-                (item) =>
-                  item.media.some(
-                    (media) =>
-                      media.type === "IMAGE",
-                  ),
-              )
-              .slice(0, 2)
-              .map((item, index) => {
-                const image =
-                  item.media.find(
-                    (media) =>
-                      media.type === "IMAGE",
-                  )?.url;
+                    {heroSlideProduct.mrp &&
+                      Number(
+                        heroSlideProduct.mrp,
+                      ) >
+                        Number(
+                          heroSlidePrice,
+                        ) && (
+                        <span className="pb-1 text-[11px] text-white/45 line-through sm:text-sm">
+                          {money(
+                            heroSlideProduct.mrp,
+                          )}
+                        </span>
+                      )}
 
-                return (
+                    {heroDiscount >
+                      0 && (
+                      <span className="mb-0.5 rounded-full bg-emerald-300 px-2.5 py-1 text-[8px] font-black text-[#032116]">
+                        {
+                          heroDiscount
+                        }
+                        % OFF
+                      </span>
+                    )}
+                  </div>
+                )}
+
+              {heroSlideProduct && (
+                <div className="mt-3 flex items-center gap-3 text-[8px] font-bold uppercase tracking-[0.12em] text-white/55">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                    {heroAvailableStock} in stock
+                  </span>
+
+                  <span>COD</span>
+
+                  {mode ===
+                    "RESELLER" &&
+                    heroSlideProduct.resellerMOQ && (
+                      <span>
+                        MOQ{" "}
+                        {
+                          heroSlideProduct.resellerMOQ
+                        }
+                      </span>
+                    )}
+                </div>
+              )}
+
+              <div className="pointer-events-auto mt-7 flex flex-wrap items-center gap-3">
+                {heroSlideProduct ? (
                   <button
-                    key={item.id}
+                    type="button"
+                    onClick={
+                      openHeroProduct
+                    }
+                    className="group inline-flex items-center gap-4 rounded-full bg-emerald-300 py-2 pl-5 pr-2 text-[9px] font-black uppercase tracking-[0.12em] text-[#03160f] shadow-[0_14px_35px_rgba(52,211,153,0.22)] transition active:scale-[0.97]"
+                  >
+                    Shop Now
+                    <span className="grid h-9 w-9 place-items-center rounded-full bg-[#05241a] text-base text-white transition group-hover:translate-x-0.5">
+                      →
+                    </span>
+                  </button>
+                ) : activeBanner?.buttonUrl ? (
+                  <button
                     type="button"
                     onClick={() =>
                       router.push(
-                        `/products/${item.id}?mode=${mode.toLowerCase()}`,
+                        activeBanner.buttonUrl!,
                       )
                     }
-                    className="relative block w-full overflow-hidden rounded-xl border border-white/20 bg-black/25 text-left backdrop-blur"
+                    className="rounded-full bg-emerald-300 px-6 py-3 text-[9px] font-black uppercase tracking-[0.1em] text-[#03160f]"
                   >
-                    <div className="aspect-[4/5] overflow-hidden">
-                      {image && (
-                        <img
-                          src={image}
-                          alt={item.name}
-                          className="h-full w-full object-cover"
-                        />
-                      )}
-                    </div>
-
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2">
-                      <p className="truncate text-[7px] font-black text-white">
-                        {index === 0
-                          ? "Festive Edit"
-                          : "Everyday Edit"}
-                      </p>
-                    </div>
+                    {activeBanner.buttonText ||
+                      "Explore"}
                   </button>
-                );
-              })}
-          </div>
+                ) : null}
 
-          {banners.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 gap-1.5">
-              {banners.map((banner, index) => (
                 <button
-                  key={banner.id}
                   type="button"
                   onClick={() =>
-                    setBannerIndex(index)
+                    document
+                      .getElementById(
+                        "shop-categories",
+                      )
+                      ?.scrollIntoView({
+                        behavior:
+                          "smooth",
+                      })
                   }
-                  className={`h-1 rounded-full transition-all ${
-                    index === bannerIndex
-                      ? "w-7 bg-emerald-300"
-                      : "w-2 bg-white/35"
-                  }`}
-                />
-              ))}
+                  className="rounded-full border border-white/20 bg-black/25 px-5 py-3 text-[8px] font-black uppercase tracking-[0.12em] text-white backdrop-blur"
+                >
+                  Explore Collection
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* PREVIOUS / NEXT */}
+          {heroProducts.length >
+            1 && (
+            <>
+              <button
+                type="button"
+                aria-label="Previous hero product"
+                onClick={() =>
+                  moveHeroSlide(-1)
+                }
+                className="absolute left-4 top-1/2 z-30 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-black/30 text-2xl text-white backdrop-blur transition hover:bg-black/50 sm:grid"
+              >
+                ‹
+              </button>
+
+              <button
+                type="button"
+                aria-label="Next hero product"
+                onClick={() =>
+                  moveHeroSlide(1)
+                }
+                className="absolute right-4 top-1/2 z-30 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-black/30 text-2xl text-white backdrop-blur transition hover:bg-black/50 sm:grid"
+              >
+                ›
+              </button>
+            </>
+          )}
+
+          {/* DESKTOP MINI PRODUCT RAIL */}
+          {heroProducts.length >
+            1 && (
+            <div className="absolute bottom-7 right-7 z-30 hidden max-w-[48%] gap-2 lg:flex">
+              {heroProducts.map(
+                (product, index) => {
+                  const media =
+                    product.media.find(
+                      (item) =>
+                        item.type ===
+                        "IMAGE",
+                    ) ??
+                    product.media[0];
+
+                  const active =
+                    index ===
+                    heroSlideIndex %
+                      heroProducts.length;
+
+                  return (
+                    <button
+                      key={
+                        product.id
+                      }
+                      type="button"
+                      onClick={() =>
+                        setHeroSlideIndex(
+                          index,
+                        )
+                      }
+                      className={`relative w-[82px] overflow-hidden rounded-xl border text-left transition ${
+                        active
+                          ? "border-emerald-300 shadow-[0_0_0_1px_rgba(110,231,183,0.32)]"
+                          : "border-white/15 opacity-70 hover:opacity-100"
+                      }`}
+                    >
+                      <div className="aspect-[4/5] bg-[#0a2018]">
+                        {media?.type ===
+                        "IMAGE" ? (
+                          <img
+                            src={
+                              media.url
+                            }
+                            alt={
+                              product.name
+                            }
+                            className="h-full w-full object-cover"
+                          />
+                        ) : media ? (
+                          <video
+                            src={
+                              media.url
+                            }
+                            muted
+                            playsInline
+                            className="h-full w-full object-cover"
+                          />
+                        ) : null}
+                      </div>
+
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 to-transparent p-1.5">
+                        <p className="truncate text-[6px] font-black text-white">
+                          {
+                            product.name
+                          }
+                        </p>
+                      </div>
+                    </button>
+                  );
+                },
+              )}
             </div>
           )}
+
+          {/* MOBILE DOTS / PROGRESS */}
+          {heroProducts.length >
+            1 && (
+            <div className="absolute bottom-7 left-5 z-30 flex items-center gap-1.5 lg:left-1/2 lg:-translate-x-1/2">
+              {heroProducts.map(
+                (product, index) => (
+                  <button
+                    key={
+                      product.id
+                    }
+                    type="button"
+                    aria-label={`Show ${product.name}`}
+                    onClick={() =>
+                      setHeroSlideIndex(
+                        index,
+                      )
+                    }
+                    className={`h-1.5 rounded-full transition-all ${
+                      index ===
+                      heroSlideIndex %
+                        heroProducts.length
+                        ? "w-8 bg-emerald-300"
+                        : "w-2 bg-white/35"
+                    }`}
+                  />
+                ),
+              )}
+            </div>
+          )}
+
+          <div className="pointer-events-none absolute bottom-7 right-5 z-20 text-[7px] font-black uppercase tracking-[0.2em] text-white/45 lg:hidden">
+            Swipe to explore
+          </div>
         </div>
       </section>
 
