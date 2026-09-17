@@ -196,6 +196,142 @@ export default function PromoSlot({
     promo.backgroundColor ||
     "#18181b";
 
+  // AR EDIT SPECIAL SLOT
+  if (placement === "HOME_MIDDLE") {
+    const desktopImage =
+      promo.imageUrl ||
+      promo.mobileImageUrl;
+
+    const mobileImage =
+      promo.mobileImageUrl ||
+      promo.imageUrl;
+
+    const desktopVideo =
+      promo.videoUrl ||
+      promo.mobileVideoUrl;
+
+    const mobileVideo =
+      promo.mobileVideoUrl ||
+      promo.videoUrl;
+
+    return (
+      <section className={`mx-auto w-full max-w-7xl px-4 py-9 sm:px-6 sm:py-11 lg:px-8 ${className}`}>
+        <div
+          className="relative min-h-[280px] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#d9c3ab] shadow-[0_25px_60px_rgba(0,0,0,0.28)] sm:min-h-[370px]"
+          style={{ background }}
+        >
+          {promo.contentType === "VIDEO" &&
+          (desktopVideo || mobileVideo) ? (
+            <>
+              {mobileVideo && (
+                <video
+                  src={mobileVideo}
+                  muted
+                  autoPlay
+                  loop
+                  playsInline
+                  className="absolute inset-0 h-full w-full object-cover sm:hidden"
+                />
+              )}
+
+              {desktopVideo && (
+                <video
+                  src={desktopVideo}
+                  muted
+                  autoPlay
+                  loop
+                  playsInline
+                  className={`absolute inset-0 h-full w-full object-cover ${
+                    mobileVideo ? "hidden sm:block" : ""
+                  }`}
+                />
+              )}
+            </>
+          ) : (
+            <>
+              {mobileImage && (
+                <img
+                  src={mobileImage}
+                  alt={promo.title ?? "AR Edit"}
+                  className="absolute inset-0 h-full w-full object-cover sm:hidden"
+                />
+              )}
+
+              {desktopImage && (
+                <img
+                  src={desktopImage}
+                  alt={promo.title ?? "AR Edit"}
+                  className={`absolute inset-0 h-full w-full object-cover ${
+                    mobileImage ? "hidden sm:block" : ""
+                  }`}
+                />
+              )}
+            </>
+          )}
+
+          <div
+            className="absolute inset-0 bg-gradient-to-r from-[#e9d5bc]/95 via-[#d7bea0]/70 to-transparent"
+            style={{
+              opacity:
+                Math.min(
+                  100,
+                  Math.max(
+                    0,
+                    promo.overlayOpacity ?? 85,
+                  ),
+                ) / 100,
+            }}
+          />
+
+          <div className="relative z-10 flex min-h-[280px] max-w-[68%] flex-col justify-center p-5 sm:min-h-[370px] sm:max-w-[58%] sm:p-10">
+            <p className="text-[8px] font-black uppercase tracking-[0.22em] text-[#7C2732]">
+              AR Fashions
+            </p>
+
+            <h2 className="mt-3 whitespace-pre-line font-serif text-[2.3rem] leading-[0.9] tracking-[-0.05em] text-[#1A1A1A] sm:text-5xl">
+              {promo.title || "AR Edit"}
+            </h2>
+
+            {promo.subtitle && (
+              <p className="mt-4 max-w-[220px] text-[9px] font-black uppercase leading-5 tracking-[0.14em] text-[#7C2732] sm:text-[10px]">
+                {promo.subtitle}
+              </p>
+            )}
+
+            {promo.buttonText && href && (
+              <a
+                href={href}
+                className="mt-5 inline-flex w-fit rounded-full bg-[#1A1A1A] px-5 py-3 text-[8px] font-black uppercase tracking-[0.1em] text-white shadow-lg"
+              >
+                {promo.buttonText} →
+              </a>
+            )}
+          </div>
+
+          {promos.length > 1 && (
+            <div className="absolute bottom-4 right-5 z-20 flex gap-1.5">
+              {promos.map((item, itemIndex) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() =>
+                    setIndex(itemIndex)
+                  }
+                  aria-label={`Show AR Edit ${itemIndex + 1}`}
+                  className={`h-1.5 rounded-full transition-all ${
+                    itemIndex === index
+                      ? "w-7 bg-[#1A1A1A]"
+                      : "w-2 bg-[#1A1A1A]/35"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       className={`mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 ${className}`}

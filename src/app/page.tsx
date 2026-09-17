@@ -3016,57 +3016,6 @@ export default function Home() {
         </>
       )}
 
-      {/* AR EDIT */}
-      <section className="mx-auto max-w-7xl px-4 py-9 sm:px-6 sm:py-11 lg:px-8">
-        <div className="relative min-h-[280px] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#d9c3ab] shadow-[0_25px_60px_rgba(0,0,0,0.28)] sm:min-h-[370px]">
-          {heroProduct?.media?.find(
-            (item) =>
-              item.type === "IMAGE",
-          )?.url ? (
-            <img
-              src={
-                heroProduct.media.find(
-                  (item) =>
-                    item.type === "IMAGE",
-                )?.url
-              }
-              alt="AR Edit"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          ) : null}
-
-          <div className="absolute inset-0 bg-gradient-to-r from-[#e9d5bc]/95 via-[#d7bea0]/70 to-transparent" />
-
-          <div className="relative z-10 flex min-h-[280px] max-w-[62%] flex-col justify-center p-5 sm:min-h-[370px] sm:p-10">
-            <p className="font-serif text-[2.25rem] leading-[0.82] tracking-[-0.05em] text-[#1A1A1A] sm:text-5xl">
-              AR
-              <br />
-              Edit
-            </p>
-
-            <p className="mt-4 max-w-[180px] text-[8px] font-black uppercase leading-4 tracking-[0.16em] text-[#7C2732]">
-              Fashion for
-              <br />
-              real people
-            </p>
-
-            <button
-              type="button"
-              onClick={() =>
-                document
-                  .getElementById("shop-categories")
-                  ?.scrollIntoView({
-                    behavior: "smooth",
-                  })
-              }
-              className="mt-5 w-fit rounded-full bg-[#1A1A1A] px-5 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] text-white"
-            >
-              Discover →
-            </button>
-          </div>
-        </div>
-      </section>
-
       <PromoSlot
         placement="HOME_MIDDLE"
         audience={mode}

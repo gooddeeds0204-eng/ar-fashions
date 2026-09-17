@@ -93,7 +93,7 @@ const placementLabels: Record<
   string
 > = {
   HOME_HERO: "Home Hero",
-  HOME_MIDDLE: "Home Middle",
+  HOME_MIDDLE: "AR Edit (Home Middle)",
   HOME_BOTTOM: "Home Bottom",
   SHOP_TOP: "Shop Top",
   RESELLER_TOP: "Reseller Zone",
