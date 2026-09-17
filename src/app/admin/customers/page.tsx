@@ -67,6 +67,24 @@ const statuses = [
   "PENDING",
 ] as const;
 
+const resellerRejectionReasons = [
+  {
+    label: "Shop Photos",
+    reason:
+      "Please upload clear shop photos showing the shop front and inside or stock display.",
+  },
+  {
+    label: "Visiting Card",
+    reason:
+      "Please upload a clear and valid business visiting card with readable shop details.",
+  },
+  {
+    label: "Address / Location",
+    reason:
+      "Business address or live shop location could not be verified. Please update the correct address and location.",
+  },
+] as const;
+
 function money(
   value: number,
 ) {
@@ -766,6 +784,56 @@ export default function AdminCustomersPage() {
                             Rejection Reason
                           </label>
 
+                          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                            {resellerRejectionReasons.map(
+                              (item) => {
+                                const selected =
+                                  rejectionReason ===
+                                  item.reason;
+
+                                return (
+                                  <button
+                                    key={
+                                      item.label
+                                    }
+                                    type="button"
+                                    onClick={() =>
+                                      setRejectionReason(
+                                        item.reason,
+                                      )
+                                    }
+                                    className={`rounded-xl border px-3 py-3 text-left text-[9px] font-black transition ${
+                                      selected
+                                        ? "border-red-500 bg-red-600 text-white"
+                                        : "border-red-200 bg-white text-red-700"
+                                    }`}
+                                  >
+                                    <span className="block">
+                                      {selected
+                                        ? "✓ "
+                                        : ""}
+                                      {
+                                        item.label
+                                      }
+                                    </span>
+
+                                    <span
+                                      className={`mt-1 block text-[8px] font-medium leading-4 ${
+                                        selected
+                                          ? "text-white/80"
+                                          : "text-zinc-500"
+                                      }`}
+                                    >
+                                      {
+                                        item.reason
+                                      }
+                                    </span>
+                                  </button>
+                                );
+                              },
+                            )}
+                          </div>
+
                           <textarea
                             value={
                               rejectionReason
@@ -778,7 +846,7 @@ export default function AdminCustomersPage() {
                               )
                             }
                             rows={3}
-                            placeholder="Example: Please provide valid business details."
+                            placeholder="Select a reason above or enter a custom reason."
                             className="mt-2 w-full resize-none rounded-xl border border-red-200 bg-white p-3 text-xs outline-none"
                           />
 
