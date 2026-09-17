@@ -1621,7 +1621,7 @@ export default function Home() {
         onOrders={() => {
           setMenuOpen(false);
           router.push(
-            "/orders",
+            "/my-orders",
           );
         }}
         onAccount={() => {
