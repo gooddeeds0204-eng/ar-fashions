@@ -164,6 +164,11 @@ export default function ProductDetailPage() {
   const [cartNotice, setCartNotice] = useState(false);
 
   const [
+    buyNowOpen,
+    setBuyNowOpen,
+  ] = useState(false);
+
+  const [
     salesAccessLoaded,
     setSalesAccessLoaded,
   ] = useState(false);
@@ -1022,6 +1027,64 @@ export default function ProductDetailPage() {
     }, 2800);
   }
 
+  function openBuyNowPopup() {
+    if (purchaseClosed) {
+      alert(
+        purchaseClosedMessage ||
+          "Shopping is temporarily closed.",
+      );
+      return;
+    }
+
+    if (!product) return;
+
+    if (
+      isReseller &&
+      product.smartStockBalance
+    ) {
+      alert(
+        "Use the Smart Stock Balance pack builder to order this reseller product.",
+      );
+      return;
+    }
+
+    if (!selectedVariant) {
+      alert(
+        "Please select color and size.",
+      );
+      return;
+    }
+
+    if (selectedVariant.stock <= 0) {
+      alert(
+        "This variant is out of stock.",
+      );
+      return;
+    }
+
+    if (
+      quantity >
+      selectedVariant.stock
+    ) {
+      alert(
+        `Only ${selectedVariant.stock} pieces available.`,
+      );
+      return;
+    }
+
+    if (
+      isReseller &&
+      quantity < minimumQuantity
+    ) {
+      alert(
+        `Minimum ${minimumQuantity} pieces required for reseller purchase.`,
+      );
+      return;
+    }
+
+    setBuyNowOpen(true);
+  }
+
   function buyNow() {
     if (purchaseClosed) {
       alert(
@@ -1682,7 +1745,7 @@ export default function ProductDetailPage() {
                   !selectedVariant ||
                   availableStock <= 0
                 }
-                onClick={buyNow}
+                onClick={openBuyNowPopup}
                 className="rounded-2xl bg-zinc-950 py-4 text-[12px] font-black text-white shadow-lg transition active:scale-[0.99] disabled:bg-zinc-300"
               >
                 Buy Now
@@ -2190,6 +2253,202 @@ export default function ProductDetailPage() {
         </div>
       )}
 
+      {buyNowOpen &&
+        selectedVariant && (
+          <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-6">
+            <button
+              type="button"
+              aria-label="Close Buy Now popup"
+              onClick={() =>
+                setBuyNowOpen(false)
+              }
+              className="absolute inset-0 bg-black/65 backdrop-blur-[3px]"
+            />
+
+            <div className="relative z-10 w-full max-w-md overflow-hidden rounded-t-[2rem] bg-[#fffefa] shadow-[0_-20px_70px_rgba(0,0,0,0.28)] sm:rounded-[2rem]">
+              <div className="h-1 w-full bg-gradient-to-r from-[#7C2732] via-[#D4AF37] to-[#7C2732]" />
+
+              <div className="flex items-start justify-between px-5 pb-3 pt-5">
+                <div>
+                  <p className="text-[8px] font-black uppercase tracking-[0.24em] text-[#7C2732]">
+                    AR Fashions
+                  </p>
+
+                  <h2 className="mt-1 font-serif text-2xl text-zinc-950">
+                    Confirm your look
+                  </h2>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setBuyNowOpen(
+                      false,
+                    )
+                  }
+                  className="grid h-10 w-10 place-items-center rounded-full border border-black/[0.08] bg-white text-lg text-zinc-600 shadow-sm"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="px-5">
+                <div className="flex gap-4 rounded-[1.3rem] border border-black/[0.06] bg-[#f7f5ef] p-3">
+                  <div className="h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-zinc-200">
+                    {product.media.find(
+                      (item) =>
+                        item.type ===
+                        "IMAGE",
+                    ) ? (
+                      <img
+                        src={
+                          product.media.find(
+                            (item) =>
+                              item.type ===
+                              "IMAGE",
+                          )!.url
+                        }
+                        alt={
+                          product.name
+                        }
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center font-serif text-xl text-[#D4AF37]">
+                        AR
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1 py-1">
+                    <p className="text-[8px] font-black uppercase tracking-[0.16em] text-[#7C2732]">
+                      {
+                        product
+                          .category
+                          .name
+                      }
+                    </p>
+
+                    <h3 className="mt-1 line-clamp-2 text-[15px] font-black leading-5 text-zinc-950">
+                      {
+                        product.name
+                      }
+                    </h3>
+
+                    <p className="mt-2 text-lg font-black text-zinc-950">
+                      {money(
+                        currentPrice,
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  <div className="rounded-xl border border-black/[0.06] bg-white p-3 text-center">
+                    <p className="text-[7px] font-black uppercase tracking-[0.14em] text-zinc-400">
+                      Color
+                    </p>
+
+                    <p className="mt-1 truncate text-[10px] font-black text-zinc-900">
+                      {
+                        selectedVariant
+                          .color
+                          .name
+                      }
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-black/[0.06] bg-white p-3 text-center">
+                    <p className="text-[7px] font-black uppercase tracking-[0.14em] text-zinc-400">
+                      Size
+                    </p>
+
+                    <p className="mt-1 truncate text-[10px] font-black text-zinc-900">
+                      {sizeLabel(
+                        selectedVariant
+                          .size
+                          .name,
+                        selectedVariant
+                          .size
+                          .inches,
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-black/[0.06] bg-white p-3 text-center">
+                    <p className="text-[7px] font-black uppercase tracking-[0.14em] text-zinc-400">
+                      Qty
+                    </p>
+
+                    <p className="mt-1 text-[10px] font-black text-zinc-900">
+                      {quantity}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-[1.2rem] bg-[#080B0D] p-4 text-white">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">
+                        Order Total
+                      </p>
+
+                      <p className="mt-1 text-[10px] text-white/45">
+                        {quantity} ×{" "}
+                        {money(
+                          currentPrice,
+                        )}
+                      </p>
+                    </div>
+
+                    <p className="text-2xl font-black text-[#D4AF37]">
+                      {money(
+                        currentPrice *
+                          quantity,
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-2 text-[8px] font-semibold text-white/50">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
+                    COD available · Secure checkout
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 grid grid-cols-[0.75fr_1.4fr] gap-2 border-t border-black/[0.06] bg-white px-5 pb-[max(20px,env(safe-area-inset-bottom))] pt-4">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setBuyNowOpen(
+                      false,
+                    )
+                  }
+                  className="min-h-[54px] rounded-[1rem] border-2 border-zinc-950 bg-white text-[11px] font-black text-zinc-950"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  disabled={adding}
+                  onClick={() => {
+                    setBuyNowOpen(
+                      false,
+                    );
+                    buyNow();
+                  }}
+                  className="min-h-[54px] rounded-[1rem] bg-[#7C2732] px-3 text-[11px] font-black text-white shadow-[0_12px_30px_rgba(124,39,50,0.28)] disabled:opacity-50"
+                >
+                  {adding
+                    ? "Preparing..."
+                    : "Continue to Checkout →"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       {!isReseller && (
         <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden">
           <div className="w-full border-t border-black/[0.08] bg-white/98 px-3 pb-3 pt-3 shadow-[0_-12px_35px_rgba(0,0,0,0.14)] backdrop-blur-xl">
@@ -2236,7 +2495,7 @@ export default function ProductDetailPage() {
                   !selectedVariant ||
                   availableStock <= 0
                 }
-                onClick={buyNow}
+                onClick={openBuyNowPopup}
                 className="min-h-[56px] flex-[1.15] rounded-[1rem] bg-emerald-600 px-2 text-[12px] font-black text-white shadow-[0_10px_24px_rgba(5,150,105,0.32)] transition active:scale-[0.98] disabled:bg-zinc-300 disabled:shadow-none"
               >
                 Buy Now →
