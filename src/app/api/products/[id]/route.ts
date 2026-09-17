@@ -10,13 +10,36 @@ const PRODUCT_STATUSES = [
   "OUT_OF_STOCK",
 ] as const;
 
+const VALID_GENDERS = [
+  "WOMEN",
+  "MEN",
+  "KIDS",
+  "UNISEX",
+] as const;
+
+const VALID_SALES_MODES = [
+  "RETAIL",
+  "BULK",
+  "BOTH",
+] as const;
+
+function hasValue(value: unknown) {
+  return !(
+    value === undefined ||
+    value === null ||
+    value === ""
+  );
+}
+
 function optionalNumber(value: unknown) {
-  if (value === undefined || value === null || value === "") {
+  if (!hasValue(value)) {
     return null;
   }
 
   const number = Number(value);
-  return Number.isFinite(number) ? number : null;
+  return Number.isFinite(number) && number >= 0
+    ? number
+    : null;
 }
 
 function requiredNumber(value: unknown) {
@@ -26,7 +49,6 @@ function requiredNumber(value: unknown) {
     ? number
     : null;
 }
-
 
 function getSkuToken(value: string, fallback: string) {
   const cleaned = String(value ?? "")
@@ -61,10 +83,7 @@ function getColorSkuCode(colorName: string) {
     .trim()
     .toUpperCase();
 
-  return (
-    known[normalized] ??
-    getSkuToken(normalized, "COL")
-  );
+  return known[normalized] ?? getSkuToken(normalized, "COL");
 }
 
 function getSizeSkuCode(sizeName: string) {
@@ -88,157 +107,162 @@ function getSizeSkuCode(sizeName: string) {
     FREESIZE: "FS",
   };
 
-  return (
-    known[normalized] ??
-    getSkuToken(normalized, "SZ")
-  );
+  return known[normalized] ?? getSkuToken(normalized, "SZ");
 }
 
-/**
- * GET /api/products/[id]
- * Load complete product details.
- */
+function publicVariant(
+  variant: Record<string, any>,
+  canSeeResellerPricing: boolean,
+) {
+  return {
+    id: variant.id,
+    productId: variant.productId,
+    colorId: variant.colorId,
+    sizeId: variant.sizeId,
+    sku: variant.sku,
+    stock: variant.stock,
+    retailPrice: variant.retailPrice,
+    resellerPrice: canSeeResellerPricing
+      ? variant.resellerPrice
+      : null,
+    isActive: variant.isActive,
+    color: variant.color,
+    size: variant.size,
+  };
+}
+
+async function uniqueVariantSku(
+  tx: any,
+  productSku: string,
+  colorName: string,
+  sizeName: string,
+) {
+  const baseSku = `${productSku}-${getColorSkuCode(
+    colorName,
+  )}-${getSizeSkuCode(sizeName)}`;
+
+  let sku = baseSku;
+  let suffix = 2;
+
+  while (
+    await tx.productVariant.findUnique({
+      where: { sku },
+      select: { id: true },
+    })
+  ) {
+    sku = `${baseSku}-${suffix}`;
+    suffix += 1;
+  }
+
+  return sku;
+}
+
 export async function GET(
   _request: Request,
   context: {
-    params: Promise<{
-      id: string;
-    }>;
+    params: Promise<{ id: string }>;
   },
 ) {
   try {
-    const access =
-      await getSalesAccess();
+    const access = await getSalesAccess();
+    const { id } = await context.params;
 
-    const { id } =
-      await context.params;
-
-    const product =
-      await prisma.product.findFirst({
-        where: {
-          id,
-
-          ...(access.isAdmin
-            ? {}
+    const product = await prisma.product.findFirst({
+      where: {
+        id,
+        ...(access.isAdmin
+          ? {}
+          : {
+              status: "ACTIVE",
+            }),
+      },
+      include: {
+        category: true,
+        variants: {
+          where: access.isAdmin
+            ? undefined
             : {
-                status:
-                  "ACTIVE",
-              }),
-        },
-
-        include: {
-          category: true,
-
-          variants: {
-            where: access.isAdmin
-              ? undefined
-              : {
-                  isActive: true,
-                },
-
-            include: {
-              color: true,
-              size: true,
-            },
-
-            orderBy: {
-              createdAt: "asc",
-            },
+                isActive: true,
+              },
+          include: {
+            color: true,
+            size: true,
           },
-
-          media: {
-            where: {
-              isActive: true,
-            },
-
-            orderBy: {
-              sortOrder: "asc",
-            },
-          },
-
-          _count: {
-            select: {
-              variants: true,
-              media: true,
-            },
+          orderBy: {
+            createdAt: "asc",
           },
         },
-      });
+        media: {
+          where: {
+            isActive: true,
+          },
+          orderBy: {
+            sortOrder: "asc",
+          },
+        },
+        _count: {
+          select: {
+            variants: true,
+            media: true,
+          },
+        },
+      },
+    });
 
     if (!product) {
       return NextResponse.json(
-        {
-          error:
-            "Product not found",
-        },
-        {
-          status: 404,
-        },
+        { error: "Product not found" },
+        { status: 404 },
       );
     }
 
     if (access.isAdmin) {
-      return NextResponse.json(
-        product,
-      );
+      return NextResponse.json(product);
     }
 
     const canSeeResellerPricing =
-      access.isReseller &&
-      access.resellerOpen;
+      access.isReseller && access.resellerOpen;
 
     return NextResponse.json({
       ...product,
-
-      resellerPrice:
-        canSeeResellerPricing
-          ? product.resellerPrice
-          : null,
-
-      resellerMOQ:
-        canSeeResellerPricing
-          ? product.resellerMOQ
-          : null,
-
-      variants:
-        product.variants.map(
-          (variant) => ({
-            ...variant,
-
-            resellerPrice:
-              canSeeResellerPricing
-                ? variant.resellerPrice
-                : null,
-          }),
+      resellerPrice: canSeeResellerPricing
+        ? product.resellerPrice
+        : null,
+      resellerMOQ: canSeeResellerPricing
+        ? product.resellerMOQ
+        : null,
+      variants: product.variants.map((variant) =>
+        publicVariant(
+          variant as unknown as Record<string, any>,
+          canSeeResellerPricing,
         ),
+      ),
     });
   } catch (error) {
-    console.error(
-      "GET /api/products/[id] failed:",
-      error,
-    );
+    console.error("GET /api/products/[id] failed:", error);
 
     return NextResponse.json(
-      {
-        error:
-          "Failed to load product",
-      },
-      {
-        status: 500,
-      },
+      { error: "Failed to load product" },
+      { status: 500 },
     );
   }
 }
 
-/**
- * PUT /api/products/[id]
- * Update product + variants.
- */
+type VariantInput = {
+  id?: string;
+  colorId: string;
+  sizeId: string;
+  stock?: number | string | null;
+  costPrice?: number | string | null;
+  retailPrice?: number | string | null;
+  resellerPrice?: number | string | null;
+  isActive?: boolean;
+};
+
 export async function PUT(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
-  /* ADMIN_GUARD_PUT */
   const adminError = await requireAdmin();
 
   if (adminError) {
@@ -249,10 +273,24 @@ export async function PUT(
     const { id } = await context.params;
     const body = await request.json();
 
-    const existingProduct =
-      await prisma.product.findUnique({
-        where: { id },
-      });
+    const existingProduct = await prisma.product.findUnique({
+      where: { id },
+      include: {
+        variants: {
+          include: {
+            _count: {
+              select: {
+                cartItems: true,
+                orderItems: true,
+                inventoryAdjustments: true,
+                purchaseOrderItems: true,
+                supplierCosts: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
     if (!existingProduct) {
       return NextResponse.json(
@@ -283,10 +321,9 @@ export async function PUT(
       );
     }
 
-    const category =
-      await prisma.category.findUnique({
-        where: { id: categoryId },
-      });
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId },
+    });
 
     if (!category) {
       return NextResponse.json(
@@ -296,8 +333,7 @@ export async function PUT(
     }
 
     const retailPrice = requiredNumber(
-      body.retailPrice ??
-        existingProduct.retailPrice,
+      body.retailPrice ?? existingProduct.retailPrice,
     );
 
     if (retailPrice === null) {
@@ -309,16 +345,16 @@ export async function PUT(
 
     const resellerPrice =
       body.resellerPrice === undefined
-        ? existingProduct.resellerPrice
-          ? Number(existingProduct.resellerPrice)
-          : null
+        ? existingProduct.resellerPrice === null
+          ? null
+          : Number(existingProduct.resellerPrice)
         : optionalNumber(body.resellerPrice);
 
     const mrp =
       body.mrp === undefined
-        ? existingProduct.mrp
-          ? Number(existingProduct.mrp)
-          : null
+        ? existingProduct.mrp === null
+          ? null
+          : Number(existingProduct.mrp)
         : optionalNumber(body.mrp);
 
     const resellerMOQ =
@@ -326,512 +362,419 @@ export async function PUT(
         ? existingProduct.resellerMOQ
         : optionalNumber(body.resellerMOQ);
 
-    const status =
-      body.status ??
-      existingProduct.status;
+    if (hasValue(body.resellerPrice) && resellerPrice === null) {
+      return NextResponse.json(
+        { error: "Invalid reseller price" },
+        { status: 400 },
+      );
+    }
+
+    if (hasValue(body.mrp) && mrp === null) {
+      return NextResponse.json(
+        { error: "Invalid MRP" },
+        { status: 400 },
+      );
+    }
 
     if (
-      !PRODUCT_STATUSES.includes(status)
+      hasValue(body.resellerMOQ) &&
+      (resellerMOQ === null || !Number.isInteger(resellerMOQ))
     ) {
+      return NextResponse.json(
+        { error: "Reseller MOQ must be a valid whole number" },
+        { status: 400 },
+      );
+    }
+
+    const status = body.status ?? existingProduct.status;
+    const gender = body.gender ?? existingProduct.gender;
+    const salesMode = body.salesMode ?? existingProduct.salesMode;
+
+    if (!PRODUCT_STATUSES.includes(status)) {
       return NextResponse.json(
         { error: "Invalid product status" },
         { status: 400 },
       );
     }
 
-    const gender =
-      body.gender ??
-      existingProduct.gender;
-
-    const validGenders = [
-      "WOMEN",
-      "MEN",
-      "KIDS",
-      "UNISEX",
-    ];
-
-    if (!validGenders.includes(gender)) {
+    if (!VALID_GENDERS.includes(gender)) {
       return NextResponse.json(
         { error: "Invalid product gender" },
         { status: 400 },
       );
     }
 
-    const salesMode =
-      body.salesMode ??
-      existingProduct.salesMode;
-
-    const validSalesModes = [
-      "RETAIL",
-      "BULK",
-      "BOTH",
-    ];
-
-    if (!validSalesModes.includes(salesMode)) {
+    if (!VALID_SALES_MODES.includes(salesMode)) {
       return NextResponse.json(
         { error: "Invalid sales mode" },
         { status: 400 },
       );
     }
 
-    type VariantInput = {
-      id?: string;
-      colorId: string;
-      sizeId: string;
-      sku?: string | null;
-      stock?: number | string | null;
-      costPrice?: number | string | null;
-      retailPrice?: number | string | null;
-      resellerPrice?: number | string | null;
-      isActive?: boolean;
-    };
+    const variants: VariantInput[] = Array.isArray(body.variants)
+      ? body.variants.map((variant: unknown) => {
+          const item = variant as Record<string, unknown>;
 
-    const variants: VariantInput[] =
-      Array.isArray(body.variants)
-        ? body.variants.map(
-            (variant: unknown) => {
-              const item =
-                variant as Record<
-                  string,
-                  unknown
-                >;
+          return {
+            id: item.id ? String(item.id) : undefined,
+            colorId: String(item.colorId ?? "").trim(),
+            sizeId: String(item.sizeId ?? "").trim(),
+            stock: item.stock as number | string | null | undefined,
+            costPrice:
+              item.costPrice as number | string | null | undefined,
+            retailPrice:
+              item.retailPrice as number | string | null | undefined,
+            resellerPrice:
+              item.resellerPrice as number | string | null | undefined,
+            isActive:
+              item.isActive === undefined
+                ? true
+                : Boolean(item.isActive),
+          };
+        })
+      : [];
 
-              return {
-                id:
-                  item.id
-                    ? String(item.id)
-                    : undefined,
-
-                colorId: String(
-                  item.colorId ?? "",
-                ).trim(),
-
-                sizeId: String(
-                  item.sizeId ?? "",
-                ).trim(),
-
-                sku:
-                  item.sku === undefined ||
-                  item.sku === null ||
-                  item.sku === ""
-                    ? null
-                    : String(
-                        item.sku,
-                      ).trim(),
-
-                stock:
-                  item.stock as
-                    | number
-                    | string
-                    | null
-                    | undefined,
-
-                costPrice:
-                  item.costPrice as
-                    | number
-                    | string
-                    | null
-                    | undefined,
-
-                retailPrice:
-                  item.retailPrice as
-                    | number
-                    | string
-                    | null
-                    | undefined,
-
-                resellerPrice:
-                  item.resellerPrice as
-                    | number
-                    | string
-                    | null
-                    | undefined,
-
-                isActive:
-                  item.isActive ===
-                  undefined
-                    ? true
-                    : Boolean(
-                        item.isActive,
-                      ),
-              };
-            },
-          )
-        : [];
-
-    const combinationSet =
-      new Set<string>();
+    const combinationSet = new Set<string>();
+    const incomingIds = new Set<string>();
 
     for (const variant of variants) {
-      if (
-        !variant.colorId ||
-        !variant.sizeId
-      ) {
+      if (!variant.colorId || !variant.sizeId) {
         return NextResponse.json(
-          {
-            error:
-              "Every variant must have color and size",
-          },
+          { error: "Every variant must have color and size" },
           { status: 400 },
         );
       }
 
-      const combination =
-        `${variant.colorId}:${variant.sizeId}`;
+      const combination = `${variant.colorId}:${variant.sizeId}`;
 
-      if (
-        combinationSet.has(
-          combination,
-        )
-      ) {
+      if (combinationSet.has(combination)) {
         return NextResponse.json(
-          {
-            error:
-              "Duplicate color and size variant found",
-          },
+          { error: "Duplicate color and size variant found" },
           { status: 400 },
         );
       }
 
-      combinationSet.add(
-        combination,
+      combinationSet.add(combination);
+
+      if (variant.id) {
+        if (incomingIds.has(variant.id)) {
+          return NextResponse.json(
+            { error: "Duplicate variant ID found" },
+            { status: 400 },
+          );
+        }
+
+        incomingIds.add(variant.id);
+      }
+
+      const stock = requiredNumber(variant.stock ?? 0);
+
+      if (stock === null || !Number.isInteger(stock)) {
+        return NextResponse.json(
+          { error: "Variant stock must be a valid whole number" },
+          { status: 400 },
+        );
+      }
+
+      const costPrice = optionalNumber(variant.costPrice);
+      const variantRetailPrice = optionalNumber(variant.retailPrice);
+      const variantResellerPrice = optionalNumber(
+        variant.resellerPrice,
       );
 
-      const stock =
-        requiredNumber(
-          variant.stock ?? 0,
+      if (hasValue(variant.costPrice) && costPrice === null) {
+        return NextResponse.json(
+          { error: "Invalid variant cost price" },
+          { status: 400 },
         );
+      }
 
       if (
-        stock === null ||
-        !Number.isInteger(stock)
+        hasValue(variant.retailPrice) &&
+        variantRetailPrice === null
       ) {
         return NextResponse.json(
-          {
-            error:
-              "Variant stock must be a valid whole number",
-          },
+          { error: "Invalid variant retail price" },
+          { status: 400 },
+        );
+      }
+
+      if (
+        hasValue(variant.resellerPrice) &&
+        variantResellerPrice === null
+      ) {
+        return NextResponse.json(
+          { error: "Invalid variant reseller price" },
           { status: 400 },
         );
       }
     }
 
-    const updatedProduct =
-      await prisma.$transaction(
-        async (tx) => {
-          await tx.product.update({
-            where: { id },
+    const colorIds = [
+      ...new Set(variants.map((variant) => variant.colorId)),
+    ];
+    const sizeIds = [
+      ...new Set(variants.map((variant) => variant.sizeId)),
+    ];
 
-            data: {
-              name,
+    const [colors, sizes] = await Promise.all([
+      colorIds.length
+        ? prisma.color.findMany({
+            where: { id: { in: colorIds } },
+            select: { id: true, name: true },
+          })
+        : [],
+      sizeIds.length
+        ? prisma.size.findMany({
+            where: { id: { in: sizeIds } },
+            select: { id: true, name: true },
+          })
+        : [],
+    ]);
 
-              gender,
+    const colorMap = new Map(
+      colors.map((color) => [color.id, color.name]),
+    );
+    const sizeMap = new Map(
+      sizes.map((size) => [size.id, size.name]),
+    );
 
-              description:
-                body.description !==
-                undefined
-                  ? String(
-                      body.description ??
-                        "",
-                    ).trim() || null
-                  : existingProduct.description,
+    for (const variant of variants) {
+      if (!colorMap.has(variant.colorId)) {
+        return NextResponse.json(
+          { error: `Invalid color: ${variant.colorId}` },
+          { status: 400 },
+        );
+      }
 
-              fabric:
-                body.fabric !==
-                undefined
-                  ? String(
-                      body.fabric ??
-                        "",
-                    ).trim() || null
-                  : existingProduct.fabric,
+      if (!sizeMap.has(variant.sizeId)) {
+        return NextResponse.json(
+          { error: `Invalid size: ${variant.sizeId}` },
+          { status: 400 },
+        );
+      }
+    }
 
-              retailPrice,
+    const currentById = new Map(
+      existingProduct.variants.map((variant) => [variant.id, variant]),
+    );
+    const currentByCombination = new Map(
+      existingProduct.variants.map((variant) => [
+        `${variant.colorId}:${variant.sizeId}`,
+        variant,
+      ]),
+    );
 
-              resellerPrice,
+    for (const variant of variants) {
+      if (variant.id && !currentById.has(variant.id)) {
+        return NextResponse.json(
+          { error: "Variant does not belong to this product" },
+          { status: 400 },
+        );
+      }
+    }
 
-              mrp,
+    if (Array.isArray(body.variants)) {
+      const representedExistingIds = new Set<string>();
 
-              resellerMOQ:
-                resellerMOQ ===
-                null
-                  ? null
-                  : Math.floor(
-                      Number(
-                        resellerMOQ,
-                      ),
-                    ),
-
-              smartStockBalance:
-                body.smartStockBalance !==
-                undefined
-                  ? Boolean(
-                      body.smartStockBalance,
-                    )
-                  : existingProduct.smartStockBalance,
-
-              salesMode,
-
-              status,
-
-              isFeatured:
-                body.isFeatured !==
-                undefined
-                  ? Boolean(
-                      body.isFeatured,
-                    )
-                  : existingProduct.isFeatured,
-
-              isTrending:
-                body.isTrending !==
-                undefined
-                  ? Boolean(
-                      body.isTrending,
-                    )
-                  : existingProduct.isTrending,
-
-              isNewArrival:
-                body.isNewArrival !==
-                undefined
-                  ? Boolean(
-                      body.isNewArrival,
-                    )
-                  : existingProduct.isNewArrival,
-
-              categoryId,
-            },
-          });
-
-          /*
-           * If variants were supplied,
-           * replace the existing variant matrix.
-           */
-          if (
-            Array.isArray(
-              body.variants,
-            )
-          ) {
-            await tx.productVariant.deleteMany(
-              {
-                where: {
-                  productId: id,
-                },
-              },
+      for (const variant of variants) {
+        const matched = variant.id
+          ? currentById.get(variant.id)
+          : currentByCombination.get(
+              `${variant.colorId}:${variant.sizeId}`,
             );
 
-            if (variants.length > 0) {
-              const colorIds = [
-                ...new Set(
-                  variants.map(
-                    (variant) =>
-                      variant.colorId,
-                  ),
-                ),
-              ];
+        if (matched) {
+          representedExistingIds.add(matched.id);
+        }
+      }
 
-              const sizeIds = [
-                ...new Set(
-                  variants.map(
-                    (variant) =>
-                      variant.sizeId,
-                  ),
-                ),
-              ];
+      for (const current of existingProduct.variants) {
+        if (representedExistingIds.has(current.id)) {
+          continue;
+        }
 
-              const colors =
-                await tx.color.findMany({
-                  where: {
-                    id: {
-                      in: colorIds,
-                    },
-                  },
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                });
+        const referenceCount =
+          current._count.cartItems +
+          current._count.orderItems +
+          current._count.inventoryAdjustments +
+          current._count.purchaseOrderItems +
+          current._count.supplierCosts;
 
-              const sizes =
-                await tx.size.findMany({
-                  where: {
-                    id: {
-                      in: sizeIds,
-                    },
-                  },
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                });
+        if (referenceCount > 0 || current.preferredSupplierId) {
+          return NextResponse.json(
+            {
+              error:
+                "A removed variant has cart/order/inventory/supplier history. Keep it in the matrix and switch Active off instead of deleting it.",
+            },
+            { status: 409 },
+          );
+        }
+      }
+    }
 
-              const colorMap =
-                new Map(
-                  colors.map(
-                    (color) => [
-                      color.id,
-                      color.name,
-                    ],
-                  ),
-                );
+    const updatedProduct = await prisma.$transaction(async (tx) => {
+      await tx.product.update({
+        where: { id },
+        data: {
+          name,
+          gender,
+          description:
+            body.description !== undefined
+              ? String(body.description ?? "").trim() || null
+              : existingProduct.description,
+          fabric:
+            body.fabric !== undefined
+              ? String(body.fabric ?? "").trim() || null
+              : existingProduct.fabric,
+          retailPrice,
+          resellerPrice,
+          mrp,
+          resellerMOQ,
+          smartStockBalance:
+            body.smartStockBalance !== undefined
+              ? Boolean(body.smartStockBalance)
+              : existingProduct.smartStockBalance,
+          salesMode,
+          status,
+          isFeatured:
+            body.isFeatured !== undefined
+              ? Boolean(body.isFeatured)
+              : existingProduct.isFeatured,
+          isTrending:
+            body.isTrending !== undefined
+              ? Boolean(body.isTrending)
+              : existingProduct.isTrending,
+          isNewArrival:
+            body.isNewArrival !== undefined
+              ? Boolean(body.isNewArrival)
+              : existingProduct.isNewArrival,
+          categoryId,
+        },
+      });
 
-              const sizeMap =
-                new Map(
-                  sizes.map(
-                    (size) => [
-                      size.id,
-                      size.name,
-                    ],
-                  ),
-                );
+      if (Array.isArray(body.variants)) {
+        const representedExistingIds = new Set<string>();
 
-              const variantData =
-                variants.map(
-                  (variant) => {
-                    const colorName =
-                      colorMap.get(
-                        variant.colorId,
-                      );
-
-                    const sizeName =
-                      sizeMap.get(
-                        variant.sizeId,
-                      );
-
-                    if (
-                      !colorName ||
-                      !sizeName
-                    ) {
-                      throw new Error(
-                        `Invalid variant color/size: ${variant.colorId}/${variant.sizeId}`,
-                      );
-                    }
-
-                    const generatedSku =
-                      `${existingProduct.sku}-${getColorSkuCode(
-                        colorName,
-                      )}-${getSizeSkuCode(
-                        sizeName,
-                      )}`;
-
-                    return {
-                      productId: id,
-
-                      colorId:
-                        variant.colorId,
-
-                      sizeId:
-                        variant.sizeId,
-
-                      sku:
-                        variant.sku ??
-                        generatedSku,
-
-                      stock: Math.floor(
-                        Number(
-                          variant.stock ??
-                            0,
-                        ),
-                      ),
-
-                      reservedStock: 0,
-
-                      costPrice:
-                        optionalNumber(
-                          variant.costPrice,
-                        ),
-
-                      retailPrice:
-                        optionalNumber(
-                          variant.retailPrice,
-                        ),
-
-                      resellerPrice:
-                        optionalNumber(
-                          variant.resellerPrice,
-                        ),
-
-                      isActive:
-                        variant.isActive !==
-                        false,
-                    };
-                  },
-                );
-
-              await tx.productVariant.createMany(
-                {
-                  data: variantData,
-                },
+        for (const variant of variants) {
+          const matched = variant.id
+            ? currentById.get(variant.id)
+            : currentByCombination.get(
+                `${variant.colorId}:${variant.sizeId}`,
               );
-            }
+
+          const data = {
+            colorId: variant.colorId,
+            sizeId: variant.sizeId,
+            stock: Math.floor(Number(variant.stock ?? 0)),
+            costPrice: optionalNumber(variant.costPrice),
+            retailPrice: optionalNumber(variant.retailPrice),
+            resellerPrice: optionalNumber(variant.resellerPrice),
+            isActive: variant.isActive !== false,
+          };
+
+          if (matched) {
+            representedExistingIds.add(matched.id);
+
+            await tx.productVariant.update({
+              where: { id: matched.id },
+              data,
+            });
+
+            continue;
           }
 
-          return tx.product.findUnique(
-            {
-              where: { id },
+          const colorName = colorMap.get(variant.colorId);
+          const sizeName = sizeMap.get(variant.sizeId);
 
-              include: {
-                category: true,
+          if (!colorName || !sizeName || !existingProduct.sku) {
+            throw new Error(
+              "Unable to generate SKU for the new variant.",
+            );
+          }
 
-                variants: {
-                  include: {
-                    color: true,
-                    size: true,
-                  },
-                  orderBy: {
-                    createdAt: "asc",
-                  },
-                },
-
-                media: {
-                  where: {
-                    isActive: true,
-                  },
-                  orderBy: {
-                    sortOrder:
-                      "asc",
-                  },
-                },
-
-                _count: {
-                  select: {
-                    variants: true,
-                    media: true,
-                  },
-                },
-              },
+          await tx.productVariant.create({
+            data: {
+              productId: id,
+              ...data,
+              reservedStock: 0,
+              sku: await uniqueVariantSku(
+                tx,
+                existingProduct.sku,
+                colorName,
+                sizeName,
+              ),
             },
-          );
+          });
+        }
+
+        const removableIds = existingProduct.variants
+          .filter((variant) => !representedExistingIds.has(variant.id))
+          .map((variant) => variant.id);
+
+        if (removableIds.length > 0) {
+          await tx.productVariant.deleteMany({
+            where: {
+              id: { in: removableIds },
+              productId: id,
+            },
+          });
+        }
+      }
+
+      return tx.product.findUnique({
+        where: { id },
+        include: {
+          category: true,
+          variants: {
+            include: {
+              color: true,
+              size: true,
+            },
+            orderBy: {
+              createdAt: "asc",
+            },
+          },
+          media: {
+            where: {
+              isActive: true,
+            },
+            orderBy: {
+              sortOrder: "asc",
+            },
+          },
+          _count: {
+            select: {
+              variants: true,
+              media: true,
+            },
+          },
         },
-      );
+      });
+    });
 
-    return NextResponse.json(
-      updatedProduct,
-    );
+    return NextResponse.json(updatedProduct);
   } catch (error) {
-    console.error(
-      "PUT /api/products/[id] failed:",
-      error,
-    );
+    console.error("PUT /api/products/[id] failed:", error);
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to update product";
 
     return NextResponse.json(
-      {
-        error:
-          "Failed to update product",
-      },
+      { error: message },
       { status: 500 },
     );
   }
 }
 
-/**
- * DELETE /api/products/[id]
- */
 export async function DELETE(
   _request: Request,
   context: {
     params: Promise<{ id: string }>;
   },
 ) {
-  /* ADMIN_GUARD_DELETE */
   const adminError = await requireAdmin();
 
   if (adminError) {
@@ -839,13 +782,11 @@ export async function DELETE(
   }
 
   try {
-    const { id } =
-      await context.params;
+    const { id } = await context.params;
 
-    const product =
-      await prisma.product.findUnique({
-        where: { id },
-      });
+    const product = await prisma.product.findUnique({
+      where: { id },
+    });
 
     if (!product) {
       return NextResponse.json(
@@ -860,20 +801,13 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message:
-        "Product deleted successfully",
+      message: "Product deleted successfully",
     });
   } catch (error) {
-    console.error(
-      "DELETE /api/products/[id] failed:",
-      error,
-    );
+    console.error("DELETE /api/products/[id] failed:", error);
 
     return NextResponse.json(
-      {
-        error:
-          "Failed to delete product",
-      },
+      { error: "Failed to delete product" },
       { status: 500 },
     );
   }
