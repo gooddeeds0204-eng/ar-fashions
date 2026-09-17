@@ -191,10 +191,22 @@ export default function ProfitProtectionPage() {
     let noCost = 0;
 
     for (const row of rows) {
+      const healthRank: Record<ProfitHealth, number> = {
+        NO_COST: 3,
+        LOSS: 2,
+        LOW_MARGIN: 1,
+        HEALTHY: 0,
+      };
+
       const relevant =
-        row.salesMode === "BULK"
-          ? row.resellerHealth
-          : row.retailHealth;
+        row.salesMode === "RETAIL"
+          ? row.retailHealth
+          : row.salesMode === "BULK"
+            ? row.resellerHealth
+            : healthRank[row.resellerHealth] >
+                healthRank[row.retailHealth]
+              ? row.resellerHealth
+              : row.retailHealth;
 
       if (relevant === "HEALTHY") healthy += 1;
       if (relevant === "LOW_MARGIN") lowMargin += 1;
