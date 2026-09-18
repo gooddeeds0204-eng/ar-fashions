@@ -21,6 +21,11 @@ import {
   enforcePublicRateLimit,
   requireSameOriginJson,
 } from "@/lib/public-write-security";
+import {
+  createRazorpayOrder,
+  getRazorpayKeyId,
+  isRazorpayConfigured,
+} from "@/lib/razorpay";
 
 type OrderItemInput = {
   productId?: unknown;
@@ -736,13 +741,33 @@ export async function POST(request: Request) {
       );
     }
 
-    if (paymentMethod !== "COD") {
+    const isRazorpayPayment =
+      paymentMethod ===
+      "RAZORPAY";
+
+    if (
+      paymentMethod !== "COD" &&
+      !isRazorpayPayment
+    ) {
       return NextResponse.json(
         {
           error:
-            "Only Cash on Delivery is available right now.",
+            "Invalid payment method.",
         },
         { status: 400 },
+      );
+    }
+
+    if (
+      isRazorpayPayment &&
+      !isRazorpayConfigured()
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Online payment is not configured yet.",
+        },
+        { status: 503 },
       );
     }
 
@@ -2027,6 +2052,25 @@ export async function POST(request: Request) {
             generateOrderNumber();
         }
 
+        const razorpayOrder =
+          isRazorpayPayment
+            ? await createRazorpayOrder({
+                amountPaise:
+                  Math.round(
+                    totalAmount *
+                      100,
+                  ),
+                receipt:
+                  orderNumber,
+                notes: {
+                  local_order_number:
+                    orderNumber,
+                  order_type:
+                    type,
+                },
+              })
+            : null;
+
         /*
          * 6. Create order.
          */
@@ -2041,7 +2085,10 @@ export async function POST(request: Request) {
                 : "RETAIL",
             status: "PENDING",
             paymentStatus: "PENDING",
-            paymentMethod: "COD",
+            paymentMethod:
+              isRazorpayPayment
+                ? null
+                : "COD",
             subtotal,
             discountAmount,
             deliveryCharge,
@@ -2082,34 +2129,44 @@ export async function POST(request: Request) {
         });
 
         /*
-         * 7. Safely reduce stock.
+         * 7. Safely reduce stock for COD.
          *
-         * WHERE stock >= quantity prevents
-         * negative stock during simultaneous orders.
+         * Online orders claim stock only
+         * after Razorpay confirms a captured
+         * payment. This prevents abandoned
+         * payment attempts from blocking stock.
          */
-        for (const item of orderItems) {
-          const stockUpdate =
-            await tx.productVariant.updateMany({
-              where: {
-                id: item.variantId,
-                stock: {
-                  gte: item.quantity,
-                },
-              },
-              data: {
-                stock: {
-                  decrement:
-                    item.quantity,
-                },
-              },
-            });
-
-          if (
-            stockUpdate.count !== 1
+        if (!isRazorpayPayment) {
+          for (
+            const item of
+            orderItems
           ) {
-            throw new Error(
-              `Stock changed for ${item.productName}. Please try again.`,
-            );
+            const stockUpdate =
+              await tx.productVariant.updateMany({
+                where: {
+                  id:
+                    item.variantId,
+                  stock: {
+                    gte:
+                      item.quantity,
+                  },
+                },
+                data: {
+                  stock: {
+                    decrement:
+                      item.quantity,
+                  },
+                },
+              });
+
+            if (
+              stockUpdate.count !==
+              1
+            ) {
+              throw new Error(
+                `Stock changed for ${item.productName}. Please try again.`,
+              );
+            }
           }
         }
 
@@ -2132,14 +2189,23 @@ export async function POST(request: Request) {
         }
 
         /*
-         * 9. Create pending COD payment record.
+         * 9. Create pending payment record.
          */
         await tx.payment.create({
           data: {
-            orderId: order.id,
-            provider: "COD",
-            amount: totalAmount,
-            status: "PENDING",
+            orderId:
+              order.id,
+            provider:
+              isRazorpayPayment
+                ? "RAZORPAY"
+                : "COD",
+            providerOrderId:
+              razorpayOrder?.id ??
+              null,
+            amount:
+              totalAmount,
+            status:
+              "PENDING",
           },
         });
 
@@ -2155,11 +2221,26 @@ export async function POST(request: Request) {
           totalAmount,
           couponCode:
             appliedCouponCode,
+          paymentRequired:
+            isRazorpayPayment,
+          razorpay:
+            razorpayOrder
+              ? {
+                  keyId:
+                    getRazorpayKeyId(),
+                  orderId:
+                    razorpayOrder.id,
+                  amount:
+                    razorpayOrder.amount,
+                  currency:
+                    razorpayOrder.currency,
+                }
+              : null,
         };
       },
       {
         maxWait: 10000,
-        timeout: 15000,
+        timeout: 30000,
       },
     );
 
@@ -2173,7 +2254,9 @@ export async function POST(request: Request) {
         {
           success: true,
           message:
-            "Order placed successfully.",
+            publicResult.paymentRequired
+              ? "Order created. Complete online payment."
+              : "Order placed successfully.",
           ...publicResult,
         },
         { status: 201 },
