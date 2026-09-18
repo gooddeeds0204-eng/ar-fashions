@@ -190,7 +190,7 @@ type PublicSalesMode = {
 const DEFAULT_PUBLIC_SITE_SETTINGS:
   PublicSiteSettings = {
     storeName:
-      "AR FASHIONS",
+      "AS FASHIONS",
     supportPhone: "",
     whatsappNumber: "",
     supportEmail: "",
@@ -510,7 +510,7 @@ function ProductCard({
           />
         ) : (
           <div className="flex h-full items-center justify-center bg-[#F4EBDD] font-serif text-3xl text-[#6B5435]">
-            AR
+            AS
           </div>
         )}
 
@@ -547,7 +547,7 @@ function ProductCard({
                 ? "New"
                 : product.isTrending
                   ? "Trending"
-                  : "AR Pick"}
+                  : "AS Pick"}
         </span>
       </div>
 
@@ -2187,9 +2187,9 @@ export default function Home() {
       icon: "✦",
       title: "Premium Quality",
       subtitle:
-        "AR curated fashion",
+        "AS curated fashion",
       description:
-        "AR Fashions collections are curated for quality, style and wearable everyday fashion. Open the collection to explore currently available products.",
+        "AS Fashions collections are curated for quality, style and wearable everyday fashion. Open the collection to explore currently available products.",
     },
     {
       key: "COD",
@@ -2204,8 +2204,8 @@ export default function Home() {
           : "Simple checkout",
       description:
         siteSettings.codEnabled
-          ? "Cash on Delivery is currently available on eligible AR Fashions orders. Final availability is confirmed during checkout."
-          : "Checkout is currently configured with the payment options enabled by AR Fashions.",
+          ? "Cash on Delivery is currently available on eligible AS Fashions orders. Final availability is confirmed during checkout."
+          : "Checkout is currently configured with the payment options enabled by AS Fashions.",
     },
     {
       key: "RESELLER",
@@ -2224,9 +2224,9 @@ export default function Home() {
         "Customer Support",
       subtitle:
         siteSettings.supportPhone ||
-        "AR Fashions support",
+        "AS Fashions support",
       description:
-        "Need help with products, orders, delivery or reseller access? Contact AR Fashions customer support using the available contact options.",
+        "Need help with products, orders, delivery or reseller access? Contact AS Fashions customer support using the available contact options.",
     },
   ];
 
@@ -2246,7 +2246,7 @@ export default function Home() {
         <div className="w-full max-w-xl rounded-[2rem] border border-white/10 bg-white/5 p-8 text-center shadow-2xl backdrop-blur sm:p-12">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#D4AF37]">
             {siteSettings.storeName ||
-              "AR FASHIONS"}
+              "AS FASHIONS"}
           </p>
 
           <div className="mx-auto mt-6 flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-2xl">
@@ -2370,7 +2370,7 @@ export default function Home() {
               className="flex min-w-0 items-center gap-2 text-left"
             >
               <span className="font-serif text-[2.15rem] leading-none tracking-[-0.08em] text-[#FFF8EC] sm:text-[2.5rem]">
-                AR
+                AS
               </span>
               <span className="min-w-0">
                 <span className="block truncate font-serif text-[1rem] tracking-[0.18em] text-[#FFF8EC] sm:text-[1.15rem]">
@@ -2482,7 +2482,7 @@ export default function Home() {
             </p>
 
             <p className="mt-6 text-xs text-zinc-400">
-              This shopping channel is currently disabled by AR Fashions.
+              This shopping channel is currently disabled by AS Fashions.
             </p>
           </div>
         </section>
@@ -2531,7 +2531,7 @@ export default function Home() {
                     alt={
                       heroSlideMedia.altText ??
                       heroSlideProduct?.name ??
-                      "AR Fashions"
+                      "AS Fashions"
                     }
                     className="h-full w-full object-cover"
                   />
@@ -2553,7 +2553,7 @@ export default function Home() {
                     }
                     alt={
                       activeBanner.title ??
-                      "AR Fashions"
+                      "AS Fashions"
                     }
                     className="h-full w-full object-cover"
                   />
@@ -2690,7 +2690,7 @@ export default function Home() {
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#E9D9C4,#CDBB9F)]">
                         <span className="font-serif text-3xl text-[#6D5431]">
-                          AR
+                          AS
                         </span>
                       </div>
                     )}
@@ -2724,7 +2724,7 @@ export default function Home() {
               key: "QUALITY" as BenefitKey,
               icon: "shield" as const,
               title: "Premium Quality",
-              subtitle: "AR curated fashion",
+              subtitle: "AS curated fashion",
             },
             {
               key: "RESELLER" as BenefitKey,
@@ -2779,7 +2779,7 @@ export default function Home() {
           <div className="flex items-end justify-between">
             <div>
               <p className="text-[8px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">
-                AR Fashions
+                AS Fashions
               </p>
 
               <h2 className="mt-2 font-serif text-[1.9rem] text-[#211C18]">
@@ -2888,7 +2888,7 @@ export default function Home() {
                     key={section.id}
                     title={section.title}
                     subtitle={section.subtitle}
-                    eyebrow="AR curated"
+                    eyebrow="AS curated"
                     products={featured}
                     mode={mode}
                   />
@@ -2922,7 +2922,7 @@ export default function Home() {
             <div className="absolute inset-0 bg-gradient-to-r from-[#032018] via-[#032018]/88 to-transparent" />
             <div className="relative z-10 flex min-h-[190px] max-w-[66%] flex-col justify-center p-6 sm:min-h-[240px] sm:p-8">
               <p className="text-[8px] font-black uppercase tracking-[0.34em] text-[#D9C29A]">
-                AR Edit
+                AS Edit
               </p>
               <h3 className="mt-3 font-serif text-[2rem] leading-none sm:text-[2.65rem]">
                 Stories in Style
@@ -2949,7 +2949,7 @@ export default function Home() {
           >
             <div className="absolute -right-7 bottom-[-20px] grid h-44 w-36 rotate-[4deg] place-items-center border border-[#B99E79] bg-[#EFE1CB] shadow-[0_16px_30px_rgba(92,67,42,0.16)] sm:h-52 sm:w-44">
               <span className="font-serif text-5xl text-[#6B5435]">
-                AR
+                AS
               </span>
             </div>
             <div className="relative z-10 flex min-h-[190px] max-w-[62%] flex-col justify-center p-6 sm:min-h-[240px] sm:p-8">
@@ -2981,7 +2981,7 @@ export default function Home() {
       <footer className="border-t border-[#E4D7C4] bg-[#F4EBDD]">
         <div className="mx-auto max-w-7xl px-5 py-10 text-center sm:px-6 lg:px-8">
           <p className="font-serif text-[1.8rem] tracking-[0.08em] text-[#211C18]">
-            AR
+            AS
           </p>
 
           <p className="mt-1 text-[7px] font-black uppercase tracking-[0.35em] text-[#D4AF37]">
@@ -3072,7 +3072,7 @@ export default function Home() {
           </div>
 
           <p className="mt-8 text-[7px] text-[#7B7066]">
-            © 2026 AR Fashions
+            © 2026 AS Fashions
           </p>
         </div>
       </footer>
@@ -3117,7 +3117,7 @@ export default function Home() {
               </div>
 
               <p className="mt-5 text-[8px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">
-                AR Fashions
+                AS Fashions
               </p>
 
               <h3 className="mt-2 font-serif text-3xl text-[#211C18]">

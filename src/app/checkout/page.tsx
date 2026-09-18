@@ -116,7 +116,7 @@ type SalesModeSettings = {
 const DEFAULT_SITE_SETTINGS:
   SiteSettings = {
     storeName:
-      "AR FASHIONS",
+      "AS FASHIONS",
     supportPhone: "",
     whatsappNumber: "",
     supportEmail: "",
@@ -1142,7 +1142,7 @@ export default function CheckoutPage() {
 
             <div className="min-w-0 flex-1">
               <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#D9C29A]">
-                AR Fashions
+                AS Fashions
               </p>
 
               <p className="mt-1 text-[13px] font-black">
@@ -1768,7 +1768,7 @@ export default function CheckoutPage() {
                           />
                         ) : (
                           <div className="grid h-full place-items-center font-serif text-xs text-zinc-300">
-                            AR
+                            AS
                           </div>
                         )}
                       </div>

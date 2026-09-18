@@ -30,7 +30,7 @@ type SizeSeed = {
 };
 
 async function main() {
-  console.log("🌱 Seeding AR Fashions master catalog...");
+  console.log("🌱 Seeding AS Fashions master catalog...");
 
   // =========================================================
   // 1. MAIN CATEGORIES
@@ -676,7 +676,7 @@ async function main() {
 
   console.log("");
   console.log("======================================");
-  console.log("🎉 AR FASHIONS MASTER CATALOG READY");
+  console.log("🎉 AS FASHIONS MASTER CATALOG READY");
   console.log("======================================");
   console.log(`📂 Categories : ${categoryCount}`);
   console.log(`🎨 Colours    : ${colorCount}`);

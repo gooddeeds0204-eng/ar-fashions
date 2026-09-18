@@ -79,7 +79,7 @@ export default function StorefrontDrawer({
         <div className="flex items-center justify-between border-b border-[#E4D7C4] px-5 py-4">
           <div>
             <p className="font-serif text-2xl text-[#211C18]">
-              AR
+              AS
             </p>
 
             <p className="text-[7px] font-black uppercase tracking-[0.32em] text-[#D4AF37]">

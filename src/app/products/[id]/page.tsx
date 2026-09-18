@@ -2151,7 +2151,7 @@ export default function ProductDetailPage() {
               <div className="flex items-start justify-between px-5 pb-3 pt-5">
                 <div>
                   <p className="text-[8px] font-black uppercase tracking-[0.24em] text-[#7C3A45]">
-                    AR Fashions
+                    AS Fashions
                   </p>
 
                   <h2 className="mt-1 font-serif text-2xl text-zinc-950">
@@ -2195,7 +2195,7 @@ export default function ProductDetailPage() {
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center font-serif text-xl text-[#D4AF37]">
-                        AR
+                        AS
                       </div>
                     )}
                   </div>

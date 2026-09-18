@@ -1019,7 +1019,7 @@ export default function PurchaseOrdersPage() {
         <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">
-              AR FASHIONS
+              AS FASHIONS
             </p>
 
             <h1 className="mt-1 text-3xl font-black tracking-tight">

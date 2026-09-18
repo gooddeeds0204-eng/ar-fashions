@@ -667,7 +667,7 @@ export default function ProductsPage() {
         <header className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-400">
-              AR FASHIONS
+              AS FASHIONS
             </p>
 
             <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">

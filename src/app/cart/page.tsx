@@ -687,7 +687,7 @@ export default function CartPage() {
 
             <div className="min-w-0 flex-1">
               <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#D9C29A]">
-                AR Fashions
+                AS Fashions
               </p>
 
               <p className="mt-1 text-[13px] font-black">
@@ -756,7 +756,7 @@ export default function CartPage() {
           <div className="relative flex items-end justify-between gap-4">
             <div>
               <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#D9C29A]">
-                AR Shopping Bag
+                AS Shopping Bag
               </p>
 
               <h1 className="mt-3 font-serif text-[2.8rem] leading-[0.86] tracking-[-0.045em] sm:text-5xl">
@@ -841,7 +841,7 @@ export default function CartPage() {
           <section className="mt-5 overflow-hidden rounded-[1.8rem] border border-black/[0.05] bg-[#FFFDF9] shadow-sm">
             <div className="px-6 py-14 text-center">
               <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-50 font-serif text-xl text-[#6B5435]">
-                AR
+                AS
               </div>
 
               <p className="mt-5 text-[8px] font-black uppercase tracking-[0.25em] text-[#6B5435]">
@@ -853,7 +853,7 @@ export default function CartPage() {
               </h2>
 
               <p className="mx-auto mt-3 max-w-sm text-[11px] leading-5 text-zinc-500">
-                Explore the latest AR Fashions collection and add the pieces you love.
+                Explore the latest AS Fashions collection and add the pieces you love.
               </p>
 
               <button
@@ -934,7 +934,7 @@ export default function CartPage() {
                                 />
                               ) : (
                                 <div className="grid h-full place-items-center font-serif text-lg text-zinc-300">
-                                  AR
+                                  AS
                                 </div>
                               )}
                             </button>
@@ -1492,7 +1492,7 @@ export default function CartPage() {
           <div className="w-full max-w-md overflow-hidden rounded-[1.7rem] bg-white shadow-[0_30px_90px_rgba(0,0,0,0.3)]">
             <div className="bg-[#031B14] p-5 text-white">
               <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#D9C29A]">
-                AR Shopping Bag
+                AS Shopping Bag
               </p>
 
               <h2 className="mt-2 font-serif text-[1.8rem]">

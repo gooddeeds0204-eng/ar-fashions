@@ -371,7 +371,7 @@ export default function AdminHomeContentPage() {
 
           <div>
             <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400">
-              AR Fashions Admin
+              AS Fashions Admin
             </p>
 
             <h1 className="text-lg font-black">

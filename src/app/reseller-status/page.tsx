@@ -235,11 +235,11 @@ export default function ResellerStatusPage() {
               "NONE" ? (
               <div className="rounded-[2rem] border border-[#D4AF37]/20 bg-gradient-to-br from-[#D4AF37]/10 to-white/[0.03] p-7">
                 <div className="grid h-14 w-14 place-items-center rounded-full bg-[#D4AF37] font-serif text-xl text-[#211C18]">
-                  AR
+                  AS
                 </div>
 
                 <p className="mt-6 text-[9px] font-black uppercase tracking-[0.25em] text-[#D4AF37]">
-                  AR Fashions Wholesale
+                  AS Fashions Wholesale
                 </p>
 
                 <h1 className="mt-3 font-serif text-4xl leading-none">

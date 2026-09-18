@@ -371,7 +371,7 @@ export default function ReportsPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">
-              AR FASHIONS
+              AS FASHIONS
             </p>
 
             <h1 className="mt-1 text-3xl font-black tracking-tight">

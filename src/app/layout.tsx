@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AR Fashions | Fashion Retail & Wholesale",
+  title: "AS Fashions | Fashion Retail & Wholesale",
   description:
-    "AR Fashions — premium fashion for retail shoppers and resellers.",
+    "AS Fashions — premium fashion for retail shoppers and resellers.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

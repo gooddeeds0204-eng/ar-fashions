@@ -236,7 +236,7 @@ export default function ProfitProtectionPage() {
             </Link>
 
             <p className="mt-5 text-xs font-black uppercase tracking-[0.24em] text-emerald-400">
-              AR FASHIONS · PROFIT PROTECTION
+              AS FASHIONS · PROFIT PROTECTION
             </p>
 
             <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">

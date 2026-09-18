@@ -188,7 +188,7 @@ export default function LoginPage() {
 
           <div className="mt-7 rounded-[1.5rem] border border-emerald-300/10 bg-emerald-400/[0.05] p-5">
             <p className="text-[10px] font-black text-[#211C18]">
-              New to AR Fashions?
+              New to AS Fashions?
             </p>
 
             <p className="mt-1 text-[10px] leading-5 text-[#7B7066]">

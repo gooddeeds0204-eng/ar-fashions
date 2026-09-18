@@ -179,7 +179,7 @@ export default async function ResellerDashboardPage() {
             </div>
 
             <p className="mt-6 text-[9px] font-black uppercase tracking-[0.28em] text-emerald-300">
-              AR Fashions
+              AS Fashions
             </p>
 
             <h1 className="mt-2 max-w-2xl font-serif text-[2.35rem] leading-[0.95] sm:text-5xl">

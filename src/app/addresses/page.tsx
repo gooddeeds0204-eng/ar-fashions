@@ -359,7 +359,7 @@ export default function AddressesPage() {
                     : "text-red-200"
                 }`}
               >
-                AR Fashions
+                AS Fashions
               </p>
 
               <p className="mt-1 text-[13px] font-black">
@@ -421,7 +421,7 @@ export default function AddressesPage() {
         {/* TITLE */}
         <section>
           <p className="text-[8px] font-black uppercase tracking-[0.28em] text-emerald-700">
-            AR Fashions · Account
+            AS Fashions · Account
           </p>
 
           <div className="mt-2 flex items-end justify-between gap-4">
@@ -777,7 +777,7 @@ export default function AddressesPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[7px] font-black uppercase tracking-[0.22em] text-emerald-300">
-                    AR Fashions · Delivery
+                    AS Fashions · Delivery
                   </p>
 
                   <h2 className="mt-2 font-serif text-[2rem] leading-none">

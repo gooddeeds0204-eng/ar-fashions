@@ -831,7 +831,7 @@ export default function CategoriesPage() {
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#7C2732] to-black font-serif text-xl text-[#D4AF37]">
-                  AR
+                  AS
                 </div>
               )}
             </div>
@@ -1096,7 +1096,7 @@ export default function CategoriesPage() {
                     ) : (
                       <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-[#641e2a] via-[#30131a] to-black">
                         <span className="font-serif text-3xl text-[#D4AF37]">
-                          AR
+                          AS
                         </span>
 
                         <span className="mt-2 text-[7px] font-black uppercase tracking-[0.18em] text-white/60">

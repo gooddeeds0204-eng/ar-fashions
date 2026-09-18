@@ -409,7 +409,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-xs font-medium text-[#7B7066]">
-                AR Fashions / Admin
+                AS Fashions / Admin
               </div>
               <h1 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
                 Dashboard
@@ -422,7 +422,7 @@ export default function AdminDashboard() {
               </div>
 
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#211C18] text-sm font-semibold text-white">
-                AR
+                AS
               </div>
 
               <button
@@ -440,7 +440,7 @@ export default function AdminDashboard() {
           <section className="overflow-hidden rounded-[28px] bg-[#211C18] p-6 text-white shadow-xl sm:p-8">
             <div className="max-w-2xl">
               <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/55">
-                AR Fashions Control Center
+                AS Fashions Control Center
               </div>
 
               <h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">

@@ -748,7 +748,7 @@ export default function AccountPage() {
 
             <div className="min-w-0 flex-1">
               <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-300">
-                AR Fashions
+                AS Fashions
               </p>
 
               <p className="mt-1 text-[13px] font-black">
@@ -1267,7 +1267,7 @@ export default function AccountPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[8px] font-black uppercase tracking-[0.24em] text-emerald-300">
-                    AR Fashions · Account
+                    AS Fashions · Account
                   </p>
 
                   <h2 className="mt-2 font-serif text-[2rem] leading-none">
@@ -1465,7 +1465,7 @@ export default function AccountPage() {
             className="relative flex min-h-[52px] flex-col items-center justify-center"
           >
             <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-[4px] border-[#031B14] bg-emerald-400 font-serif text-[14px] font-black text-[#031B14] shadow-[0_0_28px_rgba(52,211,153,0.3)]">
-              AR
+              AS
             </span>
 
             <span className="mt-0.5 text-[7px] font-black text-white">

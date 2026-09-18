@@ -24,7 +24,7 @@ export default function BrandLogo({
           light ? "text-white" : "text-zinc-950"
         }`}
       >
-        AR
+        AS
       </span>
 
       <span

@@ -252,7 +252,7 @@ export default function PromoSlot({
               {mobileImage && (
                 <img
                   src={mobileImage}
-                  alt={promo.title ?? "AR Edit"}
+                  alt={promo.title ?? "AS Edit"}
                   className="absolute inset-0 h-full w-full object-cover sm:hidden"
                 />
               )}
@@ -260,7 +260,7 @@ export default function PromoSlot({
               {desktopImage && (
                 <img
                   src={desktopImage}
-                  alt={promo.title ?? "AR Edit"}
+                  alt={promo.title ?? "AS Edit"}
                   className={`absolute inset-0 h-full w-full object-cover ${
                     mobileImage ? "hidden sm:block" : ""
                   }`}
@@ -285,11 +285,11 @@ export default function PromoSlot({
 
           <div className="relative z-10 flex min-h-[280px] max-w-[68%] flex-col justify-center p-5 sm:min-h-[370px] sm:max-w-[58%] sm:p-10">
             <p className="text-[8px] font-black uppercase tracking-[0.22em] text-[#7C3A45]">
-              AR Fashions
+              AS Fashions
             </p>
 
             <h2 className="mt-3 whitespace-pre-line font-serif text-[2.3rem] leading-[0.9] tracking-[-0.05em] text-[#211C18] sm:text-5xl">
-              {promo.title || "AR Edit"}
+              {promo.title || "AS Edit"}
             </h2>
 
             {promo.subtitle && (
@@ -317,7 +317,7 @@ export default function PromoSlot({
                   onClick={() =>
                     setIndex(itemIndex)
                   }
-                  aria-label={`Show AR Edit ${itemIndex + 1}`}
+                  aria-label={`Show AS Edit ${itemIndex + 1}`}
                   className={`h-1.5 rounded-full transition-[transform,opacity] duration-300 ${
                     itemIndex === index
                       ? "w-7 bg-[#031B14]"
@@ -352,7 +352,7 @@ export default function PromoSlot({
                 }
                 alt={
                   promo.title ??
-                  "AR Fashions promotion"
+                  "AS Fashions promotion"
                 }
                 className={`absolute inset-0 h-full w-full object-cover ${
                   promo.mobileImageUrl
@@ -369,7 +369,7 @@ export default function PromoSlot({
                 }
                 alt={
                   promo.title ??
-                  "AR Fashions promotion"
+                  "AS Fashions promotion"
                 }
                 className="absolute inset-0 h-full w-full object-cover sm:hidden"
               />
@@ -383,7 +383,7 @@ export default function PromoSlot({
                   }
                   alt={
                     promo.title ??
-                    "AR Fashions promotion"
+                    "AS Fashions promotion"
                   }
                   className="absolute inset-0 hidden h-full w-full object-cover sm:block"
                 />

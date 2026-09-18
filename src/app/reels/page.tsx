@@ -385,7 +385,7 @@ export default function ReelsPage() {
       title:
         reel.product.name,
       text:
-        `Check out ${reel.product.name} on AR Fashions`,
+        `Check out ${reel.product.name} on AS Fashions`,
       url:
         shareUrl,
     };
@@ -584,7 +584,7 @@ export default function ReelsPage() {
                     {reel.source ===
                     "INSTAGRAM"
                       ? "INSTAGRAM REEL"
-                      : "AR FASHIONS"}
+                      : "AS FASHIONS"}
                   </span>
                 </div>
 
@@ -711,7 +711,7 @@ export default function ReelsPage() {
                         />
                       ) : (
                         <div className="flex h-full items-center justify-center text-xs">
-                          AR
+                          AS
                         </div>
                       )}
                     </div>

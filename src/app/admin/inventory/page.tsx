@@ -520,7 +520,7 @@ export default function InventoryPage() {
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">
-              AR FASHIONS
+              AS FASHIONS
             </p>
 
             <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">
@@ -599,7 +599,7 @@ export default function InventoryPage() {
               </h2>
 
               <p className="mt-1 max-w-xl text-xs font-semibold leading-5 text-slate-500">
-                AR Fashions automatically marks variants as Critical or Low Stock and calculates a suggested restock quantity from live stock and recent 30-day sales.
+                AS Fashions automatically marks variants as Critical or Low Stock and calculates a suggested restock quantity from live stock and recent 30-day sales.
               </p>
             </div>
 

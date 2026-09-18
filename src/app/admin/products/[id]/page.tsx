@@ -722,7 +722,7 @@ export default function EditProductPage() {
             </a>
 
             <p className="mt-5 text-xs font-bold uppercase tracking-[0.25em] text-emerald-400">
-              AR FASHIONS · PRODUCT EDITOR
+              AS FASHIONS · PRODUCT EDITOR
             </p>
 
             <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">

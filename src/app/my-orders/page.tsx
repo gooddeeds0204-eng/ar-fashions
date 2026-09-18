@@ -395,7 +395,7 @@ export default function MyOrdersPage() {
         {/* PAGE TITLE */}
         <section className="mb-6">
           <p className="text-[8px] font-black uppercase tracking-[0.28em] text-emerald-700">
-            AR Fashions · Account
+            AS Fashions · Account
           </p>
 
           <div className="mt-2 flex items-end justify-between gap-4">
@@ -768,7 +768,7 @@ export default function MyOrdersPage() {
                                         />
                                       ) : (
                                         <span className="grid h-full w-full place-items-center font-serif text-lg text-white">
-                                          AR
+                                          AS
                                         </span>
                                       )}
                                     </button>

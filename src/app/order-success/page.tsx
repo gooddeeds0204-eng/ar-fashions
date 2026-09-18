@@ -230,7 +230,7 @@ function OrderSuccessContent() {
             </button>
 
             <p className="mt-4 text-center text-[7px] font-semibold uppercase tracking-[0.16em] text-[#7B7066]">
-              AR Fashions · Wear Your Story
+              AS Fashions · Wear Your Story
             </p>
           </div>
         </div>

@@ -208,7 +208,7 @@ export default function ResellerSetsPage() {
             }
             className="text-xl font-black tracking-[-0.05em]"
           >
-            AR
+            AS
             <span className="text-emerald-600">
               FASHIONS
             </span>
@@ -237,7 +237,7 @@ export default function ResellerSetsPage() {
       <section className="bg-zinc-950 text-white">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
           <p className="text-[10px] font-black uppercase tracking-[0.28em] text-emerald-400">
-            AR Fashions Wholesale
+            AS Fashions Wholesale
           </p>
 
           <h1 className="mt-3 max-w-2xl text-4xl font-black tracking-tight sm:text-5xl">

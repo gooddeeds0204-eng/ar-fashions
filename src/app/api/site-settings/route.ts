@@ -5,7 +5,7 @@ const SETTINGS_KEY =
   "site_settings_v1";
 
 const DEFAULT_SETTINGS = {
-  storeName: "AR FASHIONS",
+  storeName: "AS FASHIONS",
   supportPhone: "",
   whatsappNumber: "",
   supportEmail: "",

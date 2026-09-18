@@ -638,7 +638,7 @@ export default function NotificationsPage() {
 
             <div className="min-w-0 flex-1">
               <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-300">
-                AR Fashions
+                AS Fashions
               </p>
 
               <p className="mt-1 text-[13px] font-black">
@@ -728,7 +728,7 @@ export default function NotificationsPage() {
               </h1>
 
               <p className="mt-4 max-w-md text-[10px] leading-5 text-[#7B7066] sm:text-sm">
-                Orders, delivery updates, offers and important AR Fashions activity — all in one place.
+                Orders, delivery updates, offers and important AS Fashions activity — all in one place.
               </p>
             </div>
 

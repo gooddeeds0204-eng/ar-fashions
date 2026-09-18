@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  /* AR FASHIONS MASTER THEME */
+  /* AS FASHIONS MASTER THEME */
 
   --background: #FAF7F0;
   --foreground: #211C18;
@@ -62,7 +62,7 @@ body {
 }
 
 
-/* AR Fashions performance-first interaction system */
+/* AS Fashions performance-first interaction system */
 :where(button, a[href], [role="button"]) {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -132,7 +132,7 @@ body {
 }
 
 
-/* AR FASHIONS GLOBAL THEME HELPERS */
+/* AS FASHIONS GLOBAL THEME HELPERS */
 
 .ar-page {
   min-height: 100vh;

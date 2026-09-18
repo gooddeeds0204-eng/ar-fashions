@@ -216,7 +216,7 @@ export default function SignupPage() {
 
         <section className="py-10">
           <p className="text-[9px] font-black uppercase tracking-[0.28em] text-emerald-400">
-            Join AR Fashions
+            Join AS Fashions
           </p>
 
           <h1 className="mt-4 font-serif text-5xl leading-[0.94]">

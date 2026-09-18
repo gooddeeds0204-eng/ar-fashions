@@ -194,7 +194,7 @@ export default function SizesPage() {
 
   async function applyStandardKidsHeights() {
     const confirmed = window.confirm(
-      "Apply AR Fashions standard height chart to all Kids year sizes?",
+      "Apply AS Fashions standard height chart to all Kids year sizes?",
     );
 
     if (!confirmed) {

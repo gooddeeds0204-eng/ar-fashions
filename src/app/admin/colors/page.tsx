@@ -209,7 +209,7 @@ export default function ColorsPage() {
           </h1>
 
           <p className="mt-2 text-slate-400">
-            Manage the complete AR Fashions color master.
+            Manage the complete AS Fashions color master.
           </p>
         </div>
 

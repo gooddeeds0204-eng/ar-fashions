@@ -93,7 +93,7 @@ const placementLabels: Record<
   string
 > = {
   HOME_HERO: "Home Hero",
-  HOME_MIDDLE: "AR Edit (Home Middle)",
+  HOME_MIDDLE: "AS Edit (Home Middle)",
   HOME_BOTTOM: "Home Bottom",
   SHOP_TOP: "Shop Top",
   RESELLER_TOP: "Reseller Zone",
@@ -828,7 +828,7 @@ export default function AdminBannersPage() {
 
           <div>
             <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-zinc-400">
-              AR Fashions Admin
+              AS Fashions Admin
             </p>
 
             <h1 className="text-lg font-black">

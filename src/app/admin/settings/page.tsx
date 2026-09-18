@@ -38,7 +38,7 @@ type SalesMode = {
 const defaultSettings:
   Settings = {
     storeName:
-      "AR FASHIONS",
+      "AS FASHIONS",
 
     supportPhone: "",
     whatsappNumber: "",
@@ -241,7 +241,7 @@ export default function SettingsPage() {
       <div className="mx-auto max-w-6xl">
 
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">
-          AR FASHIONS
+          AS FASHIONS
         </p>
 
         <h1 className="mt-1 text-3xl font-black">

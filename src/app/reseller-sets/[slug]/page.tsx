@@ -659,7 +659,7 @@ export default function ResellerSetDetailPage() {
             }
             className="ml-2 text-lg font-black tracking-[-0.05em]"
           >
-            AR
+            AS
             <span className="text-emerald-600">
               FASHIONS
             </span>

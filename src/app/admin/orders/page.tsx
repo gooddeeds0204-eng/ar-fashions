@@ -467,7 +467,7 @@ export default function AdminOrdersPage() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <div className="text-xs font-medium text-[#7B7066]">
-                AR Fashions / Admin / Orders
+                AS Fashions / Admin / Orders
               </div>
 
               <h1 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">

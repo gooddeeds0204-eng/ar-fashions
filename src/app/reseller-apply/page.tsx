@@ -609,7 +609,7 @@ export default function ResellerApplyPage() {
 
         <section className="py-9">
           <p className="text-[9px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">
-            AR Fashions Wholesale
+            AS Fashions Wholesale
           </p>
 
           <h1 className="mt-4 font-serif text-4xl leading-[0.95] sm:text-5xl">
