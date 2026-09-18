@@ -117,6 +117,24 @@ type PaymentChoice =
   | "COD"
   | "RAZORPAY";
 
+type ShippingCheck = {
+  checking: boolean;
+  enabled: boolean;
+  serviceable:
+    | boolean
+    | null;
+  courierName:
+    | string
+    | null;
+  estimatedDays:
+    | string
+    | number
+    | null;
+  error:
+    | string
+    | null;
+};
+
 type RazorpaySuccessResponse = {
   razorpay_payment_id: string;
   razorpay_order_id: string;
@@ -315,6 +333,19 @@ export default function CheckoutPage() {
     setRazorpayEnabled,
   ] = useState(false);
 
+  const [
+    shippingCheck,
+    setShippingCheck,
+  ] =
+    useState<ShippingCheck>({
+      checking: false,
+      enabled: false,
+      serviceable: null,
+      courierName: null,
+      estimatedDays: null,
+      error: null,
+    });
+
   useEffect(() => {
     const items = getCart();
     setCart(items);
@@ -472,6 +503,128 @@ export default function CheckoutPage() {
   ]);
 
   useEffect(() => {
+    if (
+      !/^\d{6}$/.test(
+        pincode.trim(),
+      )
+    ) {
+      setShippingCheck({
+        checking: false,
+        enabled: false,
+        serviceable: null,
+        courierName: null,
+        estimatedDays: null,
+        error: null,
+      });
+      return;
+    }
+
+    const controller =
+      new AbortController();
+
+    const timer =
+      window.setTimeout(
+        async () => {
+          setShippingCheck(
+            (current) => ({
+              ...current,
+              checking: true,
+              error: null,
+            }),
+          );
+
+          try {
+            const response =
+              await fetch(
+                `/api/shipping/serviceability?pincode=${encodeURIComponent(
+                  pincode.trim(),
+                )}&weight=0.5&cod=${
+                  paymentChoice ===
+                  "COD"
+                    ? "1"
+                    : "0"
+                }`,
+                {
+                  cache:
+                    "no-store",
+                  signal:
+                    controller.signal,
+                },
+              );
+
+            const data =
+              await response.json();
+
+            if (!response.ok) {
+              throw new Error(
+                data.error ??
+                  "Delivery check failed.",
+              );
+            }
+
+            const firstCourier =
+              Array.isArray(
+                data.couriers,
+              )
+                ? data.couriers[0]
+                : null;
+
+            setShippingCheck({
+              checking: false,
+              enabled:
+                data.enabled ===
+                true,
+              serviceable:
+                data.enabled ===
+                true
+                  ? data.serviceable ===
+                    true
+                  : null,
+              courierName:
+                firstCourier?.name ??
+                null,
+              estimatedDays:
+                firstCourier
+                  ?.estimatedDays ??
+                null,
+              error: null,
+            });
+          } catch (error) {
+            if (
+              controller.signal
+                .aborted
+            ) {
+              return;
+            }
+
+            setShippingCheck({
+              checking: false,
+              enabled: false,
+              serviceable: null,
+              courierName: null,
+              estimatedDays: null,
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Delivery check failed.",
+            });
+          }
+        },
+        450,
+      );
+
+    return () => {
+      window.clearTimeout(
+        timer,
+      );
+      controller.abort();
+    };
+  }, [
+    pincode,
+    paymentChoice,
+  ]);
+
+  useEffect(() => {
     async function loadSavedAddresses() {
       try {
         const response =
@@ -606,6 +759,15 @@ export default function CheckoutPage() {
     );
 
   const curatedSet = useMemo(() => {
+    if (
+      shippingUnavailable
+    ) {
+      showCheckoutAlert(
+        "Shiprocket courier service is not available for this pincode.",
+      );
+      return;
+    }
+
     if (cart.length === 0) {
       return null;
     }
@@ -824,11 +986,17 @@ export default function CheckoutPage() {
                   )}.`
                 : "";
 
+  const shippingUnavailable =
+    shippingCheck.enabled &&
+    shippingCheck.serviceable ===
+      false;
+
   const canPlaceOrder =
     !isMixedCart &&
     !invalidCuratedCart &&
     invalidResellerGroups.length === 0 &&
-    !checkoutBlocked;
+    !checkoutBlocked &&
+    !shippingUnavailable;
 
   const deliveryCharge =
     isResellerOrder
@@ -1945,8 +2113,38 @@ export default function CheckoutPage() {
                     }
                     inputMode="numeric"
                     placeholder="6 digit pincode"
-                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-[#D4AF37]"
                   />
+
+                  {shippingCheck.checking && (
+                    <p className="mt-2 text-[7px] font-bold text-[#7B7066]">
+                      Checking courier service...
+                    </p>
+                  )}
+
+                  {!shippingCheck.checking &&
+                    shippingCheck.enabled &&
+                    shippingCheck.serviceable ===
+                      true && (
+                      <p className="mt-2 text-[7px] font-bold text-[#0F5A38]">
+                        ✓ Shiprocket delivery available
+                        {shippingCheck.courierName
+                          ? ` · ${shippingCheck.courierName}`
+                          : ""}
+                        {shippingCheck.estimatedDays
+                          ? ` · ~${shippingCheck.estimatedDays} days`
+                          : ""}
+                      </p>
+                    )}
+
+                  {!shippingCheck.checking &&
+                    shippingCheck.enabled &&
+                    shippingCheck.serviceable ===
+                      false && (
+                      <p className="mt-2 text-[7px] font-bold text-[#9F2F3D]">
+                        Delivery is not serviceable for this pincode.
+                      </p>
+                    )}
                 </div>
 
                 <div>
@@ -2432,6 +2630,14 @@ export default function CheckoutPage() {
 
                   <p className="mt-1 text-[8px] leading-4 text-amber-700">
                     {checkoutBlockMessage}
+                  </p>
+                </div>
+              )}
+
+              {shippingUnavailable && (
+                <div className="mt-4 rounded-[1.1rem] border border-red-200 bg-red-50 p-4">
+                  <p className="text-[9px] font-black text-red-800">
+                    Shiprocket delivery is not available for this pincode.
                   </p>
                 </div>
               )}
