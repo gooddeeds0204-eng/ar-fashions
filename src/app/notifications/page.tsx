@@ -135,9 +135,9 @@ function typeTone(
   if (type === "ORDER") {
     return {
       icon:
-        "bg-emerald-500 text-[#031B14]",
+        "bg-[#F4EBDD]0 text-[#031B14]",
       badge:
-        "bg-emerald-50 text-emerald-700",
+        "bg-[#F4EBDD] text-[#6B5435]",
     };
   }
 
@@ -618,7 +618,7 @@ export default function NotificationsPage() {
             className={`flex items-center gap-3 rounded-[1.35rem] border p-3.5 text-white shadow-[0_20px_55px_rgba(0,0,0,0.3)] backdrop-blur-xl ${
               toast.type ===
               "SUCCESS"
-                ? "border-emerald-300/25 bg-[#031B14]/95"
+                ? "border-[#D4AF37]/25 bg-[#031B14]/95"
                 : "border-red-300/25 bg-[#7C3A45]/95"
             }`}
           >
@@ -626,7 +626,7 @@ export default function NotificationsPage() {
               className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-black ${
                 toast.type ===
                 "SUCCESS"
-                  ? "bg-emerald-400 text-[#031B14]"
+                  ? "bg-[#D4AF37] text-[#031B14]"
                   : "bg-red-400 text-white"
               }`}
             >
@@ -637,7 +637,7 @@ export default function NotificationsPage() {
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-300">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#D9C29A]">
                 AS Fashions
               </p>
 
@@ -661,7 +661,7 @@ export default function NotificationsPage() {
                   null,
                 )
               }
-              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/10 text-xs font-black"
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#FFFDF9]/10 text-xs font-black"
             >
               ×
             </button>
@@ -677,7 +677,7 @@ export default function NotificationsPage() {
             onClick={() =>
               router.back()
             }
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-black/[0.06] bg-white text-sm font-black"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#E4D7C4] bg-[#FFFDF9] text-sm font-black"
           >
             ←
           </button>
@@ -703,7 +703,7 @@ export default function NotificationsPage() {
               Mark All Read
             </button>
           ) : (
-            <span className="ml-auto rounded-full bg-emerald-50 px-3 py-2 text-[8px] font-black uppercase tracking-[0.1em] text-emerald-700">
+            <span className="ml-auto rounded-full bg-[#F4EBDD] px-3 py-2 text-[8px] font-black uppercase tracking-[0.1em] text-[#6B5435]">
               ✓ All Read
             </span>
           )}
@@ -713,11 +713,11 @@ export default function NotificationsPage() {
       <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6 sm:py-7">
         {/* HERO */}
         <section className="relative overflow-hidden rounded-[2rem] border border-[#E4D7C4] bg-gradient-to-br from-[#F1E8DA] via-[#FFF8ED] to-[#FFFDF9] p-5 text-[#211C18] shadow-[0_26px_70px_rgba(61,48,37,0.08)] sm:p-7">
-          <div className="pointer-events-none absolute -right-20 -top-16 h-52 w-52 rounded-full bg-emerald-400/10 blur-3xl" />
+          <div className="pointer-events-none absolute -right-20 -top-16 h-52 w-52 rounded-full bg-[#D4AF37]/10 blur-3xl" />
 
           <div className="relative flex items-end justify-between gap-4">
             <div>
-              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-300">
+              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#D9C29A]">
                 AR Updates
               </p>
 
@@ -733,8 +733,8 @@ export default function NotificationsPage() {
             </div>
 
             <div className="shrink-0 text-right">
-              <div className="grid h-16 w-16 place-items-center rounded-full border border-emerald-300/20 bg-emerald-400/10">
-                <span className="font-serif text-3xl text-emerald-300">
+              <div className="grid h-16 w-16 place-items-center rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10">
+                <span className="font-serif text-3xl text-[#D9C29A]">
                   {
                     unreadCount
                   }
@@ -810,7 +810,7 @@ export default function NotificationsPage() {
                         filter ===
                         option.id
                           ? "bg-[#211C18] text-[#FFFDF9] shadow-sm"
-                          : "border border-black/[0.06] bg-white text-zinc-500"
+                          : "border border-[#E4D7C4] bg-[#FFFDF9] text-zinc-500"
                       }`}
                     >
                       {
@@ -830,7 +830,7 @@ export default function NotificationsPage() {
 
         {/* ERROR */}
         {errorMessage ? (
-          <section className="mt-5 rounded-[1.4rem] border border-red-100 bg-white p-5 shadow-sm">
+          <section className="mt-5 rounded-[1.4rem] border border-red-100 bg-[#FFFDF9] p-5 shadow-sm">
             <p className="text-[9px] font-black uppercase tracking-[0.16em] text-red-500">
               Attention
             </p>
@@ -846,7 +846,7 @@ export default function NotificationsPage() {
               onClick={() =>
                 void loadNotifications()
               }
-              className="mt-4 rounded-full bg-zinc-950 px-4 py-2.5 text-[9px] font-black text-white"
+              className="mt-4 rounded-full bg-[#031B14] px-4 py-2.5 text-[9px] font-black text-white"
             >
               Try Again
             </button>
@@ -856,7 +856,7 @@ export default function NotificationsPage() {
         {/* CONTENT */}
         <section className="mt-5">
           {loading ? (
-            <div className="rounded-[1.8rem] border border-black/[0.05] bg-white p-10 text-center shadow-sm">
+            <div className="rounded-[1.8rem] border border-[#E4D7C4] bg-[#FFFDF9] p-10 text-center shadow-sm">
               <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-emerald-600" />
 
               <p className="mt-4 text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">
@@ -865,13 +865,13 @@ export default function NotificationsPage() {
             </div>
           ) : notifications.length ===
             0 ? (
-            <div className="overflow-hidden rounded-[1.8rem] border border-black/[0.05] bg-white shadow-sm">
+            <div className="overflow-hidden rounded-[1.8rem] border border-[#E4D7C4] bg-[#FFFDF9] shadow-sm">
               <div className="p-8 text-center sm:p-12">
-                <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-50 text-2xl text-emerald-700">
+                <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#F4EBDD] text-2xl text-[#6B5435]">
                   ✦
                 </div>
 
-                <p className="mt-5 text-[8px] font-black uppercase tracking-[0.24em] text-emerald-700">
+                <p className="mt-5 text-[8px] font-black uppercase tracking-[0.24em] text-[#6B5435]">
                   AR Notification Centre
                 </p>
 
@@ -898,7 +898,7 @@ export default function NotificationsPage() {
             </div>
           ) : filteredNotifications.length ===
             0 ? (
-            <div className="rounded-[1.6rem] border border-black/[0.05] bg-white p-8 text-center shadow-sm">
+            <div className="rounded-[1.6rem] border border-[#E4D7C4] bg-[#FFFDF9] p-8 text-center shadow-sm">
               <p className="font-serif text-2xl">
                 No updates here.
               </p>
@@ -934,12 +934,12 @@ export default function NotificationsPage() {
                       }
                       className={`overflow-hidden rounded-[1.45rem] border shadow-[0_10px_30px_rgba(0,0,0,0.035)] transition ${
                         item.isRead
-                          ? "border-black/[0.05] bg-white"
-                          : "border-emerald-200 bg-[#FFFDF9]"
+                          ? "border-[#E4D7C4] bg-[#FFFDF9]"
+                          : "border-[#D4AF37]/35 bg-[#FFFDF9]"
                       }`}
                     >
                       {!item.isRead && (
-                        <div className="h-1 w-full bg-emerald-500" />
+                        <div className="h-1 w-full bg-[#F4EBDD]0" />
                       )}
 
                       <button
@@ -977,7 +977,7 @@ export default function NotificationsPage() {
                                   </span>
 
                                   {!item.isRead && (
-                                    <span className="rounded-full bg-emerald-600 px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.12em] text-white">
+                                    <span className="rounded-full bg-[#031B14] px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.12em] text-white">
                                       New
                                     </span>
                                   )}
@@ -1026,7 +1026,7 @@ export default function NotificationsPage() {
                                 className={`text-[7px] font-black uppercase tracking-[0.08em] ${
                                   item.isRead
                                     ? "text-zinc-400"
-                                    : "text-emerald-700"
+                                    : "text-[#6B5435]"
                                 }`}
                               >
                                 {item.isRead
@@ -1038,7 +1038,7 @@ export default function NotificationsPage() {
                                 <>
                                   <span className="h-1 w-1 rounded-full bg-zinc-300" />
 
-                                  <span className="text-[7px] font-black text-emerald-700">
+                                  <span className="text-[7px] font-black text-[#6B5435]">
                                     Linked Update
                                   </span>
                                 </>
@@ -1049,8 +1049,8 @@ export default function NotificationsPage() {
                       </button>
 
                       {expanded && (
-                        <div className="border-t border-black/[0.05] bg-[#FAF7F0] p-4 sm:p-5">
-                          <p className="text-[7px] font-black uppercase tracking-[0.18em] text-emerald-700">
+                        <div className="border-t border-[#E4D7C4] bg-[#FAF7F0] p-4 sm:p-5">
+                          <p className="text-[7px] font-black uppercase tracking-[0.18em] text-[#6B5435]">
                             Notification Details
                           </p>
 
@@ -1082,7 +1082,7 @@ export default function NotificationsPage() {
                                   null,
                                 )
                               }
-                              className="rounded-full border border-black/[0.08] bg-white px-5 py-3 text-[8px] font-black uppercase tracking-[0.08em] text-zinc-500"
+                              className="rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-5 py-3 text-[8px] font-black uppercase tracking-[0.08em] text-zinc-500"
                             >
                               Close
                             </button>
@@ -1139,14 +1139,14 @@ export default function NotificationsPage() {
 
           <button
             type="button"
-            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-emerald-300"
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#D9C29A]"
           >
             <span className="relative text-lg">
               ✦
 
               {unreadCount >
                 0 && (
-                <span className="absolute -right-3 -top-2 grid min-h-4 min-w-4 place-items-center rounded-full bg-emerald-400 px-1 text-[6px] font-black text-[#031B14]">
+                <span className="absolute -right-3 -top-2 grid min-h-4 min-w-4 place-items-center rounded-full bg-[#D4AF37] px-1 text-[6px] font-black text-[#031B14]">
                   {
                     unreadCount >
                     9
