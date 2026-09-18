@@ -660,12 +660,12 @@ export default function ResellerSetDetailPage() {
             className="ml-2 text-lg font-black tracking-[-0.05em]"
           >
             AS
-            <span className="text-emerald-600">
+            <span className="text-[#6B5435]">
               FASHIONS
             </span>
           </button>
 
-          <span className="ml-auto rounded-full bg-emerald-50 px-3 py-2 text-[10px] font-black text-emerald-700">
+          <span className="ml-auto rounded-full bg-[#F4EBDD] px-3 py-2 text-[10px] font-black text-[#6B5435]">
             RESELLER SET
           </span>
         </div>
@@ -707,7 +707,7 @@ export default function ResellerSetDetailPage() {
               </span>
 
               {set.isFeatured ? (
-                <span className="rounded-full bg-emerald-500 px-3 py-1.5 text-[9px] font-black text-white">
+                <span className="rounded-full bg-[#F4EBDD]0 px-3 py-1.5 text-[9px] font-black text-white">
                   FEATURED
                 </span>
               ) : null}
@@ -754,7 +754,7 @@ export default function ResellerSetDetailPage() {
               </div>
             </div>
 
-            <div className="mt-6 flex items-center justify-between rounded-2xl bg-zinc-950 p-4 text-white">
+            <div className="mt-6 flex items-center justify-between rounded-2xl bg-[#031B14] p-4 text-white">
               <div>
                 <p className="text-[10px] font-bold uppercase text-zinc-400">
                   Number of Sets
@@ -808,7 +808,7 @@ export default function ResellerSetDetailPage() {
 
         <section className="mt-8">
           <div className="mb-5">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#6B5435]">
               Set Builder
             </p>
 
@@ -882,7 +882,7 @@ export default function ResellerSetDetailPage() {
                             className={`rounded-full px-3 py-1 text-[10px] font-black ${
                               selected ===
                               required
-                                ? "bg-emerald-50 text-emerald-700"
+                                ? "bg-[#F4EBDD] text-[#6B5435]"
                                 : "bg-amber-50 text-amber-700"
                             }`}
                           >
@@ -919,7 +919,7 @@ export default function ResellerSetDetailPage() {
                                 className={`flex items-center justify-between gap-3 rounded-2xl border p-3 ${
                                   quantity >
                                   0
-                                    ? "border-emerald-200 bg-emerald-50/40"
+                                    ? "border-[#D4AF37]/35 bg-[#F4EBDD]/40"
                                     : "border-black/5 bg-zinc-50"
                                 }`}
                               >
@@ -1003,7 +1003,7 @@ export default function ResellerSetDetailPage() {
           </div>
         </section>
 
-        <section className="sticky bottom-3 mt-8 rounded-3xl bg-zinc-950 p-4 text-white shadow-2xl">
+        <section className="sticky bottom-3 mt-8 rounded-3xl bg-[#031B14] p-4 text-white shadow-2xl">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[9px] font-bold uppercase text-zinc-400">
@@ -1040,7 +1040,7 @@ export default function ResellerSetDetailPage() {
             onClick={
               addSetToCart
             }
-            className="mt-4 w-full rounded-2xl bg-emerald-500 py-4 text-sm font-black text-white disabled:bg-zinc-700 disabled:text-zinc-400"
+            className="mt-4 w-full rounded-2xl bg-[#F4EBDD]0 py-4 text-sm font-black text-white disabled:bg-zinc-700 disabled:text-zinc-400"
           >
             {complete
               ? "Add Reseller Set to Cart"
