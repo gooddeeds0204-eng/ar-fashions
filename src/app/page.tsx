@@ -2978,7 +2978,7 @@ export default function Home() {
 
 
       {/* FOOTER */}
-      <footer className="border-t border-[#E4D7C4] bg-[#F4EBDD] pb-20 sm:pb-0">
+      <footer className="border-t border-[#E4D7C4] bg-[#F4EBDD]">
         <div className="mx-auto max-w-7xl px-5 py-10 text-center sm:px-6 lg:px-8">
           <p className="font-serif text-[1.8rem] tracking-[0.08em] text-[#211C18]">
             AR
