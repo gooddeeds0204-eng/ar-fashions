@@ -112,7 +112,7 @@ function statusTone(
   status: string,
 ) {
   if (status === "DELIVERED") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    return "border-emerald-200 bg-[#F4EBDD] text-[#6B5435]";
   }
 
   if (status === "CANCELLED") {
@@ -370,7 +370,7 @@ export default function MyOrdersPage() {
   return (
     <main className="min-h-screen bg-[#FAF7F0] pb-12 text-zinc-950">
       {/* PREMIUM HEADER */}
-      <header className="sticky top-0 z-40 border-b border-black/[0.06] bg-[#FFFDF9]/95 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-[#E4D7C4] bg-[#FFFDF9]/95 backdrop-blur-xl">
         <div className="mx-auto flex h-[68px] max-w-5xl items-center justify-between px-4 sm:px-6">
           <BrandLogo
             compact
@@ -384,7 +384,7 @@ export default function MyOrdersPage() {
             onClick={() =>
               router.push("/")
             }
-            className="rounded-full border border-black/[0.08] bg-white px-4 py-2.5 text-[10px] font-black shadow-sm transition active:scale-[0.98]"
+            className="rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-2.5 text-[10px] font-black shadow-sm transition active:scale-[0.98]"
           >
             Shop More →
           </button>
@@ -394,7 +394,7 @@ export default function MyOrdersPage() {
       <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
         {/* PAGE TITLE */}
         <section className="mb-6">
-          <p className="text-[8px] font-black uppercase tracking-[0.28em] text-emerald-700">
+          <p className="text-[8px] font-black uppercase tracking-[0.28em] text-[#6B5435]">
             AS Fashions · Account
           </p>
 
@@ -412,7 +412,7 @@ export default function MyOrdersPage() {
             {!loading &&
               !error &&
               orders.length > 0 && (
-                <span className="rounded-full bg-zinc-950 px-3 py-2 text-[9px] font-black text-white">
+                <span className="rounded-full bg-[#031B14] px-3 py-2 text-[9px] font-black text-white">
                   {orders.length}{" "}
                   {orders.length === 1
                     ? "Order"
@@ -427,7 +427,7 @@ export default function MyOrdersPage() {
           !error &&
           orders.length > 0 && (
             <section className="mb-6 grid grid-cols-3 gap-2">
-              <div className="rounded-[1.3rem] border border-black/[0.05] bg-white p-3.5 shadow-sm">
+              <div className="rounded-[1.3rem] border border-[#E4D7C4] bg-[#FFFDF9] p-3.5 shadow-sm">
                 <p className="text-[7px] font-black uppercase tracking-[0.16em] text-zinc-400">
                   Total
                 </p>
@@ -437,7 +437,7 @@ export default function MyOrdersPage() {
                 </p>
               </div>
 
-              <div className="rounded-[1.3rem] border border-black/[0.05] bg-white p-3.5 shadow-sm">
+              <div className="rounded-[1.3rem] border border-[#E4D7C4] bg-[#FFFDF9] p-3.5 shadow-sm">
                 <p className="text-[7px] font-black uppercase tracking-[0.16em] text-zinc-400">
                   Active
                 </p>
@@ -455,12 +455,12 @@ export default function MyOrdersPage() {
                 </p>
               </div>
 
-              <div className="rounded-[1.3rem] border border-black/[0.05] bg-white p-3.5 shadow-sm">
+              <div className="rounded-[1.3rem] border border-[#E4D7C4] bg-[#FFFDF9] p-3.5 shadow-sm">
                 <p className="text-[7px] font-black uppercase tracking-[0.16em] text-zinc-400">
                   Delivered
                 </p>
 
-                <p className="mt-1 text-xl font-black text-emerald-600">
+                <p className="mt-1 text-xl font-black text-[#031B14]">
                   {
                     orders.filter(
                       (order) =>
@@ -474,7 +474,7 @@ export default function MyOrdersPage() {
           )}
 
         {loading ? (
-          <div className="rounded-[1.7rem] border border-black/[0.05] bg-white p-10 text-center shadow-sm">
+          <div className="rounded-[1.7rem] border border-[#E4D7C4] bg-[#FFFDF9] p-10 text-center shadow-sm">
             <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-emerald-500" />
 
             <p className="mt-4 text-[11px] font-bold text-zinc-500">
@@ -482,7 +482,7 @@ export default function MyOrdersPage() {
             </p>
           </div>
         ) : error ? (
-          <div className="rounded-[1.7rem] border border-red-100 bg-white p-8 text-center shadow-sm">
+          <div className="rounded-[1.7rem] border border-red-100 bg-[#FFFDF9] p-8 text-center shadow-sm">
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-red-50 text-xl">
               !
             </div>
@@ -500,14 +500,14 @@ export default function MyOrdersPage() {
               onClick={() =>
                 router.push("/")
               }
-              className="mt-5 rounded-xl bg-zinc-950 px-5 py-3 text-sm font-black text-white"
+              className="mt-5 rounded-xl bg-[#031B14] px-5 py-3 text-sm font-black text-white"
             >
               Back to Shop
             </button>
           </div>
         ) : orders.length === 0 ? (
-          <div className="rounded-[1.8rem] border border-black/[0.05] bg-white px-6 py-14 text-center shadow-sm">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-50 text-2xl">
+          <div className="rounded-[1.8rem] border border-[#E4D7C4] bg-[#FFFDF9] px-6 py-14 text-center shadow-sm">
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#F4EBDD] text-2xl">
               🛍
             </div>
 
@@ -524,7 +524,7 @@ export default function MyOrdersPage() {
               onClick={() =>
                 router.push("/")
               }
-              className="mt-6 rounded-2xl bg-emerald-600 px-7 py-3.5 text-sm font-black text-white"
+              className="mt-6 rounded-2xl bg-[#031B14] px-7 py-3.5 text-sm font-black text-white"
             >
               Start Shopping →
             </button>
@@ -560,7 +560,7 @@ export default function MyOrdersPage() {
                   <details
                     key={order.id}
                     open={index === 0}
-                    className="group overflow-hidden rounded-[1.65rem] border border-black/[0.07] bg-white shadow-[0_12px_35px_rgba(0,0,0,0.045)]"
+                    className="group overflow-hidden rounded-[1.65rem] border border-[#E4D7C4] bg-[#FFFDF9] shadow-[0_12px_35px_rgba(0,0,0,0.045)]"
                   >
                     {/* ORDER SUMMARY HEADER */}
                     <summary className="cursor-pointer list-none p-4 outline-none sm:p-5 [&::-webkit-details-marker]:hidden">
@@ -657,7 +657,7 @@ export default function MyOrdersPage() {
                                         className={`absolute right-1/2 top-[6px] h-[2px] w-full ${
                                           stageIndex <=
                                           currentStep
-                                            ? "bg-emerald-500"
+                                            ? "bg-[#F4EBDD]0"
                                             : "bg-zinc-200"
                                         }`}
                                       />
@@ -666,15 +666,15 @@ export default function MyOrdersPage() {
                                     <span
                                       className={`relative z-10 mx-auto block h-3.5 w-3.5 rounded-full border-2 ${
                                         reached
-                                          ? "border-emerald-500 bg-emerald-500"
-                                          : "border-zinc-200 bg-white"
+                                          ? "border-emerald-500 bg-[#F4EBDD]0"
+                                          : "border-zinc-200 bg-[#FFFDF9]"
                                       }`}
                                     />
 
                                     <p
                                       className={`mt-2 hidden text-[6px] font-black uppercase tracking-wide min-[360px]:block ${
                                         reached
-                                          ? "text-emerald-700"
+                                          ? "text-[#6B5435]"
                                           : "text-zinc-300"
                                       }`}
                                     >
@@ -696,12 +696,12 @@ export default function MyOrdersPage() {
                     </summary>
 
                     {/* EXPANDED DETAILS */}
-                    <div className="border-t border-black/[0.06]">
+                    <div className="border-t border-[#E4D7C4]">
                       {/* ITEMS */}
                       <section className="p-4 sm:p-5">
                         <div className="mb-4 flex items-center justify-between">
                           <div>
-                            <p className="text-[8px] font-black uppercase tracking-[0.18em] text-emerald-700">
+                            <p className="text-[8px] font-black uppercase tracking-[0.18em] text-[#6B5435]">
                               Order Items
                             </p>
 
@@ -739,7 +739,7 @@ export default function MyOrdersPage() {
                                   key={
                                     item.id
                                   }
-                                  className="rounded-[1.25rem] border border-black/[0.05] bg-[#FAF7F0] p-3.5"
+                                  className="rounded-[1.25rem] border border-[#E4D7C4] bg-[#FAF7F0] p-3.5"
                                 >
                                   <div className="flex gap-3">
                                     <button
@@ -754,7 +754,7 @@ export default function MyOrdersPage() {
                                           }`,
                                         )
                                       }
-                                      className="h-[74px] w-[64px] shrink-0 overflow-hidden rounded-xl bg-zinc-950"
+                                      className="h-[74px] w-[64px] shrink-0 overflow-hidden rounded-xl bg-[#031B14]"
                                     >
                                       {item.image ? (
                                         <img
@@ -801,14 +801,14 @@ export default function MyOrdersPage() {
                                       </div>
 
                                       <div className="mt-3 flex flex-wrap items-center gap-2">
-                                        <span className="rounded-full bg-white px-2.5 py-1 text-[8px] font-bold text-zinc-500">
+                                        <span className="rounded-full bg-[#FFFDF9] px-2.5 py-1 text-[8px] font-bold text-zinc-500">
                                           Qty{" "}
                                           {
                                             item.quantity
                                           }
                                         </span>
 
-                                        <span className="rounded-full bg-white px-2.5 py-1 text-[8px] font-bold text-zinc-500">
+                                        <span className="rounded-full bg-[#FFFDF9] px-2.5 py-1 text-[8px] font-bold text-zinc-500">
                                           {formatMoney(
                                             item.unitPrice,
                                           )}{" "}
@@ -818,7 +818,7 @@ export default function MyOrdersPage() {
                                         {order.status ===
                                           "DELIVERED" &&
                                           existingReview && (
-                                          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[7px] font-black uppercase text-emerald-700">
+                                          <span className="rounded-full bg-[#F4EBDD] px-2.5 py-1 text-[7px] font-black uppercase text-[#6B5435]">
                                             Review{" "}
                                             {
                                               existingReview.status
@@ -840,7 +840,7 @@ export default function MyOrdersPage() {
                                               }`,
                                             )
                                           }
-                                          className="rounded-lg border border-black/[0.08] bg-white px-3 py-2 text-[8px] font-black"
+                                          className="rounded-lg border border-[#E4D7C4] bg-[#FFFDF9] px-3 py-2 text-[8px] font-black"
                                         >
                                           View Product
                                         </button>
@@ -854,7 +854,7 @@ export default function MyOrdersPage() {
                                                 item,
                                               )
                                             }
-                                            className="rounded-lg bg-emerald-600 px-3 py-2 text-[8px] font-black text-white"
+                                            className="rounded-lg bg-[#031B14] px-3 py-2 text-[8px] font-black text-white"
                                           >
                                             {existingReview
                                               ? "Edit Review"
@@ -872,10 +872,10 @@ export default function MyOrdersPage() {
                       </section>
 
                       {/* PRICE BREAKDOWN */}
-                      <section className="border-t border-black/[0.05] bg-[#FAF7F0] p-4 sm:p-5">
+                      <section className="border-t border-[#E4D7C4] bg-[#FAF7F0] p-4 sm:p-5">
                         <div className="grid gap-4 md:grid-cols-2">
-                          <div className="rounded-[1.25rem] border border-black/[0.05] bg-white p-4">
-                            <p className="text-[8px] font-black uppercase tracking-[0.18em] text-emerald-700">
+                          <div className="rounded-[1.25rem] border border-[#E4D7C4] bg-[#FFFDF9] p-4">
+                            <p className="text-[8px] font-black uppercase tracking-[0.18em] text-[#6B5435]">
                               Price Details
                             </p>
 
@@ -894,7 +894,7 @@ export default function MyOrdersPage() {
 
                               {order.discountAmount >
                                 0 && (
-                                <div className="flex justify-between gap-3 text-emerald-700">
+                                <div className="flex justify-between gap-3 text-[#6B5435]">
                                   <span>
                                     Discount
                                   </span>
@@ -917,7 +917,7 @@ export default function MyOrdersPage() {
                                   className={`font-black ${
                                     order.deliveryCharge ===
                                     0
-                                      ? "text-emerald-700"
+                                      ? "text-[#6B5435]"
                                       : ""
                                   }`}
                                 >
@@ -930,7 +930,7 @@ export default function MyOrdersPage() {
                                 </span>
                               </div>
 
-                              <div className="border-t border-black/[0.07] pt-3">
+                              <div className="border-t border-[#E4D7C4] pt-3">
                                 <div className="flex items-end justify-between gap-3">
                                   <span className="font-black">
                                     Total Paid / Due
@@ -947,13 +947,13 @@ export default function MyOrdersPage() {
                           </div>
 
                           {/* PAYMENT */}
-                          <div className="rounded-[1.25rem] border border-black/[0.05] bg-white p-4">
-                            <p className="text-[8px] font-black uppercase tracking-[0.18em] text-emerald-700">
+                          <div className="rounded-[1.25rem] border border-[#E4D7C4] bg-[#FFFDF9] p-4">
+                            <p className="text-[8px] font-black uppercase tracking-[0.18em] text-[#6B5435]">
                               Payment
                             </p>
 
                             <div className="mt-4 flex items-center gap-3">
-                              <span className="grid h-10 w-10 place-items-center rounded-full bg-emerald-50 text-sm font-black text-emerald-700">
+                              <span className="grid h-10 w-10 place-items-center rounded-full bg-[#F4EBDD] text-sm font-black text-[#6B5435]">
                                 ₹
                               </span>
 
@@ -998,15 +998,15 @@ export default function MyOrdersPage() {
 
                       {/* DELIVERY ADDRESS */}
                       {order.address && (
-                        <section className="border-t border-black/[0.05] p-4 sm:p-5">
-                          <div className="rounded-[1.3rem] border border-black/[0.05] bg-white p-4">
+                        <section className="border-t border-[#E4D7C4] p-4 sm:p-5">
+                          <div className="rounded-[1.3rem] border border-[#E4D7C4] bg-[#FFFDF9] p-4">
                             <div className="flex items-start gap-3">
-                              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-50 text-sm">
+                              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#F4EBDD] text-sm">
                                 ⌂
                               </span>
 
                               <div className="min-w-0">
-                                <p className="text-[8px] font-black uppercase tracking-[0.18em] text-emerald-700">
+                                <p className="text-[8px] font-black uppercase tracking-[0.18em] text-[#6B5435]">
                                   Delivery Address
                                 </p>
 
@@ -1069,9 +1069,9 @@ export default function MyOrdersPage() {
                       )}
 
                       {/* ORDER FOOTER */}
-                      <div className="flex items-center justify-between gap-3 border-t border-black/[0.05] bg-[#031B14] px-4 py-3.5 text-white sm:px-5">
+                      <div className="flex items-center justify-between gap-3 border-t border-[#E4D7C4] bg-[#031B14] px-4 py-3.5 text-white sm:px-5">
                         <div>
-                          <p className="text-[7px] font-black uppercase tracking-[0.16em] text-emerald-300">
+                          <p className="text-[7px] font-black uppercase tracking-[0.16em] text-[#D9C29A]">
                             Current Status
                           </p>
 
@@ -1095,7 +1095,7 @@ export default function MyOrdersPage() {
                                 }`,
                               )
                             }
-                            className="rounded-full bg-white px-4 py-2.5 text-[8px] font-black text-[#031B14]"
+                            className="rounded-full bg-[#FFFDF9] px-4 py-2.5 text-[8px] font-black text-[#031B14]"
                           >
                             Shop Again →
                           </button>
@@ -1112,7 +1112,7 @@ export default function MyOrdersPage() {
 
       {reviewProduct && (
         <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 p-4">
-          <div className="mx-auto my-10 max-w-lg rounded-3xl bg-white p-6 shadow-xl">
+          <div className="mx-auto my-10 max-w-lg rounded-3xl bg-[#FFFDF9] p-6 shadow-xl">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
@@ -1187,7 +1187,7 @@ export default function MyOrdersPage() {
                 }
                 maxLength={100}
                 placeholder="Example: Great quality"
-                className="mt-2 w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-emerald-600"
+                className="mt-2 w-full rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-[#D4AF37]"
               />
             </div>
 
@@ -1208,7 +1208,7 @@ export default function MyOrdersPage() {
                 maxLength={1000}
                 rows={5}
                 placeholder="Tell other customers about the product..."
-                className="mt-2 w-full resize-none rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-emerald-600"
+                className="mt-2 w-full resize-none rounded-xl border border-black/10 px-4 py-3 text-sm outline-none focus:border-[#D4AF37]"
               />
             </div>
 
@@ -1220,7 +1220,7 @@ export default function MyOrdersPage() {
               onClick={
                 submitReview
               }
-              className="mt-6 w-full rounded-2xl bg-zinc-950 py-4 text-sm font-black text-white disabled:bg-zinc-300"
+              className="mt-6 w-full rounded-2xl bg-[#031B14] py-4 text-sm font-black text-white disabled:bg-zinc-300"
             >
               {reviewSaving
                 ? "Submitting..."
