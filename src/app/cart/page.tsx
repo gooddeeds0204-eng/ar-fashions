@@ -659,7 +659,7 @@ export default function CartPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FAF7F0] pb-28 text-zinc-950 sm:pb-10">
+    <main className="min-h-screen bg-[#FAF7F0] pb-28 text-[#211C18] sm:pb-10">
       {/* AR TOAST */}
       {toast && (
         <div className="fixed left-1/2 top-[78px] z-[120] w-[calc(100%-24px)] max-w-md -translate-x-1/2">
@@ -667,7 +667,7 @@ export default function CartPage() {
             className={`flex items-center gap-3 rounded-[1.35rem] border p-3.5 text-white shadow-[0_20px_55px_rgba(0,0,0,0.3)] backdrop-blur-xl ${
               toast.type ===
               "SUCCESS"
-                ? "border-emerald-300/25 bg-[#031B14]/95"
+                ? "border-[#D4AF37]/25 bg-[#031B14]/95"
                 : "border-red-300/25 bg-[#7C3A45]/95"
             }`}
           >
@@ -675,7 +675,7 @@ export default function CartPage() {
               className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-black ${
                 toast.type ===
                 "SUCCESS"
-                  ? "bg-emerald-400 text-[#031B14]"
+                  ? "bg-[#D4AF37] text-[#031B14]"
                   : "bg-red-400 text-white"
               }`}
             >
@@ -686,7 +686,7 @@ export default function CartPage() {
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-300">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#D9C29A]">
                 AR Fashions
               </p>
 
@@ -724,7 +724,7 @@ export default function CartPage() {
             onClick={() =>
               router.back()
             }
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-black/[0.06] bg-white text-sm font-black"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#E4D7C4] bg-[#FFFDF9] text-sm font-black text-[#211C18]"
           >
             ←
           </button>
@@ -741,7 +741,7 @@ export default function CartPage() {
             onClick={() =>
               router.push("/")
             }
-            className="ml-auto rounded-full border border-black/[0.07] bg-white px-4 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] text-zinc-600"
+            className="ml-auto rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] text-[#6B5435]"
           >
             Keep Shopping
           </button>
@@ -750,12 +750,12 @@ export default function CartPage() {
 
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
         {/* HERO */}
-        <section className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-[#031B14] via-[#031B14] to-black p-5 text-white shadow-[0_24px_65px_rgba(0,0,0,0.2)] sm:p-7">
-          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
+        <section className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-[#031B14] via-[#0A382B] to-[#031B14] p-5 text-white shadow-[0_24px_65px_rgba(0,0,0,0.2)] sm:p-7">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-[#D4AF37]/10 blur-3xl" />
 
           <div className="relative flex items-end justify-between gap-4">
             <div>
-              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-300">
+              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#D9C29A]">
                 AR Shopping Bag
               </p>
 
@@ -771,7 +771,7 @@ export default function CartPage() {
             </div>
 
             <div className="shrink-0 text-right">
-              <p className="font-serif text-5xl text-emerald-300">
+              <p className="font-serif text-5xl text-[#D9C29A]">
                 {
                   totalItems
                 }
@@ -823,7 +823,7 @@ export default function CartPage() {
                 <p
                   className={`mt-2 text-[10px] font-black ${
                     canCheckout
-                      ? "text-emerald-300"
+                      ? "text-[#D9C29A]"
                       : "text-amber-300"
                   }`}
                 >
@@ -838,13 +838,13 @@ export default function CartPage() {
 
         {cart.length ===
         0 ? (
-          <section className="mt-5 overflow-hidden rounded-[1.8rem] border border-black/[0.05] bg-white shadow-sm">
+          <section className="mt-5 overflow-hidden rounded-[1.8rem] border border-black/[0.05] bg-[#FFFDF9] shadow-sm">
             <div className="px-6 py-14 text-center">
-              <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-50 font-serif text-xl text-emerald-700">
+              <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-50 font-serif text-xl text-[#6B5435]">
                 AR
               </div>
 
-              <p className="mt-5 text-[8px] font-black uppercase tracking-[0.25em] text-emerald-700">
+              <p className="mt-5 text-[8px] font-black uppercase tracking-[0.25em] text-[#6B5435]">
                 Your Bag
               </p>
 
@@ -875,7 +875,7 @@ export default function CartPage() {
             <section>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-700">
+                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#6B5435]">
                     Selected Pieces
                   </p>
 
@@ -909,7 +909,7 @@ export default function CartPage() {
                         key={
                           item.id
                         }
-                        className="overflow-hidden rounded-[1.45rem] border border-black/[0.05] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.035)]"
+                        className="overflow-hidden rounded-[1.45rem] border border-[#E4D7C4] bg-[#FFFDF9] shadow-[0_10px_30px_rgba(0,0,0,0.035)]"
                       >
                         <div className="p-3.5 sm:p-4">
                           <div className="flex gap-3.5">
@@ -947,7 +947,7 @@ export default function CartPage() {
                                       className={`rounded-full px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.12em] ${
                                         item.mode ===
                                         "RESELLER"
-                                          ? "bg-emerald-50 text-emerald-700"
+                                          ? "bg-emerald-50 text-[#6B5435]"
                                           : "bg-zinc-100 text-zinc-500"
                                       }`}
                                     >
@@ -994,7 +994,7 @@ export default function CartPage() {
                                     </span>
 
                                     {item.smartStockBalance ? (
-                                      <span className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[8px] font-black text-emerald-700">
+                                      <span className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[8px] font-black text-[#6B5435]">
                                         SMART PACK · QTY FIXED
                                       </span>
                                     ) : null}
@@ -1022,7 +1022,7 @@ export default function CartPage() {
                                 <div>
                                   {item.resellerSetId ? (
                                     <>
-                                      <p className="text-[7px] font-black uppercase tracking-[0.12em] text-emerald-700">
+                                      <p className="text-[7px] font-black uppercase tracking-[0.12em] text-[#6B5435]">
                                         Included In Set
                                       </p>
 
@@ -1131,7 +1131,7 @@ export default function CartPage() {
                                 <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
                                   <div className="flex items-center justify-between gap-3">
                                     <div>
-                                      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-emerald-700">
+                                      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-[#6B5435]">
                                         Smart Stock Pack
                                       </p>
 
@@ -1165,9 +1165,9 @@ export default function CartPage() {
             </section>
 
             {/* SUMMARY */}
-            <aside className="overflow-hidden rounded-[1.6rem] border border-black/[0.05] bg-white shadow-[0_12px_35px_rgba(0,0,0,0.045)] lg:sticky lg:top-24">
+            <aside className="overflow-hidden rounded-[1.6rem] border border-[#E4D7C4] bg-[#FFFDF9] shadow-[0_12px_35px_rgba(0,0,0,0.045)] lg:sticky lg:top-24">
               <div className="bg-[#031B14] p-5 text-white">
-                <p className="text-[8px] font-black uppercase tracking-[0.22em] text-emerald-300">
+                <p className="text-[8px] font-black uppercase tracking-[0.22em] text-[#D9C29A]">
                   Order Summary
                 </p>
 
@@ -1201,7 +1201,7 @@ export default function CartPage() {
                   <div className="rounded-[1.15rem] border border-emerald-100 bg-emerald-50/60 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-[7px] font-black uppercase tracking-[0.16em] text-emerald-700">
+                        <p className="text-[7px] font-black uppercase tracking-[0.16em] text-[#6B5435]">
                           Curated Reseller Set
                         </p>
 
@@ -1232,7 +1232,7 @@ export default function CartPage() {
                               : "/reseller-sets",
                           )
                         }
-                        className="rounded-full bg-white px-3 py-2 text-[7px] font-black uppercase tracking-[0.08em] text-emerald-700"
+                        className="rounded-full bg-white px-3 py-2 text-[7px] font-black uppercase tracking-[0.08em] text-[#6B5435]"
                       >
                         Edit Set
                       </button>
@@ -1257,7 +1257,7 @@ export default function CartPage() {
                           </span>
                         </div>
 
-                        <div className="flex justify-between gap-4 text-emerald-700">
+                        <div className="flex justify-between gap-4 text-[#6B5435]">
                           <span>
                             Curated set saving
                           </span>
@@ -1299,7 +1299,7 @@ export default function CartPage() {
                       className={`font-black ${
                         delivery ===
                         0
-                          ? "text-emerald-700"
+                          ? "text-[#6B5435]"
                           : ""
                       }`}
                     >
@@ -1339,14 +1339,14 @@ export default function CartPage() {
                         more
                       </p>
 
-                      <span className="text-[7px] font-black uppercase tracking-[0.1em] text-emerald-700">
+                      <span className="text-[7px] font-black uppercase tracking-[0.1em] text-[#6B5435]">
                         Free Delivery
                       </span>
                     </div>
 
                     <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-emerald-100">
                       <div
-                        className="h-full rounded-full bg-emerald-600"
+                        className="h-full rounded-full bg-[#031B14]"
                         style={{
                           width: `${Math.min(
                             100,
@@ -1436,7 +1436,7 @@ export default function CartPage() {
                         "/checkout",
                       )
                     }
-                    className="mt-5 hidden min-h-[52px] w-full rounded-[1rem] bg-emerald-600 px-5 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-emerald-600/15 transition active:scale-[0.98] sm:block"
+                    className="mt-5 hidden min-h-[52px] w-full rounded-[1rem] bg-[#031B14] px-5 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-[0_12px_28px_rgba(3,27,20,0.18)] transition-[transform,opacity] duration-200 active:scale-[0.98] sm:block"
                   >
                     Proceed to Checkout →
                   </button>
@@ -1467,7 +1467,7 @@ export default function CartPage() {
                         }
                         className="rounded-xl bg-[#FAF7F0] px-2 py-3 text-center"
                       >
-                        <p className="text-sm font-black text-emerald-700">
+                        <p className="text-sm font-black text-[#6B5435]">
                           {icon}
                         </p>
 
@@ -1491,7 +1491,7 @@ export default function CartPage() {
         <div className="fixed inset-0 z-[130] grid place-items-end bg-black/55 p-3 backdrop-blur-sm sm:place-items-center">
           <div className="w-full max-w-md overflow-hidden rounded-[1.7rem] bg-white shadow-[0_30px_90px_rgba(0,0,0,0.3)]">
             <div className="bg-[#031B14] p-5 text-white">
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-300">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#D9C29A]">
                 AR Shopping Bag
               </p>
 
@@ -1534,7 +1534,7 @@ export default function CartPage() {
       {/* MOBILE CHECKOUT BAR */}
       {cart.length >
         0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/[0.07] bg-[#FFFDF9]/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.09)] backdrop-blur-xl sm:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/[0.07] bg-[#FFFDF9]/95 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_30px_rgba(0,0,0,0.09)] backdrop-blur-xl sm:hidden">
           <div className="mx-auto flex max-w-md items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
@@ -1568,7 +1568,7 @@ export default function CartPage() {
                   "/checkout",
                 )
               }
-              className="min-h-[50px] min-w-[175px] rounded-[1rem] bg-emerald-600 px-5 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-emerald-600/15 transition active:scale-[0.98] disabled:bg-zinc-300 disabled:text-zinc-500 disabled:shadow-none"
+              className="min-h-[50px] min-w-[175px] rounded-[1rem] bg-[#031B14] px-5 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-[0_12px_28px_rgba(3,27,20,0.18)] transition-[transform,opacity] duration-200 active:scale-[0.98] disabled:bg-zinc-300 disabled:text-zinc-500 disabled:shadow-none"
             >
               {canCheckout
                 ? "Checkout →"
