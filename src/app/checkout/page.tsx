@@ -113,6 +113,34 @@ type SalesModeSettings = {
   resellerMessage: string;
 };
 
+type PaymentChoice =
+  | "COD"
+  | "RAZORPAY";
+
+type RazorpaySuccessResponse = {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+};
+
+type RazorpayInstance = {
+  open: () => void;
+  on: (
+    event: string,
+    callback: (
+      response: unknown,
+    ) => void,
+  ) => void;
+};
+
+type RazorpayConstructor =
+  new (
+    options: Record<
+      string,
+      unknown
+    >,
+  ) => RazorpayInstance;
+
 const DEFAULT_SITE_SETTINGS:
   SiteSettings = {
     storeName:
@@ -141,6 +169,44 @@ const DEFAULT_SALES_MODE:
 
 function money(value: number) {
   return `₹${value.toLocaleString("en-IN")}`;
+}
+
+async function loadRazorpayCheckout() {
+  const existing =
+    (
+      window as unknown as {
+        Razorpay?:
+          RazorpayConstructor;
+      }
+    ).Razorpay;
+
+  if (existing) {
+    return true;
+  }
+
+  return new Promise<boolean>(
+    (resolve) => {
+      const script =
+        document.createElement(
+          "script",
+        );
+
+      script.src =
+        "https://checkout.razorpay.com/v1/checkout.js";
+
+      script.async = true;
+
+      script.onload = () =>
+        resolve(true);
+
+      script.onerror = () =>
+        resolve(false);
+
+      document.head.appendChild(
+        script,
+      );
+    },
+  );
 }
 
 function getCart(): CartItem[] {
@@ -235,6 +301,19 @@ export default function CheckoutPage() {
     useState<SalesModeSettings>(
       DEFAULT_SALES_MODE,
     );
+
+  const [
+    paymentChoice,
+    setPaymentChoice,
+  ] =
+    useState<PaymentChoice>(
+      "COD",
+    );
+
+  const [
+    razorpayEnabled,
+    setRazorpayEnabled,
+  ] = useState(false);
 
   useEffect(() => {
     const items = getCart();
@@ -334,6 +413,63 @@ export default function CheckoutPage() {
 
     loadSiteSettings();
   }, []);
+
+  useEffect(() => {
+    async function loadPaymentConfig() {
+      try {
+        const response =
+          await fetch(
+            "/api/payments/razorpay/config",
+            {
+              cache:
+                "no-store",
+            },
+          );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        const enabled =
+          data.enabled === true;
+
+        setRazorpayEnabled(
+          enabled,
+        );
+
+        if (
+          enabled &&
+          !siteSettings.codEnabled
+        ) {
+          setPaymentChoice(
+            "RAZORPAY",
+          );
+        }
+
+        if (
+          !enabled &&
+          paymentChoice ===
+            "RAZORPAY"
+        ) {
+          setPaymentChoice(
+            "COD",
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Payment config load failed:",
+          error,
+        );
+      }
+    }
+
+    loadPaymentConfig();
+  }, [
+    siteSettings.codEnabled,
+  ]);
 
   useEffect(() => {
     async function loadSavedAddresses() {
@@ -645,10 +781,24 @@ export default function CheckoutPage() {
     subtotal <
       minimumRetailOrder;
 
+  const resellerFreightPending =
+    isResellerOrder &&
+    deliverySettings.resellerDeliveryMode ===
+      "ACTUAL_FREIGHT";
+
+  const onlinePaymentAvailable =
+    razorpayEnabled &&
+    !resellerFreightPending;
+
+  const selectedPaymentUnavailable =
+    paymentChoice === "COD"
+      ? !siteSettings.codEnabled
+      : !onlinePaymentAvailable;
+
   const checkoutBlocked =
     siteSettings.maintenanceMode ||
     salesClosed ||
-    !siteSettings.codEnabled ||
+    selectedPaymentUnavailable ||
     retailMinimumNotMet;
 
   const checkoutBlockMessage =
@@ -656,24 +806,29 @@ export default function CheckoutPage() {
       ? siteSettings.maintenanceMessage
       : salesClosed
         ? activeSalesMessage
-        : !siteSettings.codEnabled
+        : paymentChoice ===
+              "COD" &&
+            !siteSettings.codEnabled
           ? "Cash on Delivery is currently unavailable."
-          : retailMinimumNotMet
-            ? `Minimum retail order is ${money(
-                minimumRetailOrder,
-              )}.`
-            : "";
+          : paymentChoice ===
+                "RAZORPAY" &&
+              resellerFreightPending
+            ? "Online payment is available for reseller orders after freight is fixed. Choose COD or use flat reseller freight."
+            : paymentChoice ===
+                  "RAZORPAY" &&
+                !razorpayEnabled
+              ? "Online payment gateway is not configured yet."
+              : retailMinimumNotMet
+                ? `Minimum retail order is ${money(
+                    minimumRetailOrder,
+                  )}.`
+                : "";
 
   const canPlaceOrder =
     !isMixedCart &&
     !invalidCuratedCart &&
     invalidResellerGroups.length === 0 &&
     !checkoutBlocked;
-
-  const resellerFreightPending =
-    isResellerOrder &&
-    deliverySettings.resellerDeliveryMode ===
-      "ACTUAL_FREIGHT";
 
   const deliveryCharge =
     isResellerOrder
@@ -931,9 +1086,26 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!siteSettings.codEnabled) {
+    if (
+      paymentChoice ===
+        "COD" &&
+      !siteSettings.codEnabled
+    ) {
       showCheckoutAlert(
         "Cash on Delivery is currently unavailable.",
+      );
+      return;
+    }
+
+    if (
+      paymentChoice ===
+        "RAZORPAY" &&
+      !onlinePaymentAvailable
+    ) {
+      showCheckoutAlert(
+        resellerFreightPending
+          ? "Online payment requires final freight. Choose COD for this reseller order."
+          : "Online payment gateway is not configured yet.",
       );
       return;
     }
@@ -1025,6 +1197,21 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (
+      paymentChoice ===
+      "RAZORPAY"
+    ) {
+      const scriptReady =
+        await loadRazorpayCheckout();
+
+      if (!scriptReady) {
+        showCheckoutAlert(
+          "Secure payment window could not load. Please check your connection and try again.",
+        );
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -1037,7 +1224,8 @@ export default function CheckoutPage() {
           type: isResellerOrder
             ? "RESELLER"
             : "RETAIL",
-          paymentMethod: "COD",
+          paymentMethod:
+            paymentChoice,
           couponCode:
             appliedCoupon?.code ??
             null,
@@ -1085,13 +1273,155 @@ export default function CheckoutPage() {
         );
       }
 
-      localStorage.removeItem("ar-fashions-cart");
+      if (
+        paymentChoice ===
+        "COD"
+      ) {
+        localStorage.removeItem(
+          "ar-fashions-cart",
+        );
 
-      router.replace(
-        `/order-success?orderNumber=${encodeURIComponent(
-          data.orderNumber,
-        )}`,
+        router.replace(
+          `/order-success?orderNumber=${encodeURIComponent(
+            data.orderNumber,
+          )}`,
+        );
+
+        return;
+      }
+
+      const razorpay =
+        data.razorpay;
+
+      if (
+        !razorpay?.keyId ||
+        !razorpay?.orderId ||
+        !data.orderId
+      ) {
+        throw new Error(
+          "Online payment session could not be created.",
+        );
+      }
+
+      const Razorpay =
+        (
+          window as unknown as {
+            Razorpay?:
+              RazorpayConstructor;
+          }
+        ).Razorpay;
+
+      if (!Razorpay) {
+        throw new Error(
+          "Secure payment window is unavailable.",
+        );
+      }
+
+      const checkout =
+        new Razorpay({
+          key:
+            razorpay.keyId,
+          amount:
+            razorpay.amount,
+          currency:
+            razorpay.currency ??
+            "INR",
+          name:
+            "AS Fashions",
+          description:
+            `Order ${data.orderNumber}`,
+          order_id:
+            razorpay.orderId,
+          prefill: {
+            name:
+              name.trim(),
+            contact:
+              phone.trim(),
+          },
+          theme: {
+            color:
+              "#031B14",
+          },
+          modal: {
+            ondismiss: () => {
+              showCheckoutAlert(
+                "Payment was not completed. Your cart is still available so you can try again.",
+                "Payment Not Completed",
+              );
+            },
+          },
+          handler: async (
+            payment:
+              RazorpaySuccessResponse,
+          ) => {
+            try {
+              setLoading(true);
+
+              const verifyResponse =
+                await fetch(
+                  "/api/payments/razorpay/verify",
+                  {
+                    method:
+                      "POST",
+                    headers: {
+                      "Content-Type":
+                        "application/json",
+                    },
+                    body:
+                      JSON.stringify({
+                        orderId:
+                          data.orderId,
+                        ...payment,
+                      }),
+                  },
+                );
+
+              const verifyData =
+                await verifyResponse.json();
+
+              if (
+                !verifyResponse.ok
+              ) {
+                throw new Error(
+                  verifyData.error ??
+                    "Payment verification failed.",
+                );
+              }
+
+              localStorage.removeItem(
+                "ar-fashions-cart",
+              );
+
+              router.replace(
+                `/order-success?orderNumber=${encodeURIComponent(
+                  verifyData.orderNumber ??
+                    data.orderNumber,
+                )}`,
+              );
+            } catch (error) {
+              showCheckoutAlert(
+                error instanceof Error
+                  ? error.message
+                  : "Payment verification failed.",
+                "Payment Verification",
+              );
+            } finally {
+              setLoading(false);
+            }
+          },
+        });
+
+      checkout.on(
+        "payment.failed",
+        () => {
+          showCheckoutAlert(
+            "Payment failed. No stock has been deducted. Please try again or choose Cash on Delivery.",
+            "Payment Failed",
+          );
+        },
       );
+
+      checkout.open();
     } catch (error) {
       showCheckoutAlert(
         error instanceof Error
@@ -1653,22 +1983,72 @@ export default function CheckoutPage() {
                 </h2>
               </div>
 
-              <div className="p-5">
-                <div
-                  className={`rounded-[1.25rem] border p-4 ${
-                    siteSettings.codEnabled
-                      ? "border-emerald-300 bg-emerald-50/60"
-                      : "border-black/[0.06] bg-zinc-100"
+              <div className="space-y-3 p-5">
+                <button
+                  type="button"
+                  disabled={
+                    !onlinePaymentAvailable
+                  }
+                  onClick={() =>
+                    setPaymentChoice(
+                      "RAZORPAY",
+                    )
+                  }
+                  className={`w-full rounded-[1.25rem] border p-4 text-left transition-[transform,opacity] duration-200 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-55 ${
+                    paymentChoice ===
+                      "RAZORPAY"
+                      ? "border-[#D4AF37] bg-[#F8F1E7]"
+                      : "border-[#E4D7C4] bg-[#FFFDF9]"
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span
-                      className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-black ${
-                        siteSettings.codEnabled
-                          ? "bg-[#031B14] text-white"
-                          : "bg-zinc-300 text-zinc-500"
-                      }`}
-                    >
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#031B14] text-[11px] font-black text-[#FFFDF9]">
+                      PAY
+                    </span>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[12px] font-black">
+                        Pay Online
+                      </p>
+
+                      <p className="mt-1 text-[9px] leading-4 text-zinc-500">
+                        {razorpayEnabled
+                          ? resellerFreightPending
+                            ? "Available after reseller freight is fixed."
+                            : "UPI, Cards, Net Banking & Wallets via Razorpay."
+                          : "Online payment setup is pending."}
+                      </p>
+                    </div>
+
+                    {paymentChoice ===
+                      "RAZORPAY" &&
+                      onlinePaymentAvailable && (
+                        <span className="grid h-7 w-7 place-items-center rounded-full bg-[#D4AF37] text-[9px] font-black text-[#031B14]">
+                          ✓
+                        </span>
+                      )}
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={
+                    !siteSettings.codEnabled
+                  }
+                  onClick={() =>
+                    setPaymentChoice(
+                      "COD",
+                    )
+                  }
+                  className={`w-full rounded-[1.25rem] border p-4 text-left transition-[transform,opacity] duration-200 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-55 ${
+                    paymentChoice ===
+                      "COD"
+                      ? "border-[#D4AF37] bg-[#F8F1E7]"
+                      : "border-[#E4D7C4] bg-[#FFFDF9]"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#031B14] text-sm font-black text-[#FFFDF9]">
                       ₹
                     </span>
 
@@ -1684,19 +2064,27 @@ export default function CheckoutPage() {
                       </p>
                     </div>
 
-                    {siteSettings.codEnabled && (
-                      <span className="grid h-7 w-7 place-items-center rounded-full bg-[#031B14] text-[9px] font-black text-white">
-                        ✓
-                      </span>
-                    )}
+                    {paymentChoice ===
+                      "COD" &&
+                      siteSettings.codEnabled && (
+                        <span className="grid h-7 w-7 place-items-center rounded-full bg-[#D4AF37] text-[9px] font-black text-[#031B14]">
+                          ✓
+                        </span>
+                      )}
                   </div>
-                </div>
+                </button>
 
-                <div className="mt-3 grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {[
                     ["✓", "Secure"],
-                    ["◎", "Protected"],
-                    ["₹", "COD"],
+                    ["◎", "Verified"],
+                    [
+                      "₹",
+                      paymentChoice ===
+                        "RAZORPAY"
+                        ? "Online"
+                        : "COD",
+                    ],
                   ].map(
                     ([icon, label]) => (
                       <div
@@ -2099,14 +2487,22 @@ export default function CheckoutPage() {
                 className="mt-5 hidden min-h-[54px] w-full rounded-[1rem] bg-[#031B14] px-4 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-[0_12px_28px_rgba(3,27,20,0.18)] transition-[transform,opacity] duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 disabled:shadow-none sm:block"
               >
                 {loading
-                  ? "Placing Order..."
-                  : isResellerOrder
-                    ? `Place Reseller Order · ${money(
+                  ? paymentChoice ===
+                    "RAZORPAY"
+                    ? "Opening Secure Payment..."
+                    : "Placing Order..."
+                  : paymentChoice ===
+                      "RAZORPAY"
+                    ? `Pay Securely · ${money(
                         total,
                       )}`
-                    : `Place Order · ${money(
-                        total,
-                      )}`}
+                    : isResellerOrder
+                      ? `Place Reseller Order · ${money(
+                          total,
+                        )}`
+                      : `Place Order · ${money(
+                          total,
+                        )}`}
               </button>
 
               <p className="mt-3 text-center text-[7px] leading-4 text-zinc-400">
@@ -2122,7 +2518,10 @@ export default function CheckoutPage() {
         <div className="mx-auto flex max-w-md items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
-              Pay on Delivery
+              {paymentChoice ===
+              "RAZORPAY"
+                ? "Secure Online Payment"
+                : "Pay on Delivery"}
             </p>
 
             <p className="mt-0.5 text-[18px] font-black leading-none">
@@ -2150,10 +2549,16 @@ export default function CheckoutPage() {
             className="min-h-[50px] min-w-[185px] rounded-[1rem] bg-[#031B14] px-4 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-[0_12px_28px_rgba(3,27,20,0.18)] transition-[transform,opacity] duration-200 active:scale-[0.98] disabled:bg-zinc-300 disabled:text-zinc-500 disabled:shadow-none"
           >
             {loading
-              ? "Placing..."
-              : isResellerOrder
-                ? "Place Reseller Order →"
-                : "Place Order →"}
+              ? paymentChoice ===
+                "RAZORPAY"
+                ? "Opening..."
+                : "Placing..."
+              : paymentChoice ===
+                  "RAZORPAY"
+                ? "Pay Securely →"
+                : isResellerOrder
+                  ? "Place Reseller Order →"
+                  : "Place Order →"}
           </button>
         </div>
       </div>
