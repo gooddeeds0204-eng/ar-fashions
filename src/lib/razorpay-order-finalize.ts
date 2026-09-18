@@ -136,8 +136,8 @@ export async function finalizeRazorpayPayment(
           .status ===
         "CANCELLED"
       ) {
-        throw new Error(
-          "This order is cancelled.",
+        throw new PaidOrderStockError(
+          "This order was cancelled before payment finalization.",
         );
       }
 
