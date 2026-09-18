@@ -742,25 +742,157 @@ function FashionReelsSection({
   mode: Mode;
 }) {
   const router = useRouter();
+  const reelCount = reels.length;
 
-  if (reels.length === 0) return null;
+  const [reelTrackIndex, setReelTrackIndex] =
+    useState(() => (reelCount > 1 ? reelCount : 0));
+
+  const [reelTouchStartX, setReelTouchStartX] =
+    useState<number | null>(null);
+
+  const [animateTrack, setAnimateTrack] =
+    useState(false);
+
+  useEffect(() => {
+    setAnimateTrack(false);
+    setReelTrackIndex(
+      reelCount > 1 ? reelCount : 0,
+    );
+  }, [reelCount]);
+
+  useEffect(() => {
+    if (reelCount <= 1) return;
+
+    const reducedMotion =
+      window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      );
+
+    if (reducedMotion.matches) return;
+
+    const timer = window.setInterval(() => {
+      setAnimateTrack(true);
+      setReelTrackIndex(
+        (current) => current + 1,
+      );
+    }, 3200);
+
+    return () =>
+      window.clearInterval(timer);
+  }, [reelCount]);
+
+  if (reelCount === 0) return null;
+
+  const carouselReels =
+    reelCount > 1
+      ? Array.from(
+          { length: reelCount * 3 },
+          (_, index) =>
+            reels[index % reelCount],
+        )
+      : reels;
+
+  const activeReelIndex =
+    reelCount > 0
+      ? ((reelTrackIndex % reelCount) +
+          reelCount) %
+        reelCount
+      : 0;
+
+  function moveReel(direction: number) {
+    if (reelCount <= 1) return;
+
+    setAnimateTrack(true);
+    setReelTrackIndex(
+      (current) =>
+        current + direction,
+    );
+  }
+
+  function openReel(
+    reel: Reel,
+    virtualIndex: number,
+  ) {
+    if (
+      reelCount > 1 &&
+      virtualIndex !== reelTrackIndex
+    ) {
+      setAnimateTrack(true);
+      setReelTrackIndex(virtualIndex);
+      return;
+    }
+
+    router.push(
+      `/reels?mode=${mode.toLowerCase()}&reel=${reel.id}`,
+    );
+  }
+
+  function finishTrackTransition() {
+    if (
+      reelCount <= 1 ||
+      !animateTrack
+    ) {
+      return;
+    }
+
+    if (
+      reelTrackIndex >=
+      reelCount * 2
+    ) {
+      setAnimateTrack(false);
+      setReelTrackIndex(reelCount);
+      return;
+    }
+
+    if (reelTrackIndex < reelCount) {
+      setAnimateTrack(false);
+      setReelTrackIndex(
+        reelCount * 2 - 1,
+      );
+    }
+  }
+
+  function finishSwipe(
+    endX: number,
+  ) {
+    if (reelTouchStartX === null) {
+      return;
+    }
+
+    const distance =
+      endX - reelTouchStartX;
+
+    setReelTouchStartX(null);
+
+    if (Math.abs(distance) < 45) {
+      return;
+    }
+
+    moveReel(
+      distance < 0 ? 1 : -1,
+    );
+  }
 
   return (
     <section
       id="fashion-reels"
-      className="border-y border-[#E7DBCC] bg-[#F8F1E7]"
+      className="overflow-hidden border-y border-[#E7DBCC] bg-[#F8F1E7]"
     >
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-        <div className="mb-6 flex items-end justify-between gap-4">
+      <div className="mx-auto max-w-7xl py-10 sm:py-12">
+        <div className="mb-6 flex items-end justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <div>
             <p className="text-[8px] font-black uppercase tracking-[0.32em] text-[#6B5435]">
               Watch · Discover · Shop
             </p>
+
             <h2 className="mt-2 font-serif text-[2.15rem] leading-none tracking-[-0.03em] text-[#211C18] sm:text-[2.6rem]">
-              {title || "Fashion Reels"}
+              {title ||
+                "Fashion Reels"}
             </h2>
+
             <p className="mt-2 text-[10px] text-[#7B7066] sm:text-xs">
-              {subtitle || "See the look in motion"}
+              {subtitle ||
+                "See the look in motion"}
             </p>
           </div>
 
@@ -771,103 +903,254 @@ function FashionReelsSection({
                 `/reels?mode=${mode.toLowerCase()}`,
               )
             }
-            className="shrink-0 text-[9px] font-black uppercase tracking-[0.1em] text-[#211C18]"
+            className="shrink-0 text-[9px] font-black uppercase tracking-[0.1em] text-[#211C18] active:scale-[0.98]"
           >
             View all →
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-          {reels.slice(0, 4).map((reel, index) => {
-            const thumb =
-              reel.thumbnailUrl ??
-              reel.product.image ??
-              null;
+        <div
+          className="relative h-[405px] overflow-hidden"
+          onTouchStart={(event) =>
+            setReelTouchStartX(
+              event.touches[0]?.clientX ??
+                null,
+            )
+          }
+          onTouchEnd={(event) =>
+            finishSwipe(
+              event.changedTouches[0]
+                ?.clientX ?? 0,
+            )
+          }
+        >
+          <div
+            onTransitionEnd={
+              finishTrackTransition
+            }
+            className={`absolute left-1/2 top-0 flex gap-3 will-change-transform ${
+              animateTrack
+                ? "transition-transform duration-300 ease-out"
+                : "transition-none"
+            }`}
+            style={{
+              transform: `translate3d(-${
+                reelTrackIndex * 272 +
+                130
+              }px, 0, 0)`,
+            }}
+          >
+            {carouselReels.map(
+              (reel, virtualIndex) => {
+                const distance =
+                  Math.abs(
+                    virtualIndex -
+                      reelTrackIndex,
+                  );
 
-            const price =
-              mode === "RESELLER" &&
-              reel.product.resellerPrice !== null
-                ? reel.product.resellerPrice
-                : reel.product.retailPrice;
+                const isActive =
+                  virtualIndex ===
+                  reelTrackIndex;
 
-            return (
-              <button
-                key={reel.id}
-                type="button"
-                onClick={() =>
-                  router.push(
-                    `/reels?mode=${mode.toLowerCase()}&reel=${reel.id}`,
-                  )
-                }
-                className="group min-w-0 text-left"
-              >
-                <div className="relative aspect-[9/14] overflow-hidden rounded-[1rem] bg-[#0A2119] shadow-[0_12px_30px_rgba(55,41,28,0.10)]">
-                  {reel.source === "UPLOAD" ? (
-                    index === 0 ? (
-                      <video
-                        src={reel.url}
-                        poster={thumb ?? undefined}
-                        muted
-                        autoPlay
-                        loop
-                        playsInline
-                        preload="metadata"
-                        className="h-full w-full object-cover"
-                      />
+                const isNear =
+                  distance <= 1;
+
+                const thumb =
+                  reel.thumbnailUrl ??
+                  reel.product.image ??
+                  null;
+
+                const price =
+                  mode ===
+                    "RESELLER" &&
+                  reel.product
+                    .resellerPrice !==
+                    null
+                    ? reel.product
+                        .resellerPrice
+                    : reel.product
+                        .retailPrice;
+
+                return (
+                  <button
+                    key={`${virtualIndex}-${reel.id}`}
+                    type="button"
+                    tabIndex={
+                      isNear ? 0 : -1
+                    }
+                    onClick={() =>
+                      openReel(
+                        reel,
+                        virtualIndex,
+                      )
+                    }
+                    className={`group relative w-[260px] shrink-0 overflow-hidden rounded-[1.1rem] bg-[#0A2119] text-left shadow-[0_16px_38px_rgba(55,41,28,0.16)] transition-[transform,opacity] duration-300 active:scale-[0.98] ${
+                      isNear
+                        ? "pointer-events-auto"
+                        : "pointer-events-none"
+                    }`}
+                    style={{
+                      aspectRatio: "9 / 14",
+                      transform: isActive
+                        ? "scale(1)"
+                        : distance === 1
+                          ? "scale(0.88)"
+                          : "scale(0.8)",
+                      opacity: isActive
+                        ? 1
+                        : distance === 1
+                          ? 0.58
+                          : 0.18,
+                    }}
+                  >
+                    {reel.source ===
+                    "UPLOAD" ? (
+                      isActive ? (
+                        <video
+                          src={reel.url}
+                          poster={
+                            thumb ??
+                            undefined
+                          }
+                          muted
+                          autoPlay
+                          loop
+                          playsInline
+                          preload="metadata"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : thumb ? (
+                        <img
+                          src={thumb}
+                          alt={
+                            reel.caption ||
+                            reel.product.name
+                          }
+                          loading="lazy"
+                          decoding="async"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <video
+                          src={reel.url}
+                          muted
+                          playsInline
+                          preload="metadata"
+                          className="h-full w-full object-cover"
+                        />
+                      )
                     ) : thumb ? (
                       <img
                         src={thumb}
-                        alt={reel.caption || reel.product.name}
+                        alt={
+                          reel.caption ||
+                          reel.product.name
+                        }
                         loading="lazy"
                         decoding="async"
-                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
-                      />
-                    ) : (
-                      <video
-                        src={reel.url}
-                        muted
-                        playsInline
-                        preload="metadata"
                         className="h-full w-full object-cover"
                       />
-                    )
-                  ) : thumb ? (
-                    <img
-                      src={thumb}
-                      alt={reel.caption || reel.product.name}
-                      loading="lazy"
-                      decoding="async"
-                      className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#0B2A20,#04140F)] text-white">
-                      <StoreIcon name="play" className="h-7 w-7" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#0B2A20,#04140F)] text-white">
+                        <StoreIcon
+                          name="play"
+                          className="h-8 w-8"
+                        />
+                      </div>
+                    )}
+
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/5 to-black/10" />
+
+                    <span className="absolute left-3 top-3 rounded-full border border-white/20 bg-black/30 px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.14em] text-white backdrop-blur">
+                      Reel
+                    </span>
+
+                    <span className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-[#FFF8EC]/94 text-[#092019] shadow-sm">
+                      <StoreIcon
+                        name="play"
+                        className="h-4 w-4"
+                      />
+                    </span>
+
+                    <div className="absolute inset-x-0 bottom-0 p-4">
+                      <p className="line-clamp-1 text-[11px] font-black text-white">
+                        {
+                          reel.product
+                            .name
+                        }
+                      </p>
+
+                      <p className="mt-1.5 text-[11px] font-black text-[#F0D7A9]">
+                        {money(price)}
+                      </p>
+
+                      {isActive ? (
+                        <span className="mt-3 inline-flex items-center gap-1.5 text-[7px] font-black uppercase tracking-[0.12em] text-white/80">
+                          Tap to shop
+                          <span>→</span>
+                        </span>
+                      ) : null}
                     </div>
-                  )}
+                  </button>
+                );
+              },
+            )}
+          </div>
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-transparent to-black/5" />
-
-                  <span className="absolute left-2 top-2 rounded-full border border-white/20 bg-black/30 px-2 py-1 text-[6px] font-black uppercase tracking-[0.12em] text-white backdrop-blur">
-                    Reel
-                  </span>
-
-                  <span className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-[#FFF8EC]/92 text-[#092019] shadow-sm">
-                    <StoreIcon name="play" className="h-4 w-4" />
-                  </span>
-
-                  <div className="absolute inset-x-0 bottom-0 p-3">
-                    <p className="line-clamp-1 text-[10px] font-black text-white sm:text-[11px]">
-                      {reel.product.name}
-                    </p>
-                    <p className="mt-1 text-[10px] font-black text-[#F0D7A9]">
-                      {money(price)}
-                    </p>
-                  </div>
-                </div>
+          {reelCount > 1 ? (
+            <>
+              <button
+                type="button"
+                aria-label="Previous reel"
+                onClick={() =>
+                  moveReel(-1)
+                }
+                className="absolute left-2 top-1/2 z-20 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[#08251C]/82 text-lg text-white shadow-lg backdrop-blur transition-[transform,opacity] duration-300 active:scale-[0.98] sm:left-6"
+              >
+                ‹
               </button>
-            );
-          })}
+
+              <button
+                type="button"
+                aria-label="Next reel"
+                onClick={() =>
+                  moveReel(1)
+                }
+                className="absolute right-2 top-1/2 z-20 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[#08251C]/82 text-lg text-white shadow-lg backdrop-blur transition-[transform,opacity] duration-300 active:scale-[0.98] sm:right-6"
+              >
+                ›
+              </button>
+            </>
+          ) : null}
         </div>
+
+        {reelCount > 1 ? (
+          <div className="mt-4 flex justify-center gap-1.5">
+            {reels.map(
+              (reel, index) => (
+                <button
+                  key={reel.id}
+                  type="button"
+                  aria-label={`Go to reel ${
+                    index + 1
+                  }`}
+                  onClick={() => {
+                    setAnimateTrack(true);
+                    setReelTrackIndex(
+                      reelCount + index,
+                    );
+                  }}
+                  className={`h-1.5 rounded-full transition-[transform,opacity] duration-300 ${
+                    activeReelIndex ===
+                    index
+                      ? "w-6 bg-[#173D30]"
+                      : "w-1.5 bg-[#B9A895]"
+                  }`}
+                />
+              ),
+            )}
+          </div>
+        ) : null}
       </div>
     </section>
   );
