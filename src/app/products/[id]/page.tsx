@@ -1242,7 +1242,7 @@ export default function ProductDetailPage() {
 
           <button
             onClick={() => router.push("/")}
-            className="mt-6 rounded-xl bg-zinc-950 px-6 py-3 text-sm font-bold text-white"
+            className="mt-6 rounded-xl bg-[#031B14] px-6 py-3 text-sm font-bold text-[#FFFDF9] transition-[transform,opacity] duration-200 active:scale-[0.98]"
           >
             Back to Shop
           </button>
@@ -1258,12 +1258,12 @@ export default function ProductDetailPage() {
       : null;
 
   return (
-    <main className="min-h-screen bg-[#FAF7F0] pb-24 text-zinc-950 sm:pb-0">
+    <main className="min-h-screen bg-[#FAF7F0] pb-24 text-[#211C18] sm:pb-0">
       <header className="sticky top-0 z-50 border-b border-black/[0.06] bg-[#FFFDF9]/95 shadow-[0_1px_12px_rgba(0,0,0,0.04)] backdrop-blur-xl">
         <div className="mx-auto flex h-[60px] max-w-7xl items-center px-4 sm:h-16 sm:px-6 lg:px-8">
           <button
             onClick={() => router.back()}
-            className="mr-3 flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-sm font-black transition active:scale-95"
+            className="mr-3 flex h-9 w-9 items-center justify-center rounded-full border border-[#E4D7C4] bg-[#F4EBDD] text-sm font-black text-[#211C18] transition-[transform,opacity] duration-200 active:scale-[0.98]"
           >
             ←
           </button>
@@ -1275,7 +1275,7 @@ export default function ProductDetailPage() {
 
           <button
             onClick={() => router.push("/cart")}
-            className="ml-auto rounded-full border border-black/[0.08] bg-white px-4 py-2 text-[11px] font-black shadow-sm transition active:scale-95"
+            className="ml-auto rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-2 text-[11px] font-black text-[#031B14] shadow-sm transition-[transform,opacity] duration-200 active:scale-[0.98]"
           >
             🛒 Cart
           </button>
@@ -1320,9 +1320,9 @@ export default function ProductDetailPage() {
                     onClick={() =>
                       setSelectedMedia(index)
                     }
-                    className={`overflow-hidden rounded-xl border-2 bg-white shadow-sm transition active:scale-95 ${
+                    className={`overflow-hidden rounded-xl border-2 bg-[#FFFDF9] shadow-sm transition-[transform,opacity] duration-200 active:scale-[0.98] ${
                       selectedMedia === index
-                        ? "border-emerald-600"
+                        ? "border-[#D4AF37]"
                         : "border-transparent"
                     }`}
                   >
@@ -1345,8 +1345,8 @@ export default function ProductDetailPage() {
         </section>
 
         {/* DETAILS */}
-        <section className="relative z-10 mt-3 rounded-[1.5rem] bg-white px-4 pb-8 pt-6 shadow-sm sm:mt-0 sm:rounded-[2rem] sm:p-6 lg:p-8">
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-600">
+        <section className="relative z-10 mt-3 rounded-[1.5rem] border border-[#E4D7C4] bg-[#FFFDF9] px-4 pb-8 pt-6 shadow-sm sm:mt-0 sm:rounded-[2rem] sm:p-6 lg:p-8">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#6B5435]">
             {product.category.name}
           </p>
 
@@ -1459,8 +1459,8 @@ export default function ProductDetailPage() {
                   className={`flex items-center gap-2 rounded-full border px-3.5 py-2.5 text-[11px] font-black transition active:scale-95 ${
                     selectedColorId ===
                     color.id
-                      ? "border-zinc-950 bg-zinc-950 text-white shadow-sm"
-                      : "border-black/[0.08] bg-white text-zinc-700"
+                      ? "border-[#031B14] bg-[#031B14] text-[#FFFDF9] shadow-sm"
+                      : "border-[#E4D7C4] bg-[#FFFDF9] text-[#211C18]"
                   }`}
                 >
                   <span
@@ -1509,10 +1509,10 @@ export default function ProductDetailPage() {
                     className={`min-w-[64px] rounded-xl border px-3 py-3 text-[11px] font-black transition active:scale-95 ${
                       selectedSizeId ===
                       size.id
-                        ? "border-emerald-600 bg-emerald-600 text-white"
+                        ? "border-[#031B14] bg-[#031B14] text-[#FFFDF9]"
                         : disabled
                           ? "cursor-not-allowed border-black/5 bg-zinc-100 text-zinc-300"
-                          : "border-black/10 bg-white"
+                          : "border-[#E4D7C4] bg-[#FFFDF9] text-[#211C18]"
                     }`}
                   >
                     <span className="block">
@@ -1611,7 +1611,7 @@ export default function ProductDetailPage() {
                   availableStock <= 0
                 }
                 onClick={addToCart}
-                className="rounded-2xl border border-black/[0.1] bg-white py-4 text-[12px] font-black text-zinc-950 transition active:scale-[0.99] disabled:bg-zinc-100 disabled:text-zinc-400"
+                className="rounded-2xl border border-[#031B14] bg-[#FFFDF9] py-4 text-[12px] font-black text-[#031B14] transition-[transform,opacity] duration-200 active:scale-[0.98] disabled:border-[#E4D7C4] disabled:bg-[#F4EBDD] disabled:text-[#9A9188]"
               >
                 {adding
                   ? "Adding..."
@@ -1626,7 +1626,7 @@ export default function ProductDetailPage() {
                   availableStock <= 0
                 }
                 onClick={openBuyNowPopup}
-                className="rounded-2xl bg-zinc-950 py-4 text-[12px] font-black text-white shadow-lg transition active:scale-[0.99] disabled:bg-zinc-300"
+                className="rounded-2xl bg-[#031B14] py-4 text-[12px] font-black text-[#FFFDF9] shadow-lg transition-[transform,opacity] duration-200 active:scale-[0.98] disabled:bg-[#E4D7C4] disabled:text-[#9A9188]"
               >
                 Buy Now
               </button>
@@ -1713,7 +1713,7 @@ export default function ProductDetailPage() {
                               className={`rounded-xl border px-3 py-3 text-center transition disabled:opacity-30 ${
                                 smartPackCount ===
                                 count
-                                  ? "border-emerald-600 bg-emerald-600 text-white"
+                                  ? "border-[#031B14] bg-[#031B14] text-[#FFFDF9]"
                                   : "border-emerald-200 bg-white text-zinc-700"
                               }`}
                             >
@@ -1862,7 +1862,7 @@ export default function ProductDetailPage() {
                 })}
               </div>
 
-              <div className="mt-6 rounded-[1.5rem] bg-zinc-950 p-5 text-white shadow-xl shadow-black/10">
+              <div className="mt-6 rounded-[1.5rem] bg-[#031B14] p-5 text-[#FFFDF9] shadow-xl shadow-black/10">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
@@ -2331,25 +2331,25 @@ export default function ProductDetailPage() {
 
       {!isReseller && (
         <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden">
-          <div className="w-full border-t border-black/[0.08] bg-white/98 px-3 pb-3 pt-3 shadow-[0_-12px_35px_rgba(0,0,0,0.14)] backdrop-blur-xl">
+          <div className="w-full border-t border-[#E4D7C4] bg-[#FFFDF9]/98 px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_35px_rgba(0,0,0,0.14)] backdrop-blur-xl">
             <div className="flex w-full items-center gap-2">
               <div className="min-w-[78px] px-1">
                 <div className="flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
 
-                  <p className="text-[7px] font-black uppercase tracking-[0.15em] text-emerald-700">
+                  <p className="text-[7px] font-black uppercase tracking-[0.15em] text-[#6B5435]">
                     Price
                   </p>
                 </div>
 
-                <p className="mt-1 text-[18px] font-black leading-none tracking-[-0.04em] text-zinc-950">
+                <p className="mt-1 text-[18px] font-black leading-none tracking-[-0.04em] text-[#211C18]">
                   {money(currentPrice)}
                 </p>
 
                 {product.mrp &&
                   Number(product.mrp) >
                     currentPrice && (
-                    <p className="mt-1 text-[8px] font-semibold text-zinc-400 line-through">
+                    <p className="mt-1 text-[8px] font-semibold text-[#9A9188] line-through">
                       {money(product.mrp)}
                     </p>
                   )}
@@ -2363,7 +2363,7 @@ export default function ProductDetailPage() {
                   availableStock <= 0
                 }
                 onClick={addToCart}
-                className="min-h-[56px] flex-1 rounded-[1rem] border-2 border-zinc-950 bg-white px-2 text-[11px] font-black text-zinc-950 transition active:scale-[0.98] disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400"
+                className="min-h-[56px] flex-1 rounded-[1rem] border-2 border-[#031B14] bg-[#FFFDF9] px-2 text-[11px] font-black text-[#031B14] transition-[transform,opacity] duration-200 active:scale-[0.98] disabled:border-[#E4D7C4] disabled:bg-[#F4EBDD] disabled:text-[#9A9188]"
               >
                 Add to Cart
               </button>
@@ -2376,7 +2376,7 @@ export default function ProductDetailPage() {
                   availableStock <= 0
                 }
                 onClick={openBuyNowPopup}
-                className="min-h-[56px] flex-[1.15] rounded-[1rem] bg-emerald-600 px-2 text-[12px] font-black text-white shadow-[0_10px_24px_rgba(5,150,105,0.32)] transition active:scale-[0.98] disabled:bg-zinc-300 disabled:shadow-none"
+                className="min-h-[56px] flex-[1.15] rounded-[1rem] bg-[#031B14] px-2 text-[12px] font-black text-[#FFFDF9] shadow-[0_10px_24px_rgba(3,27,20,0.28)] transition-[transform,opacity] duration-200 active:scale-[0.98] disabled:bg-[#E4D7C4] disabled:text-[#9A9188] disabled:shadow-none"
               >
                 Buy Now →
               </button>
