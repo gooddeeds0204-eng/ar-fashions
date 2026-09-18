@@ -405,13 +405,15 @@ function ProductCard({
             autoPlay
             loop
             playsInline
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
           />
         ) : media ? (
           <img
             src={media.url}
             alt={media.altText ?? product.name}
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-zinc-400">
@@ -2938,12 +2940,12 @@ export default function Home() {
                         index,
                       )
                     }
-                    className={`h-1.5 rounded-full transition-all ${
+                    className={`h-1.5 w-8 origin-left rounded-full bg-[#B8923B] transition-[transform,opacity] duration-200 ${
                       index ===
                       heroSlideIndex %
                         heroProducts.length
-                        ? "w-8 bg-[#D4AF37]"
-                        : "w-2 bg-white/35"
+                        ? "scale-x-100 opacity-100"
+                        : "scale-x-25 opacity-35"
                     }`}
                   />
                 ),
@@ -2998,7 +3000,7 @@ export default function Home() {
                             alt={
                               item.name
                             }
-                            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                           />
                         ) : (
                           <div className="flex h-full w-full flex-col items-center justify-center bg-[radial-gradient(circle_at_50%_25%,#7C2732_0%,#261317_45%,#0B0B0B_100%)]">
@@ -3060,9 +3062,9 @@ export default function Home() {
             </div>
 
             <div className="flex gap-1.5">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#D4AF37]" />
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#D4AF37]/60" />
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#D4AF37]/30" />
+              <span className="h-1.5 w-1.5 ar-skeleton rounded-full bg-[#D4AF37]" />
+              <span className="h-1.5 w-1.5 ar-skeleton rounded-full bg-[#D4AF37]/60" />
+              <span className="h-1.5 w-1.5 ar-skeleton rounded-full bg-[#D4AF37]/30" />
             </div>
           </div>
 
@@ -3073,11 +3075,11 @@ export default function Home() {
                   key={item}
                   className="overflow-hidden rounded-[1rem]"
                 >
-                  <div className="aspect-[3/4] animate-pulse rounded-[1rem] border border-white/[0.06] bg-gradient-to-br from-[#241418] via-[#151515] to-[#0B0B0B]" />
+                  <div className="ar-skeleton aspect-[3/4] rounded-[1rem] border border-[#E4D7C4]" />
 
-                  <div className="mt-3 h-2 w-16 animate-pulse rounded-full bg-[#D4AF37]/15" />
-                  <div className="mt-2 h-3 w-4/5 animate-pulse rounded-full bg-white/10" />
-                  <div className="mt-2 h-3 w-1/3 animate-pulse rounded-full bg-white/[0.07]" />
+                  <div className="mt-3 h-2 w-16 ar-skeleton rounded-full bg-[#D4AF37]/15" />
+                  <div className="ar-skeleton mt-2 h-3 w-4/5 rounded-full" />
+                  <div className="ar-skeleton mt-2 h-3 w-1/3 rounded-full" />
                 </div>
               ),
             )}

@@ -241,13 +241,19 @@ export default function WishlistPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#FAF7F0] text-[#211C18]">
-        <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-emerald-400" />
-
-          <p className="mt-4 text-[9px] font-black uppercase tracking-[0.2em] text-[#8A7F75]">
-            Loading Saved Looks
-          </p>
+      <main className="min-h-screen bg-[#FAF7F0] px-4 pb-24 pt-6 text-[#211C18]">
+        <div className="mx-auto max-w-6xl">
+          <div className="ar-skeleton h-10 w-40 rounded-full" />
+          <div className="mt-6 ar-skeleton h-20 w-full rounded-[1.5rem]" />
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[0, 1, 2, 3].map((item) => (
+              <div key={item}>
+                <div className="ar-skeleton aspect-[3/4] rounded-[1.2rem]" />
+                <div className="mt-3 ar-skeleton h-3 w-4/5 rounded-full" />
+                <div className="mt-2 ar-skeleton h-3 w-1/2 rounded-full" />
+              </div>
+            ))}
+          </div>
         </div>
       </main>
     );
@@ -564,7 +570,7 @@ export default function WishlistPage() {
                                 media.altText ??
                                 product.name
                               }
-                              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                             />
                           ) : (
                             <div className="grid h-full place-items-center font-serif text-xl text-white/20">

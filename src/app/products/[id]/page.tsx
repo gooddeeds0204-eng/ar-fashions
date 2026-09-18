@@ -1199,151 +1199,31 @@ export default function ProductDetailPage() {
   }
 
   if (loading) {
-    const previewPrice =
-      transitionPreview?.price ??
-      null;
-
     return (
-      <main className="min-h-screen bg-[#080B0D] text-[#F7F5EF]">
-        <header className="border-b border-[#D4AF37]/10 bg-[#080B0D]">
-          <div className="mx-auto flex h-[68px] max-w-7xl items-center px-5">
-            <button
-              type="button"
-              onClick={() =>
-                router.back()
-              }
-              className="grid h-9 w-9 place-items-center rounded-full border border-white/10 text-sm text-white"
-            >
-              ←
-            </button>
-
-            <div className="ml-4">
-              <p className="font-serif text-[28px] leading-none text-[#D4AF37]">
-                AR
-              </p>
-
-              <p className="mt-1 text-[5px] font-black uppercase tracking-[0.4em] text-[#D4AF37]">
-                Fashions
-              </p>
-            </div>
-
-            <p className="ml-auto text-[7px] font-black uppercase tracking-[0.18em] text-white/35">
-              Product View
-            </p>
+      <main className="min-h-screen bg-[#FAF7F0] pb-24 text-[#211C18]">
+        <header className="border-b border-[#E4D7C4] bg-[#FFFDF9]">
+          <div className="mx-auto flex h-[60px] max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+            <div className="ar-skeleton h-9 w-9 rounded-full" />
+            <div className="ml-3 ar-skeleton h-8 w-24 rounded-full" />
+            <div className="ml-auto ar-skeleton h-9 w-20 rounded-full" />
           </div>
         </header>
 
-        <section className="mx-auto grid min-h-[calc(100vh-68px)] max-w-5xl items-center gap-7 px-5 py-8 sm:grid-cols-2 sm:px-8">
-          <div className="relative mx-auto w-full max-w-[430px] overflow-hidden rounded-[1.8rem] border border-white/10 bg-[#171313] shadow-[0_28px_80px_rgba(0,0,0,0.45)]">
-            <div className="aspect-[4/5]">
-              {transitionPreview?.image ? (
-                <img
-                  src={
-                    transitionPreview.image
-                  }
-                  alt={
-                    transitionPreview.name
-                  }
-                  className="h-full w-full scale-[1.02] object-cover opacity-80"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_50%_28%,#7C2732_0%,#241418_38%,#080B0D_100%)]">
-                  <div className="text-center">
-                    <p className="font-serif text-6xl text-[#D4AF37]">
-                      AR
-                    </p>
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-5 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-8">
+          <div className="ar-skeleton aspect-[4/5] overflow-hidden rounded-[1.8rem]" />
 
-                    <p className="mt-3 text-[7px] font-black uppercase tracking-[0.35em] text-white/35">
-                      Your Style Is Loading
-                    </p>
-                  </div>
-                </div>
-              )}
+          <section className="py-2">
+            <div className="ar-skeleton h-3 w-24 rounded-full" />
+            <div className="mt-4 ar-skeleton h-10 w-4/5 rounded-xl" />
+            <div className="mt-3 ar-skeleton h-4 w-2/5 rounded-full" />
+            <div className="mt-7 ar-skeleton h-24 w-full rounded-[1.3rem]" />
+            <div className="mt-4 ar-skeleton h-24 w-full rounded-[1.3rem]" />
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="ar-skeleton h-14 rounded-2xl" />
+              <div className="ar-skeleton h-14 rounded-2xl" />
             </div>
-
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent" />
-
-            <div className="absolute inset-x-0 bottom-0 p-5">
-              <span className="rounded-full border border-[#D4AF37]/25 bg-black/40 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.15em] text-[#D4AF37] backdrop-blur">
-                Opening your selection
-              </span>
-
-              <h1 className="mt-4 font-serif text-[2rem] leading-[0.95] text-white">
-                {transitionPreview?.name ||
-                  "AR Fashions Product"}
-              </h1>
-
-              {transitionPreview?.category && (
-                <p className="mt-2 text-[9px] uppercase tracking-[0.16em] text-white/45">
-                  {
-                    transitionPreview.category
-                  }
-                </p>
-              )}
-
-              {previewPrice !== null && (
-                <p className="mt-3 text-xl font-black text-[#D4AF37]">
-                  {money(
-                    previewPrice,
-                  )}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="pb-6 sm:pb-0">
-            <p className="text-[8px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">
-              AR Fashions
-            </p>
-
-            <h2 className="mt-3 font-serif text-3xl leading-tight sm:text-5xl">
-              {transitionPreview?.name
-                ? `Getting ${transitionPreview.name} ready`
-                : "Preparing your product"}
-            </h2>
-
-            <p className="mt-4 max-w-md text-sm leading-6 text-white/45">
-              Loading the latest sizes,
-              colours, stock and purchase
-              options for you.
-            </p>
-
-            <div className="mt-8 space-y-3">
-              {[
-                "Checking available stock",
-                "Preparing size & colour options",
-                "Getting checkout ready",
-              ].map(
-                (text, index) => (
-                  <div
-                    key={text}
-                    className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.025] px-4 py-3"
-                  >
-                    <span
-                      className={`h-2 w-2 rounded-full bg-[#D4AF37] ${
-                        index === 0
-                          ? "animate-pulse"
-                          : "opacity-40"
-                      }`}
-                    />
-
-                    <span className="text-[10px] font-semibold text-white/55">
-                      {text}
-                    </span>
-                  </div>
-                ),
-              )}
-            </div>
-
-            <div className="mt-7 h-1 overflow-hidden rounded-full bg-white/[0.06]">
-              <div className="h-full w-2/3 animate-pulse rounded-full bg-gradient-to-r from-[#7C2732] to-[#D4AF37]" />
-            </div>
-
-            <p className="mt-3 text-[8px] uppercase tracking-[0.15em] text-white/25">
-              Almost there · AR Fashions
-            </p>
-          </div>
-        </section>
+          </section>
+        </div>
       </main>
     );
   }

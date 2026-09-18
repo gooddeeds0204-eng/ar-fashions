@@ -634,13 +634,25 @@ export default function CartPage() {
 
   if (!loaded) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#03140e] text-white">
-        <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-emerald-400" />
-
-          <p className="mt-4 text-[9px] font-black uppercase tracking-[0.2em] text-white/40">
-            Preparing Your Bag
-          </p>
+      <main className="min-h-screen bg-[#FAF7F0] px-4 pb-28 pt-6 text-[#211C18]">
+        <div className="mx-auto max-w-6xl">
+          <div className="ar-skeleton h-10 w-36 rounded-full" />
+          <div className="mt-6 ar-skeleton h-36 w-full rounded-[1.8rem]" />
+          <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="space-y-3">
+              {[0, 1].map((item) => (
+                <div key={item} className="flex gap-3 rounded-[1.3rem] border border-[#E4D7C4] bg-[#FFFDF9] p-3">
+                  <div className="ar-skeleton h-32 w-24 shrink-0 rounded-[1rem]" />
+                  <div className="flex-1 py-2">
+                    <div className="ar-skeleton h-3 w-3/4 rounded-full" />
+                    <div className="mt-3 ar-skeleton h-3 w-1/2 rounded-full" />
+                    <div className="mt-6 ar-skeleton h-9 w-full rounded-xl" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="ar-skeleton h-64 rounded-[1.5rem]" />
+          </div>
         </div>
       </main>
     );
