@@ -397,7 +397,7 @@ function ProductCard({
       }
       className="group min-w-0 cursor-pointer overflow-hidden bg-transparent transition duration-300 active:scale-[0.985]"
     >
-      <div className="relative aspect-[3/4] overflow-hidden rounded-[1rem] border border-white/10 bg-[#171313] shadow-[0_14px_34px_rgba(0,0,0,0.25)]">
+      <div className="relative aspect-[3/4] overflow-hidden rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] shadow-[0_14px_34px_rgba(0,0,0,0.25)]">
         {media?.type === "VIDEO" ? (
           <video
             src={media.url}
@@ -456,12 +456,12 @@ function ProductCard({
           {product.category.name}
         </p>
 
-        <h3 className="line-clamp-1 text-[12px] font-semibold text-zinc-100 sm:text-sm">
+        <h3 className="line-clamp-1 text-[12px] font-semibold text-[#211C18] sm:text-sm">
           {product.name}
         </h3>
 
         <div className="mt-2 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
-          <span className="text-[13px] font-black text-white sm:text-[15px]">
+          <span className="text-[13px] font-black text-[#211C18] sm:text-[15px]">
             {money(price)}
           </span>
 
@@ -531,11 +531,11 @@ function ProductSection({
             AR Fashions
           </p>
 
-          <h2 className="font-serif text-[1.9rem] font-normal leading-none text-white sm:text-3xl">
+          <h2 className="font-serif text-[1.9rem] font-normal leading-none text-[#211C18] sm:text-3xl">
             {title}
           </h2>
 
-          <p className="mt-2 text-[10px] font-medium text-white/40 sm:text-xs">
+          <p className="mt-2 text-[10px] font-medium text-[#7B7066] sm:text-xs">
             {subtitle}
           </p>
         </div>
@@ -548,7 +548,7 @@ function ProductSection({
               behavior: "smooth",
             });
           }}
-          className="hidden rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-[9px] font-black uppercase tracking-[0.08em] text-white/70 sm:block"
+          className="hidden rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-2 text-[9px] font-black uppercase tracking-[0.08em] text-[#6F655D] sm:block"
         >
           View All →
         </button>
@@ -760,7 +760,7 @@ function FashionReelsSection({
             </p>
           </div>
 
-          <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.14em] text-white/50">
+          <span className="rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.14em] text-white/50">
             {reels.length} Reels
           </span>
         </div>
@@ -814,7 +814,7 @@ function FashionReelsSection({
                       : "Instagram"}
                   </span>
 
-                  <span className="rounded-full bg-black/40 px-2.5 py-1 text-[7px] font-bold text-white/70 backdrop-blur">
+                  <span className="rounded-full bg-black/40 px-2.5 py-1 text-[7px] font-bold text-[#6F655D] backdrop-blur">
                     Full Look
                   </span>
                 </div>
@@ -919,7 +919,7 @@ function FashionReelsSection({
                 {selectedReel.product.name}
               </h3>
 
-              <p className="mt-3 text-sm leading-6 text-white/45">
+              <p className="mt-3 text-sm leading-6 text-[#8A7F75]">
                 {selectedReel.caption ||
                   "See the style in motion and shop the featured product instantly."}
               </p>
@@ -981,7 +981,7 @@ function FashionReelsSection({
           </div>
 
           <div className="shrink-0 text-right">
-            <p className="text-[13px] font-black text-white">
+            <p className="text-[13px] font-black text-[#211C18]">
               {money(selectedPrice)}
             </p>
 
@@ -2091,7 +2091,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[#080B0D] pb-24 text-white sm:pb-0">
+    <main className="min-h-screen bg-[#FAF7F0] pb-24 text-[#211C18] sm:pb-0">
       <StorefrontDrawer
         open={menuOpen}
         mode={mode}
@@ -2165,7 +2165,7 @@ export default function Home() {
       />
 
       {/* IMAGE 2 LUXURY HEADER */}
-      <div className="border-b border-[#D4AF37]/10 bg-[#7C2732] px-4 py-2 text-center text-[8px] font-bold tracking-[0.08em] text-[#F7F5EF] sm:text-[10px]">
+      <div className="border-b border-[#D4AF37]/10 bg-[#E9DECD] px-4 py-2 text-center text-[8px] font-bold tracking-[0.08em] text-[#2B241F] sm:text-[10px]">
         <div className="mx-auto flex max-w-7xl items-center justify-center gap-3 sm:justify-between">
           <p>
             ✦{" "}
@@ -2196,7 +2196,7 @@ export default function Home() {
         </div>
       </div>
 
-      <header className="sticky top-0 z-50 border-b border-[#D4AF37]/10 bg-[#080B0D]/95 text-[#F7F5EF] backdrop-blur-2xl">
+      <header className="sticky top-0 z-50 border-b border-[#D4AF37]/10 bg-[#080B0D]/95 text-[#2B241F] backdrop-blur-2xl">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-[68px] items-center gap-5">
             <button
@@ -2205,7 +2205,7 @@ export default function Home() {
                 setMenuOpen(true)
               }
               aria-label="Menu"
-              className="grid h-10 w-10 shrink-0 place-items-center text-xl text-[#F7F5EF] lg:hidden"
+              className="grid h-10 w-10 shrink-0 place-items-center text-xl text-[#2B241F] lg:hidden"
             >
               ☰
             </button>
@@ -2300,7 +2300,7 @@ export default function Home() {
             </nav>
 
             <div className="ml-auto hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex">
-              <div className="flex w-full max-w-[330px] items-center rounded-full border border-white/10 bg-white/[0.055] px-4 py-2.5">
+              <div className="flex w-full max-w-[330px] items-center rounded-full border border-[#E4D7C4] bg-[#FAF7F0] px-4 py-2.5">
                 <span className="mr-2 text-[#D4AF37]">
                   ⌕
                 </span>
@@ -2314,7 +2314,7 @@ export default function Home() {
                     )
                   }
                   placeholder="Search for products..."
-                  className="min-w-0 flex-1 bg-transparent text-[10px] text-white outline-none placeholder:text-white/30"
+                  className="min-w-0 flex-1 bg-transparent text-[10px] text-[#211C18] outline-none placeholder:text-[#9C9187]"
                 />
 
                 {search && (
@@ -2323,7 +2323,7 @@ export default function Home() {
                     onClick={() =>
                       setSearch("")
                     }
-                    className="text-white/45"
+                    className="text-[#8A7F75]"
                   >
                     ×
                   </button>
@@ -2338,7 +2338,7 @@ export default function Home() {
                   )
                 }
                 aria-label="Wishlist"
-                className="grid h-9 w-9 shrink-0 place-items-center text-xl text-[#F7F5EF]"
+                className="grid h-9 w-9 shrink-0 place-items-center text-xl text-[#2B241F]"
               >
                 ♡
               </button>
@@ -2353,7 +2353,7 @@ export default function Home() {
                   )
                 }
                 aria-label="Account"
-                className="grid h-9 w-9 shrink-0 place-items-center text-lg text-[#F7F5EF]"
+                className="grid h-9 w-9 shrink-0 place-items-center text-lg text-[#2B241F]"
               >
                 ♙
               </button>
@@ -2366,7 +2366,7 @@ export default function Home() {
                   )
                 }
                 aria-label="Cart"
-                className="relative grid h-9 w-9 shrink-0 place-items-center text-lg text-[#F7F5EF]"
+                className="relative grid h-9 w-9 shrink-0 place-items-center text-lg text-[#2B241F]"
               >
                 ◇
                 <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-[#7C2732]" />
@@ -2404,7 +2404,7 @@ export default function Home() {
           </div>
 
           <div className="pb-3 md:hidden">
-            <div className="flex items-center rounded-full border border-white/10 bg-white/[0.055] px-4 py-2.5">
+            <div className="flex items-center rounded-full border border-[#E4D7C4] bg-[#FAF7F0] px-4 py-2.5">
               <span className="mr-2 text-[#D4AF37]">
                 ⌕
               </span>
@@ -2417,7 +2417,7 @@ export default function Home() {
                   )
                 }
                 placeholder="Search for products..."
-                className="min-w-0 flex-1 bg-transparent text-[10px] text-white outline-none placeholder:text-white/30"
+                className="min-w-0 flex-1 bg-transparent text-[10px] text-[#211C18] outline-none placeholder:text-[#9C9187]"
               />
 
               {search && (
@@ -2426,7 +2426,7 @@ export default function Home() {
                   onClick={() =>
                     setSearch("")
                   }
-                  className="text-white/45"
+                  className="text-[#8A7F75]"
                 >
                   ×
                 </button>
@@ -2467,7 +2467,7 @@ export default function Home() {
       {/* PRODUCT-CONNECTED HERO SLIDER */}
       <section className="mx-auto max-w-7xl px-3 pt-3 sm:px-6 sm:pt-5 lg:px-8">
         <div
-          className="relative min-h-[565px] touch-pan-y overflow-hidden rounded-[1.6rem] border border-white/[0.09] bg-[#080B0D] shadow-[0_35px_90px_rgba(0,0,0,0.44)] sm:min-h-[640px] sm:rounded-[2.2rem]"
+          className="relative h-[460px] touch-pan-y overflow-hidden rounded-[1.6rem] border border-[#E4D7C4] bg-[#F1E8DA] shadow-[0_24px_55px_rgba(56,43,30,0.16)] sm:h-[520px] sm:rounded-[2.2rem] lg:h-[580px]"
           style={{
             background:
               !heroSlideProduct
@@ -2656,7 +2656,7 @@ export default function Home() {
           )}
 
           {/* MAIN CONTENT */}
-          <div className="pointer-events-none relative z-20 flex min-h-[565px] items-end p-5 pb-20 sm:min-h-[640px] sm:items-center sm:p-11 lg:p-14">
+          <div className="pointer-events-none relative z-20 flex h-full items-end p-5 pb-16 sm:items-center sm:p-9 lg:p-12">
             <div className="max-w-[560px]">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full border border-[#D4AF37]/25 bg-[#D4AF37]/10 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.18em] text-emerald-200 backdrop-blur">
@@ -2687,13 +2687,13 @@ export default function Home() {
                   : "Wear Your Story"}
               </p>
 
-              <h1 className="mt-3 max-w-[520px] font-serif text-[3rem] font-normal leading-[0.87] tracking-[-0.05em] text-white drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:text-7xl">
+              <h1 className="mt-3 max-w-[520px] font-serif text-[2.45rem] font-normal leading-[0.9] sm:text-[3.4rem] tracking-[-0.05em] text-white drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:text-7xl">
                 {heroSlideProduct?.name ||
                   activeBanner?.title ||
                   "Style takes the spotlight."}
               </h1>
 
-              <p className="mt-5 max-w-[390px] text-[11px] leading-5 text-white/70 sm:text-sm sm:leading-6">
+              <p className="mt-5 max-w-[390px] text-[11px] leading-5 text-[#6F655D] sm:text-sm sm:leading-6">
                 {heroSlideProduct?.description
                   ? heroSlideProduct.description
                       .replace(
@@ -2729,7 +2729,7 @@ export default function Home() {
                         Number(
                           heroSlidePrice,
                         ) && (
-                        <span className="pb-1 text-[11px] text-white/45 line-through sm:text-sm">
+                        <span className="pb-1 text-[11px] text-[#8A7F75] line-through sm:text-sm">
                           {money(
                             heroSlideProduct.mrp,
                           )}
@@ -2951,7 +2951,7 @@ export default function Home() {
             </div>
           )}
 
-          <div className="pointer-events-none absolute bottom-7 right-5 z-20 text-[7px] font-black uppercase tracking-[0.2em] text-white/45 lg:hidden">
+          <div className="pointer-events-none absolute bottom-7 right-5 z-20 text-[7px] font-black uppercase tracking-[0.2em] text-[#8A7F75] lg:hidden">
             Swipe to explore
           </div>
         </div>
@@ -2960,7 +2960,7 @@ export default function Home() {
       {/* DEDICATED CATEGORY IMAGE RAIL */}
       <section
         id="shop-categories"
-        className="border-b border-white/[0.06] bg-[#080B0D]"
+        className="border-b border-[#E4D7C4] bg-[#FAF7F0]"
       >
         <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-9 lg:px-8">
           <div className="grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-6 sm:gap-5">
@@ -2983,13 +2983,13 @@ export default function Home() {
                     className="group min-w-0 text-center"
                   >
                     <div
-                      className={`mx-auto aspect-square w-full max-w-[92px] overflow-hidden rounded-full border-2 bg-[#171313] p-[3px] transition sm:max-w-[112px] ${
+                      className={`mx-auto aspect-square w-full max-w-[92px] overflow-hidden rounded-full border-2 bg-[#FFFDF9] p-[3px] transition sm:max-w-[112px] ${
                         active
                           ? "border-[#D4AF37] shadow-[0_0_0_3px_rgba(124,39,50,0.38)]"
                           : "border-[#D4AF37]/55 group-hover:border-[#D4AF37]"
                       }`}
                     >
-                      <div className="h-full w-full overflow-hidden rounded-full bg-[#1A1A1A]">
+                      <div className="h-full w-full overflow-hidden rounded-full bg-[#F1E8DA]">
                         {item.imageUrl ? (
                           <img
                             src={
@@ -3006,7 +3006,7 @@ export default function Home() {
                               AR
                             </span>
 
-                            <span className="mt-1 max-w-[70px] truncate text-[5px] font-black uppercase tracking-[0.18em] text-white/45">
+                            <span className="mt-1 max-w-[70px] truncate text-[5px] font-black uppercase tracking-[0.18em] text-[#8A7F75]">
                               {item.name}
                             </span>
                           </div>
@@ -3018,7 +3018,7 @@ export default function Home() {
                       className={`mt-3 truncate text-[9px] font-semibold sm:text-[10px] ${
                         active
                           ? "text-[#D4AF37]"
-                          : "text-[#F7F5EF]"
+                          : "text-[#2B241F]"
                       }`}
                     >
                       {item.name}
@@ -3050,7 +3050,7 @@ export default function Home() {
                 AR Fashions
               </p>
 
-              <h2 className="mt-2 font-serif text-[1.9rem] text-[#F7F5EF]">
+              <h2 className="mt-2 font-serif text-[1.9rem] text-[#2B241F]">
                 Preparing your latest styles
               </h2>
 
@@ -3259,8 +3259,8 @@ export default function Home() {
       />
 
       {/* IMAGE 2 BENEFIT STRIP */}
-      <section className="border-y border-white/[0.055] bg-[#111112]">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-white/[0.06] px-4 sm:grid-cols-4 sm:px-6 lg:px-8">
+      <section className="border-y border-[#E4D7C4] bg-[#F1E8DA]">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-[#E4D7C4] px-4 sm:grid-cols-4 sm:px-6 lg:px-8">
           {benefitItems.map(
             (item) => (
               <button
@@ -3271,14 +3271,14 @@ export default function Home() {
                     item.key,
                   )
                 }
-                className="group flex min-h-[82px] items-center gap-3 px-3 py-4 text-left transition hover:bg-white/[0.035] sm:px-5"
+                className="group flex min-h-[82px] items-center gap-3 px-3 py-4 text-left transition hover:bg-white/70 sm:px-5"
               >
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#D4AF37]/30 text-sm text-[#D4AF37] transition group-hover:border-[#D4AF37]/70 group-hover:bg-[#D4AF37]/10">
                   {item.icon}
                 </span>
 
                 <div className="min-w-0">
-                  <p className="text-[8px] font-bold text-[#F7F5EF] sm:text-[9px]">
+                  <p className="text-[8px] font-bold text-[#2B241F] sm:text-[9px]">
                     {item.title}
                   </p>
 
@@ -3297,7 +3297,7 @@ export default function Home() {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-white/[0.07] bg-[#020c08]">
+      <footer className="border-t border-[#E4D7C4] bg-[#E9DECD]">
         <div className="mx-auto max-w-7xl px-5 py-10 text-center sm:px-6 lg:px-8">
           <p className="font-serif text-[1.8rem] tracking-[0.08em] text-white">
             AR
@@ -3311,7 +3311,7 @@ export default function Home() {
             Wear · Share · Belong
           </p>
 
-          <div className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-3 text-[9px] font-semibold text-white/45">
+          <div className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-3 text-[9px] font-semibold text-[#8A7F75]">
             <button
               type="button"
               onClick={() =>
@@ -3588,7 +3588,7 @@ export default function Home() {
       ) : null}
 
       {/* MOBILE NAV */}
-      <nav className="fixed bottom-2 left-3 right-3 z-50 rounded-[1.35rem] border border-emerald-200/10 bg-[#080B0D]/95 px-1 pb-1.5 pt-1 shadow-[0_18px_55px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:hidden">
+      <nav className="fixed bottom-2 left-3 right-3 z-50 rounded-[1.35rem] border border-[#E4D7C4] bg-[#FFFDF9]/95 px-1 pb-1.5 pt-1 shadow-[0_18px_55px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:hidden">
         <div className="grid grid-cols-5 items-end">
           <button
             type="button"
@@ -3615,7 +3615,7 @@ export default function Home() {
                   behavior: "smooth",
                 })
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-white/45"
+            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
           >
             <span className="text-lg">▦</span>
             <span className="text-[7px] font-black">
@@ -3646,7 +3646,7 @@ export default function Home() {
             onClick={() =>
               router.push("/wishlist")
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-white/45"
+            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
           >
             <span className="text-lg">♡</span>
             <span className="text-[7px] font-black">
@@ -3659,7 +3659,7 @@ export default function Home() {
             onClick={() =>
               router.push("/account")
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-white/45"
+            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
           >
             <span className="grid h-5 w-5 place-items-center rounded-full border border-current text-[7px]">
               A
