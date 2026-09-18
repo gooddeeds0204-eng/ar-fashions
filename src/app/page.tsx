@@ -2121,10 +2121,42 @@ export default function Home() {
       },
     ];
 
-  const contentSections =
-    homeSectionsConfigured
-      ? homeSections
-      : defaultHomeSections;
+  const contentSections = useMemo(() => {
+    const source =
+      homeSectionsConfigured
+        ? homeSections
+        : defaultHomeSections;
+
+    const unique = new Map<
+      HomeSection["sectionType"],
+      HomeSection
+    >();
+
+    [...source]
+      .sort(
+        (a, b) =>
+          a.sortOrder - b.sortOrder,
+      )
+      .forEach((section) => {
+        if (
+          !unique.has(
+            section.sectionType,
+          )
+        ) {
+          unique.set(
+            section.sectionType,
+            section,
+          );
+        }
+      });
+
+    return Array.from(
+      unique.values(),
+    );
+  }, [
+    homeSections,
+    homeSectionsConfigured,
+  ]);
 
   const activeModeStatus =
     mode === "RESELLER"
