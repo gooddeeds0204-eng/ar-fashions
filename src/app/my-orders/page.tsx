@@ -29,6 +29,20 @@ type CustomerReview = {
   status: string;
 };
 
+type Shipment = {
+  provider?: string;
+  shipmentId?: number;
+  awbCode?: string;
+  courierName?: string;
+  courierRate?: number;
+  estimatedDeliveryDays?:
+    | string
+    | number;
+  etd?: string | null;
+  pickupScheduled?: boolean;
+  createdAt?: string;
+};
+
 type Order = {
   id: string;
   orderNumber: string;
@@ -42,6 +56,9 @@ type Order = {
   totalAmount: number;
   createdAt: string;
   items: OrderItem[];
+  shipment:
+    | Shipment
+    | null;
   address: {
     name: string;
     phone: string;
@@ -160,11 +177,123 @@ export default function MyOrdersPage() {
     useState("");
 
   const [
+    trackingByOrder,
+    setTrackingByOrder,
+  ] = useState<
+    Record<string, string>
+  >({});
+
+  const [
     reviewsByProduct,
     setReviewsByProduct,
   ] = useState<
     Record<string, CustomerReview>
   >({});
+
+  async function refreshTracking(
+    order: Order,
+  ) {
+    if (
+      !order.shipment
+        ?.awbCode
+    ) {
+      return;
+    }
+
+    setTrackingByOrder(
+      (current) => ({
+        ...current,
+        [order.id]:
+          "Refreshing...",
+      }),
+    );
+
+    try {
+      const response =
+        await fetch(
+          `/api/shipping/order?orderNumber=${encodeURIComponent(
+            order.orderNumber,
+          )}`,
+          {
+            cache:
+              "no-store",
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "Tracking failed.",
+        );
+      }
+
+      const tracking =
+        data.tracking &&
+        typeof data.tracking ===
+          "object"
+          ? (data.tracking as Record<
+              string,
+              unknown
+            >)
+          : null;
+
+      const trackingData =
+        tracking
+          ?.tracking_data &&
+        typeof tracking
+          .tracking_data ===
+          "object"
+          ? (tracking.tracking_data as Record<
+              string,
+              unknown
+            >)
+          : null;
+
+      const shipmentTrack =
+        Array.isArray(
+          trackingData
+            ?.shipment_track,
+        )
+          ? trackingData!
+              .shipment_track as Array<
+              Record<
+                string,
+                unknown
+              >
+            >
+          : [];
+
+      const status =
+        String(
+          shipmentTrack[0]
+            ?.current_status ??
+            trackingData
+              ?.track_status ??
+            "Tracking refreshed",
+        );
+
+      setTrackingByOrder(
+        (current) => ({
+          ...current,
+          [order.id]:
+            status,
+        }),
+      );
+    } catch (error) {
+      setTrackingByOrder(
+        (current) => ({
+          ...current,
+          [order.id]:
+            error instanceof Error
+              ? error.message
+              : "Tracking failed.",
+        }),
+      );
+    }
+  }
 
   const [
     reviewProduct,
@@ -657,7 +786,7 @@ export default function MyOrdersPage() {
                                         className={`absolute right-1/2 top-[6px] h-[2px] w-full ${
                                           stageIndex <=
                                           currentStep
-                                            ? "bg-[#F4EBDD]0"
+                                            ? "bg-[#D4AF37]"
                                             : "bg-zinc-200"
                                         }`}
                                       />
@@ -666,7 +795,7 @@ export default function MyOrdersPage() {
                                     <span
                                       className={`relative z-10 mx-auto block h-3.5 w-3.5 rounded-full border-2 ${
                                         reached
-                                          ? "border-emerald-500 bg-[#F4EBDD]0"
+                                          ? "border-emerald-500 bg-[#D4AF37]"
                                           : "border-zinc-200 bg-[#FFFDF9]"
                                       }`}
                                     />
@@ -997,6 +1126,74 @@ export default function MyOrdersPage() {
                       </section>
 
                       {/* DELIVERY ADDRESS */}
+                      {order.shipment?.awbCode && (
+                        <section className="border-t border-[#E4D7C4] p-4 sm:p-5">
+                          <div className="rounded-[1.3rem] border border-[#D4AF37]/25 bg-[#F8F1E7] p-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-[8px] font-black uppercase tracking-[0.18em] text-[#6B5435]">
+                                  Courier Tracking
+                                </p>
+
+                                <h3 className="mt-1 text-[13px] font-black">
+                                  {order.shipment.courierName || "Shiprocket"}
+                                </h3>
+                              </div>
+
+                              <span className="rounded-full bg-[#031B14] px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.08em] text-[#FFFDF9]">
+                                Shipped
+                              </span>
+                            </div>
+
+                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                              <div className="rounded-xl bg-[#FFFDF9] p-3">
+                                <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                                  AWB Number
+                                </p>
+                                <p className="mt-1 break-all text-[11px] font-black">
+                                  {order.shipment.awbCode}
+                                </p>
+                              </div>
+
+                              <div className="rounded-xl bg-[#FFFDF9] p-3">
+                                <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                                  Estimate
+                                </p>
+                                <p className="mt-1 text-[11px] font-black">
+                                  {order.shipment.estimatedDeliveryDays
+                                    ? `${order.shipment.estimatedDeliveryDays} days`
+                                    : order.shipment.etd || "Courier estimate pending"}
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                refreshTracking(
+                                  order,
+                                )
+                              }
+                              className="mt-3 rounded-full bg-[#031B14] px-4 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] text-[#FFFDF9]"
+                            >
+                              Refresh Tracking
+                            </button>
+
+                            {trackingByOrder[
+                              order.id
+                            ] && (
+                              <p className="mt-3 text-[9px] font-bold leading-5 text-[#6B5435]">
+                                {
+                                  trackingByOrder[
+                                    order.id
+                                  ]
+                                }
+                              </p>
+                            )}
+                          </div>
+                        </section>
+                      )}
+
                       {order.address && (
                         <section className="border-t border-[#E4D7C4] p-4 sm:p-5">
                           <div className="rounded-[1.3rem] border border-[#E4D7C4] bg-[#FFFDF9] p-4">
