@@ -84,7 +84,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#03140e] px-4 py-6 text-white">
+    <main className="min-h-screen bg-[#FAF7F0] px-4 py-6 text-[#211C18]">
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-md flex-col">
         <header className="flex items-center justify-between">
           <BrandLogo
@@ -100,7 +100,7 @@ export default function LoginPage() {
             onClick={() =>
               router.push("/")
             }
-            className="rounded-full border border-white/10 px-4 py-2 text-[9px] font-black uppercase tracking-wider text-white/70"
+            className="rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-2 text-[9px] font-black uppercase tracking-wider text-[#6F655D]"
           >
             Close
           </button>
@@ -117,7 +117,7 @@ export default function LoginPage() {
             wardrobe awaits.
           </h1>
 
-          <p className="mt-5 max-w-sm text-sm leading-6 text-white/45">
+          <p className="mt-5 max-w-sm text-sm leading-6 text-[#7B7066]">
             Login to access your
             orders, wishlist, saved
             addresses and approved
@@ -129,7 +129,7 @@ export default function LoginPage() {
             className="mt-9 space-y-4"
           >
             <label className="block">
-              <span className="mb-2 block text-[9px] font-black uppercase tracking-[0.16em] text-white/45">
+              <span className="mb-2 block text-[9px] font-black uppercase tracking-[0.16em] text-[#7B7066]">
                 Mobile or Email
               </span>
 
@@ -142,12 +142,12 @@ export default function LoginPage() {
                 }
                 autoComplete="username"
                 placeholder="Enter mobile number or email"
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-emerald-400/50"
+                className="w-full rounded-2xl border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-4 text-sm text-[#211C18] outline-none placeholder:text-[#9C9187] focus:border-[#B8923B]/60"
               />
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-[9px] font-black uppercase tracking-[0.16em] text-white/45">
+              <span className="mb-2 block text-[9px] font-black uppercase tracking-[0.16em] text-[#7B7066]">
                 Password
               </span>
 
@@ -161,7 +161,7 @@ export default function LoginPage() {
                 }
                 autoComplete="current-password"
                 placeholder="Your password"
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-emerald-400/50"
+                className="w-full rounded-2xl border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-4 text-sm text-[#211C18] outline-none placeholder:text-[#9C9187] focus:border-[#B8923B]/60"
               />
             </label>
 
@@ -187,11 +187,11 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-7 rounded-[1.5rem] border border-emerald-300/10 bg-emerald-400/[0.05] p-5">
-            <p className="text-[10px] font-black text-white">
+            <p className="text-[10px] font-black text-[#211C18]">
               New to AR Fashions?
             </p>
 
-            <p className="mt-1 text-[10px] leading-5 text-white/40">
+            <p className="mt-1 text-[10px] leading-5 text-[#8A7F75]">
               Create a normal customer
               account or apply for a
               retailer account.

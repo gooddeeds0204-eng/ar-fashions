@@ -46,7 +46,7 @@ function OrderSuccessContent() {
   }, []);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#04150f] px-4 pb-10 pt-6 text-white">
+    <main className="relative min-h-screen overflow-hidden bg-[#FAF7F0] px-4 pb-10 pt-6 text-[#211C18]">
       {/* BACKGROUND DECORATION */}
       <div className="pointer-events-none absolute -right-24 -top-20 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl" />
 
@@ -108,7 +108,7 @@ function OrderSuccessContent() {
 
       {/* SUCCESS CONTENT */}
       <section className="relative z-10 mx-auto flex min-h-[calc(100vh-100px)] max-w-md items-center py-8">
-        <div className="w-full overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.055] shadow-[0_30px_80px_rgba(0,0,0,0.35)] backdrop-blur">
+        <div className="w-full overflow-hidden rounded-[2rem] border border-[#E4D7C4] bg-[#FFFDF9] shadow-[0_30px_80px_rgba(0,0,0,0.35)] backdrop-blur">
           <div className="px-6 pb-6 pt-8 text-center">
             <div className="relative mx-auto grid h-24 w-24 place-items-center">
               <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/10" />
@@ -122,24 +122,24 @@ function OrderSuccessContent() {
               Thank you for shopping
             </p>
 
-            <h1 className="mt-3 font-serif text-[2.7rem] leading-[0.92] tracking-[-0.04em] text-white">
+            <h1 className="mt-3 font-serif text-[2.7rem] leading-[0.92] tracking-[-0.04em] text-[#211C18]">
               Your order
               <br />
               is confirmed.
             </h1>
 
-            <p className="mx-auto mt-4 max-w-xs text-[11px] leading-5 text-white/50">
+            <p className="mx-auto mt-4 max-w-xs text-[11px] leading-5 text-[#7B7066]">
               We have received your order and will start preparing it for dispatch.
             </p>
           </div>
 
           {orderNumber && (
-            <div className="mx-4 rounded-[1.35rem] border border-emerald-300/15 bg-black/20 px-4 py-4 text-center">
-              <p className="text-[7px] font-black uppercase tracking-[0.22em] text-white/35">
+            <div className="mx-4 rounded-[1.35rem] border border-[#D8C49D] bg-[#F1E8DA] px-4 py-4 text-center">
+              <p className="text-[7px] font-black uppercase tracking-[0.22em] text-[#9C9187]">
                 Order Number
               </p>
 
-              <p className="mt-2 break-all text-[17px] font-black tracking-[-0.02em] text-white">
+              <p className="mt-2 break-all text-[17px] font-black tracking-[-0.02em] text-[#211C18]">
                 {orderNumber}
               </p>
             </div>
@@ -170,17 +170,17 @@ function OrderSuccessContent() {
               ]) => (
                 <div
                   key={title}
-                  className="rounded-[1.15rem] border border-white/[0.07] bg-white/[0.04] px-2 py-3 text-center"
+                  className="rounded-[1.15rem] border border-[#E4D7C4] bg-[#FFFDF9] px-2 py-3 text-center"
                 >
                   <span className="mx-auto grid h-8 w-8 place-items-center rounded-full bg-emerald-400/10 text-[11px] font-black text-emerald-300">
                     {icon}
                   </span>
 
-                  <p className="mt-2 text-[8px] font-black text-white">
+                  <p className="mt-2 text-[8px] font-black text-[#211C18]">
                     {title}
                   </p>
 
-                  <p className="mt-1 text-[6px] leading-3 text-white/35">
+                  <p className="mt-1 text-[6px] leading-3 text-[#9C9187]">
                     {subtitle}
                   </p>
                 </div>
@@ -188,7 +188,7 @@ function OrderSuccessContent() {
             )}
           </div>
 
-          <div className="mx-4 mt-3 rounded-[1.25rem] border border-white/[0.07] bg-white/[0.04] p-4">
+          <div className="mx-4 mt-3 rounded-[1.25rem] border border-[#E4D7C4] bg-[#FFFDF9] p-4">
             <div className="flex items-start gap-3">
               <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-sm">
                 ₹
@@ -199,7 +199,7 @@ function OrderSuccessContent() {
                   Cash on Delivery
                 </p>
 
-                <p className="mt-1 text-[10px] leading-5 text-white/45">
+                <p className="mt-1 text-[10px] leading-5 text-[#7B7066]">
                   Pay safely when your order reaches you.
                 </p>
               </div>
@@ -224,12 +224,12 @@ function OrderSuccessContent() {
               onClick={() =>
                 router.push("/")
               }
-              className="mt-2.5 min-h-[50px] w-full rounded-[1.15rem] border border-white/10 bg-white/[0.04] px-5 text-[10px] font-black uppercase tracking-[0.08em] text-white transition active:scale-[0.98]"
+              className="mt-2.5 min-h-[50px] w-full rounded-[1.15rem] border border-[#E4D7C4] bg-[#FFFDF9] px-5 text-[10px] font-black uppercase tracking-[0.08em] text-[#2B241F] transition active:scale-[0.98]"
             >
               Continue Shopping
             </button>
 
-            <p className="mt-4 text-center text-[7px] font-semibold uppercase tracking-[0.16em] text-white/25">
+            <p className="mt-4 text-center text-[7px] font-semibold uppercase tracking-[0.16em] text-[#9C9187]">
               AR Fashions · Wear Your Story
             </p>
           </div>
@@ -241,7 +241,7 @@ function OrderSuccessContent() {
 
 function LoadingOrderSuccess() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#04150f] text-white">
+    <main className="flex min-h-screen items-center justify-center bg-[#FAF7F0] text-[#211C18]">
       <div className="text-center">
         <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-emerald-400" />
 

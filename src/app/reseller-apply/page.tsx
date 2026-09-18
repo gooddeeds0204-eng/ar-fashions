@@ -572,12 +572,12 @@ export default function ResellerApplyPage() {
   }
 
   const inputClass =
-    "w-full rounded-[1rem] border border-white/10 bg-white/[0.06] px-4 py-3.5 text-sm text-white outline-none placeholder:text-white/25 focus:border-[#D4AF37]/60";
+    "w-full rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-3.5 text-sm text-[#211C18] outline-none placeholder:text-[#9C9187] focus:border-[#B8923B]/60";
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#080b0a] text-white">
-        <p className="text-sm text-white/45">
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF7F0] text-[#211C18]">
+        <p className="text-sm text-[#7B7066]">
           Preparing reseller application...
         </p>
       </main>
@@ -585,7 +585,7 @@ export default function ResellerApplyPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#080b0a] px-4 py-6 text-white">
+    <main className="min-h-screen bg-[#FAF7F0] px-4 py-6 text-[#211C18]">
       <div className="mx-auto max-w-xl">
         <header className="flex items-center justify-between">
           <BrandLogo
@@ -601,7 +601,7 @@ export default function ResellerApplyPage() {
             onClick={() =>
               router.push("/account")
             }
-            className="rounded-full border border-white/10 px-4 py-2 text-[9px] font-black uppercase tracking-wider text-white/60"
+            className="rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-2 text-[9px] font-black uppercase tracking-wider text-[#6F655D]"
           >
             My Account
           </button>
@@ -618,7 +618,7 @@ export default function ResellerApplyPage() {
             AR reseller.
           </h1>
 
-          <p className="mt-4 max-w-md text-sm leading-6 text-white/45">
+          <p className="mt-4 max-w-md text-sm leading-6 text-[#7B7066]">
             Submit your shop or business
             details. Wholesale access is
             enabled after AR approval.
@@ -626,7 +626,7 @@ export default function ResellerApplyPage() {
 
           <form
             onSubmit={submit}
-            className="mt-7 space-y-4 rounded-[1.7rem] border border-white/[0.08] bg-white/[0.035] p-5"
+            className="mt-7 space-y-4 rounded-[1.7rem] border border-[#E4D7C4] bg-[#FFFDF9] p-5"
           >
             <input
               type="email"
@@ -746,7 +746,7 @@ export default function ResellerApplyPage() {
                     Live Shop Location *
                   </p>
 
-                  <p className="mt-1 text-[9px] leading-4 text-white/35">
+                  <p className="mt-1 text-[9px] leading-4 text-[#8A7F75]">
                     Current location capture చేస్తే address, city, state, pincode automaticగా fill అవుతాయి.
                   </p>
                 </div>
@@ -761,7 +761,7 @@ export default function ResellerApplyPage() {
 
               {latitude !== null &&
               longitude !== null ? (
-                <div className="mt-4 overflow-hidden rounded-[1rem] border border-white/10 bg-black">
+                <div className="mt-4 overflow-hidden rounded-[1rem] border border-[#E4D7C4] bg-black">
                   <iframe
                     title="Shop live location"
                     src={`https://www.openstreetmap.org/export/embed.html?bbox=${longitude - 0.004}%2C${latitude - 0.004}%2C${longitude + 0.004}%2C${latitude + 0.004}&layer=mapnik&marker=${latitude}%2C${longitude}`}
@@ -770,7 +770,7 @@ export default function ResellerApplyPage() {
                   />
 
                   <div className="border-t border-white/10 px-3 py-2.5">
-                    <p className="text-[8px] font-semibold text-white/45">
+                    <p className="text-[8px] font-semibold text-[#7B7066]">
                       Location captured
                       {locationAccuracy !==
                       null
@@ -785,7 +785,7 @@ export default function ResellerApplyPage() {
 
               {locationStatus ===
               "LOADING" ? (
-                <div className="mt-3 rounded-xl bg-white/[0.04] p-3 text-[9px] text-white/55">
+                <div className="mt-3 rounded-xl bg-[#F1E8DA] p-3 text-[9px] text-[#6F655D]">
                   📍 Getting live location...
                 </div>
               ) : null}
@@ -808,19 +808,19 @@ export default function ResellerApplyPage() {
               </button>
             </div>
 
-            <div className="rounded-[1.2rem] border border-white/10 bg-white/[0.03] p-4">
+            <div className="rounded-[1.2rem] border border-[#E4D7C4] bg-[#FFFDF9] p-4">
               <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#D4AF37]">
                 Verification Photos
               </p>
 
-              <p className="mt-1 text-[9px] leading-4 text-white/35">
+              <p className="mt-1 text-[9px] leading-4 text-[#8A7F75]">
                 Visiting card + actual shop photos upload చేయండి.
               </p>
 
               {/* VISITING CARD */}
               <div className="mt-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-[9px] font-black text-white/70">
+                  <p className="text-[9px] font-black text-[#5E554D]">
                     Visiting Card *
                   </p>
 
@@ -832,7 +832,7 @@ export default function ResellerApplyPage() {
                 </div>
 
                 {visitingCardUrl ? (
-                  <div className="relative mt-2 overflow-hidden rounded-xl border border-white/10">
+                  <div className="relative mt-2 overflow-hidden rounded-xl border border-[#E4D7C4]">
                     <img
                       src={
                         visitingCardUrl
@@ -866,7 +866,7 @@ export default function ResellerApplyPage() {
                         : "Upload Visiting Card"}
                     </span>
 
-                    <span className="mt-1 text-[8px] text-white/30">
+                    <span className="mt-1 text-[8px] text-[#9C9187]">
                       Camera / Gallery
                     </span>
 
@@ -903,16 +903,16 @@ export default function ResellerApplyPage() {
               {/* SHOP PHOTOS */}
               <div className="mt-5 border-t border-white/[0.07] pt-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-[9px] font-black text-white/70">
+                  <p className="text-[9px] font-black text-[#5E554D]">
                     Shop Photos *
                   </p>
 
-                  <span className="text-[8px] text-white/35">
+                  <span className="text-[8px] text-[#8A7F75]">
                     {shopPhotoUrls.length}/3
                   </span>
                 </div>
 
-                <p className="mt-1 text-[8px] leading-4 text-white/30">
+                <p className="mt-1 text-[8px] leading-4 text-[#9C9187]">
                   Shop front, inside view లేదా stock display photos.
                 </p>
 
@@ -926,7 +926,7 @@ export default function ResellerApplyPage() {
                       ) => (
                         <div
                           key={url}
-                          className="relative aspect-square overflow-hidden rounded-xl border border-white/10"
+                          className="relative aspect-square overflow-hidden rounded-xl border border-[#E4D7C4]"
                         >
                           <img
                             src={url}
@@ -966,7 +966,7 @@ export default function ResellerApplyPage() {
                 {shopPhotoUrls.length <
                 3 ? (
                   <label className="mt-3 flex cursor-pointer items-center justify-center rounded-xl border border-dashed border-white/15 bg-white/[0.03] py-4">
-                    <span className="text-[9px] font-black text-white/60">
+                    <span className="text-[9px] font-black text-[#6F655D]">
                       {uploadingDocument ===
                       "SHOP"
                         ? "Uploading Shop Photos..."

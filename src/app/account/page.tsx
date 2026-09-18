@@ -721,7 +721,7 @@ export default function AccountPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#f6f5f1] pb-24 text-zinc-950 sm:pb-10">
+    <main className="min-h-screen bg-[#FAF7F0] pb-24 text-[#211C18] sm:pb-10">
       {accountToast && (
         <div className="fixed left-1/2 top-[78px] z-[130] w-[calc(100%-24px)] max-w-md -translate-x-1/2">
           <div
@@ -773,7 +773,7 @@ export default function AccountPage() {
         </div>
       )}
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-black/[0.05] bg-white/90 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-[#E4D7C4] bg-[#FFFDF9]/95 backdrop-blur-xl">
         <div className="mx-auto flex h-[72px] max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
           <button
             type="button"
@@ -830,13 +830,13 @@ export default function AccountPage() {
         ) : (
           <div className="space-y-4">
             {/* CLEAN PROFILE HERO */}
-            <section className="relative overflow-hidden rounded-[1.8rem] bg-[#0b0b0c] text-white shadow-[0_20px_55px_rgba(0,0,0,0.18)]">
-              <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-[#7C2732]/35 blur-3xl" />
+            <section className="relative overflow-hidden rounded-[1.8rem] border border-[#E4D7C4] bg-[#FFFDF9] text-[#211C18] shadow-[0_20px_55px_rgba(61,48,37,0.08)]">
+              <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-[#D8C49D]/35 blur-3xl" />
               <div className="pointer-events-none absolute bottom-[-90px] left-[-50px] h-48 w-48 rounded-full bg-[#D4AF37]/10 blur-3xl" />
 
               <div className="relative p-5 sm:p-7">
                 <div className="flex items-center gap-4">
-                  <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-[#D4AF37]/35 bg-[#181313] font-serif text-2xl text-[#D4AF37]">
+                  <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-[#D4AF37]/35 bg-[#F1E8DA] font-serif text-2xl text-[#B8923B]">
                     {customerInitial}
                   </div>
 
@@ -849,7 +849,7 @@ export default function AccountPage() {
                       {customerName}
                     </h1>
 
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-white/50">
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-[#7B7066]">
                       <span>{customerPhone}</span>
                       <span>•</span>
                       <span>{customerType}</span>
@@ -859,13 +859,13 @@ export default function AccountPage() {
                   <button
                     type="button"
                     onClick={openProfileEditor}
-                    className="shrink-0 rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-2 text-[8px] font-black uppercase tracking-[0.1em] text-white"
+                    className="shrink-0 rounded-full border border-[#E4D7C4] bg-[#FAF7F0] px-3.5 py-2 text-[8px] font-black uppercase tracking-[0.1em] text-white"
                   >
                     Edit
                   </button>
                 </div>
 
-                <div className="mt-5 grid grid-cols-4 divide-x divide-white/10 rounded-[1.1rem] border border-white/[0.07] bg-white/[0.04]">
+                <div className="mt-5 grid grid-cols-4 divide-x divide-[#E4D7C4] rounded-[1.1rem] border border-[#E4D7C4] bg-[#FAF7F0]">
                   {[
                     [
                       String(orders.length),
@@ -888,11 +888,11 @@ export default function AccountPage() {
                       key={label}
                       className="min-w-0 px-2 py-3 text-center"
                     >
-                      <p className="truncate text-[13px] font-black text-white sm:text-lg">
+                      <p className="truncate text-[13px] font-black text-[#211C18] sm:text-lg">
                         {value}
                       </p>
 
-                      <p className="mt-1 text-[6px] font-black uppercase tracking-[0.12em] text-white/35 sm:text-[7px]">
+                      <p className="mt-1 text-[6px] font-black uppercase tracking-[0.12em] text-[#9C9187] sm:text-[7px]">
                         {label}
                       </p>
                     </div>
@@ -1187,7 +1187,7 @@ export default function AccountPage() {
             </div>
 
             {/* RESELLER */}
-            <section className="relative overflow-hidden rounded-[1.5rem] border border-[#D4AF37]/15 bg-gradient-to-r from-[#291117] via-[#170d10] to-[#0b0b0c] p-5 text-white">
+            <section className="relative overflow-hidden rounded-[1.5rem] border border-[#D8C49D] bg-gradient-to-r from-[#F1E8DA] via-[#FFF8ED] to-[#FFFDF9] p-5 text-[#211C18]">
               <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-[#D4AF37]/10 blur-3xl" />
 
               <div className="relative flex items-center gap-4">
@@ -1202,7 +1202,7 @@ export default function AccountPage() {
                       : "Wholesale shopping"}
                   </h2>
 
-                  <p className="mt-2 max-w-xl text-[9px] leading-4 text-white/45">
+                  <p className="mt-2 max-w-xl text-[9px] leading-4 text-[#7B7066]">
                     {profile?.isReseller
                       ? "Manage reseller orders, bulk shopping and business activity."
                       : "Explore reseller pricing, MOQ-based quantities and bulk-friendly ordering."}
@@ -1274,7 +1274,7 @@ export default function AccountPage() {
                     Personal Information
                   </h2>
 
-                  <p className="mt-3 max-w-sm text-[10px] leading-5 text-white/45">
+                  <p className="mt-3 max-w-sm text-[10px] leading-5 text-[#8A7F75]">
                     Keep your account contact information accurate for orders and account communication.
                   </p>
                 </div>
@@ -1421,14 +1421,14 @@ export default function AccountPage() {
       )}
 
       {/* MOBILE NAV */}
-      <nav className="fixed bottom-2 left-3 right-3 z-50 rounded-[1.35rem] border border-emerald-200/10 bg-[#03140e]/95 px-1 pb-1.5 pt-1 shadow-[0_18px_55px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:hidden">
+      <nav className="fixed bottom-2 left-3 right-3 z-50 rounded-[1.35rem] border border-[#E4D7C4] bg-[#FFFDF9]/95 px-1 pb-1.5 pt-1 shadow-[0_18px_55px_rgba(61,48,37,0.14)] backdrop-blur-2xl sm:hidden">
         <div className="grid grid-cols-5 items-end">
           <button
             type="button"
             onClick={() =>
               router.push("/")
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-white/45"
+            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
           >
             <span className="text-lg">
               ⌂
@@ -1445,7 +1445,7 @@ export default function AccountPage() {
                 "/wishlist",
               )
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-white/45"
+            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
           >
             <span className="text-lg">
               ♡
@@ -1478,7 +1478,7 @@ export default function AccountPage() {
             onClick={() =>
               router.push("/cart")
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-white/45"
+            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
           >
             <span className="text-lg">
               🛍

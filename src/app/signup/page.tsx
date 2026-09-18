@@ -189,10 +189,10 @@ export default function SignupPage() {
   }
 
   const inputClass =
-    "w-full rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3.5 text-sm text-white outline-none placeholder:text-white/25 focus:border-emerald-400/50";
+    "w-full rounded-2xl border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-3.5 text-sm text-[#211C18] outline-none placeholder:text-[#9C9187] focus:border-[#B8923B]/60";
 
   return (
-    <main className="min-h-screen bg-[#03140e] px-4 py-6 text-white">
+    <main className="min-h-screen bg-[#FAF7F0] px-4 py-6 text-[#211C18]">
       <div className="mx-auto max-w-lg">
         <header className="flex items-center justify-between">
           <BrandLogo
@@ -208,7 +208,7 @@ export default function SignupPage() {
             onClick={() =>
               router.push("/login")
             }
-            className="rounded-full border border-white/10 px-4 py-2 text-[9px] font-black uppercase tracking-wider text-white/70"
+            className="rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-2 text-[9px] font-black uppercase tracking-wider text-[#6F655D]"
           >
             Sign In
           </button>
@@ -225,7 +225,7 @@ export default function SignupPage() {
             AR experience.
           </h1>
 
-          <p className="mt-5 text-sm leading-6 text-white/45">
+          <p className="mt-5 text-sm leading-6 text-[#7B7066]">
             Customer accounts shop at
             retail prices. Retailer
             accounts unlock wholesale
@@ -244,8 +244,8 @@ export default function SignupPage() {
               }}
               className={`rounded-[1.4rem] border p-4 text-left transition ${
                 !isReseller
-                  ? "border-white bg-white text-[#03140e]"
-                  : "border-white/10 bg-white/[0.04] text-white"
+                  ? "border-[#2B241F] bg-[#2B241F] text-[#FFFDF9]"
+                  : "border-[#E4D7C4] bg-[#FFFDF9] text-[#211C18]"
               }`}
             >
               <p className="text-[9px] font-black uppercase tracking-[0.16em]">
@@ -260,7 +260,7 @@ export default function SignupPage() {
                 className={`mt-2 text-[9px] leading-4 ${
                   !isReseller
                     ? "text-zinc-500"
-                    : "text-white/35"
+                    : "text-[#8A7F75]"
                 }`}
               >
                 Retail pricing · normal
@@ -283,7 +283,7 @@ export default function SignupPage() {
               className={`rounded-[1.4rem] border p-4 text-left transition ${
                 isReseller
                   ? "border-emerald-400 bg-emerald-400 text-[#03140e]"
-                  : "border-white/10 bg-white/[0.04] text-white"
+                  : "border-[#E4D7C4] bg-[#FFFDF9] text-[#211C18]"
               }`}
             >
               <p className="text-[9px] font-black uppercase tracking-[0.16em]">
@@ -298,7 +298,7 @@ export default function SignupPage() {
                 className={`mt-2 text-[9px] leading-4 ${
                   isReseller
                     ? "text-emerald-950/60"
-                    : "text-white/35"
+                    : "text-[#8A7F75]"
                 }`}
               >
                 Wholesale pricing ·
@@ -372,7 +372,7 @@ export default function SignupPage() {
                     Business Details
                   </p>
 
-                  <p className="mt-1 text-[9px] leading-4 text-white/35">
+                  <p className="mt-1 text-[9px] leading-4 text-[#8A7F75]">
                     These details will
                     be reviewed before
                     reseller pricing is
@@ -479,7 +479,7 @@ export default function SignupPage() {
                         Shop Location
                       </p>
 
-                      <p className="mt-1 text-[9px] leading-4 text-white/35">
+                      <p className="mt-1 text-[9px] leading-4 text-[#8A7F75]">
                         Location permission Allow chesthe mee current shop location automatic ga Google Maps lo save avutundi.
                       </p>
                     </div>
@@ -494,7 +494,7 @@ export default function SignupPage() {
 
                   {locationStatus ===
                   "LOADING" ? (
-                    <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-[9px] font-semibold text-white/55">
+                    <div className="mt-3 rounded-xl border border-[#E4D7C4] bg-[#F1E8DA] p-3 text-[9px] font-semibold text-[#6F655D]">
                       📍 Getting current location...
                     </div>
                   ) : null}
@@ -584,13 +584,13 @@ export default function SignupPage() {
                 ([number, label]) => (
                   <div
                     key={number}
-                    className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-3"
+                    className="rounded-xl border border-[#E4D7C4] bg-[#FFFDF9] p-3"
                   >
                     <p className="text-[8px] font-black text-emerald-400">
                       {number}
                     </p>
 
-                    <p className="mt-1 text-[8px] font-bold text-white/55">
+                    <p className="mt-1 text-[8px] font-bold text-[#6F655D]">
                       {label}
                     </p>
                   </div>

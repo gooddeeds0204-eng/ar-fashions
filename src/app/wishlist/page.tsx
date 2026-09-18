@@ -241,11 +241,11 @@ export default function WishlistPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#03140e] text-white">
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF7F0] text-[#211C18]">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-emerald-400" />
 
-          <p className="mt-4 text-[9px] font-black uppercase tracking-[0.2em] text-white/40">
+          <p className="mt-4 text-[9px] font-black uppercase tracking-[0.2em] text-[#8A7F75]">
             Loading Saved Looks
           </p>
         </div>
@@ -254,7 +254,7 @@ export default function WishlistPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#03140e] pb-24 text-white sm:pb-12">
+    <main className="min-h-screen bg-[#FAF7F0] pb-24 text-[#211C18] sm:pb-12">
       {/* TOP CENTER TOAST */}
       {toast && (
         <div className="fixed left-1/2 top-[78px] z-[100] w-[calc(100%-24px)] max-w-md -translate-x-1/2">
@@ -308,14 +308,14 @@ export default function WishlistPage() {
       )}
 
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-[#03140e]/95 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-[#E4D7C4] bg-[#FFFDF9]/95 backdrop-blur-xl">
         <div className="mx-auto flex h-[70px] max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
           <button
             type="button"
             onClick={() =>
               router.back()
             }
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-sm font-black text-white"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#E4D7C4] bg-[#F1E8DA] text-sm font-black text-[#211C18]"
           >
             ←
           </button>
@@ -335,7 +335,7 @@ export default function WishlistPage() {
                 "/cart",
               )
             }
-            className="ml-auto rounded-full border border-white/10 bg-white/[0.05] px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.08em] text-white"
+            className="ml-auto rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.08em] text-[#2B241F]"
           >
             Bag →
           </button>
@@ -343,7 +343,7 @@ export default function WishlistPage() {
       </header>
 
       {/* HERO */}
-      <section className="relative overflow-hidden border-b border-white/[0.06]">
+      <section className="relative overflow-hidden border-b border-[#E4D7C4]">
         <div className="pointer-events-none absolute -right-24 top-[-80px] h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl" />
 
         <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6 sm:py-12 lg:px-8">
@@ -354,13 +354,13 @@ export default function WishlistPage() {
 
             <div className="mt-3 flex items-end justify-between gap-4">
               <div>
-                <h1 className="font-serif text-[2.8rem] leading-[0.86] tracking-[-0.045em] text-white sm:text-6xl">
+                <h1 className="font-serif text-[2.8rem] leading-[0.86] tracking-[-0.045em] text-[#211C18] sm:text-6xl">
                   Saved
                   <br />
                   Looks.
                 </h1>
 
-                <p className="mt-4 max-w-sm text-[10px] leading-5 text-white/45 sm:text-sm">
+                <p className="mt-4 max-w-sm text-[10px] leading-5 text-[#7B7066] sm:text-sm">
                   Your personal fashion edit — keep the pieces you love and return whenever you are ready.
                 </p>
               </div>
@@ -381,7 +381,7 @@ export default function WishlistPage() {
 
       <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-9 lg:px-8">
         {items.length === 0 ? (
-          <div className="relative overflow-hidden rounded-[1.8rem] border border-emerald-300/10 bg-[#06261c] shadow-[0_30px_80px_rgba(0,0,0,0.3)]">
+          <div className="relative overflow-hidden rounded-[1.8rem] border border-[#D8C49D] bg-[#F1E8DA] shadow-[0_30px_80px_rgba(0,0,0,0.3)]">
             <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-emerald-400/10 blur-3xl" />
 
             <div className="relative p-6 sm:p-10">
@@ -395,7 +395,7 @@ export default function WishlistPage() {
                     Your Personal Edit
                   </p>
 
-                  <h2 className="mt-3 max-w-sm font-serif text-[2.25rem] leading-[0.92] text-white sm:text-4xl">
+                  <h2 className="mt-3 max-w-sm font-serif text-[2.25rem] leading-[0.92] text-[#211C18] sm:text-4xl">
                     Your saved runway starts here.
                   </h2>
 
@@ -462,7 +462,7 @@ export default function WishlistPage() {
                         key={
                           number
                         }
-                        className="rounded-[1.2rem] border border-white/[0.07] bg-white/[0.035] p-4"
+                        className="rounded-[1.2rem] border border-[#E4D7C4] bg-[#FFFDF9] p-4"
                       >
                         <p className="font-serif text-xl text-emerald-300">
                           {number}
@@ -533,7 +533,7 @@ export default function WishlistPage() {
                   return (
                     <article
                       key={item.id}
-                      className="group overflow-hidden rounded-[1.25rem] border border-white/[0.08] bg-[#061a13] shadow-[0_16px_40px_rgba(0,0,0,0.2)]"
+                      className="group overflow-hidden rounded-[1.25rem] border border-[#E4D7C4] bg-[#FFFDF9] shadow-[0_16px_40px_rgba(0,0,0,0.2)]"
                     >
                       <div className="relative aspect-[3/4] overflow-hidden bg-[#0a251c]">
                         <button
@@ -611,14 +611,14 @@ export default function WishlistPage() {
                           </p>
                         )}
 
-                        <h3 className="mt-1.5 line-clamp-2 min-h-[2.25rem] text-[12px] font-black leading-[1.1rem] text-white">
+                        <h3 className="mt-1.5 line-clamp-2 min-h-[2.25rem] text-[12px] font-black leading-[1.1rem] text-[#211C18]">
                           {
                             product.name
                           }
                         </h3>
 
                         <div className="mt-2.5 flex flex-wrap items-baseline gap-2">
-                          <span className="text-[15px] font-black text-white">
+                          <span className="text-[15px] font-black text-[#211C18]">
                             {money(
                               product.retailPrice,
                             )}
@@ -661,14 +661,14 @@ export default function WishlistPage() {
       </section>
 
       {/* MOBILE NAV */}
-      <nav className="fixed bottom-2 left-3 right-3 z-50 rounded-[1.35rem] border border-emerald-200/10 bg-[#03140e]/95 px-1 pb-1.5 pt-1 shadow-[0_18px_55px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:hidden">
+      <nav className="fixed bottom-2 left-3 right-3 z-50 rounded-[1.35rem] border border-[#E4D7C4] bg-[#FFFDF9]/95 px-1 pb-1.5 pt-1 shadow-[0_18px_55px_rgba(61,48,37,0.14)] backdrop-blur-2xl sm:hidden">
         <div className="grid grid-cols-4">
           <button
             type="button"
             onClick={() =>
               router.push("/")
             }
-            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-white/40"
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
           >
             <span className="text-lg">
               ⌂
@@ -686,7 +686,7 @@ export default function WishlistPage() {
                 "/reels?mode=retail",
               )
             }
-            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-white/40"
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
           >
             <span className="text-lg">
               ▶
@@ -717,7 +717,7 @@ export default function WishlistPage() {
                 "/account",
               )
             }
-            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-white/40"
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
           >
             <span className="grid h-5 w-5 place-items-center rounded-full border border-current text-[7px]">
               A

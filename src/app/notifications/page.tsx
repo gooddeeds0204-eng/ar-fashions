@@ -610,7 +610,7 @@ export default function NotificationsPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#f6f5f1] pb-24 text-zinc-950 sm:pb-10">
+    <main className="min-h-screen bg-[#FAF7F0] pb-24 text-[#211C18] sm:pb-10">
       {/* PREMIUM TOAST */}
       {toast && (
         <div className="fixed left-1/2 top-[78px] z-[120] w-[calc(100%-24px)] max-w-md -translate-x-1/2">
@@ -670,7 +670,7 @@ export default function NotificationsPage() {
       )}
 
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-black/[0.05] bg-white/90 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-[#E4D7C4] bg-[#FFFDF9]/95 backdrop-blur-xl">
         <div className="mx-auto flex h-[70px] max-w-5xl items-center gap-3 px-4 sm:px-6">
           <button
             type="button"
@@ -698,7 +698,7 @@ export default function NotificationsPage() {
               onClick={() =>
                 void markAllRead()
               }
-              className="ml-auto rounded-full bg-[#06261c] px-4 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] text-white"
+              className="ml-auto rounded-full bg-[#2B241F] px-4 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] text-[#FFFDF9]"
             >
               Mark All Read
             </button>
@@ -712,7 +712,7 @@ export default function NotificationsPage() {
 
       <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6 sm:py-7">
         {/* HERO */}
-        <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#03140e] via-[#06261c] to-black p-5 text-white shadow-[0_26px_70px_rgba(0,0,0,0.22)] sm:p-7">
+        <section className="relative overflow-hidden rounded-[2rem] border border-[#E4D7C4] bg-gradient-to-br from-[#F1E8DA] via-[#FFF8ED] to-[#FFFDF9] p-5 text-[#211C18] shadow-[0_26px_70px_rgba(61,48,37,0.08)] sm:p-7">
           <div className="pointer-events-none absolute -right-20 -top-16 h-52 w-52 rounded-full bg-emerald-400/10 blur-3xl" />
 
           <div className="relative flex items-end justify-between gap-4">
@@ -727,7 +727,7 @@ export default function NotificationsPage() {
                 Centre.
               </h1>
 
-              <p className="mt-4 max-w-md text-[10px] leading-5 text-white/45 sm:text-sm">
+              <p className="mt-4 max-w-md text-[10px] leading-5 text-[#7B7066] sm:text-sm">
                 Orders, delivery updates, offers and important AR Fashions activity — all in one place.
               </p>
             </div>
@@ -748,38 +748,38 @@ export default function NotificationsPage() {
           </div>
 
           <div className="relative mt-6 grid grid-cols-3 gap-2">
-            <div className="rounded-[1.1rem] border border-white/[0.08] bg-white/[0.05] p-3">
+            <div className="rounded-[1.1rem] border border-[#E4D7C4] bg-[#FFFDF9] p-3">
               <p className="text-[1.35rem] font-black">
                 {
                   counts.all
                 }
               </p>
 
-              <p className="mt-1 text-[7px] font-bold text-white/40">
+              <p className="mt-1 text-[7px] font-bold text-[#8A7F75]">
                 Total Updates
               </p>
             </div>
 
-            <div className="rounded-[1.1rem] border border-white/[0.08] bg-white/[0.05] p-3">
+            <div className="rounded-[1.1rem] border border-[#E4D7C4] bg-[#FFFDF9] p-3">
               <p className="text-[1.35rem] font-black">
                 {
                   counts.orders
                 }
               </p>
 
-              <p className="mt-1 text-[7px] font-bold text-white/40">
+              <p className="mt-1 text-[7px] font-bold text-[#8A7F75]">
                 Order Updates
               </p>
             </div>
 
-            <div className="rounded-[1.1rem] border border-white/[0.08] bg-white/[0.05] p-3">
+            <div className="rounded-[1.1rem] border border-[#E4D7C4] bg-[#FFFDF9] p-3">
               <p className="text-[1.35rem] font-black">
                 {
                   counts.offers
                 }
               </p>
 
-              <p className="mt-1 text-[7px] font-bold text-white/40">
+              <p className="mt-1 text-[7px] font-bold text-[#8A7F75]">
                 Offers
               </p>
             </div>
@@ -809,7 +809,7 @@ export default function NotificationsPage() {
                       className={`rounded-full px-4 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] transition ${
                         filter ===
                         option.id
-                          ? "bg-[#06261c] text-white shadow-sm"
+                          ? "bg-[#2B241F] text-[#FFFDF9] shadow-sm"
                           : "border border-black/[0.06] bg-white text-zinc-500"
                       }`}
                     >
@@ -1099,7 +1099,7 @@ export default function NotificationsPage() {
       </div>
 
       {/* MOBILE NAV */}
-      <nav className="fixed bottom-2 left-3 right-3 z-50 rounded-[1.35rem] border border-emerald-200/10 bg-[#03140e]/95 px-1 pb-1.5 pt-1 shadow-[0_18px_55px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:hidden">
+      <nav className="fixed bottom-2 left-3 right-3 z-50 rounded-[1.35rem] border border-[#E4D7C4] bg-[#FFFDF9]/95 px-1 pb-1.5 pt-1 shadow-[0_18px_55px_rgba(61,48,37,0.14)] backdrop-blur-2xl sm:hidden">
         <div className="grid grid-cols-4">
           <button
             type="button"
@@ -1108,7 +1108,7 @@ export default function NotificationsPage() {
                 "/",
               )
             }
-            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-white/40"
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
           >
             <span className="text-lg">
               ⌂
@@ -1126,7 +1126,7 @@ export default function NotificationsPage() {
                 "/wishlist",
               )
             }
-            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-white/40"
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
           >
             <span className="text-lg">
               ♡
@@ -1169,7 +1169,7 @@ export default function NotificationsPage() {
                 "/account",
               )
             }
-            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-white/40"
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
           >
             <span className="grid h-5 w-5 place-items-center rounded-full border border-current text-[7px]">
               A

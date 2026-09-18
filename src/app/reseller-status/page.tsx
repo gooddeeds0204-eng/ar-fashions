@@ -105,7 +105,7 @@ export default function ResellerStatusPage() {
         "NONE";
 
   return (
-    <main className="min-h-screen bg-[#03140e] px-4 py-6 text-white">
+    <main className="min-h-screen bg-[#FAF7F0] px-4 py-6 text-[#211C18]">
       <div className="mx-auto max-w-md">
         <header className="flex items-center justify-between">
           <BrandLogo
@@ -121,7 +121,7 @@ export default function ResellerStatusPage() {
             onClick={() =>
               router.push("/")
             }
-            className="rounded-full border border-white/10 px-4 py-2 text-[9px] font-black uppercase tracking-wider text-white/70"
+            className="rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-2 text-[9px] font-black uppercase tracking-wider text-[#6F655D]"
           >
             Home
           </button>
@@ -130,7 +130,7 @@ export default function ResellerStatusPage() {
         <section className="flex min-h-[75vh] items-center py-12">
           <div className="w-full">
             {loading ? (
-              <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 text-center text-sm text-white/50">
+              <div className="rounded-[2rem] border border-[#E4D7C4] bg-[#FFFDF9] p-8 text-center text-sm text-[#7B7066]">
                 Checking retailer
                 status...
               </div>
@@ -148,7 +148,7 @@ export default function ResellerStatusPage() {
             ) : status ===
               "APPROVED" ? (
               <div className="rounded-[2rem] border border-emerald-300/20 bg-gradient-to-br from-emerald-400/15 to-white/[0.03] p-7">
-                <div className="grid h-14 w-14 place-items-center rounded-full bg-emerald-400 text-2xl text-[#03140e]">
+                <div className="grid h-14 w-14 place-items-center rounded-full bg-emerald-400 text-2xl text-[#2B241F]">
                   ✓
                 </div>
 
@@ -162,7 +162,7 @@ export default function ResellerStatusPage() {
                   access unlocked.
                 </h1>
 
-                <p className="mt-4 text-sm leading-6 text-white/45">
+                <p className="mt-4 text-sm leading-6 text-[#7B7066]">
                   Your AR retailer
                   account is active.
                   Reseller pricing,
@@ -176,7 +176,7 @@ export default function ResellerStatusPage() {
                   onClick={() =>
                     router.push("/")
                   }
-                  className="mt-7 w-full rounded-2xl bg-emerald-400 py-4 text-[10px] font-black uppercase tracking-wider text-[#03140e]"
+                  className="mt-7 w-full rounded-2xl bg-emerald-400 py-4 text-[10px] font-black uppercase tracking-wider text-[#2B241F]"
                 >
                   Enter Reseller Store →
                 </button>
@@ -198,7 +198,7 @@ export default function ResellerStatusPage() {
                   needs attention.
                 </h1>
 
-                <p className="mt-4 text-sm leading-6 text-white/45">
+                <p className="mt-4 text-sm leading-6 text-[#7B7066]">
                   Your customer account
                   remains active at
                   retail prices.
@@ -206,12 +206,12 @@ export default function ResellerStatusPage() {
 
                 {application
                   ?.rejectionReason ? (
-                  <div className="mt-5 rounded-2xl border border-white/[0.07] bg-black/20 p-4">
-                    <p className="text-[8px] font-black uppercase tracking-wider text-white/30">
+                  <div className="mt-5 rounded-2xl border border-[#E4D7C4] bg-[#F1E8DA] p-4">
+                    <p className="text-[8px] font-black uppercase tracking-wider text-[#9C9187]">
                       AR Review Note
                     </p>
 
-                    <p className="mt-2 text-xs leading-5 text-white/65">
+                    <p className="mt-2 text-xs leading-5 text-[#6F655D]">
                       {
                         application.rejectionReason
                       }
@@ -226,7 +226,7 @@ export default function ResellerStatusPage() {
                       "/reseller-apply",
                     )
                   }
-                  className="mt-7 w-full rounded-2xl bg-white py-4 text-[10px] font-black uppercase tracking-wider text-[#03140e]"
+                  className="mt-7 w-full rounded-2xl bg-white py-4 text-[10px] font-black uppercase tracking-wider text-[#2B241F]"
                 >
                   Update Registration →
                 </button>
@@ -234,7 +234,7 @@ export default function ResellerStatusPage() {
             ) : status ===
               "NONE" ? (
               <div className="rounded-[2rem] border border-[#D4AF37]/20 bg-gradient-to-br from-[#D4AF37]/10 to-white/[0.03] p-7">
-                <div className="grid h-14 w-14 place-items-center rounded-full bg-[#D4AF37] font-serif text-xl text-[#03140e]">
+                <div className="grid h-14 w-14 place-items-center rounded-full bg-[#D4AF37] font-serif text-xl text-[#2B241F]">
                   AR
                 </div>
 
@@ -248,7 +248,7 @@ export default function ResellerStatusPage() {
                   AR reseller.
                 </h1>
 
-                <p className="mt-4 text-sm leading-6 text-white/45">
+                <p className="mt-4 text-sm leading-6 text-[#7B7066]">
                   Apply using your existing customer account.
                   After approval, reseller pricing, MOQ ordering
                   and curated wholesale sets will unlock.
@@ -261,7 +261,7 @@ export default function ResellerStatusPage() {
                       "/reseller-apply",
                     )
                   }
-                  className="mt-7 w-full rounded-2xl bg-[#D4AF37] py-4 text-[10px] font-black uppercase tracking-wider text-[#03140e]"
+                  className="mt-7 w-full rounded-2xl bg-[#D4AF37] py-4 text-[10px] font-black uppercase tracking-wider text-[#2B241F]"
                 >
                   Start Reseller Application →
                 </button>
@@ -282,7 +282,7 @@ export default function ResellerStatusPage() {
                   application received.
                 </h1>
 
-                <p className="mt-4 text-sm leading-6 text-white/45">
+                <p className="mt-4 text-sm leading-6 text-[#7B7066]">
                   Your account can still
                   shop normally at retail
                   prices. Wholesale prices
@@ -292,8 +292,8 @@ export default function ResellerStatusPage() {
                 </p>
 
                 {application ? (
-                  <div className="mt-6 rounded-2xl border border-white/[0.07] bg-black/20 p-4">
-                    <p className="text-[8px] font-black uppercase tracking-wider text-white/30">
+                  <div className="mt-6 rounded-2xl border border-[#E4D7C4] bg-[#F1E8DA] p-4">
+                    <p className="text-[8px] font-black uppercase tracking-wider text-[#9C9187]">
                       Application
                     </p>
 
@@ -303,7 +303,7 @@ export default function ResellerStatusPage() {
                       }
                     </p>
 
-                    <p className="mt-1 text-[10px] text-white/40">
+                    <p className="mt-1 text-[10px] text-[#8A7F75]">
                       {
                         application.city
                       }
@@ -320,7 +320,7 @@ export default function ResellerStatusPage() {
                   onClick={() =>
                     router.push("/")
                   }
-                  className="mt-7 w-full rounded-2xl bg-white py-4 text-[10px] font-black uppercase tracking-wider text-[#03140e]"
+                  className="mt-7 w-full rounded-2xl bg-white py-4 text-[10px] font-black uppercase tracking-wider text-[#2B241F]"
                 >
                   Continue Retail Shopping →
                 </button>
