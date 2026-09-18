@@ -54,6 +54,47 @@ export async function GET() {
         },
       });
 
+    const shipmentKeys =
+      orders.map(
+        (order) =>
+          `shipment_v1_${order.id}`,
+      );
+
+    const shipmentRows =
+      shipmentKeys.length > 0
+        ? await prisma.siteSetting.findMany({
+            where: {
+              key: {
+                in:
+                  shipmentKeys,
+              },
+            },
+          })
+        : [];
+
+    const shipmentByKey =
+      new Map<
+        string,
+        Record<string, unknown>
+      >();
+
+    for (
+      const row of
+      shipmentRows
+    ) {
+      try {
+        shipmentByKey.set(
+          row.key,
+          JSON.parse(
+            row.value,
+          ) as Record<
+            string,
+            unknown
+          >,
+        );
+      } catch {}
+    }
+
     const data = orders.map(
       (order) => ({
         id: order.id,
@@ -163,6 +204,11 @@ export async function GET() {
                 ),
             }
           : null,
+
+        shipment:
+          shipmentByKey.get(
+            `shipment_v1_${order.id}`,
+          ) ?? null,
       }),
     );
 
