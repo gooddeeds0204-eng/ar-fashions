@@ -728,7 +728,7 @@ export default function AccountPage() {
             className={`flex items-center gap-3 rounded-[1.35rem] border p-3.5 text-white shadow-[0_20px_55px_rgba(0,0,0,0.3)] backdrop-blur-xl ${
               accountToast.type ===
               "SUCCESS"
-                ? "border-emerald-300/25 bg-[#031B14]/95"
+                ? "border-[#D4AF37]/25 bg-[#031B14]/95"
                 : "border-red-300/25 bg-[#7C3A45]/95"
             }`}
           >
@@ -736,7 +736,7 @@ export default function AccountPage() {
               className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-black ${
                 accountToast.type ===
                 "SUCCESS"
-                  ? "bg-emerald-400 text-[#031B14]"
+                  ? "bg-[#D4AF37] text-[#031B14]"
                   : "bg-red-400 text-white"
               }`}
             >
@@ -747,7 +747,7 @@ export default function AccountPage() {
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-300">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#D9C29A]">
                 AS Fashions
               </p>
 
@@ -765,7 +765,7 @@ export default function AccountPage() {
               onClick={() =>
                 setAccountToast(null)
               }
-              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/10 text-xs font-black"
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#FFFDF9]/10 text-xs font-black"
             >
               ×
             </button>
@@ -780,7 +780,7 @@ export default function AccountPage() {
             onClick={() =>
               router.back()
             }
-            className="grid h-10 w-10 place-items-center rounded-full border border-black/[0.06] bg-white text-sm font-black"
+            className="grid h-10 w-10 place-items-center rounded-full border border-[#E4D7C4] bg-[#FFFDF9] text-sm font-black"
           >
             ←
           </button>
@@ -800,15 +800,15 @@ export default function AccountPage() {
 
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
         {loading ? (
-          <div className="rounded-[1.8rem] border border-black/[0.05] bg-white p-10 text-center shadow-sm">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-emerald-600" />
+          <div className="rounded-[1.8rem] border border-[#E4D7C4] bg-[#FFFDF9] p-10 text-center shadow-sm">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-[#031B14]" />
 
             <p className="mt-4 text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500">
               Loading Account
             </p>
           </div>
         ) : error ? (
-          <div className="rounded-[1.8rem] border border-red-100 bg-white p-8 text-center shadow-sm">
+          <div className="rounded-[1.8rem] border border-red-100 bg-[#FFFDF9] p-8 text-center shadow-sm">
             <p className="text-lg font-black">
               Could not load account
             </p>
@@ -822,7 +822,7 @@ export default function AccountPage() {
               onClick={() =>
                 router.push("/")
               }
-              className="mt-5 rounded-full bg-zinc-950 px-5 py-3 text-sm font-black text-white"
+              className="mt-5 rounded-full bg-[#031B14] px-5 py-3 text-sm font-black text-white"
             >
               Go Home
             </button>
@@ -921,7 +921,7 @@ export default function AccountPage() {
                     key={item.title}
                     type="button"
                     onClick={item.onClick}
-                    className="group min-h-[112px] rounded-[1.25rem] border border-black/[0.06] bg-white p-4 text-left shadow-[0_7px_20px_rgba(0,0,0,0.035)] transition active:scale-[0.98]"
+                    className="group min-h-[112px] rounded-[1.25rem] border border-[#E4D7C4] bg-[#FFFDF9] p-4 text-left shadow-[0_7px_20px_rgba(0,0,0,0.035)] transition active:scale-[0.98]"
                   >
                     <div className="flex items-start justify-between">
                       <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#f7f3ee] text-base">
@@ -948,8 +948,8 @@ export default function AccountPage() {
             {/* ORDER + ACCOUNT INFO */}
             <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
               {/* LATEST ORDER */}
-              <section className="overflow-hidden rounded-[1.5rem] border border-black/[0.06] bg-white shadow-sm">
-                <div className="flex items-center justify-between border-b border-black/[0.05] px-4 py-4 sm:px-5">
+              <section className="overflow-hidden rounded-[1.5rem] border border-[#E4D7C4] bg-[#FFFDF9] shadow-sm">
+                <div className="flex items-center justify-between border-b border-[#E4D7C4] px-4 py-4 sm:px-5">
                   <div>
                     <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#7C3A45]">
                       Orders
@@ -967,7 +967,7 @@ export default function AccountPage() {
                         "/my-orders",
                       )
                     }
-                    className="rounded-full border border-black/[0.07] px-3 py-2 text-[8px] font-black uppercase tracking-[0.08em]"
+                    className="rounded-full border border-[#E4D7C4] px-3 py-2 text-[8px] font-black uppercase tracking-[0.08em]"
                   >
                     View All
                   </button>
@@ -1074,7 +1074,7 @@ export default function AccountPage() {
                       onClick={() =>
                         router.push("/")
                       }
-                      className="mt-4 rounded-full bg-zinc-950 px-5 py-2.5 text-[9px] font-black text-white"
+                      className="mt-4 rounded-full bg-[#031B14] px-5 py-2.5 text-[9px] font-black text-white"
                     >
                       Start Shopping
                     </button>
@@ -1083,8 +1083,8 @@ export default function AccountPage() {
               </section>
 
               {/* ACCOUNT INFORMATION */}
-              <section className="overflow-hidden rounded-[1.5rem] border border-black/[0.06] bg-white shadow-sm">
-                <div className="flex items-center justify-between border-b border-black/[0.05] px-4 py-4 sm:px-5">
+              <section className="overflow-hidden rounded-[1.5rem] border border-[#E4D7C4] bg-[#FFFDF9] shadow-sm">
+                <div className="flex items-center justify-between border-b border-[#E4D7C4] px-4 py-4 sm:px-5">
                   <div>
                     <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#7C3A45]">
                       Personal
@@ -1266,7 +1266,7 @@ export default function AccountPage() {
             <div className="bg-[#031B14] p-5 text-white sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[8px] font-black uppercase tracking-[0.24em] text-emerald-300">
+                  <p className="text-[8px] font-black uppercase tracking-[0.24em] text-[#D9C29A]">
                     AS Fashions · Account
                   </p>
 
@@ -1286,7 +1286,7 @@ export default function AccountPage() {
                       false,
                     )
                   }
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10 text-sm font-black"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#FFFDF9]/10 text-sm font-black"
                 >
                   ✕
                 </button>
@@ -1316,7 +1316,7 @@ export default function AccountPage() {
                   }
                   maxLength={80}
                   placeholder="Enter full name"
-                  className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm font-semibold outline-none transition focus:border-emerald-500"
+                  className="mt-2 w-full rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-3.5 text-sm font-semibold outline-none transition focus:border-[#D4AF37]"
                 />
               </div>
 
@@ -1325,8 +1325,8 @@ export default function AccountPage() {
                   Mobile Number
                 </label>
 
-                <div className="mt-2 flex overflow-hidden rounded-[1rem] border border-black/[0.08] bg-white focus-within:border-emerald-500">
-                  <span className="flex items-center border-r border-black/[0.06] bg-[#FAF7F0] px-4 text-sm font-black text-zinc-500">
+                <div className="mt-2 flex overflow-hidden rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] focus-within:border-emerald-500">
+                  <span className="flex items-center border-r border-[#E4D7C4] bg-[#FAF7F0] px-4 text-sm font-black text-zinc-500">
                     +91
                   </span>
 
@@ -1372,7 +1372,7 @@ export default function AccountPage() {
                   }
                   maxLength={160}
                   placeholder="name@example.com"
-                  className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm font-semibold outline-none transition focus:border-emerald-500"
+                  className="mt-2 w-full rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-3.5 text-sm font-semibold outline-none transition focus:border-[#D4AF37]"
                 />
 
                 <p className="mt-2 text-[8px] leading-4 text-zinc-400">
@@ -1380,12 +1380,12 @@ export default function AccountPage() {
                 </p>
               </div>
 
-              <div className="rounded-[1rem] border border-emerald-100 bg-emerald-50 px-4 py-3">
-                <p className="text-[9px] font-black text-emerald-800">
+              <div className="rounded-[1rem] border border-[#D4AF37]/25 bg-[#F8F1E7] px-4 py-3">
+                <p className="text-[9px] font-black text-[#031B14]">
                   ✓ Secure profile update
                 </p>
 
-                <p className="mt-1 text-[8px] leading-4 text-emerald-700/65">
+                <p className="mt-1 text-[8px] leading-4 text-[#6B5435]/70">
                   Updating personal information does not change your saved delivery addresses. Those can be managed separately.
                 </p>
               </div>
@@ -1398,7 +1398,7 @@ export default function AccountPage() {
                       false,
                     )
                   }
-                  className="min-h-[50px] rounded-[1rem] border border-black/[0.08] bg-white text-[10px] font-black uppercase tracking-[0.08em] text-zinc-600"
+                  className="min-h-[50px] rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] text-[10px] font-black uppercase tracking-[0.08em] text-zinc-600"
                 >
                   Cancel
                 </button>
@@ -1408,7 +1408,7 @@ export default function AccountPage() {
                   disabled={
                     profileSaving
                   }
-                  className="min-h-[50px] rounded-[1rem] bg-emerald-600 px-4 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-emerald-600/15 transition active:scale-[0.98] disabled:bg-zinc-300"
+                  className="min-h-[50px] rounded-[1rem] bg-[#031B14] px-4 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-black/10 transition active:scale-[0.98] disabled:bg-zinc-300"
                 >
                   {profileSaving
                     ? "Saving..."
@@ -1464,7 +1464,7 @@ export default function AccountPage() {
             }
             className="relative flex min-h-[52px] flex-col items-center justify-center"
           >
-            <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-[4px] border-[#031B14] bg-emerald-400 font-serif text-[14px] font-black text-[#031B14] shadow-[0_0_28px_rgba(52,211,153,0.3)]">
+            <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-[4px] border-[#031B14] bg-[#D4AF37] font-serif text-[14px] font-black text-[#031B14] shadow-[0_0_28px_rgba(212,175,55,0.22)]">
               AS
             </span>
 
@@ -1490,7 +1490,7 @@ export default function AccountPage() {
 
           <button
             type="button"
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-emerald-300"
+            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#D9C29A]"
           >
             <span className="grid h-5 w-5 place-items-center rounded-full border border-current text-[7px]">
               A
