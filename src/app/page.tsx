@@ -731,6 +731,8 @@ function BrandHighlights({
 
 
 function FashionReelsSection({
+  title,
+  subtitle,
   reels,
   mode,
 }: {
@@ -743,55 +745,130 @@ function FashionReelsSection({
 
   if (reels.length === 0) return null;
 
-  const reel =
-    reels.find((item) => item.source === "UPLOAD") ??
-    reels[0];
-
-  const image =
-    reel.thumbnailUrl ??
-    reel.product.image ??
-    null;
-
   return (
-    <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
-      <button
-        type="button"
-        onClick={() =>
-          router.push(
-            `/reels?mode=${mode.toLowerCase()}`,
-          )
-        }
-        className="group relative block w-full overflow-hidden rounded-[1rem] bg-[#042219] text-left text-white"
-      >
-        <div className="relative min-h-[190px] sm:min-h-[260px]">
-          {image ? (
-            <img
-              src={image}
-              alt={reel.caption || "AR Edit"}
-              loading="lazy"
-              decoding="async"
-              className="absolute inset-0 h-full w-full object-cover opacity-70 transition duration-300 group-hover:scale-[1.02]"
-            />
-          ) : null}
-
-          <div className="absolute inset-0 bg-gradient-to-r from-[#032018] via-[#032018]/78 to-[#032018]/15" />
-
-          <div className="relative z-10 flex min-h-[190px] max-w-[65%] flex-col justify-center p-6 sm:min-h-[260px] sm:p-8">
-            <p className="text-[8px] font-black uppercase tracking-[0.32em] text-[#D9C29A]">
-              AR Edit
+    <section
+      id="fashion-reels"
+      className="border-y border-[#E7DBCC] bg-[#F8F1E7]"
+    >
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+        <div className="mb-6 flex items-end justify-between gap-4">
+          <div>
+            <p className="text-[8px] font-black uppercase tracking-[0.32em] text-[#6B5435]">
+              Watch · Discover · Shop
             </p>
-            <h3 className="mt-3 font-serif text-[2rem] leading-[0.95] sm:text-[2.8rem]">
-              Stories in Style
-            </h3>
-            <p className="mt-3 text-[10px] text-white/72 sm:text-xs">
-              Real people. Real looks.
+            <h2 className="mt-2 font-serif text-[2.15rem] leading-none tracking-[-0.03em] text-[#211C18] sm:text-[2.6rem]">
+              {title || "Fashion Reels"}
+            </h2>
+            <p className="mt-2 text-[10px] text-[#7B7066] sm:text-xs">
+              {subtitle || "See the look in motion"}
             </p>
-            <span className="mt-6 text-[9px] font-black uppercase tracking-[0.14em]">
-              Explore now  →
-            </span>
           </div>
+
+          <button
+            type="button"
+            onClick={() =>
+              router.push(
+                `/reels?mode=${mode.toLowerCase()}`,
+              )
+            }
+            className="shrink-0 text-[9px] font-black uppercase tracking-[0.1em] text-[#211C18]"
+          >
+            View all →
+          </button>
         </div>
-      </button>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+          {reels.slice(0, 4).map((reel, index) => {
+            const thumb =
+              reel.thumbnailUrl ??
+              reel.product.image ??
+              null;
+
+            const price =
+              mode === "RESELLER" &&
+              reel.product.resellerPrice !== null
+                ? reel.product.resellerPrice
+                : reel.product.retailPrice;
+
+            return (
+              <button
+                key={reel.id}
+                type="button"
+                onClick={() =>
+                  router.push(
+                    `/reels?mode=${mode.toLowerCase()}&reel=${reel.id}`,
+                  )
+                }
+                className="group min-w-0 text-left"
+              >
+                <div className="relative aspect-[9/14] overflow-hidden rounded-[1rem] bg-[#0A2119] shadow-[0_12px_30px_rgba(55,41,28,0.10)]">
+                  {reel.source === "UPLOAD" ? (
+                    index === 0 ? (
+                      <video
+                        src={reel.url}
+                        poster={thumb ?? undefined}
+                        muted
+                        autoPlay
+                        loop
+                        playsInline
+                        preload="metadata"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : thumb ? (
+                      <img
+                        src={thumb}
+                        alt={reel.caption || reel.product.name}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
+                      />
+                    ) : (
+                      <video
+                        src={reel.url}
+                        muted
+                        playsInline
+                        preload="metadata"
+                        className="h-full w-full object-cover"
+                      />
+                    )
+                  ) : thumb ? (
+                    <img
+                      src={thumb}
+                      alt={reel.caption || reel.product.name}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#0B2A20,#04140F)] text-white">
+                      <StoreIcon name="play" className="h-7 w-7" />
+                    </div>
+                  )}
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-transparent to-black/5" />
+
+                  <span className="absolute left-2 top-2 rounded-full border border-white/20 bg-black/30 px-2 py-1 text-[6px] font-black uppercase tracking-[0.12em] text-white backdrop-blur">
+                    Reel
+                  </span>
+
+                  <span className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-[#FFF8EC]/92 text-[#092019] shadow-sm">
+                    <StoreIcon name="play" className="h-4 w-4" />
+                  </span>
+
+                  <div className="absolute inset-x-0 bottom-0 p-3">
+                    <p className="line-clamp-1 text-[10px] font-black text-white sm:text-[11px]">
+                      {reel.product.name}
+                    </p>
+                    <p className="mt-1 text-[10px] font-black text-[#F0D7A9]">
+                      {money(price)}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </section>
   );
 }
@@ -2422,29 +2499,51 @@ export default function Home() {
         </section>
       ) : (
         <>
-          {contentSections.map(
-            (section) => {
-              if (
+          {contentSections
+            .filter(
+              (section) =>
                 section.sectionType ===
-                "NEW_ARRIVALS"
-              ) {
-                return (
-                  <ProductSection
-                    key={section.id}
-                    title={
-                      section.title
-                    }
-                    subtitle={
-                      section.subtitle
-                    }
-                    products={
-                      newArrivals
-                    }
-                    mode={mode}
-                  />
-                );
-              }
+                "NEW_ARRIVALS",
+            )
+            .map((section) => (
+              <ProductSection
+                key={section.id}
+                title={section.title}
+                subtitle={section.subtitle}
+                products={newArrivals}
+                mode={mode}
+              />
+            ))}
 
+          <FashionReelsSection
+            title={
+              contentSections.find(
+                (section) =>
+                  section.sectionType ===
+                  "REELS",
+              )?.title ?? "Fashion Reels"
+            }
+            subtitle={
+              contentSections.find(
+                (section) =>
+                  section.sectionType ===
+                  "REELS",
+              )?.subtitle ??
+              "Watch the look. Shop the look."
+            }
+            reels={videoReels}
+            mode={mode}
+          />
+
+          {contentSections
+            .filter(
+              (section) =>
+                section.sectionType !==
+                  "NEW_ARRIVALS" &&
+                section.sectionType !==
+                  "REELS",
+            )
+            .map((section) => {
               if (
                 section.sectionType ===
                 "TRENDING"
@@ -2452,25 +2551,12 @@ export default function Home() {
                 return (
                   <ProductSection
                     key={section.id}
-                    title={
-                      section.title
-                    }
-                    subtitle={
-                      section.subtitle
-                    }
-                    products={
-                      trending
-                    }
+                    title={section.title}
+                    subtitle={section.subtitle}
+                    products={trending}
                     mode={mode}
                   />
                 );
-              }
-
-              if (
-                section.sectionType ===
-                "REELS"
-              ) {
-                return null;
               }
 
               if (
@@ -2480,23 +2566,16 @@ export default function Home() {
                 return (
                   <ProductSection
                     key={section.id}
-                    title={
-                      section.title
-                    }
-                    subtitle={
-                      section.subtitle
-                    }
-                    products={
-                      featured
-                    }
+                    title={section.title}
+                    subtitle={section.subtitle}
+                    products={featured}
                     mode={mode}
                   />
                 );
               }
 
               return null;
-            },
-          )}
+            })}
         </>
       )}
 
@@ -2518,21 +2597,9 @@ export default function Home() {
             }
             className="group relative min-h-[190px] overflow-hidden rounded-[0.95rem] bg-[#042219] text-left text-white sm:min-h-[240px]"
           >
-            {videoReels[0]?.thumbnailUrl ||
-            videoReels[0]?.product.image ? (
-              <img
-                src={
-                  videoReels[0]?.thumbnailUrl ||
-                  videoReels[0]?.product.image ||
-                  ""
-                }
-                alt="AR Edit"
-                loading="lazy"
-                decoding="async"
-                className="absolute inset-0 h-full w-full object-cover opacity-58 transition duration-300 group-hover:scale-[1.02]"
-              />
-            ) : null}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#032018] via-[#032018]/80 to-transparent" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_28%,rgba(215,188,145,0.22),transparent_28%),linear-gradient(135deg,#0A382B,#042219_56%,#03140F)]" />
+            <div className="absolute right-[-26px] top-1/2 h-52 w-40 -translate-y-1/2 rotate-[7deg] border border-white/10 bg-white/[0.04] shadow-[0_18px_40px_rgba(0,0,0,0.22)]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#032018] via-[#032018]/88 to-transparent" />
             <div className="relative z-10 flex min-h-[190px] max-w-[66%] flex-col justify-center p-6 sm:min-h-[240px] sm:p-8">
               <p className="text-[8px] font-black uppercase tracking-[0.34em] text-[#D9C29A]">
                 AR Edit
