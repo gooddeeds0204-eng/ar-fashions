@@ -215,7 +215,7 @@ export default function SignupPage() {
         </header>
 
         <section className="py-10">
-          <p className="text-[9px] font-black uppercase tracking-[0.28em] text-emerald-400">
+          <p className="text-[9px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">
             Join AS Fashions
           </p>
 
@@ -282,7 +282,7 @@ export default function SignupPage() {
               }}
               className={`rounded-[1.4rem] border p-4 text-left transition ${
                 isReseller
-                  ? "border-emerald-400 bg-emerald-400 text-[#031B14]"
+                  ? "border-[#D4AF37] bg-[#D4AF37] text-[#031B14]"
                   : "border-[#E4D7C4] bg-[#FFFDF9] text-[#211C18]"
               }`}
             >
@@ -297,7 +297,7 @@ export default function SignupPage() {
               <p
                 className={`mt-2 text-[9px] leading-4 ${
                   isReseller
-                    ? "text-emerald-950/60"
+                    ? "text-[#211C18]/60"
                     : "text-[#7B7066]"
                 }`}
               >
@@ -366,9 +366,9 @@ export default function SignupPage() {
             />
 
             {isReseller ? (
-              <div className="space-y-4 rounded-[1.5rem] border border-emerald-300/15 bg-emerald-400/[0.05] p-4">
+              <div className="space-y-4 rounded-[1.5rem] border border-[#D4AF37]/20 bg-[#D4AF37]/[0.05] p-4">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-300">
+                  <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#D9C29A]">
                     Business Details
                   </p>
 
@@ -472,10 +472,10 @@ export default function SignupPage() {
                   className={inputClass}
                 />
 
-                <div className="rounded-2xl border border-emerald-300/15 bg-emerald-400/[0.05] p-4">
+                <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#D4AF37]/[0.05] p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-[8px] font-black uppercase tracking-[0.16em] text-emerald-300">
+                      <p className="text-[8px] font-black uppercase tracking-[0.16em] text-[#D9C29A]">
                         Shop Location
                       </p>
 
@@ -486,7 +486,7 @@ export default function SignupPage() {
 
                     {locationStatus ===
                     "SUCCESS" ? (
-                      <span className="rounded-full bg-emerald-400 px-2.5 py-1 text-[8px] font-black text-[#031B14]">
+                      <span className="rounded-full bg-[#D4AF37] px-2.5 py-1 text-[8px] font-black text-[#031B14]">
                         CAPTURED
                       </span>
                     ) : null}
@@ -501,8 +501,8 @@ export default function SignupPage() {
 
                   {locationStatus ===
                   "SUCCESS" ? (
-                    <div className="mt-3 rounded-xl border border-emerald-300/15 bg-black/20 p-3">
-                      <p className="text-[9px] font-bold text-emerald-300">
+                    <div className="mt-3 rounded-xl border border-[#D4AF37]/20 bg-black/20 p-3">
+                      <p className="text-[9px] font-bold text-[#D9C29A]">
                         ✓ Current location captured
                       </p>
 
@@ -535,7 +535,7 @@ export default function SignupPage() {
                       locationStatus ===
                       "LOADING"
                     }
-                    className="mt-3 w-full rounded-xl border border-emerald-300/20 bg-emerald-400/10 py-3 text-[9px] font-black uppercase tracking-wider text-emerald-300 disabled:opacity-40"
+                    className="mt-3 w-full rounded-xl border border-[#D4AF37]/25 bg-[#D4AF37]/10 py-3 text-[9px] font-black uppercase tracking-wider text-[#D9C29A] disabled:opacity-40"
                   >
                     {locationStatus ===
                     "SUCCESS"
@@ -586,7 +586,7 @@ export default function SignupPage() {
                     key={number}
                     className="rounded-xl border border-[#E4D7C4] bg-[#FFFDF9] p-3"
                   >
-                    <p className="text-[8px] font-black text-emerald-400">
+                    <p className="text-[8px] font-black text-[#D4AF37]">
                       {number}
                     </p>
 
