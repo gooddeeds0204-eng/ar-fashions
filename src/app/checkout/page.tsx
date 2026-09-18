@@ -1114,7 +1114,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FAF7F0] pb-28 text-zinc-950 sm:pb-10">
+    <main className="min-h-screen bg-[#FAF7F0] pb-28 text-[#211C18] sm:pb-10">
       {/* PREMIUM CHECKOUT TOAST */}
       {checkoutToast && (
         <div className="fixed left-1/2 top-[78px] z-[140] w-[calc(100%-24px)] max-w-md -translate-x-1/2">
@@ -1122,7 +1122,7 @@ export default function CheckoutPage() {
             className={`flex items-center gap-3 rounded-[1.35rem] border p-3.5 text-white shadow-[0_20px_55px_rgba(0,0,0,0.3)] backdrop-blur-xl ${
               checkoutToast.type ===
               "SUCCESS"
-                ? "border-emerald-300/25 bg-[#031B14]/95"
+                ? "border-[#D4AF37]/25 bg-[#031B14]/95"
                 : "border-red-300/25 bg-[#7C3A45]/95"
             }`}
           >
@@ -1130,7 +1130,7 @@ export default function CheckoutPage() {
               className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-black ${
                 checkoutToast.type ===
                 "SUCCESS"
-                  ? "bg-emerald-400 text-[#031B14]"
+                  ? "bg-[#D4AF37] text-[#031B14]"
                   : "bg-red-400 text-white"
               }`}
             >
@@ -1141,7 +1141,7 @@ export default function CheckoutPage() {
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-300">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#D9C29A]">
                 AR Fashions
               </p>
 
@@ -1175,7 +1175,7 @@ export default function CheckoutPage() {
             onClick={() =>
               router.back()
             }
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-black/[0.06] bg-white text-sm font-black"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[#E4D7C4] bg-[#FFFDF9] text-sm font-black text-[#211C18]"
           >
             ←
           </button>
@@ -1188,7 +1188,7 @@ export default function CheckoutPage() {
           />
 
           <div className="ml-auto flex items-center gap-2">
-            <span className="hidden rounded-full bg-emerald-50 px-3 py-2 text-[8px] font-black uppercase tracking-[0.1em] text-emerald-700 sm:inline-flex">
+            <span className="hidden rounded-full bg-[#F4EBDD] px-3 py-2 text-[8px] font-black uppercase tracking-[0.1em] text-[#6B5435] sm:inline-flex">
               ✓ Secure Checkout
             </span>
 
@@ -1203,12 +1203,12 @@ export default function CheckoutPage() {
 
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
         {/* CHECKOUT HERO */}
-        <section className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-[#031B14] via-[#031B14] to-black p-5 text-white shadow-[0_24px_65px_rgba(0,0,0,0.2)] sm:p-7">
-          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
+        <section className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-[#031B14] via-[#0A382B] to-[#031B14] p-5 text-white shadow-[0_24px_65px_rgba(0,0,0,0.2)] sm:p-7">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-[#D4AF37]/10 blur-3xl" />
 
           <div className="relative flex items-end justify-between gap-4">
             <div>
-              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-300">
+              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#D9C29A]">
                 Final Step
               </p>
 
@@ -1224,7 +1224,7 @@ export default function CheckoutPage() {
             </div>
 
             <div className="shrink-0 text-right">
-              <p className="font-serif text-[2.2rem] text-emerald-300">
+              <p className="font-serif text-[2.2rem] text-[#D9C29A]">
                 {money(total)}
               </p>
 
@@ -1245,7 +1245,7 @@ export default function CheckoutPage() {
                   key={number}
                   className="rounded-[1rem] border border-white/[0.08] bg-white/[0.05] p-3"
                 >
-                  <p className="font-serif text-lg text-emerald-300">
+                  <p className="font-serif text-lg text-[#D9C29A]">
                     {number}
                   </p>
 
@@ -1266,7 +1266,7 @@ export default function CheckoutPage() {
               <section className="overflow-hidden rounded-[1.6rem] border border-black/[0.05] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.035)]">
                 <div className="flex items-center justify-between gap-3 border-b border-black/[0.05] px-5 py-4">
                   <div>
-                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-700">
+                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#6B5435]">
                       Delivery Address
                     </p>
 
@@ -1306,12 +1306,12 @@ export default function CheckoutPage() {
                           }
                           className={`relative rounded-[1.25rem] border p-4 text-left transition ${
                             selected
-                              ? "border-emerald-400 bg-emerald-50/60 shadow-[0_8px_25px_rgba(16,185,129,0.08)]"
+                              ? "border-[#D9C29A] bg-[#F8F1E7] shadow-[0_8px_25px_rgba(3,27,20,0.06)]"
                               : "border-black/[0.06] bg-[#FAF7F0]"
                           }`}
                         >
                           {selected && (
-                            <span className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-full bg-emerald-600 text-[9px] font-black text-white">
+                            <span className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-full bg-[#031B14] text-[9px] font-black text-white">
                               ✓
                             </span>
                           )}
@@ -1319,13 +1319,13 @@ export default function CheckoutPage() {
                           <div className="pr-9">
                             <div className="flex flex-wrap gap-1.5">
                               {address.isDefault && (
-                                <span className="rounded-full bg-white px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.1em] text-emerald-700">
+                                <span className="rounded-full bg-white px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.1em] text-[#6B5435]">
                                   Default
                                 </span>
                               )}
 
                               {selected && (
-                                <span className="rounded-full bg-emerald-600 px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.1em] text-white">
+                                <span className="rounded-full bg-[#031B14] px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.1em] text-white">
                                   Selected
                                 </span>
                               )}
@@ -1378,7 +1378,7 @@ export default function CheckoutPage() {
                       setPincode("");
                       setLandmark("");
                     }}
-                    className="text-[8px] font-black uppercase tracking-[0.08em] text-emerald-700"
+                    className="text-[8px] font-black uppercase tracking-[0.08em] text-[#6B5435]"
                   >
                     + Use a new delivery address
                   </button>
@@ -1387,14 +1387,14 @@ export default function CheckoutPage() {
             )}
 
             {activeSavedAddressId ? (
-              <section className="overflow-hidden rounded-[1.6rem] border border-emerald-200 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.035)]">
-                <div className="flex items-center gap-3 bg-emerald-50/70 p-5">
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-600 text-sm font-black text-white">
+              <section className="overflow-hidden rounded-[1.6rem] border border-[#E4D7C4] bg-[#FFFDF9] shadow-[0_10px_30px_rgba(0,0,0,0.035)]">
+                <div className="flex items-center gap-3 bg-[#F8F1E7] p-5">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#031B14] text-sm font-black text-white">
                     ✓
                   </span>
 
                   <div className="min-w-0 flex-1">
-                    <p className="text-[8px] font-black uppercase tracking-[0.18em] text-emerald-700">
+                    <p className="text-[8px] font-black uppercase tracking-[0.18em] text-[#6B5435]">
                       Delivery Details Confirmed
                     </p>
 
@@ -1462,7 +1462,7 @@ export default function CheckoutPage() {
             {/* DELIVERY FORM */}
             <section className="overflow-hidden rounded-[1.6rem] border border-black/[0.05] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.035)]">
               <div className="border-b border-black/[0.05] px-5 py-4">
-                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-700">
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#6B5435]">
                   Recipient Details
                 </p>
 
@@ -1644,7 +1644,7 @@ export default function CheckoutPage() {
             {/* PAYMENT */}
             <section className="overflow-hidden rounded-[1.6rem] border border-black/[0.05] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.035)]">
               <div className="border-b border-black/[0.05] px-5 py-4">
-                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-700">
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#6B5435]">
                   Payment
                 </p>
 
@@ -1665,7 +1665,7 @@ export default function CheckoutPage() {
                     <span
                       className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-black ${
                         siteSettings.codEnabled
-                          ? "bg-emerald-600 text-white"
+                          ? "bg-[#031B14] text-white"
                           : "bg-zinc-300 text-zinc-500"
                       }`}
                     >
@@ -1685,7 +1685,7 @@ export default function CheckoutPage() {
                     </div>
 
                     {siteSettings.codEnabled && (
-                      <span className="grid h-7 w-7 place-items-center rounded-full bg-emerald-600 text-[9px] font-black text-white">
+                      <span className="grid h-7 w-7 place-items-center rounded-full bg-[#031B14] text-[9px] font-black text-white">
                         ✓
                       </span>
                     )}
@@ -1703,7 +1703,7 @@ export default function CheckoutPage() {
                         key={label}
                         className="rounded-xl bg-[#FAF7F0] px-2 py-3 text-center"
                       >
-                        <p className="text-sm font-black text-emerald-700">
+                        <p className="text-sm font-black text-[#6B5435]">
                           {icon}
                         </p>
 
@@ -1723,7 +1723,7 @@ export default function CheckoutPage() {
             <div className="bg-[#031B14] p-5 text-white">
               <div className="flex items-end justify-between gap-3">
                 <div>
-                  <p className="text-[8px] font-black uppercase tracking-[0.22em] text-emerald-300">
+                  <p className="text-[8px] font-black uppercase tracking-[0.22em] text-[#D9C29A]">
                     Final Review
                   </p>
 
@@ -1785,7 +1785,7 @@ export default function CheckoutPage() {
                         </p>
 
                         {item.resellerSetId ? (
-                          <p className="mt-2 text-[8px] font-black text-emerald-700">
+                          <p className="mt-2 text-[8px] font-black text-[#6B5435]">
                             Included in curated set
                           </p>
                         ) : (
@@ -1829,7 +1829,7 @@ export default function CheckoutPage() {
               <div className="rounded-[1.1rem] border border-black/[0.06] bg-[#FAF7F0] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[7px] font-black uppercase tracking-[0.15em] text-emerald-700">
+                    <p className="text-[7px] font-black uppercase tracking-[0.15em] text-[#6B5435]">
                       Offers
                     </p>
 
@@ -1839,7 +1839,7 @@ export default function CheckoutPage() {
                   </div>
 
                   {appliedCoupon && (
-                    <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.1em] text-emerald-700">
+                    <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.1em] text-[#6B5435]">
                       Applied
                     </span>
                   )}
@@ -1848,7 +1848,7 @@ export default function CheckoutPage() {
                 {appliedCoupon ? (
                   <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-3">
                     <div>
-                      <p className="text-[10px] font-black text-emerald-700">
+                      <p className="text-[10px] font-black text-[#6B5435]">
                         {appliedCoupon.code}
                       </p>
 
@@ -1926,7 +1926,7 @@ export default function CheckoutPage() {
                           </span>
                         </div>
 
-                        <div className="flex justify-between gap-4 text-emerald-700">
+                        <div className="flex justify-between gap-4 text-[#6B5435]">
                           <span>
                             Set saving
                           </span>
@@ -1952,7 +1952,7 @@ export default function CheckoutPage() {
                   </div>
 
                   {appliedCoupon && (
-                    <div className="flex justify-between gap-4 text-emerald-700">
+                    <div className="flex justify-between gap-4 text-[#6B5435]">
                       <span>
                         Coupon ·{" "}
                         {appliedCoupon.code}
@@ -1985,7 +1985,7 @@ export default function CheckoutPage() {
                         !resellerFreightPending &&
                         deliveryCharge ===
                           0
-                          ? "text-emerald-700"
+                          ? "text-[#6B5435]"
                           : ""
                       }`}
                     >
@@ -2096,7 +2096,7 @@ export default function CheckoutPage() {
                   loading ||
                   !canPlaceOrder
                 }
-                className="mt-5 hidden min-h-[54px] w-full rounded-[1rem] bg-emerald-600 px-4 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-emerald-600/15 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 disabled:shadow-none sm:block"
+                className="mt-5 hidden min-h-[54px] w-full rounded-[1rem] bg-[#031B14] px-4 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-[0_12px_28px_rgba(3,27,20,0.18)] transition-[transform,opacity] duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 disabled:shadow-none sm:block"
               >
                 {loading
                   ? "Placing Order..."
@@ -2118,7 +2118,7 @@ export default function CheckoutPage() {
       </div>
 
       {/* MOBILE PLACE ORDER BAR */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/[0.07] bg-[#FFFDF9]/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.09)] backdrop-blur-xl sm:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/[0.07] bg-[#FFFDF9]/95 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_30px_rgba(0,0,0,0.09)] backdrop-blur-xl sm:hidden">
         <div className="mx-auto flex max-w-md items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
@@ -2147,7 +2147,7 @@ export default function CheckoutPage() {
               loading ||
               !canPlaceOrder
             }
-            className="min-h-[50px] min-w-[185px] rounded-[1rem] bg-emerald-600 px-4 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-emerald-600/15 transition active:scale-[0.98] disabled:bg-zinc-300 disabled:text-zinc-500 disabled:shadow-none"
+            className="min-h-[50px] min-w-[185px] rounded-[1rem] bg-[#031B14] px-4 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-[0_12px_28px_rgba(3,27,20,0.18)] transition-[transform,opacity] duration-200 active:scale-[0.98] disabled:bg-zinc-300 disabled:text-zinc-500 disabled:shadow-none"
           >
             {loading
               ? "Placing..."
