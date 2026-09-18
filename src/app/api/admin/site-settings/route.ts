@@ -76,14 +76,22 @@ function normalizeSettings(
         >)
       : {};
 
+  const requestedStoreName =
+    cleanString(
+      source.storeName ??
+        DEFAULT_SETTINGS.storeName,
+      80,
+    );
+
+  const storeName =
+    requestedStoreName.toUpperCase() ===
+    "AR FASHIONS"
+      ? DEFAULT_SETTINGS.storeName
+      : requestedStoreName ||
+        DEFAULT_SETTINGS.storeName;
+
   return {
-    storeName:
-      cleanString(
-        source.storeName ??
-          DEFAULT_SETTINGS.storeName,
-        80,
-      ) ||
-      DEFAULT_SETTINGS.storeName,
+    storeName,
 
     supportPhone:
       cleanString(
