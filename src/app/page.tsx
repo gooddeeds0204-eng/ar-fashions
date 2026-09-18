@@ -488,9 +488,9 @@ function ProductCard({
           `/products/${product.id}?mode=${mode.toLowerCase()}`,
         )
       }
-      className="group min-w-0 cursor-pointer"
+      className="group min-w-0 cursor-pointer rounded-[1rem]"
     >
-      <div className="relative aspect-[4/5] overflow-hidden rounded-[0.8rem] bg-[#EDE2D2]">
+      <div className="relative aspect-[4/5] overflow-hidden rounded-[0.9rem] border border-[#E4D7C4] bg-[#F4EBDD]">
         {media?.type === "VIDEO" ? (
           <video
             src={media.url}
@@ -509,7 +509,7 @@ function ProductCard({
             className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
           />
         ) : (
-          <div className="flex h-full items-center justify-center bg-[#E8DCCB] font-serif text-3xl text-[#9A7B4A]">
+          <div className="flex h-full items-center justify-center bg-[#F4EBDD] font-serif text-3xl text-[#6B5435]">
             AR
           </div>
         )}
@@ -538,7 +538,7 @@ function ProductCard({
           />
         </button>
 
-        <span className="absolute bottom-2 left-2 rounded-sm bg-[#6E392A]/92 px-2 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-white">
+        <span className="absolute bottom-2 left-2 rounded-md bg-[#7C3A45]/94 px-2 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-white">
           {mode === "RESELLER"
             ? "Wholesale"
             : product.isFeatured
@@ -552,7 +552,7 @@ function ProductCard({
       </div>
 
       <div className="pt-2.5">
-        <h3 className="line-clamp-1 text-[12px] font-semibold leading-4 text-[#211C18] sm:text-sm">
+        <h3 className="line-clamp-2 min-h-8 text-[12px] font-semibold leading-4 text-[#211C18] sm:text-sm">
           {product.name}
         </h3>
 
@@ -563,7 +563,7 @@ function ProductCard({
 
           {product.mrp &&
             Number(product.mrp) > Number(price) && (
-              <span className="text-[10px] text-[#9A9289] line-through">
+              <span className="text-[10px] text-[#9A9188] line-through">
                 {money(product.mrp)}
               </span>
             )}
@@ -587,7 +587,7 @@ function ProductCard({
               event.stopPropagation();
               openProduct();
             }}
-            className="grid h-8 w-8 place-items-center rounded-[0.55rem] bg-[#041B14] text-[#FFF9ED]"
+            className="grid h-8 w-8 place-items-center rounded-[0.55rem] bg-[#031B14] text-[#FFFDF9] transition-[transform,opacity] duration-200 active:scale-[0.98]"
           >
             <StoreIcon
               name="bag"
@@ -656,7 +656,7 @@ function ProductSection({
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
         {products.slice(0, 4).map((product) => (
           <ProductCard
             key={product.id}
