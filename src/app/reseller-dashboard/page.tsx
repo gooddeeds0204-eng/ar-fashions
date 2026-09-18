@@ -165,11 +165,11 @@ export default async function ResellerDashboardPage() {
 
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
         <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#031B14] via-[#031B14] to-black p-6 text-white shadow-[0_25px_70px_rgba(0,0,0,0.24)] sm:p-8">
-          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
+          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-[#D4AF37]/10 blur-3xl" />
 
           <div className="relative">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.18em] text-emerald-200">
+              <span className="rounded-full border border-[#D4AF37]/25 bg-[#D4AF37]/10 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.18em] text-emerald-200">
                 Approved Reseller
               </span>
 
@@ -178,7 +178,7 @@ export default async function ResellerDashboardPage() {
               </span>
             </div>
 
-            <p className="mt-6 text-[9px] font-black uppercase tracking-[0.28em] text-emerald-300">
+            <p className="mt-6 text-[9px] font-black uppercase tracking-[0.28em] text-[#D9C29A]">
               AS Fashions
             </p>
 
@@ -259,7 +259,7 @@ export default async function ResellerDashboardPage() {
         <div className="mt-5 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
           <section className="overflow-hidden rounded-[1.75rem] border border-black/[0.05] bg-white shadow-sm">
             <div className="border-b border-black/[0.05] p-5">
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-700">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#6B5435]">
                 Business Profile
               </p>
 
@@ -320,7 +320,7 @@ export default async function ResellerDashboardPage() {
                   Account Status
                 </p>
 
-                <div className="mt-2 inline-flex rounded-full bg-emerald-50 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-emerald-700">
+                <div className="mt-2 inline-flex rounded-full bg-[#F4EBDD] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.12em] text-[#6B5435]">
                   Approved · Active
                 </div>
               </div>
@@ -343,7 +343,7 @@ export default async function ResellerDashboardPage() {
           <section className="overflow-hidden rounded-[1.75rem] border border-black/[0.05] bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-black/[0.05] p-5">
               <div>
-                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-700">
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#6B5435]">
                   Order Activity
                 </p>
 
@@ -354,7 +354,7 @@ export default async function ResellerDashboardPage() {
 
               <Link
                 href="/my-orders"
-                className="text-[9px] font-black uppercase tracking-[0.1em] text-emerald-700"
+                className="text-[9px] font-black uppercase tracking-[0.1em] text-[#6B5435]"
               >
                 View All
               </Link>
@@ -453,7 +453,7 @@ export default async function ResellerDashboardPage() {
         <section className="mt-5 overflow-hidden rounded-[1.75rem] bg-[#031B14] p-5 text-white shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-300">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#D9C29A]">
                 Smart Stock Balance
               </p>
 
