@@ -25,6 +25,7 @@ import {
   createRazorpayOrder,
   getRazorpayKeyId,
   isRazorpayConfigured,
+  refundRazorpayPayment,
 } from "@/lib/razorpay";
 
 type OrderItemInput = {
@@ -71,7 +72,7 @@ function generateOrderNumber() {
     .slice(2, 8)
     .toUpperCase();
 
-  return `ARF-${year}${month}${day}-${random}`;
+  return `ASF-${year}${month}${day}-${random}`;
 }
 
 
@@ -546,9 +547,16 @@ export async function PATCH(request: Request) {
        * REFUNDED does NOT restore stock because the stock
        * was already restored when the order became RETURNED.
        */
+      const onlinePaymentNeverClaimedStock =
+        order.payment?.provider ===
+          "RAZORPAY" &&
+        order.paymentStatus !==
+          "PAID";
+
       const shouldRestoreStock =
-        status === "CANCELLED" ||
-        status === "RETURNED";
+        (status === "CANCELLED" ||
+          status === "RETURNED") &&
+        !onlinePaymentNeverClaimedStock;
 
       let stockRestored = false;
 
@@ -612,21 +620,74 @@ export async function PATCH(request: Request) {
       }
 
       /*
-       * Update order status.
+       * Gateway refunds must happen before
+       * the database is marked REFUNDED.
+       */
+      if (
+        status === "REFUNDED" &&
+        order.payment?.provider ===
+          "RAZORPAY" &&
+        order.payment.status ===
+          "PAID" &&
+        order.payment.transactionId
+      ) {
+        await refundRazorpayPayment(
+          order.payment.transactionId,
+          Math.round(
+            Number(
+              order.payment.amount,
+            ) * 100,
+          ),
+        );
+      }
+
+      const markCodPaid =
+        status ===
+          "DELIVERED" &&
+        order.payment?.provider ===
+          "COD";
+
+      /*
+       * Update order status and payment state.
        */
       const updated = await tx.order.update({
         where: {
           id: orderId,
         },
         data: {
-          status: status as any,
+          status:
+            status as any,
+          ...(markCodPaid
+            ? {
+                paymentStatus:
+                  "PAID" as any,
+              }
+            : status ===
+                "REFUNDED"
+              ? {
+                  paymentStatus:
+                    "REFUNDED" as any,
+                }
+              : {}),
         },
       });
 
-      /*
-       * If an order is refunded, keep payment state
-       * synchronized when a payment record exists.
-       */
+      if (
+        markCodPaid &&
+        order.payment
+      ) {
+        await tx.payment.update({
+          where: {
+            orderId,
+          },
+          data: {
+            status: "PAID",
+            paidAt:
+              new Date(),
+          },
+        });
+      }
+
       if (
         status === "REFUNDED" &&
         order.payment
@@ -636,7 +697,26 @@ export async function PATCH(request: Request) {
             orderId,
           },
           data: {
-            status: "REFUNDED",
+            status:
+              "REFUNDED",
+          },
+        });
+      }
+
+      if (
+        status === "CANCELLED" &&
+        order.payment?.provider ===
+          "RAZORPAY" &&
+        order.payment.status !==
+          "PAID"
+      ) {
+        await tx.payment.update({
+          where: {
+            orderId,
+          },
+          data: {
+            status:
+              "FAILED",
           },
         });
       }
