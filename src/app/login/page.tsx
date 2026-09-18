@@ -107,7 +107,7 @@ export default function LoginPage() {
         </header>
 
         <section className="my-auto py-10">
-          <p className="text-[9px] font-black uppercase tracking-[0.28em] text-emerald-400">
+          <p className="text-[9px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">
             Welcome Back
           </p>
 
@@ -186,7 +186,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-7 rounded-[1.5rem] border border-emerald-300/10 bg-emerald-400/[0.05] p-5">
+          <div className="mt-7 rounded-[1.5rem] border border-[#D4AF37]/15 bg-[#D4AF37]/[0.06] p-5">
             <p className="text-[10px] font-black text-[#211C18]">
               New to AS Fashions?
             </p>
@@ -204,7 +204,7 @@ export default function LoginPage() {
                   "/signup",
                 )
               }
-              className="mt-4 rounded-full border border-emerald-300/20 px-4 py-2.5 text-[9px] font-black uppercase tracking-wider text-emerald-300"
+              className="mt-4 rounded-full border border-[#D4AF37]/25 px-4 py-2.5 text-[9px] font-black uppercase tracking-wider text-[#D9C29A]"
             >
               Create Account →
             </button>
