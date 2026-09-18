@@ -610,11 +610,13 @@ function ProductCard({
 function ProductSection({
   title,
   subtitle,
+  eyebrow,
   products,
   mode,
 }: {
   title: string;
   subtitle: string;
+  eyebrow: string;
   products: Product[];
   mode: Mode;
 }) {
@@ -627,7 +629,7 @@ function ProductSection({
       <div className="mb-6 flex items-end justify-between gap-4">
         <div>
           <p className="mb-2 text-[8px] font-black uppercase tracking-[0.32em] text-[#3D3A37]">
-            Trending now
+            {eyebrow}
           </p>
 
           <h2 className="font-serif text-[2.15rem] font-normal leading-none tracking-[-0.03em] text-[#211C18] sm:text-[2.6rem]">
@@ -641,15 +643,16 @@ function ProductSection({
 
         <button
           type="button"
-          onClick={() => {
-            window.scrollTo({
-              top: 0,
-              behavior: "smooth",
-            });
-          }}
+          onClick={() =>
+            document
+              .getElementById("shop-categories")
+              ?.scrollIntoView({
+                behavior: "smooth",
+              })
+          }
           className="hidden items-center gap-2 text-[10px] font-black text-[#211C18] sm:inline-flex"
         >
-          View All  →
+          Explore →
         </button>
       </div>
 
@@ -2783,7 +2786,7 @@ export default function Home() {
                 Preparing your latest styles
               </h2>
 
-              <p className="mt-2 text-[10px] text-white/40">
+              <p className="mt-2 text-[10px] text-[#7B7066]">
                 New arrivals are coming into view...
               </p>
             </div>
@@ -2825,6 +2828,7 @@ export default function Home() {
                 key={section.id}
                 title={section.title}
                 subtitle={section.subtitle}
+                eyebrow="Just landed"
                 products={newArrivals}
                 mode={mode}
               />
@@ -2868,6 +2872,7 @@ export default function Home() {
                     key={section.id}
                     title={section.title}
                     subtitle={section.subtitle}
+                    eyebrow="Trending now"
                     products={trending}
                     mode={mode}
                   />
@@ -2883,6 +2888,7 @@ export default function Home() {
                     key={section.id}
                     title={section.title}
                     subtitle={section.subtitle}
+                    eyebrow="AR curated"
                     products={featured}
                     mode={mode}
                   />
