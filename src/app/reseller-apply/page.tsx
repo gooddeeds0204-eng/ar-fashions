@@ -753,7 +753,7 @@ export default function ResellerApplyPage() {
 
                 {locationStatus ===
                 "SUCCESS" ? (
-                  <span className="rounded-full bg-emerald-400 px-2.5 py-1 text-[8px] font-black text-black">
+                  <span className="rounded-full bg-[#D4AF37] px-2.5 py-1 text-[8px] font-black text-black">
                     CAPTURED
                   </span>
                 ) : null}
@@ -825,7 +825,7 @@ export default function ResellerApplyPage() {
                   </p>
 
                   {visitingCardUrl ? (
-                    <span className="text-[8px] font-black text-emerald-400">
+                    <span className="text-[8px] font-black text-[#D4AF37]">
                       ✓ UPLOADED
                     </span>
                   ) : null}
