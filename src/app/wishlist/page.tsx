@@ -268,7 +268,7 @@ export default function WishlistPage() {
             className={`flex items-center gap-3 rounded-[1.35rem] border p-3.5 shadow-[0_20px_55px_rgba(0,0,0,0.35)] backdrop-blur-xl ${
               toast.type ===
               "SUCCESS"
-                ? "border-emerald-300/25 bg-[#031B14]/95"
+                ? "border-[#D4AF37]/25 bg-[#031B14]/95"
                 : "border-red-300/25 bg-[#7C3A45]/95"
             }`}
           >
@@ -276,7 +276,7 @@ export default function WishlistPage() {
               className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-black ${
                 toast.type ===
                 "SUCCESS"
-                  ? "bg-emerald-400 text-[#031B14]"
+                  ? "bg-[#D4AF37] text-[#031B14]"
                   : "bg-red-400 text-white"
               }`}
             >
@@ -287,7 +287,7 @@ export default function WishlistPage() {
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-300">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#D9C29A]">
                 AS Fashions
               </p>
 
@@ -350,11 +350,11 @@ export default function WishlistPage() {
 
       {/* HERO */}
       <section className="relative overflow-hidden border-b border-[#E4D7C4]">
-        <div className="pointer-events-none absolute -right-24 top-[-80px] h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-24 top-[-80px] h-72 w-72 rounded-full bg-[#D4AF37]/10 blur-3xl" />
 
         <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6 sm:py-12 lg:px-8">
           <div className="relative">
-            <p className="text-[8px] font-black uppercase tracking-[0.3em] text-emerald-300">
+            <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#D9C29A]">
               AR Saved Edit
             </p>
 
@@ -372,7 +372,7 @@ export default function WishlistPage() {
               </div>
 
               <div className="shrink-0 text-right">
-                <p className="font-serif text-4xl text-emerald-300 sm:text-5xl">
+                <p className="font-serif text-4xl text-[#D9C29A] sm:text-5xl">
                   {items.length}
                 </p>
 
@@ -388,16 +388,16 @@ export default function WishlistPage() {
       <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-9 lg:px-8">
         {items.length === 0 ? (
           <div className="relative overflow-hidden rounded-[1.8rem] border border-[#D9C29A] bg-[#F1E8DA] shadow-[0_30px_80px_rgba(0,0,0,0.3)]">
-            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-emerald-400/10 blur-3xl" />
+            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#D4AF37]/10 blur-3xl" />
 
             <div className="relative p-6 sm:p-10">
               <div className="grid gap-7 md:grid-cols-[1fr_0.9fr] md:items-center">
                 <div>
-                  <div className="grid h-14 w-14 place-items-center rounded-full border border-emerald-300/20 bg-emerald-400/10 text-3xl text-emerald-300">
+                  <div className="grid h-14 w-14 place-items-center rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 text-3xl text-[#D9C29A]">
                     ♡
                   </div>
 
-                  <p className="mt-6 text-[8px] font-black uppercase tracking-[0.28em] text-emerald-300">
+                  <p className="mt-6 text-[8px] font-black uppercase tracking-[0.28em] text-[#D9C29A]">
                     Your Personal Edit
                   </p>
 
@@ -417,7 +417,7 @@ export default function WishlistPage() {
                           "/",
                         )
                       }
-                      className="rounded-full bg-emerald-400 px-5 py-3 text-[9px] font-black uppercase tracking-[0.08em] text-[#031B14]"
+                      className="rounded-full bg-[#D4AF37] px-5 py-3 text-[9px] font-black uppercase tracking-[0.08em] text-[#031B14]"
                     >
                       Explore Collection →
                     </button>
@@ -470,7 +470,7 @@ export default function WishlistPage() {
                         }
                         className="rounded-[1.2rem] border border-[#E4D7C4] bg-[#FFFDF9] p-4"
                       >
-                        <p className="font-serif text-xl text-emerald-300">
+                        <p className="font-serif text-xl text-[#D9C29A]">
                           {number}
                         </p>
 
@@ -492,7 +492,7 @@ export default function WishlistPage() {
           <>
             <div className="mb-5 flex items-end justify-between gap-3">
               <div>
-                <p className="text-[8px] font-black uppercase tracking-[0.28em] text-emerald-300">
+                <p className="text-[8px] font-black uppercase tracking-[0.28em] text-[#D9C29A]">
                   Your Edit
                 </p>
 
@@ -581,7 +581,7 @@ export default function WishlistPage() {
 
                         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" />
 
-                        <span className="absolute left-2.5 top-2.5 rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.14em] text-emerald-200 backdrop-blur">
+                        <span className="absolute left-2.5 top-2.5 rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.14em] text-[#E9DECD] backdrop-blur">
                           Saved Look
                         </span>
 
@@ -600,7 +600,7 @@ export default function WishlistPage() {
 
                         {discount >
                           0 && (
-                          <span className="absolute bottom-2.5 left-2.5 rounded-full bg-emerald-400 px-2.5 py-1 text-[7px] font-black text-[#031B14]">
+                          <span className="absolute bottom-2.5 left-2.5 rounded-full bg-[#D4AF37] px-2.5 py-1 text-[7px] font-black text-[#031B14]">
                             {discount}% OFF
                           </span>
                         )}
@@ -608,7 +608,7 @@ export default function WishlistPage() {
 
                       <div className="p-3.5">
                         {product.category && (
-                          <p className="text-[7px] font-black uppercase tracking-[0.18em] text-emerald-300">
+                          <p className="text-[7px] font-black uppercase tracking-[0.18em] text-[#D9C29A]">
                             {
                               product
                                 .category
@@ -652,7 +652,7 @@ export default function WishlistPage() {
                               `/products/${product.id}?mode=retail`,
                             )
                           }
-                          className="mt-3.5 min-h-[42px] w-full rounded-xl bg-emerald-400 px-3 text-[9px] font-black uppercase tracking-[0.08em] text-[#031B14] transition active:scale-[0.98]"
+                          className="mt-3.5 min-h-[42px] w-full rounded-xl bg-[#031B14] px-3 text-[9px] font-black uppercase tracking-[0.08em] text-[#FFFDF9] transition-[transform,opacity] duration-200 active:scale-[0.98]"
                         >
                           View Product →
                         </button>
@@ -705,7 +705,7 @@ export default function WishlistPage() {
 
           <button
             type="button"
-            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-emerald-300"
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#D9C29A]"
           >
             <span className="text-lg">
               ♥
