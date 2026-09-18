@@ -43,13 +43,21 @@ function normalizeSettings(
       source.minimumRetailOrder,
     );
 
+  const requestedStoreName =
+    String(
+      source.storeName ??
+        DEFAULT_SETTINGS.storeName,
+    ).trim();
+
+  const storeName =
+    requestedStoreName.toUpperCase() ===
+    "AR FASHIONS"
+      ? DEFAULT_SETTINGS.storeName
+      : requestedStoreName ||
+        DEFAULT_SETTINGS.storeName;
+
   return {
-    storeName:
-      String(
-        source.storeName ??
-          DEFAULT_SETTINGS.storeName,
-      ).trim() ||
-      DEFAULT_SETTINGS.storeName,
+    storeName,
 
     supportPhone:
       String(
