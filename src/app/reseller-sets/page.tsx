@@ -209,7 +209,7 @@ export default function ResellerSetsPage() {
             className="text-xl font-black tracking-[-0.05em]"
           >
             AS
-            <span className="text-emerald-600">
+            <span className="text-[#6B5435]">
               FASHIONS
             </span>
           </button>
@@ -234,9 +234,9 @@ export default function ResellerSetsPage() {
         className="py-6"
       />
 
-      <section className="bg-zinc-950 text-white">
+      <section className="bg-[#031B14] text-white">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-          <p className="text-[10px] font-black uppercase tracking-[0.28em] text-emerald-400">
+          <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">
             AS Fashions Wholesale
           </p>
 
@@ -284,7 +284,7 @@ export default function ResellerSetsPage() {
                 Mode
               </p>
 
-              <p className="mt-1 text-sm font-black text-emerald-400">
+              <p className="mt-1 text-sm font-black text-[#D4AF37]">
                 RESELLER
               </p>
             </div>
@@ -391,7 +391,7 @@ export default function ResellerSetsPage() {
                         </span>
 
                         {set.isFeatured ? (
-                          <span className="rounded-full bg-emerald-500 px-3 py-1.5 text-[9px] font-black text-white">
+                          <span className="rounded-full bg-[#F4EBDD]0 px-3 py-1.5 text-[9px] font-black text-white">
                             FEATURED
                           </span>
                         ) : null}
@@ -399,7 +399,7 @@ export default function ResellerSetsPage() {
                     </div>
 
                     <div className="p-5">
-                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-600">
+                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6B5435]">
                         {
                           set.pieces
                         }{" "}
@@ -438,7 +438,7 @@ export default function ResellerSetsPage() {
 
                         {saving >
                         0 ? (
-                          <span className="rounded-full bg-emerald-50 px-3 py-2 text-[10px] font-black text-emerald-700">
+                          <span className="rounded-full bg-[#F4EBDD] px-3 py-2 text-[10px] font-black text-[#6B5435]">
                             Save{" "}
                             {money(
                               saving,
@@ -503,7 +503,7 @@ export default function ResellerSetsPage() {
                             `/reseller-sets/${set.slug}`,
                           )
                         }
-                        className="mt-5 w-full rounded-2xl bg-zinc-950 py-4 text-sm font-black text-white transition hover:bg-emerald-600"
+                        className="mt-5 w-full rounded-2xl bg-[#031B14] py-4 text-sm font-black text-white transition hover:bg-[#031B14]"
                       >
                         Build This Set
                       </button>
