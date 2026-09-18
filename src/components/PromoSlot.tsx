@@ -194,7 +194,7 @@ export default function PromoSlot({
   const background =
     promo.backgroundGradient ||
     promo.backgroundColor ||
-    "#18181b";
+    "#031B14";
 
   // AR EDIT SPECIAL SLOT
   if (placement === "HOME_MIDDLE") {
@@ -217,7 +217,7 @@ export default function PromoSlot({
     return (
       <section className={`mx-auto w-full max-w-7xl px-4 py-9 sm:px-6 sm:py-11 lg:px-8 ${className}`}>
         <div
-          className="relative min-h-[280px] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#d9c3ab] shadow-[0_25px_60px_rgba(0,0,0,0.28)] sm:min-h-[370px]"
+          className="relative min-h-[280px] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#F4EBDD] shadow-[0_25px_60px_rgba(0,0,0,0.28)] sm:min-h-[370px]"
           style={{ background }}
         >
           {promo.contentType === "VIDEO" &&
@@ -270,7 +270,7 @@ export default function PromoSlot({
           )}
 
           <div
-            className="absolute inset-0 bg-gradient-to-r from-[#e9d5bc]/95 via-[#d7bea0]/70 to-transparent"
+            className="absolute inset-0 bg-gradient-to-r from-[#F4EBDD]/95 via-[#D9C29A]/72 to-transparent"
             style={{
               opacity:
                 Math.min(
@@ -288,7 +288,7 @@ export default function PromoSlot({
               AR Fashions
             </p>
 
-            <h2 className="mt-3 whitespace-pre-line font-serif text-[2.3rem] leading-[0.9] tracking-[-0.05em] text-[#1A1A1A] sm:text-5xl">
+            <h2 className="mt-3 whitespace-pre-line font-serif text-[2.3rem] leading-[0.9] tracking-[-0.05em] text-[#211C18] sm:text-5xl">
               {promo.title || "AR Edit"}
             </h2>
 
@@ -301,7 +301,7 @@ export default function PromoSlot({
             {promo.buttonText && href && (
               <a
                 href={href}
-                className="mt-5 inline-flex w-fit rounded-full bg-[#1A1A1A] px-5 py-3 text-[8px] font-black uppercase tracking-[0.1em] text-white shadow-lg"
+                className="mt-5 inline-flex w-fit rounded-full bg-[#031B14] px-5 py-3 text-[8px] font-black uppercase tracking-[0.1em] text-white shadow-lg"
               >
                 {promo.buttonText} →
               </a>
@@ -318,10 +318,10 @@ export default function PromoSlot({
                     setIndex(itemIndex)
                   }
                   aria-label={`Show AR Edit ${itemIndex + 1}`}
-                  className={`h-1.5 rounded-full transition-all ${
+                  className={`h-1.5 rounded-full transition-[transform,opacity] duration-300 ${
                     itemIndex === index
-                      ? "w-7 bg-[#1A1A1A]"
-                      : "w-2 bg-[#1A1A1A]/35"
+                      ? "w-7 bg-[#031B14]"
+                      : "w-2 bg-[#031B14]/35"
                   }`}
                 />
               ))}
@@ -337,7 +337,7 @@ export default function PromoSlot({
       className={`mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 ${className}`}
     >
       <div
-        className="relative min-h-[220px] overflow-hidden rounded-3xl bg-zinc-950 sm:min-h-[260px]"
+        className="relative min-h-[220px] overflow-hidden rounded-3xl bg-[#031B14] sm:min-h-[260px]"
         style={{
           background,
         }}
@@ -482,7 +482,7 @@ export default function PromoSlot({
             href && (
               <a
                 href={href}
-                className="mt-5 inline-flex w-fit rounded-xl bg-white px-5 py-3 text-xs font-black text-zinc-950 shadow-lg"
+                className="mt-5 inline-flex w-fit rounded-xl bg-[#FFFDF9] px-5 py-3 text-xs font-black text-[#031B14] shadow-lg"
               >
                 {
                   promo.buttonText
@@ -511,7 +511,7 @@ export default function PromoSlot({
                   aria-label={`Show promo ${
                     itemIndex + 1
                   }`}
-                  className={`h-2.5 rounded-full transition-all ${
+                  className={`h-2.5 rounded-full transition-[transform,opacity] duration-300 ${
                     itemIndex ===
                     index
                       ? "w-7 bg-white"

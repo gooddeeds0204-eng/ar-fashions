@@ -2768,7 +2768,7 @@ export default function Home() {
       <PromoSlot
         placement="SHOP_TOP"
         audience={mode}
-        className="py-4"
+        className="py-5"
       />
 
       {loading ? (
@@ -2903,7 +2903,6 @@ export default function Home() {
       <PromoSlot
         placement="HOME_MIDDLE"
         audience={mode}
-        className="py-6"
       />
 
       {/* EDITORIAL + RESELLER PROMOS */}
@@ -2974,12 +2973,12 @@ export default function Home() {
       <PromoSlot
         placement="HOME_BOTTOM"
         audience={mode}
-        className="pb-10"
+        className="pb-6 sm:pb-10"
       />
 
 
       {/* FOOTER */}
-      <footer className="border-t border-[#E4D7C4] bg-[#F4EBDD]">
+      <footer className="border-t border-[#E4D7C4] bg-[#F4EBDD] pb-20 sm:pb-0">
         <div className="mx-auto max-w-7xl px-5 py-10 text-center sm:px-6 lg:px-8">
           <p className="font-serif text-[1.8rem] tracking-[0.08em] text-[#211C18]">
             AR
