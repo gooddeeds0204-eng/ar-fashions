@@ -233,7 +233,11 @@ function StoreIcon({
     | "user"
     | "home"
     | "grid"
-    | "play";
+    | "play"
+    | "truck"
+    | "shield"
+    | "box"
+    | "users";
   className?: string;
 }) {
   const common = {
@@ -290,6 +294,47 @@ function StoreIcon({
     );
   }
 
+  if (name === "truck") {
+    return (
+      <svg {...common}>
+        <path d="M3 6h11v10H3z" />
+        <path d="M14 10h3l3 3v3h-6z" />
+        <circle cx="7" cy="18" r="2" />
+        <circle cx="17" cy="18" r="2" />
+      </svg>
+    );
+  }
+
+  if (name === "shield") {
+    return (
+      <svg {...common}>
+        <path d="M12 3 19 6v5c0 4.5-2.7 7.6-7 10-4.3-2.4-7-5.5-7-10V6l7-3Z" />
+        <path d="m9 12 2 2 4-4" />
+      </svg>
+    );
+  }
+
+  if (name === "box") {
+    return (
+      <svg {...common}>
+        <path d="m4 7 8-4 8 4-8 4-8-4Z" />
+        <path d="M4 7v10l8 4 8-4V7" />
+        <path d="M12 11v10" />
+      </svg>
+    );
+  }
+
+  if (name === "users") {
+    return (
+      <svg {...common}>
+        <circle cx="9" cy="9" r="3" />
+        <circle cx="17" cy="10" r="2.5" />
+        <path d="M3.5 20c.6-3.8 2.5-5.6 5.5-5.6s4.9 1.8 5.5 5.6" />
+        <path d="M14.5 15c2.9-.2 4.9 1.4 5.7 4.2" />
+      </svg>
+    );
+  }
+
   if (name === "home") {
     return (
       <svg {...common}>
@@ -325,27 +370,21 @@ function ProductCard({
   mode: Mode;
 }) {
   const router = useRouter();
-
   const [wishlisted, setWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
   useEffect(() => {
     async function loadWishlistState() {
       try {
-        const userId =
-          await ensureUserSession();
-
+        const userId = await ensureUserSession();
         if (!userId) return;
 
-        const response = await fetch(
-          "/api/wishlist",
-          { cache: "no-store" },
-        );
-
+        const response = await fetch("/api/wishlist", {
+          cache: "no-store",
+        });
         if (!response.ok) return;
 
         const data = await response.json();
-
         const items = Array.isArray(data?.wishlist)
           ? data.wishlist
           : [];
@@ -357,10 +396,7 @@ function ProductCard({
           ),
         );
       } catch (error) {
-        console.error(
-          "Wishlist state failed:",
-          error,
-        );
+        console.error("Wishlist state failed:", error);
       }
     }
 
@@ -370,9 +406,7 @@ function ProductCard({
   async function toggleWishlist() {
     if (wishlistLoading) return;
 
-    const userId =
-      await ensureUserSession();
-
+    const userId = await ensureUserSession();
     if (!userId) {
       alert("Please login to use Wishlist.");
       return;
@@ -380,56 +414,19 @@ function ProductCard({
 
     try {
       setWishlistLoading(true);
+      const response = await fetch("/api/wishlist", {
+        method: wishlisted ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id }),
+      });
 
-      if (wishlisted) {
-        const response = await fetch(
-          "/api/wishlist",
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              productId: product.id,
-            }),
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            "Failed to remove from wishlist.",
-          );
-        }
-
-        setWishlisted(false);
-      } else {
-        const response = await fetch(
-          "/api/wishlist",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              productId: product.id,
-            }),
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            "Failed to add to wishlist.",
-          );
-        }
-
-        setWishlisted(true);
+      if (!response.ok) {
+        throw new Error("Wishlist update failed.");
       }
-    } catch (error) {
-      console.error(
-        "Wishlist toggle failed:",
-        error,
-      );
 
+      setWishlisted((current) => !current);
+    } catch (error) {
+      console.error("Wishlist toggle failed:", error);
       alert(
         error instanceof Error
           ? error.message
@@ -459,28 +456,28 @@ function ProductCard({
         )
       : 0;
 
+  function openProduct() {
+    saveProductTransitionPreview({
+      id: product.id,
+      name: product.name,
+      category: product.category.name,
+      image:
+        media?.type === "IMAGE"
+          ? media.url
+          : media?.thumbnailUrl ?? null,
+      price,
+      mrp: product.mrp,
+      mode,
+    });
+
+    router.push(
+      `/products/${product.id}?mode=${mode.toLowerCase()}`,
+    );
+  }
+
   return (
     <article
-      onClick={() => {
-        saveProductTransitionPreview({
-          id: product.id,
-          name: product.name,
-          category:
-            product.category.name,
-          image:
-            media?.type === "IMAGE"
-              ? media.url
-              : media?.thumbnailUrl ??
-                null,
-          price,
-          mrp: product.mrp,
-          mode,
-        });
-
-        router.push(
-          `/products/${product.id}?mode=${mode.toLowerCase()}`,
-        );
-      }}
+      onClick={openProduct}
       onPointerEnter={() =>
         router.prefetch(
           `/products/${product.id}?mode=${mode.toLowerCase()}`,
@@ -491,9 +488,9 @@ function ProductCard({
           `/products/${product.id}?mode=${mode.toLowerCase()}`,
         )
       }
-      className="group min-w-0 cursor-pointer overflow-hidden rounded-[1.35rem] border border-[#E4D7C4] bg-[#FFFDF9] p-2 shadow-[0_10px_30px_rgba(61,48,37,0.055)] transition duration-300 active:scale-[0.985]"
+      className="group min-w-0 cursor-pointer"
     >
-      <div className="relative aspect-[3/4] overflow-hidden rounded-[1.05rem] bg-[#F1E8DA]">
+      <div className="relative aspect-[4/5] overflow-hidden rounded-[0.8rem] bg-[#EDE2D2]">
         {media?.type === "VIDEO" ? (
           <video
             src={media.url}
@@ -501,7 +498,7 @@ function ProductCard({
             autoPlay
             loop
             playsInline
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
           />
         ) : media ? (
           <img
@@ -509,18 +506,12 @@ function ProductCard({
             alt={media.altText ?? product.name}
             loading="lazy"
             decoding="async"
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-sm text-zinc-400">
-            No image
+          <div className="flex h-full items-center justify-center bg-[#E8DCCB] font-serif text-3xl text-[#9A7B4A]">
+            AR
           </div>
-        )}
-
-        {product.isNewArrival && (
-          <span className="absolute left-2 top-2 rounded-full bg-[#7C2732] px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-white shadow-sm">
-            New
-          </span>
         )}
 
         <button
@@ -530,75 +521,87 @@ function ProductCard({
             event.stopPropagation();
             toggleWishlist();
           }}
-          className={`absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-xl shadow-sm transition active:scale-90 ${
-            wishlisted
-              ? "text-red-500"
-              : "text-zinc-700"
-          } ${
-            wishlistLoading
-              ? "opacity-50"
-              : "hover:scale-110"
-          }`}
           aria-label={
             wishlisted
               ? "Remove from Wishlist"
               : "Add to Wishlist"
           }
+          className={`absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-full bg-[#FFFDF9]/94 shadow-[0_5px_18px_rgba(0,0,0,0.12)] ${
+            wishlisted ? "text-[#7C2732]" : "text-[#211C18]"
+          } ${
+            wishlistLoading ? "opacity-45" : ""
+          }`}
         >
-          {wishlisted ? "♥" : "♡"}
+          <StoreIcon
+            name="heart"
+            className="h-[19px] w-[19px]"
+          />
         </button>
+
+        <span className="absolute bottom-2 left-2 rounded-sm bg-[#6E392A]/92 px-2 py-1 text-[7px] font-black uppercase tracking-[0.08em] text-white">
+          {mode === "RESELLER"
+            ? "Wholesale"
+            : product.isFeatured
+              ? "Premium"
+              : product.isNewArrival
+                ? "New"
+                : product.isTrending
+                  ? "Trending"
+                  : "AR Pick"}
+        </span>
       </div>
 
-      <div className="px-1.5 pb-2 pt-3 sm:px-2 sm:pt-3.5">
-        <p className="mb-1.5 text-[7px] font-black uppercase tracking-[0.2em] text-[#B8923B]">
-          {product.category.name}
-        </p>
-
-        <h3 className="line-clamp-1 text-[12px] font-bold tracking-[-0.01em] text-[#211C18] sm:text-sm">
+      <div className="pt-2.5">
+        <h3 className="line-clamp-1 text-[12px] font-semibold leading-4 text-[#211C18] sm:text-sm">
           {product.name}
         </h3>
 
-        <div className="mt-2 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="text-[13px] font-black text-[#211C18] sm:text-[15px]">
             {money(price)}
           </span>
 
           {product.mrp &&
             Number(product.mrp) > Number(price) && (
-              <span className="text-[10px] text-zinc-400 line-through sm:text-[11px]">
+              <span className="text-[10px] text-[#9A9289] line-through">
                 {money(product.mrp)}
               </span>
             )}
 
           {discountPercent > 0 && (
-            <span className="text-[9px] font-black text-[#D4AF37] sm:text-[10px]">
-              ({discountPercent}% OFF)
+            <span className="rounded-[0.28rem] bg-[#0F5A38] px-1.5 py-1 text-[7px] font-black text-white">
+              {discountPercent}% OFF
             </span>
           )}
         </div>
 
-        <div className="mt-3 flex items-center justify-between border-t border-[#EFE5D7] pt-2.5">
-          <span className="text-[7px] font-black uppercase tracking-[0.16em] text-[#7C3A45]">
-            {mode === "RESELLER"
-              ? "Wholesale"
-              : product.isNewArrival
-                ? "New arrival"
-                : product.isTrending
-                  ? "Trending"
-                  : "AR selection"}
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-[8px] font-semibold text-[#7B7066]">
+            {product.category.name}
           </span>
 
-          <span className="text-[8px] font-black text-[#6F655D]">
-            View →
-          </span>
+          <button
+            type="button"
+            aria-label="Open product"
+            onClick={(event) => {
+              event.stopPropagation();
+              openProduct();
+            }}
+            className="grid h-8 w-8 place-items-center rounded-[0.55rem] bg-[#041B14] text-[#FFF9ED]"
+          >
+            <StoreIcon
+              name="bag"
+              className="h-[16px] w-[16px]"
+            />
+          </button>
         </div>
 
-        {mode === "RESELLER" && product.resellerPrice !== null && (
-          <p className="mt-1 text-[11px] font-semibold text-[#D4AF37]">
+        {mode === "RESELLER" &&
+          product.resellerPrice !== null && (
+          <p className="mt-1 text-[9px] font-bold text-[#7C3A45]">
             MOQ {product.resellerMOQ ?? 1} pcs
           </p>
         )}
-
       </div>
     </article>
   );
@@ -620,17 +623,14 @@ function ProductSection({
   if (products.length === 0) return null;
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 py-11 sm:px-6 sm:py-14 lg:px-8">
-      <div className="mb-7 flex items-end justify-between gap-4 border-b border-[#E4D7C4] pb-5 sm:mb-8">
+    <section className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+      <div className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <div className="mb-2 flex items-center gap-2">
-            <span className="h-px w-6 bg-[#B8923B]" />
-            <p className="text-[8px] font-black uppercase tracking-[0.28em] text-[#B8923B]">
-              AR Edit
-            </p>
-          </div>
+          <p className="mb-2 text-[8px] font-black uppercase tracking-[0.32em] text-[#3D3A37]">
+            Trending now
+          </p>
 
-          <h2 className="font-serif text-[2rem] font-normal leading-[0.95] tracking-[-0.025em] text-[#211C18] sm:text-[2.35rem]">
+          <h2 className="font-serif text-[2.15rem] font-normal leading-none tracking-[-0.03em] text-[#211C18] sm:text-[2.6rem]">
             {title}
           </h2>
 
@@ -647,14 +647,14 @@ function ProductSection({
               behavior: "smooth",
             });
           }}
-          className="hidden rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-2 text-[9px] font-black uppercase tracking-[0.08em] text-[#6F655D] sm:block"
+          className="hidden items-center gap-2 text-[10px] font-black text-[#211C18] sm:inline-flex"
         >
-          View All →
+          View All  →
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
-        {products.slice(0, 5).map((product) => (
+      <div className="grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
+        {products.slice(0, 4).map((product) => (
           <ProductCard
             key={product.id}
             product={product}
@@ -731,8 +731,6 @@ function BrandHighlights({
 
 
 function FashionReelsSection({
-  title,
-  subtitle,
   reels,
   mode,
 }: {
@@ -743,365 +741,57 @@ function FashionReelsSection({
 }) {
   const router = useRouter();
 
-  const preferredReel =
-    reels.find(
-      (item) =>
-        item.source === "UPLOAD",
-    ) ?? reels[0];
+  if (reels.length === 0) return null;
 
-  const [
-    selectedReelId,
-    setSelectedReelId,
-  ] = useState<string | null>(
-    preferredReel?.id ?? null,
-  );
-
-  useEffect(() => {
-    if (reels.length === 0) {
-      return;
-    }
-
-    const stillExists =
-      reels.some(
-        (item) =>
-          item.id ===
-          selectedReelId,
-      );
-
-    if (!stillExists) {
-      const preferred =
-        reels.find(
-          (item) =>
-            item.source ===
-            "UPLOAD",
-        ) ?? reels[0];
-
-      setSelectedReelId(
-        preferred.id,
-      );
-    }
-  }, [
-    reels,
-    selectedReelId,
-  ]);
-
-  if (reels.length === 0) {
-    return null;
-  }
-
-  const selectedReel =
-    reels.find(
-      (item) =>
-        item.id ===
-        selectedReelId,
-    ) ??
-    preferredReel ??
+  const reel =
+    reels.find((item) => item.source === "UPLOAD") ??
     reels[0];
 
-  const selectedPrice =
-    mode === "RESELLER" &&
-    selectedReel.product.resellerPrice !== null
-      ? selectedReel.product.resellerPrice
-      : selectedReel.product.retailPrice;
-
-  function openProduct(
-    reel: Reel,
-  ) {
-    const price =
-      mode === "RESELLER" &&
-      reel.product.resellerPrice !==
-        null
-        ? reel.product.resellerPrice
-        : reel.product.retailPrice;
-
-    saveProductTransitionPreview({
-      id: reel.product.id,
-      name: reel.product.name,
-      category: "AR Featured Look",
-      image:
-        reel.product.image ??
-        reel.thumbnailUrl ??
-        null,
-      price,
-      mrp: null,
-      mode,
-    });
-
-    const href =
-      `/products/${reel.product.id}?mode=${mode.toLowerCase()}`;
-
-    router.prefetch(href);
-    router.push(href);
-  }
+  const image =
+    reel.thumbnailUrl ??
+    reel.product.image ??
+    null;
 
   return (
-    <section
-      id="fashion-reels"
-      className="mx-3 overflow-hidden rounded-[1.8rem] border border-[#D4AF37]/10 bg-[#050506] py-8 text-white shadow-[0_30px_80px_rgba(0,0,0,0.42)] sm:mx-6 sm:py-10 lg:mx-auto lg:max-w-7xl"
-    >
-      <div className="px-4 sm:px-6 lg:px-8">
-        <div className="mb-5 flex items-end justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="h-px w-5 bg-[#D4AF37]" />
+    <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
+      <button
+        type="button"
+        onClick={() =>
+          router.push(
+            `/reels?mode=${mode.toLowerCase()}`,
+          )
+        }
+        className="group relative block w-full overflow-hidden rounded-[1rem] bg-[#042219] text-left text-white"
+      >
+        <div className="relative min-h-[190px] sm:min-h-[260px]">
+          {image ? (
+            <img
+              src={image}
+              alt={reel.caption || "AR Edit"}
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover opacity-70 transition duration-300 group-hover:scale-[1.02]"
+            />
+          ) : null}
 
-              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#D4AF37]">
-                AR Live Looks
-              </p>
-            </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#032018] via-[#032018]/78 to-[#032018]/15" />
 
-            <h2 className="mt-2 font-serif text-[2rem] leading-none text-white sm:text-3xl">
-              {title}
-            </h2>
-
-            <p className="mt-2 text-[10px] text-white/40 sm:text-xs">
-              Watch the look. Shop the look.
+          <div className="relative z-10 flex min-h-[190px] max-w-[65%] flex-col justify-center p-6 sm:min-h-[260px] sm:p-8">
+            <p className="text-[8px] font-black uppercase tracking-[0.32em] text-[#D9C29A]">
+              AR Edit
             </p>
-          </div>
-
-          <span className="rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.14em] text-white/50">
-            {reels.length} Reels
-          </span>
-        </div>
-
-        <div className="grid grid-cols-[minmax(0,1fr)_92px] gap-3 sm:grid-cols-[minmax(0,1fr)_140px] sm:gap-4 lg:grid-cols-[420px_150px_minmax(0,1fr)]">
-          {/* CINEMATIC MAIN REEL */}
-          <div className="relative overflow-hidden rounded-[1.4rem] border border-white/10 bg-black shadow-[0_22px_50px_rgba(0,0,0,0.4)]">
-            <div className="relative aspect-[9/16]">
-              {selectedReel.source === "UPLOAD" ? (
-                <video
-                  key={selectedReel.id}
-                  src={selectedReel.url}
-                  poster={
-                    selectedReel.thumbnailUrl ??
-                    undefined
-                  }
-                  controls
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  className="h-full w-full object-cover"
-                />
-              ) : selectedReel.instagramEmbedUrl ? (
-                <iframe
-                  key={selectedReel.id}
-                  src={selectedReel.instagramEmbedUrl}
-                  title={selectedReel.caption}
-                  className="h-full w-full border-0 bg-black"
-                  allow="autoplay; encrypted-media"
-                />
-              ) : selectedReel.thumbnailUrl ? (
-                <img
-                  src={selectedReel.thumbnailUrl}
-                  alt={selectedReel.caption}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center bg-gradient-to-b from-[#4B1821] to-black">
-                  <span className="text-4xl">
-                    ▶
-                  </span>
-                </div>
-              )}
-
-              <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/70 to-transparent p-3">
-                <div className="flex items-center justify-between">
-                  <span className="rounded-full border border-white/10 bg-black/45 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.16em] text-[#D4AF37] backdrop-blur">
-                    {selectedReel.source === "UPLOAD"
-                      ? "AR Original"
-                      : "Instagram"}
-                  </span>
-
-                  <span className="rounded-full bg-black/40 px-2.5 py-1 text-[7px] font-bold text-[#6F655D] backdrop-blur">
-                    Full Look
-                  </span>
-                </div>
-              </div>
-
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/55 to-transparent p-4">
-                <p className="line-clamp-2 text-[15px] font-black leading-5 text-white sm:text-lg">
-                  {selectedReel.product.name}
-                </p>
-
-                <p className="mt-2 text-[15px] font-black text-[#D4AF37]">
-                  {money(selectedPrice)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* VERTICAL REEL RAIL */}
-          <div className="max-h-[590px] space-y-2 overflow-y-auto pr-0.5 sm:max-h-[700px] sm:space-y-3">
-            {reels
-              .slice(0, 10)
-              .map((reel) => {
-                const active =
-                  reel.id ===
-                  selectedReel.id;
-
-                return (
-                  <button
-                    key={reel.id}
-                    type="button"
-                    onClick={() =>
-                      setSelectedReelId(
-                        reel.id,
-                      )
-                    }
-                    className={`relative block w-full overflow-hidden rounded-xl border transition active:scale-[0.97] ${
-                      active
-                        ? "border-[#D4AF37] shadow-[0_0_18px_rgba(212,175,55,0.22)]"
-                        : "border-white/10"
-                    }`}
-                  >
-                    <div className="relative aspect-[9/14] bg-[#181313]">
-                      {reel.thumbnailUrl ? (
-                        <img
-                          src={reel.thumbnailUrl}
-                          alt={reel.caption}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : reel.source === "UPLOAD" ? (
-                        <video
-                          src={reel.url}
-                          muted
-                          playsInline
-                          preload="metadata"
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center bg-gradient-to-b from-[#5A1D28] to-black">
-                          <span className="text-xl">
-                            ▶
-                          </span>
-                        </div>
-                      )}
-
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
-
-                      <div className="absolute inset-0 grid place-items-center">
-                        <span
-                          className={`grid h-8 w-8 place-items-center rounded-full text-[9px] shadow-lg ${
-                            active
-                              ? "bg-[#D4AF37] text-[#080B0D]"
-                              : "bg-white/90 text-black"
-                          }`}
-                        >
-                          ▶
-                        </span>
-                      </div>
-
-                      {active && (
-                        <span className="absolute left-1.5 top-1.5 rounded-full bg-[#D4AF37] px-1.5 py-0.5 text-[6px] font-black uppercase text-[#080B0D]">
-                          Live
-                        </span>
-                      )}
-
-                      <p className="absolute inset-x-0 bottom-0 line-clamp-2 p-2 text-left text-[7px] font-black leading-3 text-white sm:text-[8px]">
-                        {reel.product.name}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-          </div>
-
-          {/* PRODUCT PANEL - DESKTOP */}
-          <div className="hidden flex-col justify-between rounded-[1.5rem] border border-white/10 bg-white/[0.045] p-6 lg:flex">
-            <div>
-              <p className="text-[8px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">
-                Shop the reel
-              </p>
-
-              <h3 className="mt-4 font-serif text-3xl leading-tight text-white">
-                {selectedReel.product.name}
-              </h3>
-
-              <p className="mt-3 text-sm leading-6 text-[#8A7F75]">
-                {selectedReel.caption ||
-                  "See the style in motion and shop the featured product instantly."}
-              </p>
-
-              <p className="mt-6 text-2xl font-black text-white">
-                {money(selectedPrice)}
-              </p>
-
-              <div className="mt-6 flex flex-wrap gap-2">
-                {[
-                  "AR Curated",
-                  mode === "RESELLER"
-                    ? "Bulk Ready"
-                    : "Retail Pick",
-                  "Watch & Shop",
-                ].map((item) => (
-                  <span
-                    key={item}
-                    className="rounded-full border border-white/10 bg-black/15 px-3 py-1.5 text-[8px] font-bold text-white/55"
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() =>
-                openProduct(
-                  selectedReel,
-                )
-              }
-              className="mt-8 w-full rounded-2xl bg-[#D4AF37] py-4 text-[10px] font-black uppercase tracking-[0.1em] text-[#080B0D]"
-            >
-              Shop This Look →
-            </button>
+            <h3 className="mt-3 font-serif text-[2rem] leading-[0.95] sm:text-[2.8rem]">
+              Stories in Style
+            </h3>
+            <p className="mt-3 text-[10px] text-white/72 sm:text-xs">
+              Real people. Real looks.
+            </p>
+            <span className="mt-6 text-[9px] font-black uppercase tracking-[0.14em]">
+              Explore now  →
+            </span>
           </div>
         </div>
-
-        {/* MOBILE PRODUCT CTA */}
-        <button
-          type="button"
-          onClick={() =>
-            openProduct(
-              selectedReel,
-            )
-          }
-          className="mt-4 flex w-full items-center justify-between gap-3 rounded-[1.2rem] border border-[#D4AF37]/15 bg-[#D4AF37]/[0.07] p-4 text-left lg:hidden"
-        >
-          <div className="min-w-0">
-            <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">
-              Featured Look
-            </p>
-
-            <p className="mt-1 truncate text-[12px] font-black text-white">
-              {selectedReel.product.name}
-            </p>
-          </div>
-
-          <div className="shrink-0 text-right">
-            <p className="text-[13px] font-black text-[#211C18]">
-              {money(selectedPrice)}
-            </p>
-
-            <p className="mt-1 text-[8px] font-black text-[#D4AF37]">
-              Shop Now →
-            </p>
-          </div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() =>
-            router.push(
-              `/reels?mode=${mode.toLowerCase()}`,
-            )
-          }
-          className="mt-4 w-full rounded-[1rem] border border-white/10 bg-white/[0.03] py-3 text-[8px] font-black uppercase tracking-[0.16em] text-white/50"
-        >
-          View All AR Reels →
-        </button>
-      </div>
+      </button>
     </section>
   );
 }
@@ -2034,9 +1724,9 @@ export default function Home() {
     HomeSection[] = [
       {
         id: "default-new-arrivals",
-        title: "New Arrivals",
+        title: "Fresh Drops",
         subtitle:
-          "Fresh styles just added",
+          "New season favourites, curated for now",
         sectionType:
           "NEW_ARRIVALS",
         sortOrder: 0,
@@ -2263,274 +1953,114 @@ export default function Home() {
         }
       />
 
-      {/* IMAGE 2 LUXURY HEADER */}
-      <div className="border-b border-[#D4AF37]/10 bg-[#E9DECD] px-4 py-2 text-center text-[8px] font-bold tracking-[0.08em] text-[#2B241F] sm:text-[10px]">
-        <div className="mx-auto flex max-w-7xl items-center justify-center gap-3 sm:justify-between">
-          <p>
-            ✦{" "}
-            {siteSettings.storeNotice ||
-              "Premium fashion for every mood, every moment."}
-          </p>
-
-          <div className="hidden items-center gap-4 text-[8px] text-[#7B7066] sm:flex">
+      {/* AR PREMIUM EDITORIAL HEADER */}
+      <header className="sticky top-0 z-50 bg-[#031B14] text-[#FFF8EC] shadow-[0_10px_30px_rgba(0,0,0,0.16)]">
+        <div className="mx-auto max-w-7xl px-4 pb-3 pt-3 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() =>
-                router.push(
-                  "/my-orders",
-                )
-              }
-            >
-              Track Order
-            </button>
-
-            <span className="text-[#C6B9A8]">
-              |
-            </span>
-
-            <span>
-              Shop Smart. Dress Better.
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <header className="sticky top-0 z-50 border-b border-[#E4D7C4] bg-[#FFFDF9]/95 text-[#211C18] shadow-[0_8px_30px_rgba(61,48,37,0.06)] backdrop-blur-2xl">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-[68px] items-center gap-5">
-            <button
-              type="button"
-              onClick={() =>
-                setMenuOpen(true)
-              }
+              onClick={() => setMenuOpen(true)}
               aria-label="Menu"
-              className="grid h-10 w-10 shrink-0 place-items-center text-xl text-[#2B241F] lg:hidden"
+              className="grid h-10 w-10 shrink-0 place-items-center text-[#FFF8EC]"
             >
-              ☰
+              <StoreIcon
+                name="menu"
+                className="h-6 w-6"
+              />
             </button>
 
             <button
               type="button"
-              onClick={() =>
-                router.push("/")
-              }
-              className="shrink-0 text-center"
+              onClick={() => router.push("/")}
+              className="flex min-w-0 items-center gap-2 text-left"
             >
-              <span className="block font-serif text-[31px] leading-[0.8] tracking-[-0.04em] text-[#D4AF37]">
+              <span className="font-serif text-[2.15rem] leading-none tracking-[-0.08em] text-[#FFF8EC] sm:text-[2.5rem]">
                 AR
               </span>
-
-              <span className="mt-1 block text-[5px] font-black uppercase tracking-[0.42em] text-[#D4AF37]">
-                Fashions
+              <span className="min-w-0">
+                <span className="block truncate font-serif text-[1rem] tracking-[0.18em] text-[#FFF8EC] sm:text-[1.15rem]">
+                  FASHIONS
+                </span>
+                <span className="mt-0.5 block text-[5px] font-black uppercase tracking-[0.42em] text-[#D9C29A]">
+                  Wear your story
+                </span>
               </span>
             </button>
 
-            <nav className="hidden items-center gap-6 lg:flex">
-              <button
-                type="button"
-                onClick={() =>
-                  router.push("/")
-                }
-                className="text-[10px] font-semibold text-[#D4AF37]"
-              >
-                Home
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  document
-                    .getElementById(
-                      "shop-categories",
-                    )
-                    ?.scrollIntoView({
-                      behavior:
-                        "smooth",
-                    })
-                }
-                className="text-[10px] font-semibold text-[#6F655D] transition hover:text-[#B8923B]"
-              >
-                Shop
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  document
-                    .getElementById(
-                      "shop-categories",
-                    )
-                    ?.scrollIntoView({
-                      behavior:
-                        "smooth",
-                    })
-                }
-                className="text-[10px] font-semibold text-[#6F655D] transition hover:text-[#B8923B]"
-              >
-                Categories
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  router.push(
-                    mode ===
-                      "RESELLER"
-                      ? "/reseller-sets"
-                      : "/account",
-                  )
-                }
-                className="text-[10px] font-semibold text-[#6F655D] transition hover:text-[#B8923B]"
-              >
-                Reseller
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  router.push(
-                    `/reels?mode=${mode.toLowerCase()}`,
-                  )
-                }
-                className="text-[10px] font-semibold text-[#6F655D] transition hover:text-[#B8923B]"
-              >
-                Reels
-              </button>
+            <nav className="ml-5 hidden items-center gap-5 lg:flex">
+              {[
+                ["Home", "/"],
+                ["Reels", `/reels?mode=${mode.toLowerCase()}`],
+                [
+                  "Reseller",
+                  mode === "RESELLER"
+                    ? "/reseller-sets"
+                    : "/account",
+                ],
+              ].map(([label, href]) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => router.push(href)}
+                  className="text-[9px] font-bold uppercase tracking-[0.12em] text-white/70 hover:text-white"
+                >
+                  {label}
+                </button>
+              ))}
             </nav>
 
-            <div className="ml-auto hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex">
-              <div className="flex w-full max-w-[330px] items-center rounded-full border border-[#E4D7C4] bg-[#FAF7F0] px-4 py-2.5">
-                <span className="mr-2 text-[#B8923B]">
-                  <StoreIcon name="search" className="h-4 w-4" />
-                </span>
-
-                <input
-                  value={search}
-                  onChange={(event) =>
-                    setSearch(
-                      event.target
-                        .value,
-                    )
-                  }
-                  placeholder="Search for products..."
-                  className="min-w-0 flex-1 bg-transparent text-[10px] text-[#211C18] outline-none placeholder:text-[#9C9187]"
+            <div className="ml-auto flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => router.push("/wishlist")}
+                aria-label="Wishlist"
+                className="grid h-10 w-10 place-items-center rounded-full text-[#FFF8EC]"
+              >
+                <StoreIcon
+                  name="heart"
+                  className="h-[22px] w-[22px]"
                 />
-
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSearch("")
-                    }
-                    className="text-[#8A7F75]"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  router.push(
-                    "/wishlist",
-                  )
-                }
-                aria-label="Wishlist"
-                className="grid h-9 w-9 shrink-0 place-items-center text-xl text-[#2B241F]"
-              >
-                <StoreIcon name="heart" />
               </button>
 
               <button
                 type="button"
-                onClick={() =>
-                  router.push(
-                    customerLoggedIn
-                      ? "/account"
-                      : "/login",
-                  )
-                }
-                aria-label="Account"
-                className="grid h-9 w-9 shrink-0 place-items-center text-lg text-[#2B241F]"
-              >
-                <StoreIcon name="user" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  router.push(
-                    "/cart",
-                  )
-                }
+                onClick={() => router.push("/cart")}
                 aria-label="Cart"
-                className="relative grid h-9 w-9 shrink-0 place-items-center text-lg text-[#2B241F]"
+                className="relative grid h-10 w-10 place-items-center rounded-full text-[#FFF8EC]"
               >
-                <StoreIcon name="bag" />
-                <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-[#7C2732]" />
-              </button>
-            </div>
-
-            <div className="ml-auto flex items-center gap-1 md:hidden">
-              <button
-                type="button"
-                onClick={() =>
-                  router.push(
-                    "/wishlist",
-                  )
-                }
-                className="grid h-9 w-9 place-items-center text-xl"
-                aria-label="Wishlist"
-              >
-                <StoreIcon name="heart" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  router.push(
-                    "/cart",
-                  )
-                }
-                className="relative grid h-9 w-9 place-items-center text-lg"
-                aria-label="Cart"
-              >
-                <StoreIcon name="bag" />
-                <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-[#7C2732]" />
+                <StoreIcon
+                  name="bag"
+                  className="h-[22px] w-[22px]"
+                />
+                <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[#E3C79A] px-1 text-[7px] font-black text-[#031B14]">
+                  0
+                </span>
               </button>
             </div>
           </div>
 
-          <div className="pb-3 md:hidden">
-            <div className="flex items-center rounded-full border border-[#E4D7C4] bg-[#FAF7F0] px-4 py-2.5">
-              <span className="mr-2 text-[#B8923B]">
-                <StoreIcon name="search" className="h-4 w-4" />
-              </span>
-
-              <input
-                value={search}
-                onChange={(event) =>
-                  setSearch(
-                    event.target.value,
-                  )
-                }
-                placeholder="Search for products..."
-                className="min-w-0 flex-1 bg-transparent text-[10px] text-[#211C18] outline-none placeholder:text-[#9C9187]"
-              />
-
-              {search && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSearch("")
-                  }
-                  className="text-[#8A7F75]"
-                >
-                  ×
-                </button>
-              )}
-            </div>
+          <div className="mt-3 flex items-center rounded-full border border-white/35 bg-white/[0.06] px-4 py-3 backdrop-blur">
+            <StoreIcon
+              name="search"
+              className="h-[18px] w-[18px] shrink-0 text-[#FFF8EC]"
+            />
+            <input
+              value={search}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
+              placeholder="Search for dresses, tops, kurta sets, co-ord sets..."
+              className="ml-3 min-w-0 flex-1 bg-transparent text-[11px] text-white outline-none placeholder:text-white/55 sm:text-sm"
+            />
+            {search ? (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="ml-2 grid h-7 w-7 place-items-center rounded-full border border-white/20 text-sm text-white/75"
+              >
+                ×
+              </button>
+            ) : null}
           </div>
         </div>
       </header>
@@ -2563,527 +2093,177 @@ export default function Home() {
         </section>
       ) : (
         <>
-      {/* PRODUCT-CONNECTED HERO SLIDER */}
-      <section className="mx-auto max-w-7xl px-3 pt-3 sm:px-6 sm:pt-5 lg:px-8">
-        <div
-          className="relative h-[420px] touch-pan-y overflow-hidden rounded-[1.55rem] border-[5px] border-[#FFFDF9] bg-[#F1E8DA] shadow-[0_18px_55px_rgba(61,48,37,0.14)] sm:h-[500px] sm:rounded-[2rem] lg:h-[540px]"
-          style={{
-            background:
-              !heroSlideProduct
-                ? activeBanner?.backgroundGradient ||
-                  activeBanner?.backgroundColor ||
-                  undefined
-                : undefined,
-          }}
-          onTouchStart={(event) => {
-            setHeroTouchStartX(
-              event.touches[0]
-                ?.clientX ?? null,
-            );
-          }}
-          onTouchEnd={(event) => {
-            if (
-              heroTouchStartX ===
-              null
-            ) {
-              return;
-            }
+      {/* CINEMATIC EDITORIAL HERO */}
+      <section className="bg-[#031B14]">
+        <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+          <div
+            className="relative h-[390px] touch-pan-y overflow-hidden bg-[#082219] sm:h-[500px] sm:rounded-b-[2rem]"
+            onTouchStart={(event) => {
+              setHeroTouchStartX(
+                event.touches[0]?.clientX ?? null,
+              );
+            }}
+            onTouchEnd={(event) => {
+              if (heroTouchStartX === null) return;
+              const endX =
+                event.changedTouches[0]?.clientX ??
+                heroTouchStartX;
+              const distance =
+                endX - heroTouchStartX;
+              setHeroTouchStartX(null);
 
-            const endX =
-              event.changedTouches[0]
-                ?.clientX ??
-              heroTouchStartX;
-
-            const distance =
-              endX -
-              heroTouchStartX;
-
-            setHeroTouchStartX(
-              null,
-            );
-
-            if (
-              Math.abs(distance) <
-              45
-            ) {
-              return;
-            }
-
-            moveHeroSlide(
-              distance < 0
-                ? 1
-                : -1,
-            );
-          }}
-        >
-          {/* MEDIA */}
-          <div className="absolute inset-0">
-            {heroSlideMedia ? (
-              heroSlideMedia.type ===
-              "VIDEO" ? (
-                <video
-                  key={
-                    heroSlideProduct?.id
-                  }
-                  src={
-                    heroSlideMedia.url
-                  }
-                  muted
-                  autoPlay
-                  loop
-                  playsInline
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <img
-                  key={
-                    heroSlideProduct?.id
-                  }
-                  src={
-                    heroSlideMedia.url
-                  }
-                  alt={
-                    heroSlideMedia.altText ??
-                    heroSlideProduct?.name ??
-                    "AR Fashions"
-                  }
-                  className="h-full w-full object-cover"
-                />
-              )
-            ) : activeBanner?.contentType ===
-                "VIDEO" &&
-              (activeBanner.videoUrl ||
-                activeBanner.mobileVideoUrl) ? (
-              <>
-                {activeBanner.mobileVideoUrl && (
+              if (Math.abs(distance) >= 45) {
+                moveHeroSlide(distance < 0 ? 1 : -1);
+              }
+            }}
+          >
+            <div className="absolute inset-0">
+              {heroSlideMedia ? (
+                heroSlideMedia.type === "VIDEO" ? (
                   <video
-                    src={
-                      activeBanner.mobileVideoUrl
-                    }
+                    key={heroSlideProduct?.id}
+                    src={heroSlideMedia.url}
                     muted
                     autoPlay
                     loop
                     playsInline
-                    className="h-full w-full object-cover sm:hidden"
+                    className="h-full w-full object-cover"
                   />
-                )}
-
-                <video
-                  src={
-                    activeBanner.videoUrl ||
-                    activeBanner.mobileVideoUrl ||
-                    undefined
-                  }
-                  muted
-                  autoPlay
-                  loop
-                  playsInline
-                  className={`absolute inset-0 h-full w-full object-cover ${
-                    activeBanner.mobileVideoUrl
-                      ? "hidden sm:block"
-                      : ""
-                  }`}
-                />
-              </>
-            ) : activeBanner?.imageUrl ||
-              activeBanner?.mobileImageUrl ? (
-              <picture>
-                {activeBanner.mobileImageUrl && (
-                  <source
-                    media="(max-width: 639px)"
-                    srcSet={
-                      activeBanner.mobileImageUrl
+                ) : (
+                  <img
+                    key={heroSlideProduct?.id}
+                    src={heroSlideMedia.url}
+                    alt={
+                      heroSlideMedia.altText ??
+                      heroSlideProduct?.name ??
+                      "AR Fashions"
                     }
+                    className="h-full w-full object-cover"
                   />
-                )}
+                )
+              ) : activeBanner?.imageUrl ||
+                activeBanner?.mobileImageUrl ? (
+                <picture>
+                  {activeBanner.mobileImageUrl ? (
+                    <source
+                      media="(max-width: 639px)"
+                      srcSet={activeBanner.mobileImageUrl}
+                    />
+                  ) : null}
+                  <img
+                    src={
+                      activeBanner.imageUrl ||
+                      activeBanner.mobileImageUrl ||
+                      ""
+                    }
+                    alt={
+                      activeBanner.title ??
+                      "AR Fashions"
+                    }
+                    className="h-full w-full object-cover"
+                  />
+                </picture>
+              ) : (
+                <div className="h-full w-full bg-[radial-gradient(circle_at_72%_24%,rgba(197,161,105,0.24),transparent_28%),linear-gradient(135deg,#082B20,#031B14_58%,#020B08)]" />
+              )}
 
-                <img
-                  src={
-                    activeBanner.imageUrl ||
-                    activeBanner.mobileImageUrl ||
-                    ""
-                  }
-                  alt={
-                    activeBanner.title ??
-                    "AR Fashions"
-                  }
-                  className="h-full w-full object-cover"
-                />
-              </picture>
-            ) : (
-              <div className="h-full w-full bg-[radial-gradient(circle_at_75%_20%,rgba(212,175,55,0.22),transparent_32%),linear-gradient(135deg,#3A1119,#080B0D_58%,#010806)]" />
-            )}
-
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/18 to-black/10 sm:bg-gradient-to-r sm:from-black/78 sm:via-black/24 sm:to-black/5" />
-          </div>
-
-          {/* CLICK IMAGE -> PRODUCT */}
-          {heroSlideProduct && (
-            <button
-              type="button"
-              onClick={
-                openHeroProduct
-              }
-              aria-label={`View ${heroSlideProduct.name}`}
-              className="absolute inset-0 z-10 cursor-pointer"
-            />
-          )}
-
-          {/* AR MONOGRAM */}
-          <div className="pointer-events-none absolute left-6 top-24 z-20 hidden sm:block">
-            <p className="font-serif text-[9rem] leading-[0.62] tracking-[-0.08em] text-white/[0.07]">
-              A
-              <br />
-              R
-            </p>
-          </div>
-
-          {/* SLIDE COUNT */}
-          {heroProducts.length >
-            0 && (
-            <div className="pointer-events-none absolute right-5 top-5 z-30 rounded-full border border-white/15 bg-black/30 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.15em] text-white/75 backdrop-blur-md">
-              {String(
-                (heroSlideIndex %
-                  heroProducts.length) +
-                  1,
-              ).padStart(2, "0")}
-              {" / "}
-              {String(
-                heroProducts.length,
-              ).padStart(2, "0")}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#02150F]/95 via-[#02150F]/60 to-black/12" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#02150F]/72 via-transparent to-transparent" />
             </div>
-          )}
 
-          {/* MAIN CONTENT */}
-          <div className="pointer-events-none relative z-20 flex h-full items-end p-5 pb-14 sm:items-center sm:p-9 lg:p-12">
-            <div className="max-w-[560px]">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-[#D4AF37]/25 bg-[#D4AF37]/10 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.18em] text-emerald-200 backdrop-blur">
-                  {heroSlideProduct
-                    ? heroSlideProduct.isFeatured
-                      ? "AR Signature"
-                      : heroSlideProduct.isNewArrival
-                        ? "Fresh Drop"
-                        : heroSlideProduct.isTrending
-                          ? "Trending Now"
-                          : "AR Curated"
-                    : "The AR Runway"}
-                </span>
+            {heroSlideProduct ? (
+              <button
+                type="button"
+                onClick={openHeroProduct}
+                aria-label={`View ${heroSlideProduct.name}`}
+                className="absolute inset-0 z-10"
+              />
+            ) : null}
 
-                {heroSlideProduct && (
-                  <span className="rounded-full border border-white/15 bg-black/30 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.16em] text-white/65 backdrop-blur">
-                    {mode ===
-                    "RESELLER"
-                      ? "Reseller Edit"
-                      : "Retail Edit"}
-                  </span>
-                )}
-              </div>
+            <div className="pointer-events-none relative z-20 flex h-full items-end p-6 pb-14 sm:items-center sm:p-10 lg:p-14">
+              <div className="max-w-[560px]">
+                <p className="text-[8px] font-black uppercase tracking-[0.42em] text-[#F4E8D6] sm:text-[10px]">
+                  New Season
+                </p>
 
-              <p className="mt-5 text-[8px] font-black uppercase tracking-[0.32em] text-[#D4AF37]">
-                {heroSlideProduct
-                  ? heroSlideProduct.category.name
-                  : "Wear Your Story"}
-              </p>
+                <h1 className="mt-3 max-w-[520px] font-serif text-[2.9rem] leading-[0.9] tracking-[-0.045em] text-white sm:text-[4.8rem]">
+                  Tradition
+                  <br />
+                  Reimagined
+                </h1>
 
-              <h1 className="mt-3 max-w-[520px] font-serif text-[2.45rem] font-normal leading-[0.9] sm:text-[3.4rem] tracking-[-0.05em] text-white drop-shadow-[0_8px_30px_rgba(0,0,0,0.45)] sm:text-7xl">
-                {heroSlideProduct?.name ||
-                  activeBanner?.title ||
-                  "Style takes the spotlight."}
-              </h1>
+                <p className="mt-4 max-w-[340px] font-serif text-[1.02rem] leading-6 text-white/88 sm:text-[1.3rem]">
+                  Ethnic looks for your modern era
+                </p>
 
-              <p className="mt-4 max-w-[390px] text-[11px] font-medium leading-5 text-white/78 sm:text-sm sm:leading-6">
-                {heroSlideProduct?.description
-                  ? heroSlideProduct.description
-                      .replace(
-                        /\s+/g,
-                        " ",
-                      )
-                      .slice(
-                        0,
-                        145,
-                      ) +
-                    (heroSlideProduct.description.length >
-                    145
-                      ? "…"
-                      : "")
-                  : activeBanner?.subtitle ||
-                    "Curated fashion for women, men and kids — made to be noticed."}
-              </p>
-
-              {heroSlideProduct &&
-                heroSlidePrice !==
-                  null && (
-                  <div className="mt-5 flex flex-wrap items-end gap-2.5">
-                    <span className="text-2xl font-black text-white sm:text-3xl">
-                      {money(
-                        heroSlidePrice,
-                      )}
-                    </span>
-
-                    {heroSlideProduct.mrp &&
-                      Number(
-                        heroSlideProduct.mrp,
-                      ) >
-                        Number(
-                          heroSlidePrice,
-                        ) && (
-                        <span className="pb-1 text-[11px] text-[#8A7F75] line-through sm:text-sm">
-                          {money(
-                            heroSlideProduct.mrp,
-                          )}
-                        </span>
-                      )}
-
-                    {heroDiscount >
-                      0 && (
-                      <span className="mb-0.5 rounded-full bg-[#D4AF37] px-2.5 py-1 text-[8px] font-black text-[#080B0D]">
-                        {
-                          heroDiscount
-                        }
-                        % OFF
-                      </span>
-                    )}
-                  </div>
-                )}
-
-              {heroSlideProduct && (
-                <div className="mt-3 flex items-center gap-3 text-[8px] font-bold uppercase tracking-[0.12em] text-white/55">
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
-                    {heroAvailableStock} in stock
-                  </span>
-
-                  <span>COD</span>
-
-                  {mode ===
-                    "RESELLER" &&
-                    heroSlideProduct.resellerMOQ && (
-                      <span>
-                        MOQ{" "}
-                        {
-                          heroSlideProduct.resellerMOQ
-                        }
-                      </span>
-                    )}
+                <div className="pointer-events-auto mt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (heroSlideProduct) {
+                        openHeroProduct();
+                      } else {
+                        document
+                          .getElementById("shop-categories")
+                          ?.scrollIntoView({
+                            behavior: "smooth",
+                          });
+                      }
+                    }}
+                    className="inline-flex items-center gap-4 rounded-[0.2rem] bg-[#FFF8EC] px-5 py-3.5 text-[9px] font-black uppercase tracking-[0.13em] text-[#17130F] shadow-[0_12px_30px_rgba(0,0,0,0.16)]"
+                  >
+                    Shop the collection
+                    <span>→</span>
+                  </button>
                 </div>
-              )}
-
-              <div className="pointer-events-auto mt-7 flex flex-wrap items-center gap-3">
-                {heroSlideProduct ? (
-                  <button
-                    type="button"
-                    onClick={
-                      openHeroProduct
-                    }
-                    className="group inline-flex items-center gap-4 rounded-full bg-[#7C3A45] py-2 pl-5 pr-2 text-[9px] font-black uppercase tracking-[0.12em] text-white shadow-[0_14px_35px_rgba(124,58,69,0.28)] transition active:scale-[0.98]"
-                  >
-                    Shop Now
-                    <span className="grid h-9 w-9 place-items-center rounded-full bg-[#FFFDF9] text-base text-[#7C3A45] transition group-hover:translate-x-0.5">
-                      →
-                    </span>
-                  </button>
-                ) : activeBanner?.buttonUrl ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      router.push(
-                        activeBanner.buttonUrl!,
-                      )
-                    }
-                    className="rounded-full bg-[#D4AF37] px-6 py-3 text-[9px] font-black uppercase tracking-[0.1em] text-[#03160f]"
-                  >
-                    {activeBanner.buttonText ||
-                      "Explore"}
-                  </button>
-                ) : null}
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    document
-                      .getElementById(
-                        "shop-categories",
-                      )
-                      ?.scrollIntoView({
-                        behavior:
-                          "smooth",
-                      })
-                  }
-                  className="rounded-full border border-white/30 bg-white/12 px-5 py-3 text-[8px] font-black uppercase tracking-[0.12em] text-white backdrop-blur-md"
-                >
-                  Explore Collection
-                </button>
               </div>
             </div>
-          </div>
 
-          {/* PREVIOUS / NEXT */}
-          {heroProducts.length >
-            1 && (
-            <>
-              <button
-                type="button"
-                aria-label="Previous hero product"
-                onClick={() =>
-                  moveHeroSlide(-1)
-                }
-                className="absolute left-4 top-1/2 z-30 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-black/30 text-2xl text-white backdrop-blur transition hover:bg-black/50 sm:grid"
-              >
-                ‹
-              </button>
-
-              <button
-                type="button"
-                aria-label="Next hero product"
-                onClick={() =>
-                  moveHeroSlide(1)
-                }
-                className="absolute right-4 top-1/2 z-30 hidden h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-black/30 text-2xl text-white backdrop-blur transition hover:bg-black/50 sm:grid"
-              >
-                ›
-              </button>
-            </>
-          )}
-
-          {/* DESKTOP MINI PRODUCT RAIL */}
-          {heroProducts.length >
-            1 && (
-            <div className="absolute bottom-7 right-7 z-30 hidden max-w-[48%] gap-2 lg:flex">
-              {heroProducts.map(
-                (product, index) => {
-                  const media =
-                    product.media.find(
-                      (item) =>
-                        item.type ===
-                        "IMAGE",
-                    ) ??
-                    product.media[0];
-
-                  const active =
-                    index ===
-                    heroSlideIndex %
-                      heroProducts.length;
-
-                  return (
-                    <button
-                      key={
-                        product.id
-                      }
-                      type="button"
-                      onClick={() =>
-                        setHeroSlideIndex(
-                          index,
-                        )
-                      }
-                      className={`relative w-[82px] overflow-hidden rounded-xl border text-left transition ${
-                        active
-                          ? "border-[#D4AF37] shadow-[0_0_0_1px_rgba(212,175,55,0.32)]"
-                          : "border-white/15 opacity-70 hover:opacity-100"
-                      }`}
-                    >
-                      <div className="aspect-[4/5] bg-[#181313]">
-                        {media?.type ===
-                        "IMAGE" ? (
-                          <img
-                            src={
-                              media.url
-                            }
-                            alt={
-                              product.name
-                            }
-                            className="h-full w-full object-cover"
-                          />
-                        ) : media ? (
-                          <video
-                            src={
-                              media.url
-                            }
-                            muted
-                            playsInline
-                            className="h-full w-full object-cover"
-                          />
-                        ) : null}
-                      </div>
-
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 to-transparent p-1.5">
-                        <p className="truncate text-[6px] font-black text-white">
-                          {
-                            product.name
-                          }
-                        </p>
-                      </div>
-                    </button>
-                  );
-                },
-              )}
+            <div className="pointer-events-none absolute right-6 top-16 z-20 hidden border-l border-[#C79C55]/75 pl-5 text-right sm:block">
+              <p className="font-serif text-[1.55rem] italic leading-8 text-white/90">
+                Your Story
+                <br />
+                in Every Drape
+              </p>
+              <p className="mt-6 text-[7px] font-black uppercase tracking-[0.32em] text-white/65">
+                Ethnic · Fusion
+                <br />
+                Everyday Luxe
+              </p>
             </div>
-          )}
 
-          {/* MOBILE DOTS / PROGRESS */}
-          {heroProducts.length >
-            1 && (
-            <div className="absolute bottom-7 left-5 z-30 flex items-center gap-1.5 lg:left-1/2 lg:-translate-x-1/2">
-              {heroProducts.map(
-                (product, index) => (
+            {heroProducts.length > 1 ? (
+              <div className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2">
+                {heroProducts.map((product, index) => (
                   <button
-                    key={
-                      product.id
-                    }
+                    key={product.id}
                     type="button"
                     aria-label={`Show ${product.name}`}
-                    onClick={() =>
-                      setHeroSlideIndex(
-                        index,
-                      )
-                    }
-                    className={`h-1.5 w-8 origin-left rounded-full bg-[#B8923B] transition-[transform,opacity] duration-200 ${
+                    onClick={() => setHeroSlideIndex(index)}
+                    className={`h-2 w-2 rounded-full border border-white/70 ${
                       index ===
-                      heroSlideIndex %
-                        heroProducts.length
-                        ? "scale-x-100 opacity-100"
-                        : "scale-x-25 opacity-35"
+                      heroSlideIndex % heroProducts.length
+                        ? "bg-white"
+                        : "bg-transparent"
                     }`}
                   />
-                ),
-              )}
-            </div>
-          )}
-
-          <div className="pointer-events-none absolute bottom-7 right-5 z-20 text-[7px] font-black uppercase tracking-[0.2em] text-[#8A7F75] lg:hidden">
-            Swipe to explore
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       </section>
 
-      {/* EDITORIAL CATEGORY GRID */}
+      {/* ARCH CATEGORY RAIL */}
       <section
         id="shop-categories"
-        className="border-b border-[#E4D7C4] bg-[#FAF7F0]"
+        className="border-b border-[#E8DED0] bg-[#FFF8EE]"
       >
-        <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6 sm:py-12 lg:px-8">
-          <div className="mb-6 flex items-end justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="h-px w-6 bg-[#B8923B]" />
-                <p className="text-[7px] font-black uppercase tracking-[0.28em] text-[#B8923B]">
-                  Shop by mood
-                </p>
-              </div>
-              <h2 className="mt-2 font-serif text-[1.8rem] leading-none tracking-[-0.025em] text-[#211C18]">
-                Find your edit
-              </h2>
-            </div>
-            <p className="hidden text-[9px] font-semibold text-[#8A7F75] sm:block">
-              Six curated destinations
-            </p>
-          </div>
-
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-6 sm:gap-4">
             {homeCategoryItems.map((item) => {
               const active =
-                selectedMenuCategoryName ===
-                item.name;
+                selectedMenuCategoryName === item.name;
 
               return (
                 <button
@@ -3095,41 +2275,35 @@ export default function Home() {
                       item.name,
                     )
                   }
-                  className={`group relative min-w-0 overflow-hidden rounded-[1.15rem] border bg-[#FFFDF9] text-left shadow-[0_10px_28px_rgba(61,48,37,0.06)] transition duration-300 ${
-                    active
-                      ? "border-[#7C3A45]"
-                      : "border-[#E4D7C4]"
-                  }`}
+                  className="group min-w-0 text-center"
                 >
-                  <div className="relative aspect-[4/5] overflow-hidden bg-[#F1E8DA]">
+                  <div
+                    className={`relative mx-auto aspect-[4/5] w-full overflow-hidden rounded-t-[999px] rounded-b-[0.75rem] border bg-[#EADBC7] ${
+                      active
+                        ? "border-[#7C3A45]"
+                        : "border-[#E1D3C0]"
+                    }`}
+                  >
                     {item.imageUrl ? (
                       <img
                         src={item.imageUrl}
                         alt={item.name}
                         loading="lazy"
                         decoding="async"
-                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#F1E8DA,#E7D6C1)]">
-                        <span className="font-serif text-3xl text-[#B8923B]">
+                      <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#E9D9C4,#CDBB9F)]">
+                        <span className="font-serif text-3xl text-[#6D5431]">
                           AR
                         </span>
                       </div>
                     )}
-
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/58 via-transparent to-transparent" />
-                    <span className="absolute bottom-3 left-3 right-2 truncate text-[9px] font-black uppercase tracking-[0.1em] text-white">
-                      {item.name}
-                    </span>
                   </div>
 
-                  <div className="flex items-center justify-between px-3 py-2.5">
-                    <span className="text-[7px] font-black uppercase tracking-[0.14em] text-[#7B7066]">
-                      Explore
-                    </span>
-                    <span className="text-[11px] text-[#7C3A45]">→</span>
-                  </div>
+                  <p className="mt-2 truncate text-[8px] font-black uppercase tracking-[0.08em] text-[#211C18] sm:text-[9px]">
+                    {item.name}
+                  </p>
                 </button>
               );
             })}
@@ -3137,6 +2311,63 @@ export default function Home() {
         </div>
       </section>
 
+      {/* TRUST STRIP */}
+      <section className="border-b border-[#E6DBCD] bg-[#F8F1E7]">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 px-4 sm:grid-cols-4 sm:px-6 lg:px-8">
+          {[
+            {
+              key: "COD" as BenefitKey,
+              icon: "truck" as const,
+              title: siteSettings.codEnabled
+                ? "Cash on Delivery"
+                : "Easy Checkout",
+              subtitle: siteSettings.codEnabled
+                ? "Pay when delivered"
+                : "Simple order flow",
+            },
+            {
+              key: "QUALITY" as BenefitKey,
+              icon: "shield" as const,
+              title: "Premium Quality",
+              subtitle: "AR curated fashion",
+            },
+            {
+              key: "RESELLER" as BenefitKey,
+              icon: "box" as const,
+              title: "Retail + Reseller",
+              subtitle: "Two shopping modes",
+            },
+            {
+              key: "SUPPORT" as BenefitKey,
+              icon: "users" as const,
+              title: "Customer Support",
+              subtitle: "Help when you need it",
+            },
+          ].map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() =>
+                setSelectedBenefit(item.key)
+              }
+              className="flex min-h-[78px] items-center gap-3 border-[#E5D9C9] px-2 py-4 text-left even:border-l sm:min-h-[86px] sm:border-l sm:px-5 sm:first:border-l-0"
+            >
+              <StoreIcon
+                name={item.icon}
+                className="h-7 w-7 shrink-0 text-[#1F1A16]"
+              />
+              <span>
+                <span className="block text-[9px] font-black text-[#211C18] sm:text-[10px]">
+                  {item.title}
+                </span>
+                <span className="mt-1 block text-[7px] font-medium text-[#7B7066] sm:text-[8px]">
+                  {item.subtitle}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
 
 
       <PromoSlot
@@ -3239,19 +2470,7 @@ export default function Home() {
                 section.sectionType ===
                 "REELS"
               ) {
-                return (
-                  <FashionReelsSection
-                    key={section.id}
-                    title={
-                      section.title
-                    }
-                    subtitle={
-                      section.subtitle
-                    }
-                    reels={videoReels}
-                    mode={mode}
-                  />
-                );
+                return null;
               }
 
               if (
@@ -3287,74 +2506,80 @@ export default function Home() {
         className="py-6"
       />
 
-      {/* RESELLER CTA */}
-      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-        <div className="relative overflow-hidden rounded-[1.7rem] border border-[#D4AF37]/15 bg-gradient-to-br from-[#3A1119] via-[#211014] to-[#080B0D] text-white shadow-[0_30px_70px_rgba(0,0,0,0.32)]">
-          <div className="pointer-events-none absolute right-[-60px] top-[-80px] h-56 w-56 rounded-full bg-[#D4AF37]/10 blur-3xl" />
-
-          <div className="relative grid gap-6 p-6 sm:p-9 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-            <div>
-              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#D4AF37]">
-                AR Reseller Studio
-              </p>
-
-              <h2 className="mt-3 font-serif text-[2.35rem] leading-[0.9] sm:text-5xl">
-                Grow together.
-                <br />
-                Sell smarter.
-              </h2>
-
-              <div className="mt-5 space-y-2">
-                {[
-                  "Bulk pricing",
-                  "Mixed sizes & colors",
-                  "Dedicated reseller flow",
-                ].map((item) => (
-                  <p
-                    key={item}
-                    className="text-[9px] font-semibold text-white/65"
-                  >
-                    ◉ {item}
-                  </p>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  router.push(
-                    mode === "RESELLER"
-                      ? "/reseller-sets"
-                      : "/account",
-                  )
+      {/* EDITORIAL + RESELLER PROMOS */}
+      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <button
+            type="button"
+            onClick={() =>
+              router.push(
+                `/reels?mode=${mode.toLowerCase()}`,
+              )
+            }
+            className="group relative min-h-[190px] overflow-hidden rounded-[0.95rem] bg-[#042219] text-left text-white sm:min-h-[240px]"
+          >
+            {videoReels[0]?.thumbnailUrl ||
+            videoReels[0]?.product.image ? (
+              <img
+                src={
+                  videoReels[0]?.thumbnailUrl ||
+                  videoReels[0]?.product.image ||
+                  ""
                 }
-                className="mt-6 rounded-full bg-white px-5 py-3 text-[8px] font-black uppercase tracking-[0.1em] text-[#063326]"
-              >
-                Join Now →
-              </button>
+                alt="AR Edit"
+                loading="lazy"
+                decoding="async"
+                className="absolute inset-0 h-full w-full object-cover opacity-58 transition duration-300 group-hover:scale-[1.02]"
+              />
+            ) : null}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#032018] via-[#032018]/80 to-transparent" />
+            <div className="relative z-10 flex min-h-[190px] max-w-[66%] flex-col justify-center p-6 sm:min-h-[240px] sm:p-8">
+              <p className="text-[8px] font-black uppercase tracking-[0.34em] text-[#D9C29A]">
+                AR Edit
+              </p>
+              <h3 className="mt-3 font-serif text-[2rem] leading-none sm:text-[2.65rem]">
+                Stories in Style
+              </h3>
+              <p className="mt-3 text-[10px] text-white/72">
+                Real people. Real looks.
+              </p>
+              <span className="mt-6 text-[9px] font-black uppercase tracking-[0.12em]">
+                Explore now  →
+              </span>
             </div>
+          </button>
 
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                ["10+", "Sets"],
-                ["₹300+", "Start"],
-                ["24/7", "Orders"],
-              ].map(([value, label]) => (
-                <div
-                  key={label}
-                  className="rounded-xl border border-white/10 bg-black/15 px-2 py-4 text-center"
-                >
-                  <p className="text-xl font-black">
-                    {value}
-                  </p>
-
-                  <p className="mt-1 text-[7px] uppercase tracking-wide text-emerald-100/50">
-                    {label}
-                  </p>
-                </div>
-              ))}
+          <button
+            type="button"
+            onClick={() =>
+              router.push(
+                mode === "RESELLER"
+                  ? "/reseller-sets"
+                  : "/account",
+              )
+            }
+            className="relative min-h-[190px] overflow-hidden rounded-[0.95rem] border border-[#DECDB6] bg-[linear-gradient(120deg,#F3E7D5,#E5D1B6)] text-left text-[#211C18] sm:min-h-[240px]"
+          >
+            <div className="absolute -right-7 bottom-[-20px] grid h-44 w-36 rotate-[4deg] place-items-center border border-[#B99E79] bg-[#EFE1CB] shadow-[0_16px_30px_rgba(92,67,42,0.16)] sm:h-52 sm:w-44">
+              <span className="font-serif text-5xl text-[#6B5435]">
+                AR
+              </span>
             </div>
-          </div>
+            <div className="relative z-10 flex min-h-[190px] max-w-[62%] flex-col justify-center p-6 sm:min-h-[240px] sm:p-8">
+              <p className="text-[8px] font-black uppercase tracking-[0.34em] text-[#6B5435]">
+                Reseller Studio
+              </p>
+              <h3 className="mt-3 font-serif text-[2rem] leading-none sm:text-[2.65rem]">
+                Grow Together
+              </h3>
+              <p className="mt-3 text-[10px] leading-4 text-[#5F5145]">
+                Exclusive prices for bulk buyers.
+              </p>
+              <span className="mt-6 text-[9px] font-black uppercase tracking-[0.12em]">
+                Join now  →
+              </span>
+            </div>
+          </button>
         </div>
       </section>
 
@@ -3364,46 +2589,9 @@ export default function Home() {
         className="pb-10"
       />
 
-      {/* IMAGE 2 BENEFIT STRIP */}
-      <section className="border-y border-[#E4D7C4] bg-[#F1E8DA]">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-[#E4D7C4] px-4 sm:grid-cols-4 sm:px-6 lg:px-8">
-          {benefitItems.map(
-            (item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() =>
-                  setSelectedBenefit(
-                    item.key,
-                  )
-                }
-                className="group flex min-h-[82px] items-center gap-3 px-3 py-4 text-left transition hover:bg-white/70 sm:px-5"
-              >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#D4AF37]/30 text-sm text-[#D4AF37] transition group-hover:border-[#D4AF37]/70 group-hover:bg-[#D4AF37]/10">
-                  {item.icon}
-                </span>
-
-                <div className="min-w-0">
-                  <p className="text-[8px] font-bold text-[#2B241F] sm:text-[9px]">
-                    {item.title}
-                  </p>
-
-                  <p className="mt-1 truncate text-[6px] text-[#8A7F75] sm:text-[7px]">
-                    {item.subtitle}
-                  </p>
-
-                  <p className="mt-1 text-[6px] font-bold text-[#D4AF37]/60">
-                    View details →
-                  </p>
-                </div>
-              </button>
-            ),
-          )}
-        </div>
-      </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-[#E4D7C4] bg-[#E9DECD]">
+      <footer className="border-t border-[#E4D7C4] bg-[#F4EBDD]">
         <div className="mx-auto max-w-7xl px-5 py-10 text-center sm:px-6 lg:px-8">
           <p className="font-serif text-[1.8rem] tracking-[0.08em] text-[#211C18]">
             AR
@@ -3646,7 +2834,7 @@ export default function Home() {
                   {siteSettings.supportPhone ? (
                     <a
                       href={`tel:${siteSettings.supportPhone}`}
-                      className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-[10px] font-black text-white"
+                      className="flex w-full items-center justify-between rounded-2xl border border-[#E4D7C4] bg-[#FAF7F0] px-4 py-4 text-[10px] font-black text-[#211C18]"
                     >
                       <span>
                         Call Support
@@ -3664,7 +2852,7 @@ export default function Home() {
                       href={`https://wa.me/${siteSettings.whatsappNumber.replace(/\D/g, "")}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex w-full items-center justify-between rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.07] px-4 py-4 text-[10px] font-black text-emerald-300"
+                      className="flex w-full items-center justify-between rounded-2xl border border-[#B9D8C7] bg-[#EDF7F1] px-4 py-4 text-[10px] font-black text-[#0D5A38]"
                     >
                       <span>
                         WhatsApp
@@ -3676,10 +2864,10 @@ export default function Home() {
                   {siteSettings.supportEmail ? (
                     <a
                       href={`mailto:${siteSettings.supportEmail}`}
-                      className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-[10px] font-black text-white"
+                      className="flex w-full items-center justify-between rounded-2xl border border-[#E4D7C4] bg-[#FAF7F0] px-4 py-4 text-[10px] font-black text-[#211C18]"
                     >
                       <span>Email</span>
-                      <span className="max-w-[190px] truncate text-white/50">
+                      <span className="max-w-[190px] truncate text-[#7B7066]">
                         {
                           siteSettings.supportEmail
                         }
@@ -3694,8 +2882,8 @@ export default function Home() {
       ) : null}
 
       {/* MOBILE NAV */}
-      <nav className="fixed bottom-2 left-3 right-3 z-50 rounded-[1.35rem] border border-[#E4D7C4] bg-[#FFFDF9]/95 px-1 pb-1.5 pt-1 shadow-[0_18px_55px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:hidden">
-        <div className="grid grid-cols-5 items-end">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-[#031B14]/98 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 text-[#FFF8EC] shadow-[0_-14px_34px_rgba(0,0,0,0.18)] backdrop-blur-2xl sm:hidden">
+        <div className="grid grid-cols-5">
           <button
             type="button"
             onClick={() =>
@@ -3704,12 +2892,10 @@ export default function Home() {
                 behavior: "smooth",
               })
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#D4AF37]"
+            className="flex min-h-[54px] flex-col items-center justify-center gap-1 text-[#FFF1D8]"
           >
-            <StoreIcon name="home" className="h-[19px] w-[19px]" />
-            <span className="text-[7px] font-black">
-              Home
-            </span>
+            <StoreIcon name="home" className="h-5 w-5" />
+            <span className="text-[7px] font-bold">Home</span>
           </button>
 
           <button
@@ -3721,12 +2907,10 @@ export default function Home() {
                   behavior: "smooth",
                 })
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
+            className="flex min-h-[54px] flex-col items-center justify-center gap-1 text-white/72"
           >
-            <StoreIcon name="grid" className="h-[18px] w-[18px]" />
-            <span className="text-[7px] font-black">
-              Shop
-            </span>
+            <StoreIcon name="grid" className="h-5 w-5" />
+            <span className="text-[7px] font-bold">Categories</span>
           </button>
 
           <button
@@ -3736,43 +2920,34 @@ export default function Home() {
                 `/reels?mode=${mode.toLowerCase()}`,
               )
             }
-            className="relative flex min-h-[52px] flex-col items-center justify-center"
+            className="flex min-h-[54px] flex-col items-center justify-center gap-1 text-white/72"
           >
-            <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-[4px] border-[#FAF7F0] bg-[#B8923B] font-serif text-[15px] font-black text-[#FFFDF9] shadow-[0_0_28px_rgba(212,175,55,0.3)]">
-              AR
-            </span>
+            <StoreIcon name="play" className="h-5 w-5" />
+            <span className="text-[7px] font-bold">Reels</span>
+          </button>
 
-            <span className="mt-0.5 text-[7px] font-black text-[#6F655D]">
-              Reels
-            </span>
+          <button
+            type="button"
+            onClick={() => router.push("/cart")}
+            className="flex min-h-[54px] flex-col items-center justify-center gap-1 text-white/72"
+          >
+            <StoreIcon name="bag" className="h-5 w-5" />
+            <span className="text-[7px] font-bold">Cart</span>
           </button>
 
           <button
             type="button"
             onClick={() =>
-              router.push("/wishlist")
+              router.push(
+                customerLoggedIn
+                  ? "/account"
+                  : "/login",
+              )
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
+            className="flex min-h-[54px] flex-col items-center justify-center gap-1 text-white/72"
           >
-            <span className="text-lg">♡</span>
-            <span className="text-[7px] font-black">
-              Wishlist
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() =>
-              router.push("/account")
-            }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
-          >
-            <span className="grid h-5 w-5 place-items-center rounded-full border border-current text-[7px]">
-              A
-            </span>
-            <span className="text-[7px] font-black">
-              Account
-            </span>
+            <StoreIcon name="user" className="h-5 w-5" />
+            <span className="text-[7px] font-bold">Account</span>
           </button>
         </div>
       </nav>
