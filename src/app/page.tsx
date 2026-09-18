@@ -221,6 +221,102 @@ function money(value: string | number | null) {
   return `₹${Number(value).toLocaleString("en-IN")}`;
 }
 
+function StoreIcon({
+  name,
+  className = "h-5 w-5",
+}: {
+  name:
+    | "menu"
+    | "search"
+    | "heart"
+    | "bag"
+    | "user"
+    | "home"
+    | "grid"
+    | "play";
+  className?: string;
+}) {
+  const common = {
+    className,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.7,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+
+  if (name === "menu") {
+    return (
+      <svg {...common}>
+        <path d="M4 7h16M4 12h16M4 17h16" />
+      </svg>
+    );
+  }
+
+  if (name === "search") {
+    return (
+      <svg {...common}>
+        <circle cx="11" cy="11" r="6.5" />
+        <path d="m16 16 4 4" />
+      </svg>
+    );
+  }
+
+  if (name === "heart") {
+    return (
+      <svg {...common}>
+        <path d="M20.8 4.7a5.3 5.3 0 0 0-7.5 0L12 6l-1.3-1.3a5.3 5.3 0 0 0-7.5 7.5L12 21l8.8-8.8a5.3 5.3 0 0 0 0-7.5Z" />
+      </svg>
+    );
+  }
+
+  if (name === "bag") {
+    return (
+      <svg {...common}>
+        <path d="M6.5 8h11l1 12h-13l1-12Z" />
+        <path d="M9 9V6.5a3 3 0 0 1 6 0V9" />
+      </svg>
+    );
+  }
+
+  if (name === "user") {
+    return (
+      <svg {...common}>
+        <circle cx="12" cy="8" r="3.5" />
+        <path d="M5 20c.8-4 3.1-6 7-6s6.2 2 7 6" />
+      </svg>
+    );
+  }
+
+  if (name === "home") {
+    return (
+      <svg {...common}>
+        <path d="m4 11 8-7 8 7" />
+        <path d="M6.5 10.5V20h11v-9.5" />
+      </svg>
+    );
+  }
+
+  if (name === "grid") {
+    return (
+      <svg {...common}>
+        <rect x="4" y="4" width="6" height="6" rx="1.2" />
+        <rect x="14" y="4" width="6" height="6" rx="1.2" />
+        <rect x="4" y="14" width="6" height="6" rx="1.2" />
+        <rect x="14" y="14" width="6" height="6" rx="1.2" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...common}>
+      <path d="m9 7 8 5-8 5V7Z" />
+    </svg>
+  );
+}
+
 function ProductCard({
   product,
   mode,
@@ -395,9 +491,9 @@ function ProductCard({
           `/products/${product.id}?mode=${mode.toLowerCase()}`,
         )
       }
-      className="group min-w-0 cursor-pointer overflow-hidden bg-transparent transition duration-300 active:scale-[0.985]"
+      className="group min-w-0 cursor-pointer overflow-hidden rounded-[1.35rem] border border-[#E4D7C4] bg-[#FFFDF9] p-2 shadow-[0_10px_30px_rgba(61,48,37,0.055)] transition duration-300 active:scale-[0.985]"
     >
-      <div className="relative aspect-[3/4] overflow-hidden rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] shadow-[0_14px_34px_rgba(0,0,0,0.25)]">
+      <div className="relative aspect-[3/4] overflow-hidden rounded-[1.05rem] bg-[#F1E8DA]">
         {media?.type === "VIDEO" ? (
           <video
             src={media.url}
@@ -453,12 +549,12 @@ function ProductCard({
         </button>
       </div>
 
-      <div className="px-1 pb-2 pt-2.5 sm:px-1.5 sm:pt-3">
-        <p className="mb-1 text-[8px] font-black uppercase tracking-[0.18em] text-[#D4AF37]">
+      <div className="px-1.5 pb-2 pt-3 sm:px-2 sm:pt-3.5">
+        <p className="mb-1.5 text-[7px] font-black uppercase tracking-[0.2em] text-[#B8923B]">
           {product.category.name}
         </p>
 
-        <h3 className="line-clamp-1 text-[12px] font-semibold text-[#211C18] sm:text-sm">
+        <h3 className="line-clamp-1 text-[12px] font-bold tracking-[-0.01em] text-[#211C18] sm:text-sm">
           {product.name}
         </h3>
 
@@ -481,21 +577,19 @@ function ProductCard({
           )}
         </div>
 
-        <div className="mt-2.5 flex items-center justify-between gap-2">
-          <span className="rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.08em] text-[#D4AF37]">
+        <div className="mt-3 flex items-center justify-between border-t border-[#EFE5D7] pt-2.5">
+          <span className="text-[7px] font-black uppercase tracking-[0.16em] text-[#7C3A45]">
             {mode === "RESELLER"
-              ? "Bulk Ready"
+              ? "Wholesale"
               : product.isNewArrival
-                ? "Fresh Drop"
+                ? "New arrival"
                 : product.isTrending
                   ? "Trending"
-                  : "AR Pick"}
+                  : "AR selection"}
           </span>
 
-          <span className="text-[8px] font-bold text-[#D4AF37]">
-            {product.isFeatured
-              ? "Signature Edit"
-              : "Curated Style"}
+          <span className="text-[8px] font-black text-[#6F655D]">
+            View →
           </span>
         </div>
 
@@ -526,14 +620,17 @@ function ProductSection({
   if (products.length === 0) return null;
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 py-9 sm:px-6 sm:py-11 lg:px-8">
-      <div className="mb-6 flex items-end justify-between gap-4 sm:mb-7">
+    <section className="mx-auto w-full max-w-7xl px-4 py-11 sm:px-6 sm:py-14 lg:px-8">
+      <div className="mb-7 flex items-end justify-between gap-4 border-b border-[#E4D7C4] pb-5 sm:mb-8">
         <div>
-          <p className="mb-2 text-[8px] font-black uppercase tracking-[0.28em] text-[#B9912E]">
-            AR Fashions
-          </p>
+          <div className="mb-2 flex items-center gap-2">
+            <span className="h-px w-6 bg-[#B8923B]" />
+            <p className="text-[8px] font-black uppercase tracking-[0.28em] text-[#B8923B]">
+              AR Edit
+            </p>
+          </div>
 
-          <h2 className="font-serif text-[1.9rem] font-normal leading-none text-[#211C18] sm:text-3xl">
+          <h2 className="font-serif text-[2rem] font-normal leading-[0.95] tracking-[-0.025em] text-[#211C18] sm:text-[2.35rem]">
             {title}
           </h2>
 
@@ -2303,8 +2400,8 @@ export default function Home() {
 
             <div className="ml-auto hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex">
               <div className="flex w-full max-w-[330px] items-center rounded-full border border-[#E4D7C4] bg-[#FAF7F0] px-4 py-2.5">
-                <span className="mr-2 text-[#D4AF37]">
-                  ⌕
+                <span className="mr-2 text-[#B8923B]">
+                  <StoreIcon name="search" className="h-4 w-4" />
                 </span>
 
                 <input
@@ -2342,7 +2439,7 @@ export default function Home() {
                 aria-label="Wishlist"
                 className="grid h-9 w-9 shrink-0 place-items-center text-xl text-[#2B241F]"
               >
-                ♡
+                <StoreIcon name="heart" />
               </button>
 
               <button
@@ -2357,7 +2454,7 @@ export default function Home() {
                 aria-label="Account"
                 className="grid h-9 w-9 shrink-0 place-items-center text-lg text-[#2B241F]"
               >
-                ♙
+                <StoreIcon name="user" />
               </button>
 
               <button
@@ -2370,7 +2467,7 @@ export default function Home() {
                 aria-label="Cart"
                 className="relative grid h-9 w-9 shrink-0 place-items-center text-lg text-[#2B241F]"
               >
-                ◇
+                <StoreIcon name="bag" />
                 <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-[#7C2732]" />
               </button>
             </div>
@@ -2386,7 +2483,7 @@ export default function Home() {
                 className="grid h-9 w-9 place-items-center text-xl"
                 aria-label="Wishlist"
               >
-                ♡
+                <StoreIcon name="heart" />
               </button>
 
               <button
@@ -2399,7 +2496,7 @@ export default function Home() {
                 className="relative grid h-9 w-9 place-items-center text-lg"
                 aria-label="Cart"
               >
-                ◇
+                <StoreIcon name="bag" />
                 <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-[#7C2732]" />
               </button>
             </div>
@@ -2407,8 +2504,8 @@ export default function Home() {
 
           <div className="pb-3 md:hidden">
             <div className="flex items-center rounded-full border border-[#E4D7C4] bg-[#FAF7F0] px-4 py-2.5">
-              <span className="mr-2 text-[#D4AF37]">
-                ⌕
+              <span className="mr-2 text-[#B8923B]">
+                <StoreIcon name="search" className="h-4 w-4" />
               </span>
 
               <input
@@ -2469,7 +2566,7 @@ export default function Home() {
       {/* PRODUCT-CONNECTED HERO SLIDER */}
       <section className="mx-auto max-w-7xl px-3 pt-3 sm:px-6 sm:pt-5 lg:px-8">
         <div
-          className="relative h-[460px] touch-pan-y overflow-hidden rounded-[1.6rem] border border-[#E4D7C4] bg-[#F1E8DA] shadow-[0_24px_55px_rgba(56,43,30,0.16)] sm:h-[520px] sm:rounded-[2.2rem] lg:h-[580px]"
+          className="relative h-[420px] touch-pan-y overflow-hidden rounded-[1.55rem] border-[5px] border-[#FFFDF9] bg-[#F1E8DA] shadow-[0_18px_55px_rgba(61,48,37,0.14)] sm:h-[500px] sm:rounded-[2rem] lg:h-[540px]"
           style={{
             background:
               !heroSlideProduct
@@ -2617,7 +2714,7 @@ export default function Home() {
               <div className="h-full w-full bg-[radial-gradient(circle_at_75%_20%,rgba(212,175,55,0.22),transparent_32%),linear-gradient(135deg,#3A1119,#080B0D_58%,#010806)]" />
             )}
 
-            <div className="absolute inset-0 bg-gradient-to-t from-[#02100b] via-black/20 to-black/20 sm:bg-gradient-to-r sm:from-[#02100b]/95 sm:via-[#02100b]/35 sm:to-black/10" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/18 to-black/10 sm:bg-gradient-to-r sm:from-black/78 sm:via-black/24 sm:to-black/5" />
           </div>
 
           {/* CLICK IMAGE -> PRODUCT */}
@@ -2658,7 +2755,7 @@ export default function Home() {
           )}
 
           {/* MAIN CONTENT */}
-          <div className="pointer-events-none relative z-20 flex h-full items-end p-5 pb-16 sm:items-center sm:p-9 lg:p-12">
+          <div className="pointer-events-none relative z-20 flex h-full items-end p-5 pb-14 sm:items-center sm:p-9 lg:p-12">
             <div className="max-w-[560px]">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full border border-[#D4AF37]/25 bg-[#D4AF37]/10 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.18em] text-emerald-200 backdrop-blur">
@@ -2695,7 +2792,7 @@ export default function Home() {
                   "Style takes the spotlight."}
               </h1>
 
-              <p className="mt-5 max-w-[390px] text-[11px] leading-5 text-[#6F655D] sm:text-sm sm:leading-6">
+              <p className="mt-4 max-w-[390px] text-[11px] font-medium leading-5 text-white/78 sm:text-sm sm:leading-6">
                 {heroSlideProduct?.description
                   ? heroSlideProduct.description
                       .replace(
@@ -2779,10 +2876,10 @@ export default function Home() {
                     onClick={
                       openHeroProduct
                     }
-                    className="group inline-flex items-center gap-4 rounded-full bg-[#D4AF37] py-2 pl-5 pr-2 text-[9px] font-black uppercase tracking-[0.12em] text-[#03160f] shadow-[0_14px_35px_rgba(212,175,55,0.22)] transition active:scale-[0.97]"
+                    className="group inline-flex items-center gap-4 rounded-full bg-[#7C3A45] py-2 pl-5 pr-2 text-[9px] font-black uppercase tracking-[0.12em] text-white shadow-[0_14px_35px_rgba(124,58,69,0.28)] transition active:scale-[0.98]"
                   >
                     Shop Now
-                    <span className="grid h-9 w-9 place-items-center rounded-full bg-[#7C2732] text-base text-white transition group-hover:translate-x-0.5">
+                    <span className="grid h-9 w-9 place-items-center rounded-full bg-[#FFFDF9] text-base text-[#7C3A45] transition group-hover:translate-x-0.5">
                       →
                     </span>
                   </button>
@@ -2813,7 +2910,7 @@ export default function Home() {
                           "smooth",
                       })
                   }
-                  className="rounded-full border border-white/20 bg-black/25 px-5 py-3 text-[8px] font-black uppercase tracking-[0.12em] text-white backdrop-blur"
+                  className="rounded-full border border-white/30 bg-white/12 px-5 py-3 text-[8px] font-black uppercase tracking-[0.12em] text-white backdrop-blur-md"
                 >
                   Explore Collection
                 </button>
@@ -2959,76 +3056,83 @@ export default function Home() {
         </div>
       </section>
 
-      {/* DEDICATED CATEGORY IMAGE RAIL */}
+      {/* EDITORIAL CATEGORY GRID */}
       <section
         id="shop-categories"
         className="border-b border-[#E4D7C4] bg-[#FAF7F0]"
       >
-        <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-9 lg:px-8">
-          <div className="grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-6 sm:gap-5">
-            {homeCategoryItems.map(
-              (item) => {
-                const active =
-                  selectedMenuCategoryName ===
-                  item.name;
+        <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6 sm:py-12 lg:px-8">
+          <div className="mb-6 flex items-end justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="h-px w-6 bg-[#B8923B]" />
+                <p className="text-[7px] font-black uppercase tracking-[0.28em] text-[#B8923B]">
+                  Shop by mood
+                </p>
+              </div>
+              <h2 className="mt-2 font-serif text-[1.8rem] leading-none tracking-[-0.025em] text-[#211C18]">
+                Find your edit
+              </h2>
+            </div>
+            <p className="hidden text-[9px] font-semibold text-[#8A7F75] sm:block">
+              Six curated destinations
+            </p>
+          </div>
 
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() =>
-                      applyMenuCategory(
-                        item.ids,
-                        item.name,
-                      )
-                    }
-                    className="group min-w-0 text-center"
-                  >
-                    <div
-                      className={`mx-auto aspect-square w-full max-w-[92px] overflow-hidden rounded-full border-2 bg-[#FFFDF9] p-[3px] transition sm:max-w-[112px] ${
-                        active
-                          ? "border-[#D4AF37] shadow-[0_0_0_3px_rgba(124,39,50,0.38)]"
-                          : "border-[#D4AF37]/55 group-hover:border-[#D4AF37]"
-                      }`}
-                    >
-                      <div className="h-full w-full overflow-hidden rounded-full bg-[#F1E8DA]">
-                        {item.imageUrl ? (
-                          <img
-                            src={
-                              item.imageUrl
-                            }
-                            alt={
-                              item.name
-                            }
-                            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full flex-col items-center justify-center bg-[radial-gradient(circle_at_50%_25%,#7C2732_0%,#261317_45%,#0B0B0B_100%)]">
-                            <span className="font-serif text-2xl text-[#D4AF37] sm:text-3xl">
-                              AR
-                            </span>
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-6 sm:gap-4">
+            {homeCategoryItems.map((item) => {
+              const active =
+                selectedMenuCategoryName ===
+                item.name;
 
-                            <span className="mt-1 max-w-[70px] truncate text-[5px] font-black uppercase tracking-[0.18em] text-[#8A7F75]">
-                              {item.name}
-                            </span>
-                          </div>
-                        )}
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() =>
+                    applyMenuCategory(
+                      item.ids,
+                      item.name,
+                    )
+                  }
+                  className={`group relative min-w-0 overflow-hidden rounded-[1.15rem] border bg-[#FFFDF9] text-left shadow-[0_10px_28px_rgba(61,48,37,0.06)] transition duration-300 ${
+                    active
+                      ? "border-[#7C3A45]"
+                      : "border-[#E4D7C4]"
+                  }`}
+                >
+                  <div className="relative aspect-[4/5] overflow-hidden bg-[#F1E8DA]">
+                    {item.imageUrl ? (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#F1E8DA,#E7D6C1)]">
+                        <span className="font-serif text-3xl text-[#B8923B]">
+                          AR
+                        </span>
                       </div>
-                    </div>
+                    )}
 
-                    <p
-                      className={`mt-3 truncate text-[9px] font-semibold sm:text-[10px] ${
-                        active
-                          ? "text-[#D4AF37]"
-                          : "text-[#2B241F]"
-                      }`}
-                    >
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/58 via-transparent to-transparent" />
+                    <span className="absolute bottom-3 left-3 right-2 truncate text-[9px] font-black uppercase tracking-[0.1em] text-white">
                       {item.name}
-                    </p>
-                  </button>
-                );
-              },
-            )}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between px-3 py-2.5">
+                    <span className="text-[7px] font-black uppercase tracking-[0.14em] text-[#7B7066]">
+                      Explore
+                    </span>
+                    <span className="text-[11px] text-[#7C3A45]">→</span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -3284,7 +3388,7 @@ export default function Home() {
                     {item.title}
                   </p>
 
-                  <p className="mt-1 truncate text-[6px] text-white/40 sm:text-[7px]">
+                  <p className="mt-1 truncate text-[6px] text-[#8A7F75] sm:text-[7px]">
                     {item.subtitle}
                   </p>
 
@@ -3602,7 +3706,7 @@ export default function Home() {
             }
             className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#D4AF37]"
           >
-            <span className="text-lg">⌂</span>
+            <StoreIcon name="home" className="h-[19px] w-[19px]" />
             <span className="text-[7px] font-black">
               Home
             </span>
@@ -3619,7 +3723,7 @@ export default function Home() {
             }
             className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
           >
-            <span className="text-lg">▦</span>
+            <StoreIcon name="grid" className="h-[18px] w-[18px]" />
             <span className="text-[7px] font-black">
               Shop
             </span>
