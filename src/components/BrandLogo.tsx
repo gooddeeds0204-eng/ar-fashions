@@ -21,7 +21,7 @@ export default function BrandLogo({
         className={`block font-serif leading-none tracking-[0.08em] ${
           compact ? "text-[24px]" : "text-[28px]"
         } ${
-          light ? "text-white" : "text-zinc-950"
+          light ? "text-[#FFFDF9]" : "text-[#211C18]"
         }`}
       >
         AS
@@ -30,8 +30,8 @@ export default function BrandLogo({
       <span
         className={`mt-1 block text-[6px] font-black uppercase tracking-[0.38em] ${
           light
-            ? "text-emerald-300"
-            : "text-emerald-700"
+            ? "text-[#D9C29A]"
+            : "text-[#6B5435]"
         }`}
       >
         Fashions
