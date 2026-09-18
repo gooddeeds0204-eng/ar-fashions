@@ -140,7 +140,7 @@ export default async function ResellerDashboardPage() {
     orders.slice(0, 5);
 
   return (
-    <main className="min-h-screen bg-[#f5f4ef] pb-24 text-zinc-950">
+    <main className="min-h-screen bg-[#FAF7F0] pb-24 text-zinc-950">
       <header className="sticky top-0 z-40 border-b border-black/[0.05] bg-white/90 backdrop-blur-xl">
         <div className="mx-auto flex h-[72px] max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
           <Link
@@ -157,14 +157,14 @@ export default async function ResellerDashboardPage() {
             <BrandLogo compact />
           </Link>
 
-          <span className="ml-auto rounded-full bg-[#06261c] px-4 py-2 text-[9px] font-black uppercase tracking-[0.12em] text-emerald-200">
+          <span className="ml-auto rounded-full bg-[#031B14] px-4 py-2 text-[9px] font-black uppercase tracking-[0.12em] text-emerald-200">
             Reseller Studio
           </span>
         </div>
       </header>
 
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
-        <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#03140e] via-[#06261c] to-black p-6 text-white shadow-[0_25px_70px_rgba(0,0,0,0.24)] sm:p-8">
+        <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#031B14] via-[#031B14] to-black p-6 text-white shadow-[0_25px_70px_rgba(0,0,0,0.24)] sm:p-8">
           <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
 
           <div className="relative">
@@ -195,7 +195,7 @@ export default async function ResellerDashboardPage() {
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/"
-                className="rounded-full bg-white px-5 py-3 text-[10px] font-black uppercase tracking-[0.1em] text-[#052219]"
+                className="rounded-full bg-white px-5 py-3 text-[10px] font-black uppercase tracking-[0.1em] text-[#0A382B]"
               >
                 Shop Wholesale
               </Link>
@@ -332,7 +332,7 @@ export default async function ResellerDashboardPage() {
                   }
                   target="_blank"
                   rel="noreferrer"
-                  className="block rounded-xl border border-black/[0.07] bg-[#f8f7f3] px-4 py-3 text-center text-[9px] font-black uppercase tracking-[0.1em]"
+                  className="block rounded-xl border border-black/[0.07] bg-[#F8F1E7] px-4 py-3 text-center text-[9px] font-black uppercase tracking-[0.1em]"
                 >
                   View Business Location
                 </a>
@@ -373,7 +373,7 @@ export default async function ResellerDashboardPage() {
 
                 <Link
                   href="/"
-                  className="mt-5 inline-block rounded-full bg-[#06261c] px-5 py-3 text-[9px] font-black uppercase tracking-[0.1em] text-white"
+                  className="mt-5 inline-block rounded-full bg-[#031B14] px-5 py-3 text-[9px] font-black uppercase tracking-[0.1em] text-white"
                 >
                   Browse Wholesale
                 </Link>
@@ -415,7 +415,7 @@ export default async function ResellerDashboardPage() {
                             </p>
                           </div>
 
-                          <span className="rounded-full bg-[#f5f4ef] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.08em]">
+                          <span className="rounded-full bg-[#FAF7F0] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.08em]">
                             {niceStatus(
                               order.status,
                             )}
@@ -450,7 +450,7 @@ export default async function ResellerDashboardPage() {
           </section>
         </div>
 
-        <section className="mt-5 overflow-hidden rounded-[1.75rem] bg-[#06261c] p-5 text-white shadow-sm">
+        <section className="mt-5 overflow-hidden rounded-[1.75rem] bg-[#031B14] p-5 text-white shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-300">
@@ -468,7 +468,7 @@ export default async function ResellerDashboardPage() {
 
             <Link
               href="/"
-              className="shrink-0 rounded-full bg-white px-4 py-3 text-[9px] font-black uppercase tracking-[0.1em] text-[#052219]"
+              className="shrink-0 rounded-full bg-white px-4 py-3 text-[9px] font-black uppercase tracking-[0.1em] text-[#0A382B]"
             >
               Shop
             </Link>

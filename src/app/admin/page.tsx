@@ -340,8 +340,8 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f7f9] text-[#172033]">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[250px] border-r border-black/5 bg-[#111827] text-white lg:block">
+    <div className="min-h-screen bg-[#FAF7F0] text-[#211C18]">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[250px] border-r border-black/5 bg-[#211C18] text-white lg:block">
         <div className="flex h-full flex-col">
           <div className="border-b border-white/10 px-6 py-6">
             <div className="text-[11px] font-medium tracking-[0.35em] text-white/45">
@@ -349,7 +349,7 @@ export default function AdminDashboard() {
             </div>
 
             <div className="mt-2 font-serif text-[27px] tracking-wide">
-              AR <span className="text-[#b98b5e]">FASHIONS</span>
+              AR <span className="text-[#D4AF37]">FASHIONS</span>
             </div>
 
             <div className="mt-1 text-xs text-white/40">
@@ -375,7 +375,7 @@ export default function AdminDashboard() {
                     href={item.href}
                     className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition ${
                       active
-                        ? "bg-white text-[#111827] shadow-lg"
+                        ? "bg-white text-[#211C18] shadow-lg"
                         : "text-white/65 hover:bg-white/8 hover:text-white"
                     }`}
                   >
@@ -405,10 +405,10 @@ export default function AdminDashboard() {
       </aside>
 
       <main className="lg:pl-[250px]">
-        <header className="sticky top-0 z-20 border-b border-black/5 bg-[#f6f7f9]/90 px-5 py-4 backdrop-blur-xl sm:px-8">
+        <header className="sticky top-0 z-20 border-b border-black/5 bg-[#FAF7F0]/90 px-5 py-4 backdrop-blur-xl sm:px-8">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-xs font-medium text-[#8b93a3]">
+              <div className="text-xs font-medium text-[#7B7066]">
                 AR Fashions / Admin
               </div>
               <h1 className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
@@ -417,18 +417,18 @@ export default function AdminDashboard() {
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="hidden rounded-full border border-black/5 bg-white px-4 py-2 text-xs text-[#697386] sm:block">
+              <div className="hidden rounded-full border border-black/5 bg-white px-4 py-2 text-xs text-[#7B7066] sm:block">
                 Store: <span className="font-semibold text-emerald-600">Live</span>
               </div>
 
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#111827] text-sm font-semibold text-white">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#211C18] text-sm font-semibold text-white">
                 AR
               </div>
 
               <button
                 type="button"
                 onClick={logout}
-                className="rounded-xl border border-black/10 bg-white px-4 py-2 text-xs font-semibold text-[#172033]"
+                className="rounded-xl border border-black/10 bg-white px-4 py-2 text-xs font-semibold text-[#211C18]"
               >
                 Logout
               </button>
@@ -437,7 +437,7 @@ export default function AdminDashboard() {
         </header>
 
         <div className="px-5 py-7 sm:px-8 lg:px-10">
-          <section className="overflow-hidden rounded-[28px] bg-[#111827] p-6 text-white shadow-xl sm:p-8">
+          <section className="overflow-hidden rounded-[28px] bg-[#211C18] p-6 text-white shadow-xl sm:p-8">
             <div className="max-w-2xl">
               <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/55">
                 AR Fashions Control Center
@@ -445,7 +445,7 @@ export default function AdminDashboard() {
 
               <h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
                 Manage your fashion store
-                <span className="text-[#c49a6c]"> smarter.</span>
+                <span className="text-[#D9C29A]"> smarter.</span>
               </h2>
 
               <p className="mt-3 max-w-xl text-sm leading-6 text-white/50">
@@ -457,7 +457,7 @@ export default function AdminDashboard() {
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
                 href="/admin/products"
-                className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#111827] transition hover:bg-white/90"
+                className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#211C18] transition hover:bg-white/90"
               >
                 + Add Product
               </Link>
@@ -478,11 +478,11 @@ export default function AdminDashboard() {
                 className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm"
               >
                 <div className="flex items-start justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f3eee8] text-[#9b7048]">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F4EBDD] text-[#6B5435]">
                     {stat.icon}
                   </div>
 
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-[#a2a8b3]">
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-[#9A9188]">
                     Live
                   </span>
                 </div>
@@ -495,7 +495,7 @@ export default function AdminDashboard() {
                   {stat.title}
                 </div>
 
-                <div className="mt-1 text-xs text-[#9ba2ae]">
+                <div className="mt-1 text-xs text-[#9A9188]">
                   {stat.note}
                 </div>
               </div>
@@ -526,14 +526,14 @@ export default function AdminDashboard() {
                     )}
                   </div>
 
-                  <p className="mt-1 text-xs text-[#9ba2ae]">
+                  <p className="mt-1 text-xs text-[#9A9188]">
                     Automatic stock watch · refreshes every 60 seconds
                   </p>
                 </div>
 
                 <Link
                   href="/admin/inventory"
-                  className="rounded-xl bg-[#111827] px-4 py-2.5 text-center text-xs font-semibold text-white"
+                  className="rounded-xl bg-[#211C18] px-4 py-2.5 text-center text-xs font-semibold text-white"
                 >
                   Open Inventory →
                 </Link>
@@ -587,7 +587,7 @@ export default function AdminDashboard() {
                     }
                   </div>
 
-                  <div className="mt-1 text-[9px] text-[#9ba2ae]">
+                  <div className="mt-1 text-[9px] text-[#9A9188]">
                     Draft {
                       inventorySummary.totalDraftStock
                     } · Incoming {
@@ -629,7 +629,7 @@ export default function AdminDashboard() {
                             }
                           </div>
 
-                          <div className="mt-1 truncate text-[10px] text-[#9ba2ae]">
+                          <div className="mt-1 truncate text-[10px] text-[#9A9188]">
                             {
                               alert.colorName
                             }{" "}
@@ -689,7 +689,7 @@ export default function AdminDashboard() {
                                 href={`/admin/inventory?variant=${encodeURIComponent(
                                   alert.variantId,
                                 )}&action=restock`}
-                                className="mt-2 inline-flex rounded-lg bg-[#111827] px-3 py-1.5 text-[9px] font-semibold text-white"
+                                className="mt-2 inline-flex rounded-lg bg-[#211C18] px-3 py-1.5 text-[9px] font-semibold text-white"
                               >
                                 Restock →
                               </Link>
@@ -719,13 +719,13 @@ export default function AdminDashboard() {
                     Inventory healthy ✓
                   </div>
 
-                  <p className="mt-1 text-xs text-[#9ba2ae]">
+                  <p className="mt-1 text-xs text-[#9A9188]">
                     No low, critical or out-of-stock variants.
                   </p>
                 </div>
               )}
 
-              <div className="border-t border-black/5 bg-[#fafafa] px-5 py-3 text-[10px] text-[#9ba2ae]">
+              <div className="border-t border-black/5 bg-[#FFFDF9] px-5 py-3 text-[10px] text-[#9A9188]">
                 Alert rules: Low ≤{" "}
                 {
                   inventorySummary.lowStockThreshold
@@ -762,7 +762,7 @@ export default function AdminDashboard() {
                     </span>
                   </div>
 
-                  <p className="mt-1 text-xs text-[#9ba2ae]">
+                  <p className="mt-1 text-xs text-[#9A9188]">
                     Purchase timing, supplier reliability and cost movement
                   </p>
                 </div>
@@ -777,7 +777,7 @@ export default function AdminDashboard() {
 
                   <Link
                     href="/admin/suppliers"
-                    className="rounded-xl bg-[#111827] px-3 py-2 text-xs font-semibold text-white"
+                    className="rounded-xl bg-[#211C18] px-3 py-2 text-xs font-semibold text-white"
                   >
                     Suppliers →
                   </Link>
@@ -812,7 +812,7 @@ export default function AdminDashboard() {
                       procurementSummary.pendingIncomingValue,
                     )}
                   </div>
-                  <div className="mt-1 text-[9px] text-[#9ba2ae]">
+                  <div className="mt-1 text-[9px] text-[#9A9188]">
                     {procurementSummary.pendingIncomingPieces} pcs ·{" "}
                     {procurementSummary.incomingPOCount} POs
                   </div>
@@ -825,7 +825,7 @@ export default function AdminDashboard() {
                   <div className="mt-1 text-2xl font-semibold">
                     {procurementSummary.supplierReliabilityRiskCount}
                   </div>
-                  <div className="mt-1 text-[9px] text-[#9ba2ae]">
+                  <div className="mt-1 text-[9px] text-[#9A9188]">
                     Cost risk {procurementSummary.costIncreaseSupplierCount}
                   </div>
                 </div>
@@ -852,14 +852,14 @@ export default function AdminDashboard() {
                         <div className="text-sm font-semibold">
                           {alert.title}
                         </div>
-                        <div className="mt-1 text-[10px] leading-5 text-[#9ba2ae]">
+                        <div className="mt-1 text-[10px] leading-5 text-[#9A9188]">
                           {alert.detail}
                         </div>
                       </div>
 
                       <Link
                         href={alert.href}
-                        className="shrink-0 rounded-lg bg-[#111827] px-3 py-2 text-[9px] font-semibold text-white"
+                        className="shrink-0 rounded-lg bg-[#211C18] px-3 py-2 text-[9px] font-semibold text-white"
                       >
                         Review →
                       </Link>
@@ -871,13 +871,13 @@ export default function AdminDashboard() {
                   <div className="text-sm font-semibold text-emerald-600">
                     Procurement healthy ✓
                   </div>
-                  <p className="mt-1 text-xs text-[#9ba2ae]">
+                  <p className="mt-1 text-xs text-[#9A9188]">
                     No overdue purchase orders or active supplier risks.
                   </p>
                 </div>
               )}
 
-              <div className="border-t border-black/5 bg-[#fafafa] px-5 py-3 text-[10px] text-[#9ba2ae]">
+              <div className="border-t border-black/5 bg-[#FFFDF9] px-5 py-3 text-[10px] text-[#9A9188]">
                 Needs attention suppliers{" "}
                 {procurementSummary.needsAttentionSupplierCount}
                 {" · "}
@@ -894,7 +894,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-semibold">Quick Management</h3>
-                  <p className="mt-1 text-xs text-[#9ba2ae]">
+                  <p className="mt-1 text-xs text-[#9A9188]">
                     Frequently used store controls
                   </p>
                 </div>
@@ -913,15 +913,15 @@ export default function AdminDashboard() {
                   <Link
                     key={href}
                     href={href}
-                    className="group rounded-2xl border border-black/5 p-4 transition hover:border-[#c49a6c]/40 hover:bg-[#fcfaf8]"
+                    className="group rounded-2xl border border-black/5 p-4 transition hover:border-[#D9C29A]/40 hover:bg-[#FFFDF9]"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium">{title}</span>
-                      <span className="text-[#b98b5e] transition group-hover:translate-x-1">
+                      <span className="text-[#D4AF37] transition group-hover:translate-x-1">
                         →
                       </span>
                     </div>
-                    <p className="mt-1 text-xs text-[#9ba2ae]">
+                    <p className="mt-1 text-xs text-[#9A9188]">
                       {description}
                     </p>
                   </Link>
@@ -931,15 +931,15 @@ export default function AdminDashboard() {
 
             <div className="rounded-2xl border border-black/5 bg-white p-6 shadow-sm">
               <h3 className="font-semibold">Store Modes</h3>
-              <p className="mt-1 text-xs text-[#9ba2ae]">
+              <p className="mt-1 text-xs text-[#9A9188]">
                 Retail and reseller commerce
               </p>
 
               <div className="mt-5 space-y-3">
-                <div className="flex items-center justify-between rounded-2xl bg-[#f7f8fa] p-4">
+                <div className="flex items-center justify-between rounded-2xl bg-[#F8F1E7] p-4">
                   <div>
                     <div className="text-sm font-medium">Retail Mode</div>
-                    <div className="mt-1 text-xs text-[#9ba2ae]">
+                    <div className="mt-1 text-xs text-[#9A9188]">
                       Individual customer shopping
                     </div>
                   </div>
@@ -959,10 +959,10 @@ export default function AdminDashboard() {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between rounded-2xl bg-[#f7f8fa] p-4">
+                <div className="flex items-center justify-between rounded-2xl bg-[#F8F1E7] p-4">
                   <div>
                     <div className="text-sm font-medium">Reseller Mode</div>
-                    <div className="mt-1 text-xs text-[#9ba2ae]">
+                    <div className="mt-1 text-xs text-[#9A9188]">
                       Bulk & wholesale orders
                     </div>
                   </div>
@@ -985,17 +985,17 @@ export default function AdminDashboard() {
 
               <Link
                 href="/admin/settings"
-                className="mt-5 block rounded-2xl border border-dashed border-[#d9dde5] p-4 transition hover:border-[#c49a6c]/50 hover:bg-[#fcfaf8]"
+                className="mt-5 block rounded-2xl border border-dashed border-[#E4D7C4] p-4 transition hover:border-[#D9C29A]/50 hover:bg-[#FFFDF9]"
               >
                 <div className="flex items-center justify-between">
                   <div className="text-xs font-medium">
                     Store Controls
                   </div>
-                  <span className="text-[#b98b5e]">
+                  <span className="text-[#D4AF37]">
                     →
                   </span>
                 </div>
-                <div className="mt-1 text-xs leading-5 text-[#9ba2ae]">
+                <div className="mt-1 text-xs leading-5 text-[#9A9188]">
                   Manage retail and reseller availability, COD,
                   maintenance mode and checkout rules.
                 </div>

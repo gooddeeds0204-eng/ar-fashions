@@ -82,7 +82,7 @@ export default function StorefrontDrawer({
               AR
             </p>
 
-            <p className="text-[7px] font-black uppercase tracking-[0.32em] text-[#B8923B]">
+            <p className="text-[7px] font-black uppercase tracking-[0.32em] text-[#D4AF37]">
               Fashions
             </p>
           </div>
@@ -90,7 +90,7 @@ export default function StorefrontDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="grid h-10 w-10 place-items-center rounded-full border border-[#E4D7C4] bg-[#FAF7F0] text-xl text-[#2B241F]"
+            className="grid h-10 w-10 place-items-center rounded-full border border-[#E4D7C4] bg-[#FAF7F0] text-xl text-[#211C18]"
           >
             ×
           </button>
@@ -101,7 +101,7 @@ export default function StorefrontDrawer({
             <>
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[8px] font-black uppercase tracking-[0.24em] text-[#B8923B]">
+                  <p className="text-[8px] font-black uppercase tracking-[0.24em] text-[#D4AF37]">
                     Retail Shop
                   </p>
 
@@ -122,8 +122,8 @@ export default function StorefrontDrawer({
               </div>
 
               {selectedCategoryName ? (
-                <div className="mb-4 rounded-2xl border border-[#D8C49D] bg-[#F1E8DA] px-4 py-3">
-                  <p className="text-[8px] font-bold uppercase tracking-wider text-[#B8923B]">
+                <div className="mb-4 rounded-2xl border border-[#D9C29A] bg-[#F1E8DA] px-4 py-3">
+                  <p className="text-[8px] font-bold uppercase tracking-wider text-[#D4AF37]">
                     Selected
                   </p>
 
@@ -178,7 +178,7 @@ export default function StorefrontDrawer({
                                 parent.id,
                               )
                             }
-                            className="grid h-12 w-12 shrink-0 place-items-center text-lg font-black text-[#B8923B]"
+                            className="grid h-12 w-12 shrink-0 place-items-center text-lg font-black text-[#D4AF37]"
                           >
                             {expanded
                               ? "−"
@@ -204,7 +204,7 @@ export default function StorefrontDrawer({
                                     child.name,
                                   )
                                 }
-                                className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-xs font-bold text-[#6F655D] transition hover:bg-[#FFFDF9] hover:text-[#211C18]"
+                                className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-xs font-bold text-[#7B7066] transition hover:bg-[#FFFDF9] hover:text-[#211C18]"
                               >
                                 <span>
                                   {
@@ -212,7 +212,7 @@ export default function StorefrontDrawer({
                                   }
                                 </span>
 
-                                <span className="text-[#B8923B]">
+                                <span className="text-[#D4AF37]">
                                   ›
                                 </span>
                               </button>
@@ -226,15 +226,15 @@ export default function StorefrontDrawer({
 
                 {categories.length ===
                 0 ? (
-                  <p className="py-6 text-center text-xs text-[#9C9187]">
+                  <p className="py-6 text-center text-xs text-[#7B7066]">
                     No categories available.
                   </p>
                 ) : null}
               </div>
             </>
           ) : (
-            <div className="rounded-2xl border border-[#D8C49D] bg-[#F1E8DA] p-4">
-              <p className="text-[8px] font-black uppercase tracking-[0.22em] text-[#B8923B]">
+            <div className="rounded-2xl border border-[#D9C29A] bg-[#F1E8DA] p-4">
+              <p className="text-[8px] font-black uppercase tracking-[0.22em] text-[#D4AF37]">
                 Reseller Account
               </p>
 
@@ -247,7 +247,7 @@ export default function StorefrontDrawer({
                 onClick={
                   onResellerDashboard
                 }
-                className="mt-4 w-full rounded-xl bg-[#2B241F] px-4 py-3 text-xs font-black text-[#FFFDF9]"
+                className="mt-4 w-full rounded-xl bg-[#211C18] px-4 py-3 text-xs font-black text-[#FFFDF9]"
               >
                 Open Reseller Dashboard
               </button>
@@ -255,7 +255,7 @@ export default function StorefrontDrawer({
           )}
 
           <div className="mt-6 border-t border-[#E4D7C4] pt-4">
-            <p className="mb-2 px-2 text-[8px] font-black uppercase tracking-[0.22em] text-[#9C9187]">
+            <p className="mb-2 px-2 text-[8px] font-black uppercase tracking-[0.22em] text-[#7B7066]">
               My AR
             </p>
 
@@ -292,9 +292,9 @@ export default function StorefrontDrawer({
                   onClick={
                     action as () => void
                   }
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-xs font-bold text-[#5E554D] transition hover:bg-[#F1E8DA] hover:text-[#211C18]"
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-xs font-bold text-[#7B7066] transition hover:bg-[#F1E8DA] hover:text-[#211C18]"
                 >
-                  <span className="grid h-8 w-8 place-items-center rounded-full border border-[#D8C49D] bg-[#FAF7F0] text-sm text-[#B8923B]">
+                  <span className="grid h-8 w-8 place-items-center rounded-full border border-[#D9C29A] bg-[#FAF7F0] text-sm text-[#D4AF37]">
                     {icon as string}
                   </span>
 

@@ -230,14 +230,14 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#f6f7f9] p-8">
+      <main className="min-h-screen bg-[#FAF7F0] p-8">
         Loading settings...
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f7f9] px-4 py-6 text-[#172033] md:px-8">
+    <main className="min-h-screen bg-[#FAF7F0] px-4 py-6 text-[#211C18] md:px-8">
       <div className="mx-auto max-w-6xl">
 
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">

@@ -527,7 +527,7 @@ function ProductCard({
               : "Add to Wishlist"
           }
           className={`absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-full bg-[#FFFDF9]/94 shadow-[0_5px_18px_rgba(0,0,0,0.12)] ${
-            wishlisted ? "text-[#7C2732]" : "text-[#211C18]"
+            wishlisted ? "text-[#7C3A45]" : "text-[#211C18]"
           } ${
             wishlistLoading ? "opacity-45" : ""
           }`}
@@ -2747,7 +2747,7 @@ export default function Home() {
                 AR Fashions
               </p>
 
-              <h2 className="mt-2 font-serif text-[1.9rem] text-[#2B241F]">
+              <h2 className="mt-2 font-serif text-[1.9rem] text-[#211C18]">
                 Preparing your latest styles
               </h2>
 
@@ -2951,11 +2951,11 @@ export default function Home() {
             Fashions
           </p>
 
-          <p className="mt-4 text-[8px] uppercase tracking-[0.22em] text-[#8A7F75]">
+          <p className="mt-4 text-[8px] uppercase tracking-[0.22em] text-[#7B7066]">
             Wear · Share · Belong
           </p>
 
-          <div className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-3 text-[9px] font-semibold text-[#8A7F75]">
+          <div className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-3 text-[9px] font-semibold text-[#7B7066]">
             <button
               type="button"
               onClick={() =>
@@ -3034,7 +3034,7 @@ export default function Home() {
             </button>
           </div>
 
-          <p className="mt-8 text-[7px] text-[#9C9187]">
+          <p className="mt-8 text-[7px] text-[#7B7066]">
             © 2026 AR Fashions
           </p>
         </div>

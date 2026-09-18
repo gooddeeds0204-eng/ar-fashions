@@ -55,8 +55,8 @@ function OrderSuccessContent() {
       {/* SUCCESS TOAST */}
       {showSuccessToast && (
         <div className="fixed left-1/2 top-[78px] z-[80] w-[calc(100%-24px)] max-w-md -translate-x-1/2">
-          <div className="flex items-center gap-3 rounded-[1.35rem] border border-emerald-300/25 bg-[#063326]/95 p-3.5 shadow-[0_20px_55px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-400 text-xl font-black text-[#032017]">
+          <div className="flex items-center gap-3 rounded-[1.35rem] border border-emerald-300/25 bg-[#031B14]/95 p-3.5 shadow-[0_20px_55px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-400 text-xl font-black text-[#031B14]">
               ✓
             </div>
 
@@ -83,7 +83,7 @@ function OrderSuccessContent() {
                   "/my-orders",
                 )
               }
-              className="shrink-0 rounded-full bg-white px-4 py-2.5 text-[9px] font-black text-[#063326]"
+              className="shrink-0 rounded-full bg-white px-4 py-2.5 text-[9px] font-black text-[#031B14]"
             >
               View →
             </button>
@@ -113,7 +113,7 @@ function OrderSuccessContent() {
             <div className="relative mx-auto grid h-24 w-24 place-items-center">
               <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/10" />
 
-              <span className="relative grid h-20 w-20 place-items-center rounded-full border border-emerald-300/30 bg-emerald-400 text-4xl font-black text-[#042016] shadow-[0_0_40px_rgba(52,211,153,0.25)]">
+              <span className="relative grid h-20 w-20 place-items-center rounded-full border border-emerald-300/30 bg-emerald-400 text-4xl font-black text-[#031B14] shadow-[0_0_40px_rgba(52,211,153,0.25)]">
                 ✓
               </span>
             </div>
@@ -134,8 +134,8 @@ function OrderSuccessContent() {
           </div>
 
           {orderNumber && (
-            <div className="mx-4 rounded-[1.35rem] border border-[#D8C49D] bg-[#F1E8DA] px-4 py-4 text-center">
-              <p className="text-[7px] font-black uppercase tracking-[0.22em] text-[#9C9187]">
+            <div className="mx-4 rounded-[1.35rem] border border-[#D9C29A] bg-[#F1E8DA] px-4 py-4 text-center">
+              <p className="text-[7px] font-black uppercase tracking-[0.22em] text-[#7B7066]">
                 Order Number
               </p>
 
@@ -180,7 +180,7 @@ function OrderSuccessContent() {
                     {title}
                   </p>
 
-                  <p className="mt-1 text-[6px] leading-3 text-[#9C9187]">
+                  <p className="mt-1 text-[6px] leading-3 text-[#7B7066]">
                     {subtitle}
                   </p>
                 </div>
@@ -214,7 +214,7 @@ function OrderSuccessContent() {
                   "/my-orders",
                 )
               }
-              className="min-h-[54px] w-full rounded-[1.15rem] bg-emerald-400 px-5 text-[11px] font-black uppercase tracking-[0.08em] text-[#032017] shadow-[0_12px_30px_rgba(52,211,153,0.2)] transition active:scale-[0.98]"
+              className="min-h-[54px] w-full rounded-[1.15rem] bg-emerald-400 px-5 text-[11px] font-black uppercase tracking-[0.08em] text-[#031B14] shadow-[0_12px_30px_rgba(52,211,153,0.2)] transition active:scale-[0.98]"
             >
               View My Order →
             </button>
@@ -224,12 +224,12 @@ function OrderSuccessContent() {
               onClick={() =>
                 router.push("/")
               }
-              className="mt-2.5 min-h-[50px] w-full rounded-[1.15rem] border border-[#E4D7C4] bg-[#FFFDF9] px-5 text-[10px] font-black uppercase tracking-[0.08em] text-[#2B241F] transition active:scale-[0.98]"
+              className="mt-2.5 min-h-[50px] w-full rounded-[1.15rem] border border-[#E4D7C4] bg-[#FFFDF9] px-5 text-[10px] font-black uppercase tracking-[0.08em] text-[#211C18] transition active:scale-[0.98]"
             >
               Continue Shopping
             </button>
 
-            <p className="mt-4 text-center text-[7px] font-semibold uppercase tracking-[0.16em] text-[#9C9187]">
+            <p className="mt-4 text-center text-[7px] font-semibold uppercase tracking-[0.16em] text-[#7B7066]">
               AR Fashions · Wear Your Story
             </p>
           </div>

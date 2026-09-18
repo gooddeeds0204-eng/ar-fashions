@@ -1230,7 +1230,7 @@ export default function ProductDetailPage() {
 
   if (error || !product) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f7f7f5] px-6">
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF7F0] px-6">
         <div className="text-center">
           <h1 className="text-xl font-black">
             Product not found
@@ -1258,8 +1258,8 @@ export default function ProductDetailPage() {
       : null;
 
   return (
-    <main className="min-h-screen bg-[#f7f6f2] pb-24 text-zinc-950 sm:pb-0">
-      <header className="sticky top-0 z-50 border-b border-black/[0.06] bg-[#fffefa]/95 shadow-[0_1px_12px_rgba(0,0,0,0.04)] backdrop-blur-xl">
+    <main className="min-h-screen bg-[#FAF7F0] pb-24 text-zinc-950 sm:pb-0">
+      <header className="sticky top-0 z-50 border-b border-black/[0.06] bg-[#FFFDF9]/95 shadow-[0_1px_12px_rgba(0,0,0,0.04)] backdrop-blur-xl">
         <div className="mx-auto flex h-[60px] max-w-7xl items-center px-4 sm:h-16 sm:px-6 lg:px-8">
           <button
             onClick={() => router.back()}
@@ -1285,7 +1285,7 @@ export default function ProductDetailPage() {
       <div className="mx-auto grid max-w-7xl gap-0 pb-8 sm:gap-8 sm:px-6 sm:pt-6 lg:grid-cols-2 lg:px-8 lg:py-10">
         {/* MEDIA */}
         <section className="lg:sticky lg:top-24 lg:self-start">
-          <div className="overflow-hidden bg-[#eeede9] sm:rounded-[2rem]">
+          <div className="overflow-hidden bg-[#F4EBDD] sm:rounded-[2rem]">
             <div className="aspect-[4/5]">
               {media?.type === "VIDEO" ? (
                 <video
@@ -1434,7 +1434,7 @@ export default function ProductDetailPage() {
           {!isReseller ? (
             <>
           {/* COLOR */}
-          <div className="mt-7 rounded-[1.35rem] border border-black/[0.06] bg-[#faf9f6] p-4 sm:p-5">
+          <div className="mt-7 rounded-[1.35rem] border border-black/[0.06] bg-[#FAF7F0] p-4 sm:p-5">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-bold">
                 Color
@@ -1479,7 +1479,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* SIZE */}
-          <div className="mt-4 rounded-[1.35rem] border border-black/[0.06] bg-[#faf9f6] p-4 sm:p-5">
+          <div className="mt-4 rounded-[1.35rem] border border-black/[0.06] bg-[#FAF7F0] p-4 sm:p-5">
             <p className="mb-3 text-sm font-bold">
               Size
             </p>
@@ -1551,7 +1551,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* QUANTITY */}
-          <div className="mt-4 flex items-center justify-between gap-4 rounded-[1.35rem] border border-black/[0.06] bg-[#faf9f6] p-4">
+          <div className="mt-4 flex items-center justify-between gap-4 rounded-[1.35rem] border border-black/[0.06] bg-[#FAF7F0] p-4">
             <div>
               <p className="text-sm font-black">
                 Quantity
@@ -1757,7 +1757,7 @@ export default function ProductDetailPage() {
                   return (
                     <div
                       key={color.id}
-                      className="rounded-2xl border border-black/[0.07] bg-[#fcfbf8] p-4 shadow-sm"
+                      className="rounded-2xl border border-black/[0.07] bg-[#FFFDF9] p-4 shadow-sm"
                     >
                       <div className="mb-4 flex items-center justify-between">
                         <p className="font-black">
@@ -1943,7 +1943,7 @@ export default function ProductDetailPage() {
               ([icon, title, subtitle]) => (
                 <div
                   key={title}
-                  className="rounded-[1.25rem] border border-black/[0.05] bg-[#f7f6f2] px-2 py-3.5 text-center"
+                  className="rounded-[1.25rem] border border-black/[0.05] bg-[#FAF7F0] px-2 py-3.5 text-center"
                 >
                   <span className="mx-auto grid h-8 w-8 place-items-center rounded-full bg-white text-[11px] font-black text-emerald-700 shadow-sm">
                     {icon}
@@ -1962,7 +1962,7 @@ export default function ProductDetailPage() {
           </div>
 
           {product.description && (
-            <div className="mt-6 overflow-hidden rounded-[1.4rem] border border-black/[0.06] bg-[#faf9f6]">
+            <div className="mt-6 overflow-hidden rounded-[1.4rem] border border-black/[0.06] bg-[#FAF7F0]">
               <div className="border-b border-black/[0.05] px-5 py-4">
                 <p className="text-[8px] font-black uppercase tracking-[0.22em] text-emerald-700">
                   About this piece
@@ -1991,7 +1991,7 @@ export default function ProductDetailPage() {
           )}
 
           <div className="mt-6 overflow-hidden rounded-[1.4rem] border border-black/[0.06] bg-white shadow-[0_12px_35px_rgba(0,0,0,0.04)]">
-            <div className="flex items-end justify-between gap-4 border-b border-black/[0.05] bg-[#faf9f6] px-5 py-4">
+            <div className="flex items-end justify-between gap-4 border-b border-black/[0.05] bg-[#FAF7F0] px-5 py-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-zinc-400">
                   Verified Buyers
@@ -2036,7 +2036,7 @@ export default function ProductDetailPage() {
                       key={
                         review.id
                       }
-                      className="rounded-[1.2rem] border border-black/[0.05] bg-[#faf9f6] p-4 shadow-[0_4px_18px_rgba(0,0,0,0.025)]"
+                      className="rounded-[1.2rem] border border-black/[0.05] bg-[#FAF7F0] p-4 shadow-[0_4px_18px_rgba(0,0,0,0.025)]"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
@@ -2103,8 +2103,8 @@ export default function ProductDetailPage() {
 
       {cartNotice && (
         <div className="fixed left-1/2 top-[78px] z-[70] w-[calc(100%-24px)] max-w-md -translate-x-1/2">
-          <div className="mx-auto flex max-w-md items-center gap-3 rounded-[1.3rem] border border-emerald-400/25 bg-[#06261c]/95 p-3.5 text-white shadow-[0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-400 text-lg font-black text-[#042016]">
+          <div className="mx-auto flex max-w-md items-center gap-3 rounded-[1.3rem] border border-emerald-400/25 bg-[#031B14]/95 p-3.5 text-white shadow-[0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-400 text-lg font-black text-[#031B14]">
               ✓
             </div>
 
@@ -2125,7 +2125,7 @@ export default function ProductDetailPage() {
             <button
               type="button"
               onClick={() => router.push("/cart")}
-              className="shrink-0 rounded-full bg-white px-4 py-2.5 text-[9px] font-black text-[#06261c]"
+              className="shrink-0 rounded-full bg-white px-4 py-2.5 text-[9px] font-black text-[#031B14]"
             >
               View Bag →
             </button>
@@ -2145,12 +2145,12 @@ export default function ProductDetailPage() {
               className="absolute inset-0 bg-black/65 backdrop-blur-[3px]"
             />
 
-            <div className="relative z-10 w-full max-w-md overflow-hidden rounded-t-[2rem] bg-[#fffefa] shadow-[0_-20px_70px_rgba(0,0,0,0.28)] sm:rounded-[2rem]">
-              <div className="h-1 w-full bg-gradient-to-r from-[#7C2732] via-[#D4AF37] to-[#7C2732]" />
+            <div className="relative z-10 w-full max-w-md overflow-hidden rounded-t-[2rem] bg-[#FFFDF9] shadow-[0_-20px_70px_rgba(0,0,0,0.28)] sm:rounded-[2rem]">
+              <div className="h-1 w-full bg-gradient-to-r from-[#7C3A45] via-[#D4AF37] to-[#7C3A45]" />
 
               <div className="flex items-start justify-between px-5 pb-3 pt-5">
                 <div>
-                  <p className="text-[8px] font-black uppercase tracking-[0.24em] text-[#7C2732]">
+                  <p className="text-[8px] font-black uppercase tracking-[0.24em] text-[#7C3A45]">
                     AR Fashions
                   </p>
 
@@ -2173,7 +2173,7 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="px-5">
-                <div className="flex gap-4 rounded-[1.3rem] border border-black/[0.06] bg-[#f7f5ef] p-3">
+                <div className="flex gap-4 rounded-[1.3rem] border border-black/[0.06] bg-[#F8F1E7] p-3">
                   <div className="h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-zinc-200">
                     {product.media.find(
                       (item) =>
@@ -2201,7 +2201,7 @@ export default function ProductDetailPage() {
                   </div>
 
                   <div className="min-w-0 flex-1 py-1">
-                    <p className="text-[8px] font-black uppercase tracking-[0.16em] text-[#7C2732]">
+                    <p className="text-[8px] font-black uppercase tracking-[0.16em] text-[#7C3A45]">
                       {
                         product
                           .category
@@ -2318,7 +2318,7 @@ export default function ProductDetailPage() {
                     );
                     buyNow();
                   }}
-                  className="min-h-[54px] rounded-[1rem] bg-[#7C2732] px-3 text-[11px] font-black text-white shadow-[0_12px_30px_rgba(124,39,50,0.28)] disabled:opacity-50"
+                  className="min-h-[54px] rounded-[1rem] bg-[#7C3A45] px-3 text-[11px] font-black text-white shadow-[0_12px_30px_rgba(124,39,50,0.28)] disabled:opacity-50"
                 >
                   {adding
                     ? "Preparing..."

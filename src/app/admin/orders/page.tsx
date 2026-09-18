@@ -461,12 +461,12 @@ export default function AdminOrdersPage() {
   }, [orders, selectedStatus]);
 
   return (
-    <div className="min-h-screen bg-[#f6f7f9] text-[#172033]">
+    <div className="min-h-screen bg-[#FAF7F0] text-[#211C18]">
       <main className="lg:pl-[250px]">
-        <header className="sticky top-0 z-20 border-b border-black/5 bg-[#f6f7f9]/90 px-5 py-4 backdrop-blur-xl sm:px-8">
+        <header className="sticky top-0 z-20 border-b border-black/5 bg-[#FAF7F0]/90 px-5 py-4 backdrop-blur-xl sm:px-8">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <div className="text-xs font-medium text-[#8b93a3]">
+              <div className="text-xs font-medium text-[#7B7066]">
                 AR Fashions / Admin / Orders
               </div>
 

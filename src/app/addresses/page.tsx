@@ -324,7 +324,7 @@ export default function AddressesPage() {
     );
 
   return (
-    <main className="min-h-screen bg-[#f7f6f2] pb-12 text-zinc-950">
+    <main className="min-h-screen bg-[#FAF7F0] pb-12 text-zinc-950">
       {/* TOP-CENTER AR TOAST */}
       {toast && (
         <div className="fixed left-1/2 top-[78px] z-[120] w-[calc(100%-24px)] max-w-md -translate-x-1/2">
@@ -332,15 +332,15 @@ export default function AddressesPage() {
             className={`flex items-center gap-3 rounded-[1.35rem] border p-3.5 text-white shadow-[0_20px_55px_rgba(0,0,0,0.28)] backdrop-blur-xl ${
               toast.type ===
               "SUCCESS"
-                ? "border-emerald-300/25 bg-[#063326]/95"
-                : "border-red-300/25 bg-[#4a1111]/95"
+                ? "border-emerald-300/25 bg-[#031B14]/95"
+                : "border-red-300/25 bg-[#7C3A45]/95"
             }`}
           >
             <div
               className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-black ${
                 toast.type ===
                 "SUCCESS"
-                  ? "bg-emerald-400 text-[#032017]"
+                  ? "bg-emerald-400 text-[#031B14]"
                   : "bg-red-400 text-white"
               }`}
             >
@@ -385,7 +385,7 @@ export default function AddressesPage() {
       )}
 
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-black/[0.06] bg-[#fffefa]/95 shadow-[0_1px_12px_rgba(0,0,0,0.03)] backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-black/[0.06] bg-[#FFFDF9]/95 shadow-[0_1px_12px_rgba(0,0,0,0.03)] backdrop-blur-xl">
         <div className="mx-auto flex h-[68px] max-w-5xl items-center gap-3 px-4 sm:px-6">
           <button
             type="button"
@@ -608,7 +608,7 @@ export default function AddressesPage() {
                             className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-black ${
                               address.isDefault
                                 ? "bg-emerald-600 text-white"
-                                : "bg-[#f7f6f2] text-zinc-600"
+                                : "bg-[#FAF7F0] text-zinc-600"
                             }`}
                           >
                             ⌂
@@ -647,7 +647,7 @@ export default function AddressesPage() {
                       </div>
 
                       {/* FULL ADDRESS */}
-                      <div className="mt-5 rounded-[1.2rem] bg-[#faf9f6] p-4">
+                      <div className="mt-5 rounded-[1.2rem] bg-[#FAF7F0] p-4">
                         <p className="text-[7px] font-black uppercase tracking-[0.18em] text-emerald-700">
                           Full Delivery Address
                         </p>
@@ -772,8 +772,8 @@ export default function AddressesPage() {
       {/* ADD ADDRESS MODAL */}
       {showForm && (
         <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4">
-          <div className="mx-auto my-4 max-w-xl overflow-hidden rounded-[1.8rem] bg-[#fffefa] shadow-[0_30px_90px_rgba(0,0,0,0.3)] sm:my-8">
-            <div className="border-b border-black/[0.06] bg-[#06261c] p-5 text-white sm:p-6">
+          <div className="mx-auto my-4 max-w-xl overflow-hidden rounded-[1.8rem] bg-[#FFFDF9] shadow-[0_30px_90px_rgba(0,0,0,0.3)] sm:my-8">
+            <div className="border-b border-black/[0.06] bg-[#031B14] p-5 text-white sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[7px] font-black uppercase tracking-[0.22em] text-emerald-300">

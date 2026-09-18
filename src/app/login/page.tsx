@@ -100,7 +100,7 @@ export default function LoginPage() {
             onClick={() =>
               router.push("/")
             }
-            className="rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-2 text-[9px] font-black uppercase tracking-wider text-[#6F655D]"
+            className="rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-2 text-[9px] font-black uppercase tracking-wider text-[#7B7066]"
           >
             Close
           </button>
@@ -142,7 +142,7 @@ export default function LoginPage() {
                 }
                 autoComplete="username"
                 placeholder="Enter mobile number or email"
-                className="w-full rounded-2xl border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-4 text-sm text-[#211C18] outline-none placeholder:text-[#9C9187] focus:border-[#B8923B]/60"
+                className="w-full rounded-2xl border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-4 text-sm text-[#211C18] outline-none placeholder:text-[#7B7066] focus:border-[#D4AF37]/60"
               />
             </label>
 
@@ -161,7 +161,7 @@ export default function LoginPage() {
                 }
                 autoComplete="current-password"
                 placeholder="Your password"
-                className="w-full rounded-2xl border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-4 text-sm text-[#211C18] outline-none placeholder:text-[#9C9187] focus:border-[#B8923B]/60"
+                className="w-full rounded-2xl border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-4 text-sm text-[#211C18] outline-none placeholder:text-[#7B7066] focus:border-[#D4AF37]/60"
               />
             </label>
 
@@ -178,7 +178,7 @@ export default function LoginPage() {
                 !identifier.trim() ||
                 !password
               }
-              className="w-full rounded-2xl bg-white py-4 text-[11px] font-black uppercase tracking-[0.12em] text-[#03140e] transition active:scale-[0.99] disabled:opacity-40"
+              className="w-full rounded-2xl bg-white py-4 text-[11px] font-black uppercase tracking-[0.12em] text-[#031B14] transition active:scale-[0.99] disabled:opacity-40"
             >
               {loading
                 ? "Signing In..."
@@ -191,7 +191,7 @@ export default function LoginPage() {
               New to AR Fashions?
             </p>
 
-            <p className="mt-1 text-[10px] leading-5 text-[#8A7F75]">
+            <p className="mt-1 text-[10px] leading-5 text-[#7B7066]">
               Create a normal customer
               account or apply for a
               retailer account.

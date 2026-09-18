@@ -284,7 +284,7 @@ export default function PromoSlot({
           />
 
           <div className="relative z-10 flex min-h-[280px] max-w-[68%] flex-col justify-center p-5 sm:min-h-[370px] sm:max-w-[58%] sm:p-10">
-            <p className="text-[8px] font-black uppercase tracking-[0.22em] text-[#7C2732]">
+            <p className="text-[8px] font-black uppercase tracking-[0.22em] text-[#7C3A45]">
               AR Fashions
             </p>
 
@@ -293,7 +293,7 @@ export default function PromoSlot({
             </h2>
 
             {promo.subtitle && (
-              <p className="mt-4 max-w-[220px] text-[9px] font-black uppercase leading-5 tracking-[0.14em] text-[#7C2732] sm:text-[10px]">
+              <p className="mt-4 max-w-[220px] text-[9px] font-black uppercase leading-5 tracking-[0.14em] text-[#7C3A45] sm:text-[10px]">
                 {promo.subtitle}
               </p>
             )}

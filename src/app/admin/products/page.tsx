@@ -1095,7 +1095,7 @@ export default function ProductsPage() {
                                   style={{
                                     backgroundColor:
                                       color.hexCode ??
-                                      "#64748b",
+                                      "#7B7066",
                                   }}
                                 />
                               ))}
@@ -1147,7 +1147,7 @@ export default function ProductsPage() {
                                     style={{
                                       backgroundColor:
                                         color.hexCode ??
-                                        "#64748b",
+                                        "#7B7066",
                                     }}
                                   />
 

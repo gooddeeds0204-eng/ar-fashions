@@ -123,7 +123,7 @@ export default function ResellerDashboardActions() {
               }
               className="rounded-[1.35rem] border border-black/[0.05] bg-white p-3.5 text-left shadow-sm transition active:scale-[0.98]"
             >
-              <div className="grid h-9 w-9 place-items-center rounded-full bg-[#06261c] text-[9px] font-black text-emerald-200">
+              <div className="grid h-9 w-9 place-items-center rounded-full bg-[#031B14] text-[9px] font-black text-emerald-200">
                 {
                   action.icon
                 }

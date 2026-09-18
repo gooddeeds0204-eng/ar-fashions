@@ -728,15 +728,15 @@ export default function AccountPage() {
             className={`flex items-center gap-3 rounded-[1.35rem] border p-3.5 text-white shadow-[0_20px_55px_rgba(0,0,0,0.3)] backdrop-blur-xl ${
               accountToast.type ===
               "SUCCESS"
-                ? "border-emerald-300/25 bg-[#063326]/95"
-                : "border-red-300/25 bg-[#4a1111]/95"
+                ? "border-emerald-300/25 bg-[#031B14]/95"
+                : "border-red-300/25 bg-[#7C3A45]/95"
             }`}
           >
             <div
               className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-black ${
                 accountToast.type ===
                 "SUCCESS"
-                  ? "bg-emerald-400 text-[#032017]"
+                  ? "bg-emerald-400 text-[#031B14]"
                   : "bg-red-400 text-white"
               }`}
             >
@@ -792,7 +792,7 @@ export default function AccountPage() {
             }
           />
 
-          <span className="ml-auto rounded-full bg-[#f4f4f1] px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-zinc-500">
+          <span className="ml-auto rounded-full bg-[#F4EBDD] px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-zinc-500">
             My Account
           </span>
         </div>
@@ -831,12 +831,12 @@ export default function AccountPage() {
           <div className="space-y-4">
             {/* CLEAN PROFILE HERO */}
             <section className="relative overflow-hidden rounded-[1.8rem] border border-[#E4D7C4] bg-[#FFFDF9] text-[#211C18] shadow-[0_20px_55px_rgba(61,48,37,0.08)]">
-              <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-[#D8C49D]/35 blur-3xl" />
+              <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-[#D9C29A]/35 blur-3xl" />
               <div className="pointer-events-none absolute bottom-[-90px] left-[-50px] h-48 w-48 rounded-full bg-[#D4AF37]/10 blur-3xl" />
 
               <div className="relative p-5 sm:p-7">
                 <div className="flex items-center gap-4">
-                  <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-[#D4AF37]/35 bg-[#F1E8DA] font-serif text-2xl text-[#B8923B]">
+                  <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-[#D4AF37]/35 bg-[#F1E8DA] font-serif text-2xl text-[#D4AF37]">
                     {customerInitial}
                   </div>
 
@@ -892,7 +892,7 @@ export default function AccountPage() {
                         {value}
                       </p>
 
-                      <p className="mt-1 text-[6px] font-black uppercase tracking-[0.12em] text-[#9C9187] sm:text-[7px]">
+                      <p className="mt-1 text-[6px] font-black uppercase tracking-[0.12em] text-[#7B7066] sm:text-[7px]">
                         {label}
                       </p>
                     </div>
@@ -905,7 +905,7 @@ export default function AccountPage() {
             <section>
               <div className="mb-3 flex items-end justify-between">
                 <div>
-                  <p className="text-[7px] font-black uppercase tracking-[0.22em] text-[#7C2732]">
+                  <p className="text-[7px] font-black uppercase tracking-[0.22em] text-[#7C3A45]">
                     Account
                   </p>
 
@@ -951,7 +951,7 @@ export default function AccountPage() {
               <section className="overflow-hidden rounded-[1.5rem] border border-black/[0.06] bg-white shadow-sm">
                 <div className="flex items-center justify-between border-b border-black/[0.05] px-4 py-4 sm:px-5">
                   <div>
-                    <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#7C2732]">
+                    <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#7C3A45]">
                       Orders
                     </p>
 
@@ -1020,7 +1020,7 @@ export default function AccountPage() {
                     </div>
 
                     <div className="mt-4 grid grid-cols-2 gap-2">
-                      <div className="rounded-xl bg-[#faf9f6] p-3">
+                      <div className="rounded-xl bg-[#FAF7F0] p-3">
                         <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
                           Payment
                         </p>
@@ -1036,7 +1036,7 @@ export default function AccountPage() {
                         </p>
                       </div>
 
-                      <div className="rounded-xl bg-[#faf9f6] p-3">
+                      <div className="rounded-xl bg-[#FAF7F0] p-3">
                         <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
                           Delivery
                         </p>
@@ -1086,7 +1086,7 @@ export default function AccountPage() {
               <section className="overflow-hidden rounded-[1.5rem] border border-black/[0.06] bg-white shadow-sm">
                 <div className="flex items-center justify-between border-b border-black/[0.05] px-4 py-4 sm:px-5">
                   <div>
-                    <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#7C2732]">
+                    <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#7C3A45]">
                       Personal
                     </p>
 
@@ -1098,7 +1098,7 @@ export default function AccountPage() {
                   <button
                     type="button"
                     onClick={openProfileEditor}
-                    className="text-[8px] font-black uppercase tracking-[0.08em] text-[#7C2732]"
+                    className="text-[8px] font-black uppercase tracking-[0.08em] text-[#7C3A45]"
                   >
                     Edit
                   </button>
@@ -1128,7 +1128,7 @@ export default function AccountPage() {
                             "/addresses",
                           )
                         }
-                        className="text-[7px] font-black uppercase tracking-[0.08em] text-[#7C2732]"
+                        className="text-[7px] font-black uppercase tracking-[0.08em] text-[#7C3A45]"
                       >
                         Manage
                       </button>
@@ -1160,7 +1160,7 @@ export default function AccountPage() {
                             "/addresses",
                           )
                         }
-                        className="mt-2 text-[10px] font-black text-[#7C2732]"
+                        className="mt-2 text-[10px] font-black text-[#7C3A45]"
                       >
                         + Add delivery address
                       </button>
@@ -1178,7 +1178,7 @@ export default function AccountPage() {
                       </p>
                     </div>
 
-                    <span className="rounded-full bg-[#f7f3ee] px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.08em] text-[#7C2732]">
+                    <span className="rounded-full bg-[#f7f3ee] px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.08em] text-[#7C3A45]">
                       Active
                     </span>
                   </div>
@@ -1187,7 +1187,7 @@ export default function AccountPage() {
             </div>
 
             {/* RESELLER */}
-            <section className="relative overflow-hidden rounded-[1.5rem] border border-[#D8C49D] bg-gradient-to-r from-[#F1E8DA] via-[#FFF8ED] to-[#FFFDF9] p-5 text-[#211C18]">
+            <section className="relative overflow-hidden rounded-[1.5rem] border border-[#D9C29A] bg-gradient-to-r from-[#F1E8DA] via-[#FFF8ED] to-[#FFFDF9] p-5 text-[#211C18]">
               <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-[#D4AF37]/10 blur-3xl" />
 
               <div className="relative flex items-center gap-4">
@@ -1262,8 +1262,8 @@ export default function AccountPage() {
 
       {editProfileOpen && (
         <div className="fixed inset-0 z-[120] overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4">
-          <div className="mx-auto my-6 max-w-lg overflow-hidden rounded-[1.8rem] bg-[#fffefa] shadow-[0_30px_90px_rgba(0,0,0,0.35)]">
-            <div className="bg-[#06261c] p-5 text-white sm:p-6">
+          <div className="mx-auto my-6 max-w-lg overflow-hidden rounded-[1.8rem] bg-[#FFFDF9] shadow-[0_30px_90px_rgba(0,0,0,0.35)]">
+            <div className="bg-[#031B14] p-5 text-white sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[8px] font-black uppercase tracking-[0.24em] text-emerald-300">
@@ -1274,7 +1274,7 @@ export default function AccountPage() {
                     Personal Information
                   </h2>
 
-                  <p className="mt-3 max-w-sm text-[10px] leading-5 text-[#8A7F75]">
+                  <p className="mt-3 max-w-sm text-[10px] leading-5 text-[#7B7066]">
                     Keep your account contact information accurate for orders and account communication.
                   </p>
                 </div>
@@ -1326,7 +1326,7 @@ export default function AccountPage() {
                 </label>
 
                 <div className="mt-2 flex overflow-hidden rounded-[1rem] border border-black/[0.08] bg-white focus-within:border-emerald-500">
-                  <span className="flex items-center border-r border-black/[0.06] bg-[#faf9f6] px-4 text-sm font-black text-zinc-500">
+                  <span className="flex items-center border-r border-black/[0.06] bg-[#FAF7F0] px-4 text-sm font-black text-zinc-500">
                     +91
                   </span>
 
@@ -1428,7 +1428,7 @@ export default function AccountPage() {
             onClick={() =>
               router.push("/")
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
+            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#7B7066]"
           >
             <span className="text-lg">
               ⌂
@@ -1445,7 +1445,7 @@ export default function AccountPage() {
                 "/wishlist",
               )
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
+            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#7B7066]"
           >
             <span className="text-lg">
               ♡
@@ -1464,7 +1464,7 @@ export default function AccountPage() {
             }
             className="relative flex min-h-[52px] flex-col items-center justify-center"
           >
-            <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-[4px] border-[#03140e] bg-emerald-400 font-serif text-[14px] font-black text-[#03140e] shadow-[0_0_28px_rgba(52,211,153,0.3)]">
+            <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-[4px] border-[#031B14] bg-emerald-400 font-serif text-[14px] font-black text-[#031B14] shadow-[0_0_28px_rgba(52,211,153,0.3)]">
               AR
             </span>
 
@@ -1478,7 +1478,7 @@ export default function AccountPage() {
             onClick={() =>
               router.push("/cart")
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
+            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#7B7066]"
           >
             <span className="text-lg">
               🛍

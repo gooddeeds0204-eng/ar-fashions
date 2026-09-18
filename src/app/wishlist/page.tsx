@@ -268,15 +268,15 @@ export default function WishlistPage() {
             className={`flex items-center gap-3 rounded-[1.35rem] border p-3.5 shadow-[0_20px_55px_rgba(0,0,0,0.35)] backdrop-blur-xl ${
               toast.type ===
               "SUCCESS"
-                ? "border-emerald-300/25 bg-[#063326]/95"
-                : "border-red-300/25 bg-[#4a1111]/95"
+                ? "border-emerald-300/25 bg-[#031B14]/95"
+                : "border-red-300/25 bg-[#7C3A45]/95"
             }`}
           >
             <div
               className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-black ${
                 toast.type ===
                 "SUCCESS"
-                  ? "bg-emerald-400 text-[#032017]"
+                  ? "bg-emerald-400 text-[#031B14]"
                   : "bg-red-400 text-white"
               }`}
             >
@@ -341,7 +341,7 @@ export default function WishlistPage() {
                 "/cart",
               )
             }
-            className="ml-auto rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.08em] text-[#2B241F]"
+            className="ml-auto rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.08em] text-[#211C18]"
           >
             Bag →
           </button>
@@ -387,7 +387,7 @@ export default function WishlistPage() {
 
       <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-9 lg:px-8">
         {items.length === 0 ? (
-          <div className="relative overflow-hidden rounded-[1.8rem] border border-[#D8C49D] bg-[#F1E8DA] shadow-[0_30px_80px_rgba(0,0,0,0.3)]">
+          <div className="relative overflow-hidden rounded-[1.8rem] border border-[#D9C29A] bg-[#F1E8DA] shadow-[0_30px_80px_rgba(0,0,0,0.3)]">
             <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-emerald-400/10 blur-3xl" />
 
             <div className="relative p-6 sm:p-10">
@@ -417,7 +417,7 @@ export default function WishlistPage() {
                           "/",
                         )
                       }
-                      className="rounded-full bg-emerald-400 px-5 py-3 text-[9px] font-black uppercase tracking-[0.08em] text-[#032017]"
+                      className="rounded-full bg-emerald-400 px-5 py-3 text-[9px] font-black uppercase tracking-[0.08em] text-[#031B14]"
                     >
                       Explore Collection →
                     </button>
@@ -541,7 +541,7 @@ export default function WishlistPage() {
                       key={item.id}
                       className="group overflow-hidden rounded-[1.25rem] border border-[#E4D7C4] bg-[#FFFDF9] shadow-[0_16px_40px_rgba(0,0,0,0.2)]"
                     >
-                      <div className="relative aspect-[3/4] overflow-hidden bg-[#0a251c]">
+                      <div className="relative aspect-[3/4] overflow-hidden bg-[#0A382B]">
                         <button
                           type="button"
                           onClick={() =>
@@ -600,7 +600,7 @@ export default function WishlistPage() {
 
                         {discount >
                           0 && (
-                          <span className="absolute bottom-2.5 left-2.5 rounded-full bg-emerald-400 px-2.5 py-1 text-[7px] font-black text-[#032017]">
+                          <span className="absolute bottom-2.5 left-2.5 rounded-full bg-emerald-400 px-2.5 py-1 text-[7px] font-black text-[#031B14]">
                             {discount}% OFF
                           </span>
                         )}
@@ -652,7 +652,7 @@ export default function WishlistPage() {
                               `/products/${product.id}?mode=retail`,
                             )
                           }
-                          className="mt-3.5 min-h-[42px] w-full rounded-xl bg-emerald-400 px-3 text-[9px] font-black uppercase tracking-[0.08em] text-[#032017] transition active:scale-[0.98]"
+                          className="mt-3.5 min-h-[42px] w-full rounded-xl bg-emerald-400 px-3 text-[9px] font-black uppercase tracking-[0.08em] text-[#031B14] transition active:scale-[0.98]"
                         >
                           View Product →
                         </button>
@@ -674,7 +674,7 @@ export default function WishlistPage() {
             onClick={() =>
               router.push("/")
             }
-            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#7B7066]"
           >
             <span className="text-lg">
               ⌂
@@ -692,7 +692,7 @@ export default function WishlistPage() {
                 "/reels?mode=retail",
               )
             }
-            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#7B7066]"
           >
             <span className="text-lg">
               ▶
@@ -723,7 +723,7 @@ export default function WishlistPage() {
                 "/account",
               )
             }
-            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#7B7066]"
           >
             <span className="grid h-5 w-5 place-items-center rounded-full border border-current text-[7px]">
               A

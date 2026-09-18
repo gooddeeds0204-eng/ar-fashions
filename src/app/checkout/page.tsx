@@ -1105,7 +1105,7 @@ export default function CheckoutPage() {
 
   if (cart.length === 0) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f7f7f5]">
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF7F0]">
         <p className="text-sm font-semibold text-zinc-500">
           Redirecting to cart...
         </p>
@@ -1114,7 +1114,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f5f1] pb-28 text-zinc-950 sm:pb-10">
+    <main className="min-h-screen bg-[#FAF7F0] pb-28 text-zinc-950 sm:pb-10">
       {/* PREMIUM CHECKOUT TOAST */}
       {checkoutToast && (
         <div className="fixed left-1/2 top-[78px] z-[140] w-[calc(100%-24px)] max-w-md -translate-x-1/2">
@@ -1122,15 +1122,15 @@ export default function CheckoutPage() {
             className={`flex items-center gap-3 rounded-[1.35rem] border p-3.5 text-white shadow-[0_20px_55px_rgba(0,0,0,0.3)] backdrop-blur-xl ${
               checkoutToast.type ===
               "SUCCESS"
-                ? "border-emerald-300/25 bg-[#063326]/95"
-                : "border-red-300/25 bg-[#4a1111]/95"
+                ? "border-emerald-300/25 bg-[#031B14]/95"
+                : "border-red-300/25 bg-[#7C3A45]/95"
             }`}
           >
             <div
               className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-black ${
                 checkoutToast.type ===
                 "SUCCESS"
-                  ? "bg-emerald-400 text-[#032017]"
+                  ? "bg-emerald-400 text-[#031B14]"
                   : "bg-red-400 text-white"
               }`}
             >
@@ -1168,7 +1168,7 @@ export default function CheckoutPage() {
       )}
 
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-black/[0.05] bg-[#fffefa]/95 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-black/[0.05] bg-[#FFFDF9]/95 backdrop-blur-xl">
         <div className="mx-auto flex h-[70px] max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
           <button
             type="button"
@@ -1192,7 +1192,7 @@ export default function CheckoutPage() {
               ✓ Secure Checkout
             </span>
 
-            <span className="rounded-full bg-[#06261c] px-3 py-2 text-[8px] font-black uppercase tracking-[0.08em] text-white">
+            <span className="rounded-full bg-[#031B14] px-3 py-2 text-[8px] font-black uppercase tracking-[0.08em] text-white">
               {isResellerOrder
                 ? "Reseller"
                 : "Retail"}
@@ -1203,7 +1203,7 @@ export default function CheckoutPage() {
 
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
         {/* CHECKOUT HERO */}
-        <section className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-[#03140e] via-[#06261c] to-black p-5 text-white shadow-[0_24px_65px_rgba(0,0,0,0.2)] sm:p-7">
+        <section className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-[#031B14] via-[#031B14] to-black p-5 text-white shadow-[0_24px_65px_rgba(0,0,0,0.2)] sm:p-7">
           <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
 
           <div className="relative flex items-end justify-between gap-4">
@@ -1307,7 +1307,7 @@ export default function CheckoutPage() {
                           className={`relative rounded-[1.25rem] border p-4 text-left transition ${
                             selected
                               ? "border-emerald-400 bg-emerald-50/60 shadow-[0_8px_25px_rgba(16,185,129,0.08)]"
-                              : "border-black/[0.06] bg-[#faf9f6]"
+                              : "border-black/[0.06] bg-[#FAF7F0]"
                           }`}
                         >
                           {selected && (
@@ -1409,7 +1409,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="grid gap-3 p-5 sm:grid-cols-2">
-                  <div className="rounded-[1rem] bg-[#faf9f6] px-4 py-3">
+                  <div className="rounded-[1rem] bg-[#FAF7F0] px-4 py-3">
                     <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
                       Recipient
                     </p>
@@ -1419,7 +1419,7 @@ export default function CheckoutPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-[1rem] bg-[#faf9f6] px-4 py-3">
+                  <div className="rounded-[1rem] bg-[#FAF7F0] px-4 py-3">
                     <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
                       Mobile
                     </p>
@@ -1429,7 +1429,7 @@ export default function CheckoutPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-[1rem] bg-[#faf9f6] px-4 py-3 sm:col-span-2">
+                  <div className="rounded-[1rem] bg-[#FAF7F0] px-4 py-3 sm:col-span-2">
                     <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
                       Delivering To
                     </p>
@@ -1489,7 +1489,7 @@ export default function CheckoutPage() {
                       )
                     }
                     placeholder="Enter full name"
-                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#fffefa] px-4 py-3.5 text-sm font-semibold outline-none transition focus:border-emerald-500"
+                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#FFFDF9] px-4 py-3.5 text-sm font-semibold outline-none transition focus:border-emerald-500"
                   />
                 </div>
 
@@ -1498,8 +1498,8 @@ export default function CheckoutPage() {
                     Mobile Number
                   </label>
 
-                  <div className="mt-2 flex overflow-hidden rounded-[1rem] border border-black/[0.08] bg-[#fffefa] focus-within:border-emerald-500">
-                    <span className="flex items-center border-r border-black/[0.06] bg-[#f7f6f2] px-4 text-sm font-black text-zinc-500">
+                  <div className="mt-2 flex overflow-hidden rounded-[1rem] border border-black/[0.08] bg-[#FFFDF9] focus-within:border-emerald-500">
+                    <span className="flex items-center border-r border-black/[0.06] bg-[#FAF7F0] px-4 text-sm font-black text-zinc-500">
                       +91
                     </span>
 
@@ -1538,7 +1538,7 @@ export default function CheckoutPage() {
                       )
                     }
                     placeholder="House no, building, street"
-                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#fffefa] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
                   />
                 </div>
 
@@ -1555,7 +1555,7 @@ export default function CheckoutPage() {
                       )
                     }
                     placeholder="Area, colony, apartment (optional)"
-                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#fffefa] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
                   />
                 </div>
 
@@ -1572,7 +1572,7 @@ export default function CheckoutPage() {
                       )
                     }
                     placeholder="City"
-                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#fffefa] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
                   />
                 </div>
 
@@ -1589,7 +1589,7 @@ export default function CheckoutPage() {
                       )
                     }
                     placeholder="State"
-                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#fffefa] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
                   />
                 </div>
 
@@ -1615,7 +1615,7 @@ export default function CheckoutPage() {
                     }
                     inputMode="numeric"
                     placeholder="6 digit pincode"
-                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#fffefa] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
                   />
                 </div>
 
@@ -1632,7 +1632,7 @@ export default function CheckoutPage() {
                       )
                     }
                     placeholder="Nearby landmark"
-                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#fffefa] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                    className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
                   />
                 </div>
               </div>
@@ -1701,7 +1701,7 @@ export default function CheckoutPage() {
                     ([icon, label]) => (
                       <div
                         key={label}
-                        className="rounded-xl bg-[#f7f6f2] px-2 py-3 text-center"
+                        className="rounded-xl bg-[#FAF7F0] px-2 py-3 text-center"
                       >
                         <p className="text-sm font-black text-emerald-700">
                           {icon}
@@ -1720,7 +1720,7 @@ export default function CheckoutPage() {
 
           {/* RIGHT SUMMARY */}
           <aside className="h-fit overflow-hidden rounded-[1.6rem] border border-black/[0.05] bg-white shadow-[0_12px_35px_rgba(0,0,0,0.045)] lg:sticky lg:top-24">
-            <div className="bg-[#06261c] p-5 text-white">
+            <div className="bg-[#031B14] p-5 text-white">
               <div className="flex items-end justify-between gap-3">
                 <div>
                   <p className="text-[8px] font-black uppercase tracking-[0.22em] text-emerald-300">
@@ -1757,7 +1757,7 @@ export default function CheckoutPage() {
                   (item) => (
                     <div
                       key={item.id}
-                      className="flex gap-3 rounded-[1rem] bg-[#faf9f6] p-2.5"
+                      className="flex gap-3 rounded-[1rem] bg-[#FAF7F0] p-2.5"
                     >
                       <div className="h-[72px] w-[58px] shrink-0 overflow-hidden rounded-xl bg-zinc-100">
                         {item.image ? (
@@ -1826,7 +1826,7 @@ export default function CheckoutPage() {
               )}
 
               {/* COUPON */}
-              <div className="rounded-[1.1rem] border border-black/[0.06] bg-[#faf9f6] p-4">
+              <div className="rounded-[1.1rem] border border-black/[0.06] bg-[#FAF7F0] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[7px] font-black uppercase tracking-[0.15em] text-emerald-700">
@@ -1887,7 +1887,7 @@ export default function CheckoutPage() {
                       type="button"
                       disabled={couponLoading}
                       onClick={applyCoupon}
-                      className="rounded-xl bg-[#06261c] px-4 text-[8px] font-black uppercase tracking-[0.08em] text-white disabled:bg-zinc-300"
+                      className="rounded-xl bg-[#031B14] px-4 text-[8px] font-black uppercase tracking-[0.08em] text-white disabled:bg-zinc-300"
                     >
                       {couponLoading
                         ? "..."
@@ -2118,7 +2118,7 @@ export default function CheckoutPage() {
       </div>
 
       {/* MOBILE PLACE ORDER BAR */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/[0.07] bg-[#fffefa]/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.09)] backdrop-blur-xl sm:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/[0.07] bg-[#FFFDF9]/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.09)] backdrop-blur-xl sm:hidden">
         <div className="mx-auto flex max-w-md items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">

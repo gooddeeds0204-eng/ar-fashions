@@ -1,21 +1,45 @@
 @import "tailwindcss";
 
 :root {
+  /* AR FASHIONS MASTER THEME */
+
   --background: #FAF7F0;
   --foreground: #211C18;
 
+  /* Brand */
+  --ar-emerald: #031B14;
+  --ar-emerald-soft: #0A382B;
+  --ar-emerald-light: #173D30;
+
+  /* Surfaces */
   --ar-ivory: #FAF7F0;
   --ar-white: #FFFDF9;
-  --ar-cream: #F1E8DA;
+  --ar-cream: #F4EBDD;
+  --ar-cream-soft: #F8F1E7;
   --ar-cream-deep: #E9DECD;
-  --ar-border: #E4D7C4;
 
+  /* Borders */
+  --ar-border: #E4D7C4;
+  --ar-border-soft: #EDE4D8;
+
+  /* Typography */
   --ar-text: #211C18;
   --ar-muted: #7B7066;
+  --ar-muted-light: #9A9188;
 
-  --ar-gold: #B8923B;
-  --ar-brown: #2B241F;
+  /* Accents */
+  --ar-gold: #D4AF37;
+  --ar-gold-soft: #D9C29A;
+  --ar-brown: #6B5435;
   --ar-burgundy: #7C3A45;
+
+  /* Status */
+  --ar-success: #0F5A38;
+  --ar-danger: #9F2F3D;
+
+  /* Shadows */
+  --ar-shadow-soft: 0 10px 30px rgba(61, 48, 37, 0.08);
+  --ar-shadow-card: 0 16px 38px rgba(55, 41, 28, 0.12);
 }
 
 @theme inline {
@@ -105,4 +129,73 @@ body {
     animation: none !important;
     display: none;
   }
+}
+
+
+/* AR FASHIONS GLOBAL THEME HELPERS */
+
+.ar-page {
+  min-height: 100vh;
+  background: var(--ar-ivory);
+  color: var(--ar-text);
+}
+
+.ar-surface {
+  background: var(--ar-white);
+  border: 1px solid var(--ar-border);
+}
+
+.ar-card {
+  background: var(--ar-white);
+  border: 1px solid var(--ar-border);
+  box-shadow: var(--ar-shadow-soft);
+}
+
+.ar-section-cream {
+  background: var(--ar-cream-soft);
+}
+
+.ar-section-dark {
+  background: var(--ar-emerald);
+  color: var(--ar-ivory);
+}
+
+.ar-primary-button {
+  background: var(--ar-emerald);
+  color: var(--ar-ivory);
+}
+
+.ar-primary-button:hover {
+  background: var(--ar-emerald-soft);
+}
+
+.ar-secondary-button {
+  background: var(--ar-cream);
+  color: var(--ar-text);
+  border: 1px solid var(--ar-border);
+}
+
+.ar-gold-text {
+  color: var(--ar-gold);
+}
+
+.ar-muted-text {
+  color: var(--ar-muted);
+}
+
+.ar-input {
+  background: var(--ar-white);
+  color: var(--ar-text);
+  border: 1px solid var(--ar-border);
+}
+
+.ar-input:focus {
+  outline: none;
+  border-color: var(--ar-emerald-light);
+  box-shadow: 0 0 0 3px rgba(23, 61, 48, 0.08);
+}
+
+::selection {
+  background: var(--ar-emerald);
+  color: var(--ar-ivory);
 }

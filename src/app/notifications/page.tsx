@@ -135,7 +135,7 @@ function typeTone(
   if (type === "ORDER") {
     return {
       icon:
-        "bg-emerald-500 text-[#032017]",
+        "bg-emerald-500 text-[#031B14]",
       badge:
         "bg-emerald-50 text-emerald-700",
     };
@@ -618,15 +618,15 @@ export default function NotificationsPage() {
             className={`flex items-center gap-3 rounded-[1.35rem] border p-3.5 text-white shadow-[0_20px_55px_rgba(0,0,0,0.3)] backdrop-blur-xl ${
               toast.type ===
               "SUCCESS"
-                ? "border-emerald-300/25 bg-[#063326]/95"
-                : "border-red-300/25 bg-[#4a1111]/95"
+                ? "border-emerald-300/25 bg-[#031B14]/95"
+                : "border-red-300/25 bg-[#7C3A45]/95"
             }`}
           >
             <div
               className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-black ${
                 toast.type ===
                 "SUCCESS"
-                  ? "bg-emerald-400 text-[#032017]"
+                  ? "bg-emerald-400 text-[#031B14]"
                   : "bg-red-400 text-white"
               }`}
             >
@@ -698,7 +698,7 @@ export default function NotificationsPage() {
               onClick={() =>
                 void markAllRead()
               }
-              className="ml-auto rounded-full bg-[#2B241F] px-4 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] text-[#FFFDF9]"
+              className="ml-auto rounded-full bg-[#211C18] px-4 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] text-[#FFFDF9]"
             >
               Mark All Read
             </button>
@@ -755,7 +755,7 @@ export default function NotificationsPage() {
                 }
               </p>
 
-              <p className="mt-1 text-[7px] font-bold text-[#8A7F75]">
+              <p className="mt-1 text-[7px] font-bold text-[#7B7066]">
                 Total Updates
               </p>
             </div>
@@ -767,7 +767,7 @@ export default function NotificationsPage() {
                 }
               </p>
 
-              <p className="mt-1 text-[7px] font-bold text-[#8A7F75]">
+              <p className="mt-1 text-[7px] font-bold text-[#7B7066]">
                 Order Updates
               </p>
             </div>
@@ -779,7 +779,7 @@ export default function NotificationsPage() {
                 }
               </p>
 
-              <p className="mt-1 text-[7px] font-bold text-[#8A7F75]">
+              <p className="mt-1 text-[7px] font-bold text-[#7B7066]">
                 Offers
               </p>
             </div>
@@ -809,7 +809,7 @@ export default function NotificationsPage() {
                       className={`rounded-full px-4 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] transition ${
                         filter ===
                         option.id
-                          ? "bg-[#2B241F] text-[#FFFDF9] shadow-sm"
+                          ? "bg-[#211C18] text-[#FFFDF9] shadow-sm"
                           : "border border-black/[0.06] bg-white text-zinc-500"
                       }`}
                     >
@@ -890,7 +890,7 @@ export default function NotificationsPage() {
                       "/",
                     )
                   }
-                  className="mt-6 rounded-full bg-[#06261c] px-6 py-3 text-[9px] font-black uppercase tracking-[0.08em] text-white"
+                  className="mt-6 rounded-full bg-[#031B14] px-6 py-3 text-[9px] font-black uppercase tracking-[0.08em] text-white"
                 >
                   Continue Shopping →
                 </button>
@@ -935,7 +935,7 @@ export default function NotificationsPage() {
                       className={`overflow-hidden rounded-[1.45rem] border shadow-[0_10px_30px_rgba(0,0,0,0.035)] transition ${
                         item.isRead
                           ? "border-black/[0.05] bg-white"
-                          : "border-emerald-200 bg-[#fbfffd]"
+                          : "border-emerald-200 bg-[#FFFDF9]"
                       }`}
                     >
                       {!item.isRead && (
@@ -1049,7 +1049,7 @@ export default function NotificationsPage() {
                       </button>
 
                       {expanded && (
-                        <div className="border-t border-black/[0.05] bg-[#faf9f6] p-4 sm:p-5">
+                        <div className="border-t border-black/[0.05] bg-[#FAF7F0] p-4 sm:p-5">
                           <p className="text-[7px] font-black uppercase tracking-[0.18em] text-emerald-700">
                             Notification Details
                           </p>
@@ -1069,7 +1069,7 @@ export default function NotificationsPage() {
                                     item.link!,
                                   )
                                 }
-                                className="rounded-full bg-[#06261c] px-5 py-3 text-[8px] font-black uppercase tracking-[0.08em] text-white"
+                                className="rounded-full bg-[#031B14] px-5 py-3 text-[8px] font-black uppercase tracking-[0.08em] text-white"
                               >
                                 Open Linked Page →
                               </button>
@@ -1108,7 +1108,7 @@ export default function NotificationsPage() {
                 "/",
               )
             }
-            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#7B7066]"
           >
             <span className="text-lg">
               ⌂
@@ -1126,7 +1126,7 @@ export default function NotificationsPage() {
                 "/wishlist",
               )
             }
-            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#7B7066]"
           >
             <span className="text-lg">
               ♡
@@ -1146,7 +1146,7 @@ export default function NotificationsPage() {
 
               {unreadCount >
                 0 && (
-                <span className="absolute -right-3 -top-2 grid min-h-4 min-w-4 place-items-center rounded-full bg-emerald-400 px-1 text-[6px] font-black text-[#032017]">
+                <span className="absolute -right-3 -top-2 grid min-h-4 min-w-4 place-items-center rounded-full bg-emerald-400 px-1 text-[6px] font-black text-[#031B14]">
                   {
                     unreadCount >
                     9
@@ -1169,7 +1169,7 @@ export default function NotificationsPage() {
                 "/account",
               )
             }
-            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#8A7F75]"
+            className="flex min-h-[50px] flex-col items-center justify-center gap-1 text-[#7B7066]"
           >
             <span className="grid h-5 w-5 place-items-center rounded-full border border-current text-[7px]">
               A

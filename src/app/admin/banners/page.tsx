@@ -811,7 +811,7 @@ export default function AdminBannersPage() {
         : "items-start text-left";
 
   return (
-    <main className="min-h-screen bg-[#f6f7f9] text-zinc-900">
+    <main className="min-h-screen bg-[#FAF7F0] text-zinc-900">
       <header className="sticky top-0 z-30 border-b bg-white">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
           <button

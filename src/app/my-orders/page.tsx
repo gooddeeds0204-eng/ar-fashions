@@ -368,9 +368,9 @@ export default function MyOrdersPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f6f2] pb-12 text-zinc-950">
+    <main className="min-h-screen bg-[#FAF7F0] pb-12 text-zinc-950">
       {/* PREMIUM HEADER */}
-      <header className="sticky top-0 z-40 border-b border-black/[0.06] bg-[#fffefa]/95 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-black/[0.06] bg-[#FFFDF9]/95 backdrop-blur-xl">
         <div className="mx-auto flex h-[68px] max-w-5xl items-center justify-between px-4 sm:px-6">
           <BrandLogo
             compact
@@ -710,7 +710,7 @@ export default function MyOrdersPage() {
                             </h3>
                           </div>
 
-                          <span className="rounded-full bg-[#f7f6f2] px-3 py-1.5 text-[9px] font-black text-zinc-500">
+                          <span className="rounded-full bg-[#FAF7F0] px-3 py-1.5 text-[9px] font-black text-zinc-500">
                             {
                               order.items
                                 .length
@@ -739,7 +739,7 @@ export default function MyOrdersPage() {
                                   key={
                                     item.id
                                   }
-                                  className="rounded-[1.25rem] border border-black/[0.05] bg-[#faf9f6] p-3.5"
+                                  className="rounded-[1.25rem] border border-black/[0.05] bg-[#FAF7F0] p-3.5"
                                 >
                                   <div className="flex gap-3">
                                     <button
@@ -872,7 +872,7 @@ export default function MyOrdersPage() {
                       </section>
 
                       {/* PRICE BREAKDOWN */}
-                      <section className="border-t border-black/[0.05] bg-[#faf9f6] p-4 sm:p-5">
+                      <section className="border-t border-black/[0.05] bg-[#FAF7F0] p-4 sm:p-5">
                         <div className="grid gap-4 md:grid-cols-2">
                           <div className="rounded-[1.25rem] border border-black/[0.05] bg-white p-4">
                             <p className="text-[8px] font-black uppercase tracking-[0.18em] text-emerald-700">
@@ -973,7 +973,7 @@ export default function MyOrdersPage() {
                               </div>
                             </div>
 
-                            <div className="mt-4 rounded-xl bg-[#f7f6f2] px-3 py-3">
+                            <div className="mt-4 rounded-xl bg-[#FAF7F0] px-3 py-3">
                               <p className="text-[9px] font-bold text-zinc-600">
                                 Order type:{" "}
                                 <span className="font-black">
@@ -1069,7 +1069,7 @@ export default function MyOrdersPage() {
                       )}
 
                       {/* ORDER FOOTER */}
-                      <div className="flex items-center justify-between gap-3 border-t border-black/[0.05] bg-[#06261c] px-4 py-3.5 text-white sm:px-5">
+                      <div className="flex items-center justify-between gap-3 border-t border-black/[0.05] bg-[#031B14] px-4 py-3.5 text-white sm:px-5">
                         <div>
                           <p className="text-[7px] font-black uppercase tracking-[0.16em] text-emerald-300">
                             Current Status
@@ -1095,7 +1095,7 @@ export default function MyOrdersPage() {
                                 }`,
                               )
                             }
-                            className="rounded-full bg-white px-4 py-2.5 text-[8px] font-black text-[#06261c]"
+                            className="rounded-full bg-white px-4 py-2.5 text-[8px] font-black text-[#031B14]"
                           >
                             Shop Again →
                           </button>

@@ -247,7 +247,7 @@ export default function AdminReviewsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f7f9] text-[#172033]">
+    <main className="min-h-screen bg-[#FAF7F0] text-[#211C18]">
       <header className="sticky top-0 z-30 border-b border-black/5 bg-white/95 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6">
           <button
@@ -281,7 +281,7 @@ export default function AdminReviewsPage() {
       </header>
 
       <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6">
-        <section className="rounded-[28px] bg-[#111827] p-6 text-white shadow-xl">
+        <section className="rounded-[28px] bg-[#211C18] p-6 text-white shadow-xl">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">
             Customer Feedback
           </p>

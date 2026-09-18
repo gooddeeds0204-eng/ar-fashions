@@ -97,7 +97,7 @@ function AdminLoginContent() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f6f7f9] p-4 text-[#172033]">
+    <main className="flex min-h-screen items-center justify-center bg-[#FAF7F0] p-4 text-[#211C18]">
       <section className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-xl sm:p-8">
         <div className="text-center">
           <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-400">
@@ -184,7 +184,7 @@ export default function AdminLoginPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-[#f6f7f9] p-4 text-[#172033]">
+        <main className="flex min-h-screen items-center justify-center bg-[#FAF7F0] p-4 text-[#211C18]">
           <div className="h-9 w-9 animate-spin rounded-full border-2 border-zinc-200 border-t-emerald-600" />
         </main>
       }

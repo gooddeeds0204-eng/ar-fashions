@@ -659,7 +659,7 @@ export default function CartPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f5f1] pb-28 text-zinc-950 sm:pb-10">
+    <main className="min-h-screen bg-[#FAF7F0] pb-28 text-zinc-950 sm:pb-10">
       {/* AR TOAST */}
       {toast && (
         <div className="fixed left-1/2 top-[78px] z-[120] w-[calc(100%-24px)] max-w-md -translate-x-1/2">
@@ -667,15 +667,15 @@ export default function CartPage() {
             className={`flex items-center gap-3 rounded-[1.35rem] border p-3.5 text-white shadow-[0_20px_55px_rgba(0,0,0,0.3)] backdrop-blur-xl ${
               toast.type ===
               "SUCCESS"
-                ? "border-emerald-300/25 bg-[#063326]/95"
-                : "border-red-300/25 bg-[#4a1111]/95"
+                ? "border-emerald-300/25 bg-[#031B14]/95"
+                : "border-red-300/25 bg-[#7C3A45]/95"
             }`}
           >
             <div
               className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-black ${
                 toast.type ===
                 "SUCCESS"
-                  ? "bg-emerald-400 text-[#032017]"
+                  ? "bg-emerald-400 text-[#031B14]"
                   : "bg-red-400 text-white"
               }`}
             >
@@ -717,7 +717,7 @@ export default function CartPage() {
       )}
 
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-black/[0.05] bg-[#fffefa]/95 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-black/[0.05] bg-[#FFFDF9]/95 backdrop-blur-xl">
         <div className="mx-auto flex h-[70px] max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
           <button
             type="button"
@@ -750,7 +750,7 @@ export default function CartPage() {
 
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
         {/* HERO */}
-        <section className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-[#03140e] via-[#06261c] to-black p-5 text-white shadow-[0_24px_65px_rgba(0,0,0,0.2)] sm:p-7">
+        <section className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-[#031B14] via-[#031B14] to-black p-5 text-white shadow-[0_24px_65px_rgba(0,0,0,0.2)] sm:p-7">
           <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
 
           <div className="relative flex items-end justify-between gap-4">
@@ -863,7 +863,7 @@ export default function CartPage() {
                     "/",
                   )
                 }
-                className="mt-6 rounded-full bg-[#06261c] px-6 py-3 text-[9px] font-black uppercase tracking-[0.08em] text-white"
+                className="mt-6 rounded-full bg-[#031B14] px-6 py-3 text-[9px] font-black uppercase tracking-[0.08em] text-white"
               >
                 Explore Collection →
               </button>
@@ -920,7 +920,7 @@ export default function CartPage() {
                                   item,
                                 )
                               }
-                              className="h-[132px] w-[98px] shrink-0 overflow-hidden rounded-[1.05rem] bg-[#eeede9] sm:h-36 sm:w-28"
+                              className="h-[132px] w-[98px] shrink-0 overflow-hidden rounded-[1.05rem] bg-[#F4EBDD] sm:h-36 sm:w-28"
                             >
                               {item.image ? (
                                 <img
@@ -979,14 +979,14 @@ export default function CartPage() {
                                   </button>
 
                                   <div className="mt-2 flex flex-wrap gap-1.5">
-                                    <span className="rounded-lg bg-[#f7f6f2] px-2.5 py-1.5 text-[8px] font-bold text-zinc-500">
+                                    <span className="rounded-lg bg-[#FAF7F0] px-2.5 py-1.5 text-[8px] font-bold text-zinc-500">
                                       Color ·{" "}
                                       {
                                         item.colorName
                                       }
                                     </span>
 
-                                    <span className="rounded-lg bg-[#f7f6f2] px-2.5 py-1.5 text-[8px] font-bold text-zinc-500">
+                                    <span className="rounded-lg bg-[#FAF7F0] px-2.5 py-1.5 text-[8px] font-bold text-zinc-500">
                                       Size ·{" "}
                                       {
                                         item.sizeName
@@ -1049,7 +1049,7 @@ export default function CartPage() {
                                 </div>
 
                                 {item.resellerSetId ? (
-                                  <div className="rounded-xl bg-[#f7f6f2] px-3 py-2 text-[9px] font-black">
+                                  <div className="rounded-xl bg-[#FAF7F0] px-3 py-2 text-[9px] font-black">
                                     Qty{" "}
                                     {
                                       item.quantity
@@ -1068,7 +1068,7 @@ export default function CartPage() {
                                     </p>
                                   </div>
                                 ) : (
-                                  <div className="flex items-center overflow-hidden rounded-xl border border-black/[0.08] bg-[#faf9f6]">
+                                  <div className="flex items-center overflow-hidden rounded-xl border border-black/[0.08] bg-[#FAF7F0]">
                                     <button
                                       type="button"
                                       onClick={() =>
@@ -1166,7 +1166,7 @@ export default function CartPage() {
 
             {/* SUMMARY */}
             <aside className="overflow-hidden rounded-[1.6rem] border border-black/[0.05] bg-white shadow-[0_12px_35px_rgba(0,0,0,0.045)] lg:sticky lg:top-24">
-              <div className="bg-[#06261c] p-5 text-white">
+              <div className="bg-[#031B14] p-5 text-white">
                 <p className="text-[8px] font-black uppercase tracking-[0.22em] text-emerald-300">
                   Order Summary
                 </p>
@@ -1465,7 +1465,7 @@ export default function CartPage() {
                         key={
                           label
                         }
-                        className="rounded-xl bg-[#f7f6f2] px-2 py-3 text-center"
+                        className="rounded-xl bg-[#FAF7F0] px-2 py-3 text-center"
                       >
                         <p className="text-sm font-black text-emerald-700">
                           {icon}
@@ -1490,7 +1490,7 @@ export default function CartPage() {
       {clearConfirm && (
         <div className="fixed inset-0 z-[130] grid place-items-end bg-black/55 p-3 backdrop-blur-sm sm:place-items-center">
           <div className="w-full max-w-md overflow-hidden rounded-[1.7rem] bg-white shadow-[0_30px_90px_rgba(0,0,0,0.3)]">
-            <div className="bg-[#06261c] p-5 text-white">
+            <div className="bg-[#031B14] p-5 text-white">
               <p className="text-[8px] font-black uppercase tracking-[0.2em] text-emerald-300">
                 AR Shopping Bag
               </p>
@@ -1534,7 +1534,7 @@ export default function CartPage() {
       {/* MOBILE CHECKOUT BAR */}
       {cart.length >
         0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/[0.07] bg-[#fffefa]/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.09)] backdrop-blur-xl sm:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/[0.07] bg-[#FFFDF9]/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.09)] backdrop-blur-xl sm:hidden">
           <div className="mx-auto flex max-w-md items-center gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">

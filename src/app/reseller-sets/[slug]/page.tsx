@@ -593,7 +593,7 @@ export default function ResellerSetDetailPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f7f7f5]">
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF7F0]">
         <p className="text-sm font-bold text-zinc-500">
           Loading reseller
           set...
@@ -607,7 +607,7 @@ export default function ResellerSetDetailPage() {
     !set
   ) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f7f7f5] px-5">
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF7F0] px-5">
         <div className="text-center">
           <h1 className="text-xl font-black">
             Reseller set
@@ -635,7 +635,7 @@ export default function ResellerSetDetailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] text-zinc-950">
+    <main className="min-h-screen bg-[#FAF7F0] text-zinc-950">
       <header className="sticky top-0 z-50 border-b border-black/5 bg-white/95 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6">
           <button

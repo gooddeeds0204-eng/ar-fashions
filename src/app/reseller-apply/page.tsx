@@ -572,7 +572,7 @@ export default function ResellerApplyPage() {
   }
 
   const inputClass =
-    "w-full rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-3.5 text-sm text-[#211C18] outline-none placeholder:text-[#9C9187] focus:border-[#B8923B]/60";
+    "w-full rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-3.5 text-sm text-[#211C18] outline-none placeholder:text-[#7B7066] focus:border-[#D4AF37]/60";
 
   if (loading) {
     return (
@@ -601,7 +601,7 @@ export default function ResellerApplyPage() {
             onClick={() =>
               router.push("/account")
             }
-            className="rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-2 text-[9px] font-black uppercase tracking-wider text-[#6F655D]"
+            className="rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-2 text-[9px] font-black uppercase tracking-wider text-[#7B7066]"
           >
             My Account
           </button>
@@ -746,7 +746,7 @@ export default function ResellerApplyPage() {
                     Live Shop Location *
                   </p>
 
-                  <p className="mt-1 text-[9px] leading-4 text-[#8A7F75]">
+                  <p className="mt-1 text-[9px] leading-4 text-[#7B7066]">
                     Current location capture చేస్తే address, city, state, pincode automaticగా fill అవుతాయి.
                   </p>
                 </div>
@@ -785,7 +785,7 @@ export default function ResellerApplyPage() {
 
               {locationStatus ===
               "LOADING" ? (
-                <div className="mt-3 rounded-xl bg-[#F1E8DA] p-3 text-[9px] text-[#6F655D]">
+                <div className="mt-3 rounded-xl bg-[#F1E8DA] p-3 text-[9px] text-[#7B7066]">
                   📍 Getting live location...
                 </div>
               ) : null}
@@ -813,14 +813,14 @@ export default function ResellerApplyPage() {
                 Verification Photos
               </p>
 
-              <p className="mt-1 text-[9px] leading-4 text-[#8A7F75]">
+              <p className="mt-1 text-[9px] leading-4 text-[#7B7066]">
                 Visiting card + actual shop photos upload చేయండి.
               </p>
 
               {/* VISITING CARD */}
               <div className="mt-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-[9px] font-black text-[#5E554D]">
+                  <p className="text-[9px] font-black text-[#7B7066]">
                     Visiting Card *
                   </p>
 
@@ -866,7 +866,7 @@ export default function ResellerApplyPage() {
                         : "Upload Visiting Card"}
                     </span>
 
-                    <span className="mt-1 text-[8px] text-[#9C9187]">
+                    <span className="mt-1 text-[8px] text-[#7B7066]">
                       Camera / Gallery
                     </span>
 
@@ -903,16 +903,16 @@ export default function ResellerApplyPage() {
               {/* SHOP PHOTOS */}
               <div className="mt-5 border-t border-white/[0.07] pt-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-[9px] font-black text-[#5E554D]">
+                  <p className="text-[9px] font-black text-[#7B7066]">
                     Shop Photos *
                   </p>
 
-                  <span className="text-[8px] text-[#8A7F75]">
+                  <span className="text-[8px] text-[#7B7066]">
                     {shopPhotoUrls.length}/3
                   </span>
                 </div>
 
-                <p className="mt-1 text-[8px] leading-4 text-[#9C9187]">
+                <p className="mt-1 text-[8px] leading-4 text-[#7B7066]">
                   Shop front, inside view లేదా stock display photos.
                 </p>
 
@@ -966,7 +966,7 @@ export default function ResellerApplyPage() {
                 {shopPhotoUrls.length <
                 3 ? (
                   <label className="mt-3 flex cursor-pointer items-center justify-center rounded-xl border border-dashed border-white/15 bg-white/[0.03] py-4">
-                    <span className="text-[9px] font-black text-[#6F655D]">
+                    <span className="text-[9px] font-black text-[#7B7066]">
                       {uploadingDocument ===
                       "SHOP"
                         ? "Uploading Shop Photos..."
