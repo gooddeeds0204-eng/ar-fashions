@@ -13,6 +13,30 @@ type OrderItem = {
   inventoryRestored: boolean;
 };
 
+type ShipmentInfo = {
+  provider?: string;
+  providerOrderId?:
+    | number
+    | null;
+  shipmentId?: number;
+  awbCode?: string;
+  courierId?: number;
+  courierName?: string;
+  courierRate?: number;
+  estimatedDeliveryDays?:
+    | string
+    | number;
+  etd?: string | null;
+  pickupScheduled?: boolean;
+  package?: {
+    weightKg?: number;
+    lengthCm?: number;
+    breadthCm?: number;
+    heightCm?: number;
+  };
+  createdAt?: string;
+};
+
 type Order = {
   id: string;
   orderNumber: string;
@@ -232,6 +256,48 @@ export default function AdminOrdersPage() {
     setFreightUpdating,
   ] = useState(false);
 
+  const [
+    shiprocketConfigured,
+    setShiprocketConfigured,
+  ] = useState(false);
+
+  const [
+    shipmentLoading,
+    setShipmentLoading,
+  ] = useState(false);
+
+  const [
+    shipmentCreating,
+    setShipmentCreating,
+  ] = useState(false);
+
+  const [
+    shipmentInfo,
+    setShipmentInfo,
+  ] =
+    useState<ShipmentInfo | null>(
+      null,
+    );
+
+  const [
+    trackingInfo,
+    setTrackingInfo,
+  ] =
+    useState<Record<
+      string,
+      unknown
+    > | null>(null);
+
+  const [
+    packageForm,
+    setPackageForm,
+  ] = useState({
+    weightKg: "0.5",
+    lengthCm: "20",
+    breadthCm: "15",
+    heightCm: "5",
+  });
+
   useEffect(() => {
     if (!selectedOrder) {
       setFreightCharge("");
@@ -250,6 +316,283 @@ export default function AdminOrdersPage() {
     selectedOrder?.deliveryCharge,
     selectedOrder?.deliveryChargePending,
   ]);
+
+  async function loadShipment(
+    orderId: string,
+  ) {
+    try {
+      setShipmentLoading(
+        true,
+      );
+
+      const response =
+        await fetch(
+          `/api/admin/shipping?orderId=${encodeURIComponent(
+            orderId,
+          )}`,
+          {
+            cache:
+              "no-store",
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "Failed to load shipment.",
+        );
+      }
+
+      setShiprocketConfigured(
+        data.configured ===
+          true,
+      );
+
+      setShipmentInfo(
+        data.shipment ??
+          null,
+      );
+
+      setTrackingInfo(
+        data.tracking ??
+          null,
+      );
+
+      if (
+        data.shipment
+          ?.package
+      ) {
+        setPackageForm({
+          weightKg:
+            String(
+              data.shipment
+                .package
+                .weightKg ??
+                0.5,
+            ),
+          lengthCm:
+            String(
+              data.shipment
+                .package
+                .lengthCm ??
+                20,
+            ),
+          breadthCm:
+            String(
+              data.shipment
+                .package
+                .breadthCm ??
+                15,
+            ),
+          heightCm:
+            String(
+              data.shipment
+                .package
+                .heightCm ??
+                5,
+            ),
+        });
+      }
+    } catch (error) {
+      console.error(
+        error,
+      );
+
+      setShipmentInfo(
+        null,
+      );
+      setTrackingInfo(
+        null,
+      );
+    } finally {
+      setShipmentLoading(
+        false,
+      );
+    }
+  }
+
+  useEffect(() => {
+    if (!selectedOrder) {
+      setShipmentInfo(
+        null,
+      );
+      setTrackingInfo(
+        null,
+      );
+      return;
+    }
+
+    loadShipment(
+      selectedOrder.id,
+    );
+  }, [
+    selectedOrder?.id,
+  ]);
+
+  async function createShipment() {
+    if (!selectedOrder) {
+      return;
+    }
+
+    const weightKg =
+      Number(
+        packageForm.weightKg,
+      );
+    const lengthCm =
+      Number(
+        packageForm.lengthCm,
+      );
+    const breadthCm =
+      Number(
+        packageForm.breadthCm,
+      );
+    const heightCm =
+      Number(
+        packageForm.heightCm,
+      );
+
+    if (
+      ![
+        weightKg,
+        lengthCm,
+        breadthCm,
+        heightCm,
+      ].every(
+        (value) =>
+          Number.isFinite(
+            value,
+          ) &&
+          value > 0,
+      )
+    ) {
+      alert(
+        "Enter valid package weight and dimensions.",
+      );
+      return;
+    }
+
+    try {
+      setShipmentCreating(
+        true,
+      );
+
+      const response =
+        await fetch(
+          "/api/admin/shipping",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body:
+              JSON.stringify({
+                action:
+                  "CREATE_SHIPMENT",
+                orderId:
+                  selectedOrder.id,
+                weightKg,
+                lengthCm,
+                breadthCm,
+                heightCm,
+              }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "Failed to create shipment.",
+        );
+      }
+
+      setShipmentInfo(
+        data.shipment ??
+          null,
+      );
+
+      alert(
+        data.message ||
+          "Shipment created.",
+      );
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to create shipment.",
+      );
+    } finally {
+      setShipmentCreating(
+        false,
+      );
+    }
+  }
+
+  async function refreshTracking() {
+    if (
+      !selectedOrder ||
+      !shipmentInfo
+        ?.awbCode
+    ) {
+      return;
+    }
+
+    try {
+      setShipmentLoading(
+        true,
+      );
+
+      const response =
+        await fetch(
+          "/api/admin/shipping",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body:
+              JSON.stringify({
+                action:
+                  "TRACK",
+                orderId:
+                  selectedOrder.id,
+              }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "Tracking refresh failed.",
+        );
+      }
+
+      setTrackingInfo(
+        data.tracking ??
+          null,
+      );
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Tracking refresh failed.",
+      );
+    } finally {
+      setShipmentLoading(
+        false,
+      );
+    }
+  }
 
   async function loadOrders() {
     try {
@@ -874,6 +1217,174 @@ export default function AdminOrdersPage() {
                 </p>
               </div>
             )}
+
+            <section className="mt-4 rounded-2xl border border-[#E4D7C4] bg-[#FFFDF9] p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#6B5435]">
+                    Delivery Integration
+                  </p>
+
+                  <h3 className="mt-1 text-sm font-black">
+                    Shiprocket Courier
+                  </h3>
+                </div>
+
+                <span className={`rounded-full px-3 py-1 text-[9px] font-black uppercase ${
+                  shiprocketConfigured
+                    ? "bg-[#F4EBDD] text-[#031B14]"
+                    : "bg-zinc-100 text-zinc-500"
+                }`}>
+                  {shiprocketConfigured
+                    ? "Connected"
+                    : "Setup Pending"}
+                </span>
+              </div>
+
+              {shipmentLoading ? (
+                <p className="mt-4 text-xs font-semibold text-zinc-500">
+                  Loading shipment details...
+                </p>
+              ) : shipmentInfo?.awbCode ? (
+                <div className="mt-4 rounded-2xl bg-[#FAF7F0] p-4">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <p className="text-[9px] font-bold uppercase text-zinc-400">
+                        Courier
+                      </p>
+                      <p className="mt-1 text-sm font-black">
+                        {shipmentInfo.courierName || "Shiprocket"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[9px] font-bold uppercase text-zinc-400">
+                        AWB
+                      </p>
+                      <p className="mt-1 break-all text-sm font-black">
+                        {shipmentInfo.awbCode}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[9px] font-bold uppercase text-zinc-400">
+                        Courier Rate
+                      </p>
+                      <p className="mt-1 text-sm font-black">
+                        {money(
+                          Number(
+                            shipmentInfo.courierRate ?? 0,
+                          ),
+                        )}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[9px] font-bold uppercase text-zinc-400">
+                        Estimate
+                      </p>
+                      <p className="mt-1 text-sm font-black">
+                        {shipmentInfo.estimatedDeliveryDays
+                          ? `${shipmentInfo.estimatedDeliveryDays} days`
+                          : shipmentInfo.etd || "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={refreshTracking}
+                    disabled={shipmentLoading}
+                    className="mt-4 rounded-xl bg-[#031B14] px-4 py-3 text-[10px] font-black uppercase tracking-[0.08em] text-white disabled:opacity-50"
+                  >
+                    Refresh Tracking
+                  </button>
+
+                  {trackingInfo && (
+                    <p className="mt-3 text-[10px] leading-5 text-zinc-500">
+                      Live Shiprocket tracking data refreshed successfully.
+                    </p>
+                  )}
+                </div>
+              ) : shiprocketConfigured ? (
+                <div className="mt-4">
+                  <p className="text-[10px] leading-5 text-zinc-500">
+                    Confirm/pack the order, enter the final parcel size, then create the courier shipment. AWB and pickup request are generated automatically.
+                  </p>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {[
+                      ["weightKg", "Weight kg"],
+                      ["lengthCm", "Length cm"],
+                      ["breadthCm", "Breadth cm"],
+                      ["heightCm", "Height cm"],
+                    ].map(
+                      ([key, label]) => (
+                        <label
+                          key={key}
+                          className="text-[9px] font-black uppercase text-zinc-500"
+                        >
+                          {label}
+                          <input
+                            type="number"
+                            min="0.1"
+                            step="0.1"
+                            value={
+                              packageForm[
+                                key as keyof typeof packageForm
+                              ]
+                            }
+                            onChange={(event) =>
+                              setPackageForm(
+                                (current) => ({
+                                  ...current,
+                                  [key]:
+                                    event.target.value,
+                                }),
+                              )
+                            }
+                            className="mt-2 w-full rounded-xl border border-[#E4D7C4] bg-white px-3 py-2.5 text-sm font-bold text-[#211C18] outline-none focus:border-[#D4AF37]"
+                          />
+                        </label>
+                      ),
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={createShipment}
+                    disabled={
+                      shipmentCreating ||
+                      ![
+                        "CONFIRMED",
+                        "PACKED",
+                      ].includes(
+                        selectedOrder.status,
+                      ) ||
+                      selectedOrder.deliveryChargePending
+                    }
+                    className="mt-4 w-full rounded-xl bg-[#031B14] px-4 py-3 text-[10px] font-black uppercase tracking-[0.08em] text-white disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    {shipmentCreating
+                      ? "Creating Shipment..."
+                      : selectedOrder.deliveryChargePending
+                        ? "Finalize Freight First"
+                        : ![
+                              "CONFIRMED",
+                              "PACKED",
+                            ].includes(
+                              selectedOrder.status,
+                            )
+                          ? "Confirm Order First"
+                          : "Create Shiprocket Shipment"}
+                  </button>
+                </div>
+              ) : (
+                <p className="mt-4 text-[10px] leading-5 text-zinc-500">
+                  Shiprocket API credentials are not configured yet. After setup, courier creation, AWB and pickup controls will appear here automatically.
+                </p>
+              )}
+            </section>
 
             <div className="mt-6">
               <h3 className="font-black">
