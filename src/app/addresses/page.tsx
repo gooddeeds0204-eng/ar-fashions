@@ -332,7 +332,7 @@ export default function AddressesPage() {
             className={`flex items-center gap-3 rounded-[1.35rem] border p-3.5 text-white shadow-[0_20px_55px_rgba(0,0,0,0.28)] backdrop-blur-xl ${
               toast.type ===
               "SUCCESS"
-                ? "border-emerald-300/25 bg-[#031B14]/95"
+                ? "border-[#D4AF37]/25 bg-[#031B14]/95"
                 : "border-red-300/25 bg-[#7C3A45]/95"
             }`}
           >
@@ -340,7 +340,7 @@ export default function AddressesPage() {
               className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-black ${
                 toast.type ===
                 "SUCCESS"
-                  ? "bg-emerald-400 text-[#031B14]"
+                  ? "bg-[#D4AF37] text-[#031B14]"
                   : "bg-red-400 text-white"
               }`}
             >
@@ -355,7 +355,7 @@ export default function AddressesPage() {
                 className={`text-[8px] font-black uppercase tracking-[0.2em] ${
                   toast.type ===
                   "SUCCESS"
-                    ? "text-emerald-300"
+                    ? "text-[#D9C29A]"
                     : "text-red-200"
                 }`}
               >
@@ -376,7 +376,7 @@ export default function AddressesPage() {
               onClick={() =>
                 setToast(null)
               }
-              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/10 text-xs font-black"
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#FFFDF9]/10 text-xs font-black"
             >
               ×
             </button>
@@ -385,14 +385,14 @@ export default function AddressesPage() {
       )}
 
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-black/[0.06] bg-[#FFFDF9]/95 shadow-[0_1px_12px_rgba(0,0,0,0.03)] backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-[#E4D7C4] bg-[#FFFDF9]/95 shadow-[0_1px_12px_rgba(0,0,0,0.03)] backdrop-blur-xl">
         <div className="mx-auto flex h-[68px] max-w-5xl items-center gap-3 px-4 sm:px-6">
           <button
             type="button"
             onClick={() =>
               router.back()
             }
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-zinc-100 text-sm font-black transition active:scale-95"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#F4EBDD] text-sm font-black transition active:scale-95"
           >
             ←
           </button>
@@ -410,7 +410,7 @@ export default function AddressesPage() {
               resetForm();
               setShowForm(true);
             }}
-            className="ml-auto rounded-full bg-zinc-950 px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-sm transition active:scale-[0.98]"
+            className="ml-auto rounded-full bg-[#031B14] px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-sm transition active:scale-[0.98]"
           >
             + Add Address
           </button>
@@ -420,7 +420,7 @@ export default function AddressesPage() {
       <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
         {/* TITLE */}
         <section>
-          <p className="text-[8px] font-black uppercase tracking-[0.28em] text-emerald-700">
+          <p className="text-[8px] font-black uppercase tracking-[0.28em] text-[#6B5435]">
             AS Fashions · Account
           </p>
 
@@ -439,7 +439,7 @@ export default function AddressesPage() {
               !error &&
               addresses.length >
                 0 && (
-                <span className="shrink-0 rounded-full bg-zinc-950 px-3 py-2 text-[9px] font-black text-white">
+                <span className="shrink-0 rounded-full bg-[#031B14] px-3 py-2 text-[9px] font-black text-white">
                   {
                     addresses.length
                   }{" "}
@@ -455,8 +455,8 @@ export default function AddressesPage() {
           addresses.length >
             0 && (
             <section className="mt-6 grid grid-cols-3 gap-2">
-              <div className="rounded-[1.2rem] border border-black/[0.05] bg-white p-3 text-center shadow-sm">
-                <span className="mx-auto grid h-8 w-8 place-items-center rounded-full bg-emerald-50 text-[11px] font-black text-emerald-700">
+              <div className="rounded-[1.2rem] border border-[#E4D7C4] bg-[#FFFDF9] p-3 text-center shadow-sm">
+                <span className="mx-auto grid h-8 w-8 place-items-center rounded-full bg-[#F4EBDD] text-[11px] font-black text-[#6B5435]">
                   ✓
                 </span>
 
@@ -469,8 +469,8 @@ export default function AddressesPage() {
                 </p>
               </div>
 
-              <div className="rounded-[1.2rem] border border-black/[0.05] bg-white p-3 text-center shadow-sm">
-                <span className="mx-auto grid h-8 w-8 place-items-center rounded-full bg-emerald-50 text-[11px] font-black text-emerald-700">
+              <div className="rounded-[1.2rem] border border-[#E4D7C4] bg-[#FFFDF9] p-3 text-center shadow-sm">
+                <span className="mx-auto grid h-8 w-8 place-items-center rounded-full bg-[#F4EBDD] text-[11px] font-black text-[#6B5435]">
                   ₹
                 </span>
 
@@ -483,8 +483,8 @@ export default function AddressesPage() {
                 </p>
               </div>
 
-              <div className="rounded-[1.2rem] border border-black/[0.05] bg-white p-3 text-center shadow-sm">
-                <span className="mx-auto grid h-8 w-8 place-items-center rounded-full bg-emerald-50 text-[11px] font-black text-emerald-700">
+              <div className="rounded-[1.2rem] border border-[#E4D7C4] bg-[#FFFDF9] p-3 text-center shadow-sm">
+                <span className="mx-auto grid h-8 w-8 place-items-center rounded-full bg-[#F4EBDD] text-[11px] font-black text-[#6B5435]">
                   ◎
                 </span>
 
@@ -500,7 +500,7 @@ export default function AddressesPage() {
           )}
 
         {loading ? (
-          <div className="mt-6 rounded-[1.7rem] border border-black/[0.05] bg-white p-10 text-center shadow-sm">
+          <div className="mt-6 rounded-[1.7rem] border border-[#E4D7C4] bg-[#FFFDF9] p-10 text-center shadow-sm">
             <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-emerald-500" />
 
             <p className="mt-4 text-[11px] font-bold text-zinc-500">
@@ -508,7 +508,7 @@ export default function AddressesPage() {
             </p>
           </div>
         ) : error ? (
-          <div className="mt-6 rounded-[1.7rem] border border-red-100 bg-white p-8 text-center shadow-sm">
+          <div className="mt-6 rounded-[1.7rem] border border-red-100 bg-[#FFFDF9] p-8 text-center shadow-sm">
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-red-50 text-xl font-black text-red-500">
               !
             </div>
@@ -527,19 +527,19 @@ export default function AddressesPage() {
                 setLoading(true);
                 void loadAddresses();
               }}
-              className="mt-5 rounded-xl bg-zinc-950 px-5 py-3 text-sm font-black text-white"
+              className="mt-5 rounded-xl bg-[#031B14] px-5 py-3 text-sm font-black text-white"
             >
               Try Again
             </button>
           </div>
         ) : addresses.length ===
           0 ? (
-          <div className="mt-6 rounded-[1.8rem] border border-black/[0.05] bg-white px-6 py-14 text-center shadow-sm">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-50 text-2xl text-emerald-700">
+          <div className="mt-6 rounded-[1.8rem] border border-[#E4D7C4] bg-[#FFFDF9] px-6 py-14 text-center shadow-sm">
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#F4EBDD] text-2xl text-[#6B5435]">
               ⌂
             </div>
 
-            <p className="mt-5 text-[8px] font-black uppercase tracking-[0.2em] text-emerald-700">
+            <p className="mt-5 text-[8px] font-black uppercase tracking-[0.2em] text-[#6B5435]">
               Delivery Address
             </p>
 
@@ -557,7 +557,7 @@ export default function AddressesPage() {
                 resetForm();
                 setShowForm(true);
               }}
-              className="mt-6 rounded-2xl bg-emerald-600 px-7 py-3.5 text-sm font-black text-white shadow-lg shadow-emerald-600/15"
+              className="mt-6 rounded-2xl bg-[#031B14] px-7 py-3.5 text-sm font-black text-white shadow-lg shadow-black/10"
             >
               Add First Address →
             </button>
@@ -576,7 +576,7 @@ export default function AddressesPage() {
               </div>
 
               {defaultAddress && (
-                <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.1em] text-emerald-700">
+                <span className="rounded-full bg-[#F4EBDD] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.1em] text-[#6B5435]">
                   Default Ready
                 </span>
               )}
@@ -590,14 +590,14 @@ export default function AddressesPage() {
                 ) => (
                   <article
                     key={address.id}
-                    className={`relative overflow-hidden rounded-[1.6rem] border bg-white shadow-[0_12px_35px_rgba(0,0,0,0.04)] ${
+                    className={`relative overflow-hidden rounded-[1.6rem] border bg-[#FFFDF9] shadow-[0_12px_35px_rgba(0,0,0,0.04)] ${
                       address.isDefault
-                        ? "border-emerald-400/70"
-                        : "border-black/[0.06]"
+                        ? "border-[#D4AF37]/60"
+                        : "border-[#E4D7C4]"
                     }`}
                   >
                     {address.isDefault && (
-                      <div className="h-1 w-full bg-emerald-500" />
+                      <div className="h-1 w-full bg-[#F4EBDD]0" />
                     )}
 
                     <div className="p-4 sm:p-5">
@@ -607,7 +607,7 @@ export default function AddressesPage() {
                           <span
                             className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-black ${
                               address.isDefault
-                                ? "bg-emerald-600 text-white"
+                                ? "bg-[#031B14] text-white"
                                 : "bg-[#FAF7F0] text-zinc-600"
                             }`}
                           >
@@ -636,11 +636,11 @@ export default function AddressesPage() {
                         </div>
 
                         {address.isDefault ? (
-                          <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.1em] text-emerald-700">
+                          <span className="shrink-0 rounded-full bg-[#F4EBDD] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.1em] text-[#6B5435]">
                             ✓ Default
                           </span>
                         ) : (
-                          <span className="shrink-0 rounded-full bg-zinc-100 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.1em] text-zinc-400">
+                          <span className="shrink-0 rounded-full bg-[#F4EBDD] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.1em] text-zinc-400">
                             Saved
                           </span>
                         )}
@@ -648,7 +648,7 @@ export default function AddressesPage() {
 
                       {/* FULL ADDRESS */}
                       <div className="mt-5 rounded-[1.2rem] bg-[#FAF7F0] p-4">
-                        <p className="text-[7px] font-black uppercase tracking-[0.18em] text-emerald-700">
+                        <p className="text-[7px] font-black uppercase tracking-[0.18em] text-[#6B5435]">
                           Full Delivery Address
                         </p>
 
@@ -662,7 +662,7 @@ export default function AddressesPage() {
                         </p>
 
                         <div className="mt-4 grid grid-cols-2 gap-2">
-                          <div className="rounded-xl bg-white px-3 py-2.5">
+                          <div className="rounded-xl bg-[#FFFDF9] px-3 py-2.5">
                             <p className="text-[6px] font-black uppercase tracking-[0.12em] text-zinc-400">
                               City
                             </p>
@@ -674,7 +674,7 @@ export default function AddressesPage() {
                             </p>
                           </div>
 
-                          <div className="rounded-xl bg-white px-3 py-2.5">
+                          <div className="rounded-xl bg-[#FFFDF9] px-3 py-2.5">
                             <p className="text-[6px] font-black uppercase tracking-[0.12em] text-zinc-400">
                               Pincode
                             </p>
@@ -686,7 +686,7 @@ export default function AddressesPage() {
                             </p>
                           </div>
 
-                          <div className="col-span-2 rounded-xl bg-white px-3 py-2.5">
+                          <div className="col-span-2 rounded-xl bg-[#FFFDF9] px-3 py-2.5">
                             <p className="text-[6px] font-black uppercase tracking-[0.12em] text-zinc-400">
                               State
                             </p>
@@ -716,17 +716,17 @@ export default function AddressesPage() {
                       </div>
 
                       {/* DELIVERY READY INFO */}
-                      <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2.5">
-                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-600 text-[9px] font-black text-white">
+                      <div className="mt-3 flex items-center gap-2 rounded-xl border border-[#D4AF37]/25 bg-[#F4EBDD]/70 px-3 py-2.5">
+                        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#031B14] text-[9px] font-black text-white">
                           ✓
                         </span>
 
                         <div>
-                          <p className="text-[8px] font-black text-emerald-800">
+                          <p className="text-[8px] font-black text-[#031B14]">
                             Ready for Checkout
                           </p>
 
-                          <p className="mt-0.5 text-[7px] text-emerald-700/65">
+                          <p className="mt-0.5 text-[7px] text-[#6B5435]/65">
                             This address can be used for your next order.
                           </p>
                         </div>
@@ -741,7 +741,7 @@ export default function AddressesPage() {
                               address,
                             )
                           }
-                          className="min-h-[48px] w-full rounded-[1rem] bg-emerald-600 px-4 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-[0_10px_25px_rgba(5,150,105,0.16)] transition active:scale-[0.98]"
+                          className="min-h-[48px] w-full rounded-[1rem] bg-[#031B14] px-4 text-[10px] font-black uppercase tracking-[0.08em] text-white shadow-[0_10px_25px_rgba(5,150,105,0.16)] transition active:scale-[0.98]"
                         >
                           Use at Checkout →
                         </button>
@@ -754,7 +754,7 @@ export default function AddressesPage() {
                                 address.id,
                               )
                             }
-                            className="min-h-[44px] w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 text-[9px] font-black uppercase tracking-[0.08em] text-zinc-700 transition active:scale-[0.98]"
+                            className="min-h-[44px] w-full rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] px-4 text-[9px] font-black uppercase tracking-[0.08em] text-zinc-700 transition active:scale-[0.98]"
                           >
                             Set as Default Address
                           </button>
@@ -773,10 +773,10 @@ export default function AddressesPage() {
       {showForm && (
         <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4">
           <div className="mx-auto my-4 max-w-xl overflow-hidden rounded-[1.8rem] bg-[#FFFDF9] shadow-[0_30px_90px_rgba(0,0,0,0.3)] sm:my-8">
-            <div className="border-b border-black/[0.06] bg-[#031B14] p-5 text-white sm:p-6">
+            <div className="border-b border-[#E4D7C4] bg-[#031B14] p-5 text-white sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[7px] font-black uppercase tracking-[0.22em] text-emerald-300">
+                  <p className="text-[7px] font-black uppercase tracking-[0.22em] text-[#D9C29A]">
                     AS Fashions · Delivery
                   </p>
 
@@ -794,7 +794,7 @@ export default function AddressesPage() {
                   onClick={() =>
                     setShowForm(false)
                   }
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10 text-sm font-black"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#FFFDF9]/10 text-sm font-black"
                 >
                   ✕
                 </button>
@@ -821,7 +821,7 @@ export default function AddressesPage() {
                     )
                   }
                   placeholder="Full name"
-                  className="w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                  className="w-full rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-[#D4AF37]"
                 />
               </div>
 
@@ -848,7 +848,7 @@ export default function AddressesPage() {
                   }
                   inputMode="numeric"
                   placeholder="10 digit mobile number"
-                  className="w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                  className="w-full rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-[#D4AF37]"
                 />
               </div>
 
@@ -868,7 +868,7 @@ export default function AddressesPage() {
                     )
                   }
                   placeholder="House no, building, street"
-                  className="w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                  className="w-full rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-[#D4AF37]"
                 />
               </div>
 
@@ -887,7 +887,7 @@ export default function AddressesPage() {
                     )
                   }
                   placeholder="Area, colony, locality"
-                  className="w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                  className="w-full rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-[#D4AF37]"
                 />
               </div>
 
@@ -905,7 +905,7 @@ export default function AddressesPage() {
                     )
                   }
                   placeholder="City"
-                  className="w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                  className="w-full rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-[#D4AF37]"
                 />
               </div>
 
@@ -923,7 +923,7 @@ export default function AddressesPage() {
                     )
                   }
                   placeholder="State"
-                  className="w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                  className="w-full rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-[#D4AF37]"
                 />
               </div>
 
@@ -950,7 +950,7 @@ export default function AddressesPage() {
                   }
                   inputMode="numeric"
                   placeholder="6 digit pincode"
-                  className="w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                  className="w-full rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-[#D4AF37]"
                 />
               </div>
 
@@ -969,17 +969,17 @@ export default function AddressesPage() {
                     )
                   }
                   placeholder="Nearby landmark"
-                  className="w-full rounded-[1rem] border border-black/[0.08] bg-white px-4 py-3.5 text-sm outline-none focus:border-emerald-500"
+                  className="w-full rounded-[1rem] border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-[#D4AF37]"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <div className="rounded-[1rem] border border-emerald-100 bg-emerald-50 px-4 py-3">
-                  <p className="text-[9px] font-black text-emerald-800">
+                <div className="rounded-[1rem] border border-[#D4AF37]/25 bg-[#F4EBDD] px-4 py-3">
+                  <p className="text-[9px] font-black text-[#031B14]">
                     ✓ Secure Address Storage
                   </p>
 
-                  <p className="mt-1 text-[8px] leading-4 text-emerald-700/65">
+                  <p className="mt-1 text-[8px] leading-4 text-[#6B5435]/65">
                     Your saved address is connected to your customer session and used only for checkout and order delivery.
                   </p>
                 </div>
@@ -987,7 +987,7 @@ export default function AddressesPage() {
 
               <button
                 disabled={saving}
-                className="min-h-[52px] rounded-[1rem] bg-emerald-600 px-5 text-[11px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-emerald-600/15 transition active:scale-[0.98] sm:col-span-2 disabled:bg-zinc-300"
+                className="min-h-[52px] rounded-[1rem] bg-[#031B14] px-5 text-[11px] font-black uppercase tracking-[0.08em] text-white shadow-lg shadow-black/10 transition active:scale-[0.98] sm:col-span-2 disabled:bg-zinc-300"
               >
                 {saving
                   ? "Saving Address..."
