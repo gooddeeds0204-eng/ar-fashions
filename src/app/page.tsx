@@ -2173,7 +2173,7 @@ export default function Home() {
               "Premium fashion for every mood, every moment."}
           </p>
 
-          <div className="hidden items-center gap-4 text-[8px] text-white/75 sm:flex">
+          <div className="hidden items-center gap-4 text-[8px] text-[#7B7066] sm:flex">
             <button
               type="button"
               onClick={() =>
@@ -2185,7 +2185,7 @@ export default function Home() {
               Track Order
             </button>
 
-            <span className="text-white/25">
+            <span className="text-[#C6B9A8]">
               |
             </span>
 
@@ -2196,7 +2196,7 @@ export default function Home() {
         </div>
       </div>
 
-      <header className="sticky top-0 z-50 border-b border-[#D4AF37]/10 bg-[#080B0D]/95 text-[#2B241F] backdrop-blur-2xl">
+      <header className="sticky top-0 z-50 border-b border-[#E4D7C4] bg-[#FFFDF9]/95 text-[#211C18] shadow-[0_8px_30px_rgba(61,48,37,0.06)] backdrop-blur-2xl">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-[68px] items-center gap-5">
             <button
@@ -2249,7 +2249,7 @@ export default function Home() {
                         "smooth",
                     })
                 }
-                className="text-[10px] font-semibold text-white/75 transition hover:text-[#D4AF37]"
+                className="text-[10px] font-semibold text-[#6F655D] transition hover:text-[#B8923B]"
               >
                 Shop
               </button>
@@ -2266,7 +2266,7 @@ export default function Home() {
                         "smooth",
                     })
                 }
-                className="text-[10px] font-semibold text-white/75 transition hover:text-[#D4AF37]"
+                className="text-[10px] font-semibold text-[#6F655D] transition hover:text-[#B8923B]"
               >
                 Categories
               </button>
@@ -2281,7 +2281,7 @@ export default function Home() {
                       : "/account",
                   )
                 }
-                className="text-[10px] font-semibold text-white/75 transition hover:text-[#D4AF37]"
+                className="text-[10px] font-semibold text-[#6F655D] transition hover:text-[#B8923B]"
               >
                 Reseller
               </button>
@@ -2293,7 +2293,7 @@ export default function Home() {
                     `/reels?mode=${mode.toLowerCase()}`,
                   )
                 }
-                className="text-[10px] font-semibold text-white/75 transition hover:text-[#D4AF37]"
+                className="text-[10px] font-semibold text-[#6F655D] transition hover:text-[#B8923B]"
               >
                 Reels
               </button>
@@ -3299,7 +3299,7 @@ export default function Home() {
       {/* FOOTER */}
       <footer className="border-t border-[#E4D7C4] bg-[#E9DECD]">
         <div className="mx-auto max-w-7xl px-5 py-10 text-center sm:px-6 lg:px-8">
-          <p className="font-serif text-[1.8rem] tracking-[0.08em] text-white">
+          <p className="font-serif text-[1.8rem] tracking-[0.08em] text-[#211C18]">
             AR
           </p>
 
@@ -3307,7 +3307,7 @@ export default function Home() {
             Fashions
           </p>
 
-          <p className="mt-4 text-[8px] uppercase tracking-[0.22em] text-white/30">
+          <p className="mt-4 text-[8px] uppercase tracking-[0.22em] text-[#8A7F75]">
             Wear · Share · Belong
           </p>
 
@@ -3390,7 +3390,7 @@ export default function Home() {
             </button>
           </div>
 
-          <p className="mt-8 text-[7px] text-white/20">
+          <p className="mt-8 text-[7px] text-[#9C9187]">
             © 2026 AR Fashions
           </p>
         </div>
@@ -3411,9 +3411,9 @@ export default function Home() {
             onClick={(event) =>
               event.stopPropagation()
             }
-            className="w-full max-w-md overflow-hidden rounded-[1.8rem] border border-[#D4AF37]/20 bg-[#101112] shadow-[0_30px_90px_rgba(0,0,0,0.55)]"
+            className="w-full max-w-md overflow-hidden rounded-[1.8rem] border border-[#E4D7C4] bg-[#FFFDF9] text-[#211C18] shadow-[0_30px_90px_rgba(61,48,37,0.22)]"
           >
-            <div className="border-b border-white/[0.07] p-5">
+            <div className="border-b border-[#E4D7C4] p-5">
               <div className="flex items-start justify-between gap-4">
                 <span className="grid h-12 w-12 place-items-center rounded-full border border-[#D4AF37]/35 bg-[#D4AF37]/[0.06] text-lg text-[#D4AF37]">
                   {
@@ -3428,7 +3428,7 @@ export default function Home() {
                       null,
                     )
                   }
-                  className="grid h-9 w-9 place-items-center rounded-full border border-white/10 text-sm text-white/50"
+                  className="grid h-9 w-9 place-items-center rounded-full border border-[#E4D7C4] bg-[#FAF7F0] text-sm text-[#7B7066]"
                   aria-label="Close details"
                 >
                   ×
@@ -3439,13 +3439,13 @@ export default function Home() {
                 AR Fashions
               </p>
 
-              <h3 className="mt-2 font-serif text-3xl text-white">
+              <h3 className="mt-2 font-serif text-3xl text-[#211C18]">
                 {
                   selectedBenefitItem.title
                 }
               </h3>
 
-              <p className="mt-3 text-sm leading-6 text-white/50">
+              <p className="mt-3 text-sm leading-6 text-[#7B7066]">
                 {
                   selectedBenefitItem.description
                 }
@@ -3632,11 +3632,11 @@ export default function Home() {
             }
             className="relative flex min-h-[52px] flex-col items-center justify-center"
           >
-            <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-[4px] border-[#080B0D] bg-[#D4AF37] font-serif text-[15px] font-black text-[#080B0D] shadow-[0_0_28px_rgba(212,175,55,0.3)]">
+            <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-[4px] border-[#FAF7F0] bg-[#B8923B] font-serif text-[15px] font-black text-[#FFFDF9] shadow-[0_0_28px_rgba(212,175,55,0.3)]">
               AR
             </span>
 
-            <span className="mt-0.5 text-[7px] font-black text-white">
+            <span className="mt-0.5 text-[7px] font-black text-[#6F655D]">
               Reels
             </span>
           </button>
