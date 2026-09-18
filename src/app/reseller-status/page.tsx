@@ -147,12 +147,12 @@ export default function ResellerStatusPage() {
               </div>
             ) : status ===
               "APPROVED" ? (
-              <div className="rounded-[2rem] border border-emerald-300/20 bg-gradient-to-br from-emerald-400/15 to-white/[0.03] p-7">
-                <div className="grid h-14 w-14 place-items-center rounded-full bg-emerald-400 text-2xl text-[#211C18]">
+              <div className="rounded-[2rem] border border-[#D4AF37]/25 bg-gradient-to-br from-emerald-400/15 to-white/[0.03] p-7">
+                <div className="grid h-14 w-14 place-items-center rounded-full bg-[#D4AF37] text-2xl text-[#211C18]">
                   ✓
                 </div>
 
-                <p className="mt-6 text-[9px] font-black uppercase tracking-[0.25em] text-emerald-300">
+                <p className="mt-6 text-[9px] font-black uppercase tracking-[0.25em] text-[#D9C29A]">
                   Application Approved
                 </p>
 
@@ -176,7 +176,7 @@ export default function ResellerStatusPage() {
                   onClick={() =>
                     router.push("/")
                   }
-                  className="mt-7 w-full rounded-2xl bg-emerald-400 py-4 text-[10px] font-black uppercase tracking-wider text-[#211C18]"
+                  className="mt-7 w-full rounded-2xl bg-[#D4AF37] py-4 text-[10px] font-black uppercase tracking-wider text-[#211C18]"
                 >
                   Enter Reseller Store →
                 </button>
