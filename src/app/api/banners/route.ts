@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  bannerPresentationKey,
+  normalizeBannerPresentation,
+  parseBannerPresentationJson,
+} from "@/lib/banner-presentation";
 
 type BannerPlacement =
   | "HOME_HERO"
@@ -157,11 +162,53 @@ export async function GET(
         },
       });
 
+    const presentationRows =
+      banners.length > 0
+        ? await prisma.siteSetting.findMany({
+            where: {
+              key: {
+                in:
+                  banners.map(
+                    (banner) =>
+                      bannerPresentationKey(
+                        banner.id,
+                      ),
+                  ),
+              },
+            },
+          })
+        : [];
+
+    const presentationMap =
+      new Map(
+        presentationRows.map(
+          (row) => [
+            row.key,
+            parseBannerPresentationJson(
+              row.value,
+            ),
+          ],
+        ),
+      );
+
     return NextResponse.json({
       success: true,
       placement,
       audience,
-      banners,
+      banners:
+        banners.map(
+          (banner) => ({
+            ...banner,
+            ...(presentationMap.get(
+              bannerPresentationKey(
+                banner.id,
+              ),
+            ) ??
+              normalizeBannerPresentation(
+                {},
+              )),
+          }),
+        ),
     });
   } catch (error) {
     console.error(
