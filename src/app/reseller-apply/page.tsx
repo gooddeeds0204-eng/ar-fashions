@@ -143,9 +143,24 @@ export default function ResellerApplyPage() {
           applicationData.application ??
           null;
 
-        if (
+        const pendingApplicationComplete =
           application?.status ===
-          "PENDING"
+            "PENDING" &&
+          Boolean(
+            application.visitingCardUrl,
+          ) &&
+          Array.isArray(
+            application.shopPhotoUrls,
+          ) &&
+          application.shopPhotoUrls.length >
+            0 &&
+          typeof application.latitude ===
+            "number" &&
+          typeof application.longitude ===
+            "number";
+
+        if (
+          pendingApplicationComplete
         ) {
           router.replace(
             "/reseller-status",
@@ -615,7 +630,7 @@ export default function ResellerApplyPage() {
           <h1 className="mt-4 font-serif text-4xl leading-[0.95] sm:text-5xl">
             Become an
             <br />
-            AR reseller.
+            AS retailer.
           </h1>
 
           <p className="mt-4 max-w-md text-sm leading-6 text-[#7B7066]">
