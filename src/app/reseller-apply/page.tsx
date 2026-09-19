@@ -7,6 +7,11 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import BrandLogo from "@/components/BrandLogo";
+import {
+  RETAILER_CITIES,
+  normalizeRetailerState,
+  type RetailerState,
+} from "@/lib/retailer-locations";
 
 type ExistingApplication = {
   businessName?: string;
@@ -40,7 +45,12 @@ export default function ResellerApplyPage() {
   const [city, setCity] =
     useState("");
   const [state, setState] =
-    useState("");
+    useState<RetailerState | "">("");
+
+  const [
+    detectedCity,
+    setDetectedCity,
+  ] = useState("");
   const [pincode, setPincode] =
     useState("");
   const [latitude, setLatitude] =
@@ -192,7 +202,10 @@ export default function ResellerApplyPage() {
             application.city ?? "",
           );
           setState(
-            application.state ?? "",
+            normalizeRetailerState(
+              application.state ??
+                "",
+            ),
           );
           setPincode(
             application.pincode ?? "",
@@ -472,15 +485,31 @@ export default function ResellerApplyPage() {
               );
             }
 
-            if (data.city) {
-              setCity(
-                data.city,
+            const detectedState =
+              normalizeRetailerState(
+                String(
+                  data.state ?? "",
+                ),
+              );
+
+            if (detectedState) {
+              setState(
+                detectedState,
               );
             }
 
-            if (data.state) {
-              setState(
-                data.state,
+            if (data.city) {
+              const nextCity =
+                String(
+                  data.city,
+                );
+
+              setCity(
+                nextCity,
+              );
+
+              setDetectedCity(
+                nextCity,
               );
             }
 
@@ -714,7 +743,36 @@ export default function ResellerApplyPage() {
             />
 
             <div className="grid grid-cols-2 gap-3">
-              <input
+              <select
+                required
+                value={state}
+                onChange={(event) => {
+                  const nextState =
+                    event.target
+                      .value as RetailerState | "";
+
+                  setState(
+                    nextState,
+                  );
+                  setCity("");
+                  setDetectedCity("");
+                }}
+                className={inputClass}
+              >
+                <option value="">
+                  Select State *
+                </option>
+
+                <option value="Andhra Pradesh">
+                  Andhra Pradesh
+                </option>
+
+                <option value="Telangana">
+                  Telangana
+                </option>
+              </select>
+
+              <select
                 required
                 value={city}
                 onChange={(event) =>
@@ -722,21 +780,50 @@ export default function ResellerApplyPage() {
                     event.target.value,
                   )
                 }
-                placeholder="City *"
-                className={inputClass}
-              />
+                disabled={!state}
+                className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
+              >
+                <option value="">
+                  {state
+                    ? "Select City / Town *"
+                    : "Select State First"}
+                </option>
 
-              <input
-                required
-                value={state}
-                onChange={(event) =>
-                  setState(
-                    event.target.value,
-                  )
-                }
-                placeholder="State *"
-                className={inputClass}
-              />
+                {detectedCity &&
+                state &&
+                !RETAILER_CITIES[
+                  state
+                ].includes(
+                  detectedCity,
+                ) ? (
+                  <option value={detectedCity}>
+                    {detectedCity}
+                  </option>
+                ) : null}
+
+                {state
+                  ? RETAILER_CITIES[
+                      state
+                    ].map(
+                      (
+                        cityName,
+                      ) => (
+                        <option
+                          key={
+                            cityName
+                          }
+                          value={
+                            cityName
+                          }
+                        >
+                          {
+                            cityName
+                          }
+                        </option>
+                      ),
+                    )
+                  : null}
+              </select>
             </div>
 
             <input
