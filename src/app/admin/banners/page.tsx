@@ -629,6 +629,59 @@ export default function AdminBannersPage() {
             40,
         ),
 
+      eyebrowText:
+        banner.eyebrowText ??
+        "New Season",
+
+      eyebrowFont:
+        banner.eyebrowFont ??
+        "MODERN_SANS",
+
+      eyebrowColor:
+        banner.eyebrowColor ??
+        "#F4E8D6",
+
+      titleFont:
+        banner.titleFont ??
+        "EDITORIAL_SERIF",
+
+      titleColor:
+        banner.titleColor ??
+        banner.textColor ??
+        "#FFFFFF",
+
+      subtitleFont:
+        banner.subtitleFont ??
+        "CLASSIC_SERIF",
+
+      subtitleColor:
+        banner.subtitleColor ??
+        "#F8F1E7",
+
+      buttonFont:
+        banner.buttonFont ??
+        "MODERN_SANS",
+
+      buttonTextColor:
+        banner.buttonTextColor ??
+        "#17130F",
+
+      buttonBackgroundColor:
+        banner.buttonBackgroundColor ??
+        "#FFF8EC",
+
+      buttonBorderColor:
+        banner.buttonBorderColor ??
+        "#FFF8EC",
+
+      ctaCategoryId:
+        banner.ctaCategoryId ??
+        "",
+
+      ctaCategoryName:
+        banner.ctaCategoryName ??
+        "",
+
       sortOrder:
         String(
           banner.sortOrder,
