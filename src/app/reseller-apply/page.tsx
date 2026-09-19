@@ -201,6 +201,9 @@ export default function ResellerApplyPage() {
           setCity(
             application.city ?? "",
           );
+          setDetectedCity(
+            application.city ?? "",
+          );
           setState(
             normalizeRetailerState(
               application.state ??
