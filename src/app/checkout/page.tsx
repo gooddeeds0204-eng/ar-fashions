@@ -759,15 +759,6 @@ export default function CheckoutPage() {
     );
 
   const curatedSet = useMemo(() => {
-    if (
-      shippingUnavailable
-    ) {
-      showCheckoutAlert(
-        "Shiprocket courier service is not available for this pincode.",
-      );
-      return;
-    }
-
     if (cart.length === 0) {
       return null;
     }
@@ -1357,6 +1348,15 @@ export default function CheckoutPage() {
         );
         return;
       }
+    }
+
+    if (
+      shippingUnavailable
+    ) {
+      showCheckoutAlert(
+        "Shiprocket courier service is not available for this pincode.",
+      );
+      return;
     }
 
     if (cart.length === 0) {
