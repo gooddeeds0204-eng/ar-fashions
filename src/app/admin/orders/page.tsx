@@ -58,6 +58,7 @@ type ShipmentInfo = {
   referenceNumber?: string;
   estimatedDelivery?: string | null;
   notes?: string | null;
+  lrImageUrl?: string | null;
   dispatchedAt?: string;
   createdAt?: string;
 };
@@ -346,6 +347,16 @@ export default function AdminOrdersPage() {
     notes: "",
   });
 
+  const [
+    bulkDispatchImageUrl,
+    setBulkDispatchImageUrl,
+  ] = useState("");
+
+  const [
+    bulkDispatchImageUploading,
+    setBulkDispatchImageUploading,
+  ] = useState(false);
+
   useEffect(() => {
     (async () => {
       try {
@@ -389,8 +400,11 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     if (!selectedOrder) {
       setFreightCharge("");
+      setBulkDispatchImageUrl("");
       return;
     }
+
+    setBulkDispatchImageUrl("");
 
     setFreightCharge(
       selectedOrder.deliveryChargePending
@@ -682,6 +696,95 @@ export default function AdminOrdersPage() {
     }
   }
 
+  async function uploadBulkDispatchImage(
+    file: File,
+  ) {
+    if (!selectedOrder) {
+      return;
+    }
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (
+      !allowedTypes.includes(
+        file.type,
+      )
+    ) {
+      alert(
+        "Upload JPG, PNG or WebP image only.",
+      );
+      return;
+    }
+
+    if (
+      file.size >
+      5 * 1024 * 1024
+    ) {
+      alert(
+        "LR image must be 5MB or smaller.",
+      );
+      return;
+    }
+
+    try {
+      setBulkDispatchImageUploading(
+        true,
+      );
+
+      const formData =
+        new FormData();
+
+      formData.append(
+        "orderId",
+        selectedOrder.id,
+      );
+
+      formData.append(
+        "file",
+        file,
+      );
+
+      const response =
+        await fetch(
+          "/api/admin/bulk-dispatch-upload",
+          {
+            method: "POST",
+            body: formData,
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "LR image upload failed.",
+        );
+      }
+
+      setBulkDispatchImageUrl(
+        String(
+          data.url ?? "",
+        ),
+      );
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "LR image upload failed.",
+      );
+    } finally {
+      setBulkDispatchImageUploading(
+        false,
+      );
+    }
+  }
+
   async function dispatchBulkOrder() {
     if (!selectedOrder) {
       return;
@@ -735,6 +838,8 @@ export default function AdminOrdersPage() {
                 orderId:
                   selectedOrder.id,
                 ...bulkDispatch,
+                lrImageUrl:
+                  bulkDispatchImageUrl,
               }),
           },
         );
@@ -1498,6 +1603,16 @@ export default function AdminOrdersPage() {
                         Estimate: {shipmentInfo.estimatedDelivery}
                       </p>
                     )}
+
+                    {shipmentInfo.lrImageUrl && (
+                      <div className="mt-4 overflow-hidden rounded-2xl border border-violet-100 bg-violet-50">
+                        <img
+                          src={shipmentInfo.lrImageUrl}
+                          alt="LR / dispatch receipt"
+                          className="max-h-[340px] w-full object-contain"
+                        />
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="mt-4">
@@ -1610,11 +1725,108 @@ export default function AdminOrdersPage() {
                       />
                     </label>
 
+                    <div className="mt-3 rounded-2xl border border-violet-200 bg-white p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[9px] font-black uppercase tracking-[0.08em] text-violet-800">
+                            LR / Dispatch Image
+                          </p>
+
+                          <p className="mt-1 text-[10px] leading-5 text-zinc-500">
+                            LR receipt, docket or transport booking slip ni direct ga upload cheyyandi.
+                          </p>
+                        </div>
+
+                        {bulkDispatchImageUrl && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setBulkDispatchImageUrl(
+                                "",
+                              )
+                            }
+                            className="rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-[8px] font-black uppercase text-red-700"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+
+                      {bulkDispatchImageUrl ? (
+                        <div className="mt-3">
+                          <div className="overflow-hidden rounded-xl border border-violet-100 bg-violet-50">
+                            <img
+                              src={bulkDispatchImageUrl}
+                              alt="LR upload preview"
+                              className="max-h-[320px] w-full object-contain"
+                            />
+                          </div>
+
+                          <label className="mt-3 inline-flex cursor-pointer rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-[9px] font-black uppercase text-violet-800">
+                            Change Image
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              className="hidden"
+                              onChange={(event) => {
+                                const file =
+                                  event.target.files?.[0];
+
+                                if (file) {
+                                  void uploadBulkDispatchImage(
+                                    file,
+                                  );
+                                }
+
+                                event.currentTarget.value =
+                                  "";
+                              }}
+                            />
+                          </label>
+                        </div>
+                      ) : (
+                        <label className="mt-3 flex min-h-[140px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-violet-300 bg-violet-50/50 px-4 py-5 text-center">
+                          <span className="text-[11px] font-black text-violet-900">
+                            {bulkDispatchImageUploading
+                              ? "Uploading LR image..."
+                              : "Tap to upload LR image"}
+                          </span>
+
+                          <span className="mt-1 text-[8px] text-violet-600">
+                            JPG, PNG or WebP · max 5MB
+                          </span>
+
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            disabled={
+                              bulkDispatchImageUploading
+                            }
+                            className="hidden"
+                            onChange={(event) => {
+                              const file =
+                                event.target.files?.[0];
+
+                              if (file) {
+                                void uploadBulkDispatchImage(
+                                  file,
+                                );
+                              }
+
+                              event.currentTarget.value =
+                                "";
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+
                     <button
                       type="button"
                       onClick={dispatchBulkOrder}
                       disabled={
                         bulkDispatching ||
+                        bulkDispatchImageUploading ||
                         selectedOrder.status !==
                           "PACKED" ||
                         selectedOrder.deliveryChargePending ||
