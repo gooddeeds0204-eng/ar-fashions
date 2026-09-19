@@ -7,6 +7,11 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+import {
+  BANNER_FONT_OPTIONS,
+  bannerFontFamily,
+  type BannerFont,
+} from "@/lib/banner-presentation";
 
 type BannerPlacement =
   | "HOME_HERO"
@@ -30,6 +35,12 @@ type BannerTextAlign =
   | "CENTER"
   | "RIGHT";
 
+type CategoryOption = {
+  id: string;
+  name: string;
+  label: string;
+};
+
 type Banner = {
   id: string;
   title: string | null;
@@ -52,6 +63,20 @@ type Banner = {
   textColor: string | null;
   textAlign: BannerTextAlign;
   overlayOpacity: number;
+
+  eyebrowText: string;
+  eyebrowFont: BannerFont;
+  eyebrowColor: string;
+  titleFont: BannerFont;
+  titleColor: string;
+  subtitleFont: BannerFont;
+  subtitleColor: string;
+  buttonFont: BannerFont;
+  buttonTextColor: string;
+  buttonBackgroundColor: string;
+  buttonBorderColor: string;
+  ctaCategoryId: string;
+  ctaCategoryName: string;
 
   isActive: boolean;
   sortOrder: number;
@@ -81,6 +106,20 @@ type FormState = {
   textColor: string;
   textAlign: BannerTextAlign;
   overlayOpacity: string;
+
+  eyebrowText: string;
+  eyebrowFont: BannerFont;
+  eyebrowColor: string;
+  titleFont: BannerFont;
+  titleColor: string;
+  subtitleFont: BannerFont;
+  subtitleColor: string;
+  buttonFont: BannerFont;
+  buttonTextColor: string;
+  buttonBackgroundColor: string;
+  buttonBorderColor: string;
+  ctaCategoryId: string;
+  ctaCategoryName: string;
 
   sortOrder: string;
   startsAt: string;
@@ -138,6 +177,20 @@ const emptyForm: FormState = {
   textColor: "#ffffff",
   textAlign: "LEFT",
   overlayOpacity: "40",
+
+  eyebrowText: "New Season",
+  eyebrowFont: "MODERN_SANS",
+  eyebrowColor: "#F4E8D6",
+  titleFont: "EDITORIAL_SERIF",
+  titleColor: "#FFFFFF",
+  subtitleFont: "CLASSIC_SERIF",
+  subtitleColor: "#F8F1E7",
+  buttonFont: "MODERN_SANS",
+  buttonTextColor: "#17130F",
+  buttonBackgroundColor: "#FFF8EC",
+  buttonBorderColor: "#FFF8EC",
+  ctaCategoryId: "",
+  ctaCategoryName: "",
 
   sortOrder: "0",
   startsAt: "",
@@ -224,6 +277,14 @@ export default function AdminBannersPage() {
   ] = useState<
     "ALL" | BannerPlacement
   >("ALL");
+
+  const [
+    categoryOptions,
+    setCategoryOptions,
+  ] =
+    useState<
+      CategoryOption[]
+    >([]);
 
   async function loadBanners() {
     try {
