@@ -1,9 +1,14 @@
-import { randomUUID } from "node:crypto";
-import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/admin-auth";
-import { prisma } from "@/lib/prisma";
+import {
+  NextResponse,
+} from "next/server";
+import {
+  requireAdmin,
+} from "@/lib/admin-auth";
+import {
+  prisma,
+} from "@/lib/prisma";
 
-const KEY =
+const SETTINGS_KEY =
   "bulk_delivery_services_v1";
 
 type ServiceType =
@@ -21,19 +26,23 @@ type BulkDeliveryService = {
   isActive: boolean;
 };
 
-function clean(
+function textValue(
   value: unknown,
-  max = 160,
+  maxLength: number,
 ) {
   return String(
     value ?? "",
   )
     .trim()
-    .slice(0, max);
+    .slice(
+      0,
+      maxLength,
+    );
 }
 
-function normalizeService(
+function parseService(
   value: unknown,
+  index: number,
 ): BulkDeliveryService | null {
   if (
     !value ||
@@ -49,52 +58,60 @@ function normalizeService(
       unknown
     >;
 
-  const type =
-    String(
-      source.type ?? "",
+  const typeValue =
+    textValue(
+      source.type,
+      20,
     ).toUpperCase();
 
-  const name =
-    clean(
-      source.name,
-      100,
-    );
-
   if (
-    !name ||
-    (type !== "PARCEL" &&
-      type !== "TRANSPORT")
+    typeValue !==
+      "PARCEL" &&
+    typeValue !==
+      "TRANSPORT"
   ) {
     return null;
   }
 
+  const name =
+    textValue(
+      source.name,
+      100,
+    );
+
+  if (!name) {
+    return null;
+  }
+
+  const id =
+    textValue(
+      source.id,
+      80,
+    ) ||
+    `bulk-service-${Date.now()}-${index}`;
+
   return {
-    id:
-      clean(
-        source.id,
-        80,
-      ) ||
-      randomUUID(),
+    id,
     type:
-      type as ServiceType,
+      typeValue as ServiceType,
     name,
     phone:
-      clean(
+      textValue(
         source.phone,
         30,
       ),
     branch:
-      clean(
+      textValue(
         source.branch,
         120,
       ),
     serviceArea:
-      clean(
+      textValue(
         source.serviceArea,
         180,
       ),
     notes:
-      clean(
+      textValue(
         source.notes,
         300,
       ),
@@ -104,11 +121,52 @@ function normalizeService(
   };
 }
 
+function parseServices(
+  value: unknown,
+) {
+  if (
+    !Array.isArray(
+      value,
+    )
+  ) {
+    return [] as BulkDeliveryService[];
+  }
+
+  const result:
+    BulkDeliveryService[] =
+    [];
+
+  for (
+    let index = 0;
+    index <
+    value.length;
+    index += 1
+  ) {
+    const service =
+      parseService(
+        value[index],
+        index,
+      );
+
+    if (service) {
+      result.push(
+        service,
+      );
+    }
+  }
+
+  return result.slice(
+    0,
+    100,
+  );
+}
+
 async function readServices() {
   const row =
     await prisma.siteSetting.findUnique({
       where: {
-        key: KEY,
+        key:
+          SETTINGS_KEY,
       },
     });
 
@@ -117,29 +175,11 @@ async function readServices() {
   }
 
   try {
-    const parsed =
+    return parseServices(
       JSON.parse(
         row.value,
-      );
-
-    if (
-      !Array.isArray(
-        parsed,
-      )
-    ) {
-      return [];
-    }
-
-    return parsed
-      .map(
-        normalizeService,
-      )
-      .filter(
-        (
-          item,
-        ): item is BulkDeliveryService =>
-          Boolean(item),
-      );
+      ),
+    );
   } catch {
     return [];
   }
@@ -153,11 +193,28 @@ export async function GET() {
     return auth;
   }
 
-  return NextResponse.json({
-    success: true,
-    services:
-      await readServices(),
-  });
+  try {
+    return NextResponse.json({
+      success: true,
+      services:
+        await readServices(),
+    });
+  } catch (error) {
+    console.error(
+      "GET bulk delivery services failed:",
+      error,
+    );
+
+    return NextResponse.json(
+      {
+        error:
+          "Failed to load bulk delivery services.",
+      },
+      {
+        status: 500,
+      },
+    );
+  }
 }
 
 export async function PUT(
@@ -172,27 +229,14 @@ export async function PUT(
 
   try {
     const body =
-      await request.json();
-
-    const source =
-      Array.isArray(
-        body.services,
-      )
-        ? body.services
-        : [];
+      (await request.json()) as {
+        services?: unknown;
+      };
 
     const services =
-      source
-        .map(
-          normalizeService,
-        )
-        .filter(
-          (
-            item,
-          ): item is BulkDeliveryService =>
-            Boolean(item),
-        )
-        .slice(0, 100);
+      parseServices(
+        body.services,
+      );
 
     const ids =
       new Set<string>();
@@ -209,9 +253,11 @@ export async function PUT(
         return NextResponse.json(
           {
             error:
-              "Duplicate delivery service ID found.",
+              "Duplicate delivery service found.",
           },
-          { status: 400 },
+          {
+            status: 400,
+          },
         );
       }
 
@@ -222,7 +268,8 @@ export async function PUT(
 
     await prisma.siteSetting.upsert({
       where: {
-        key: KEY,
+        key:
+          SETTINGS_KEY,
       },
       update: {
         value:
@@ -231,7 +278,8 @@ export async function PUT(
           ),
       },
       create: {
-        key: KEY,
+        key:
+          SETTINGS_KEY,
         value:
           JSON.stringify(
             services,
@@ -243,11 +291,11 @@ export async function PUT(
       success: true,
       services,
       message:
-        "Bulk parcel and transport services saved.",
+        "Bulk delivery services saved.",
     });
   } catch (error) {
     console.error(
-      "Bulk delivery services save failed:",
+      "PUT bulk delivery services failed:",
       error,
     );
 
@@ -256,7 +304,9 @@ export async function PUT(
         error:
           "Failed to save bulk delivery services.",
       },
-      { status: 500 },
+      {
+        status: 500,
+      },
     );
   }
 }
