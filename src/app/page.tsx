@@ -6,6 +6,10 @@ import { useRouter } from "next/navigation";
 import PromoSlot from "@/components/PromoSlot";
 import BrandLogo from "@/components/BrandLogo";
 import StorefrontDrawer from "@/components/StorefrontDrawer";
+import {
+  bannerFontFamily,
+  type BannerFont,
+} from "@/lib/banner-presentation";
 
 type Media = {
   id: string;
@@ -95,6 +99,21 @@ type Banner = {
     | "RIGHT";
 
   overlayOpacity: number;
+
+  eyebrowText: string;
+  eyebrowFont: BannerFont;
+  eyebrowColor: string;
+  titleFont: BannerFont;
+  titleColor: string;
+  subtitleFont: BannerFont;
+  subtitleColor: string;
+  buttonFont: BannerFont;
+  buttonTextColor: string;
+  buttonBackgroundColor: string;
+  buttonBorderColor: string;
+  ctaCategoryId: string;
+  ctaCategoryName: string;
+
   sortOrder: number;
 };
 
