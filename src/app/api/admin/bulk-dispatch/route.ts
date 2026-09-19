@@ -101,6 +101,27 @@ export async function POST(
         300,
       );
 
+    const lrImageUrl =
+      clean(
+        body.lrImageUrl,
+        600,
+      );
+
+    if (
+      lrImageUrl &&
+      !/^https:\/\//i.test(
+        lrImageUrl,
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid LR image.",
+        },
+        { status: 400 },
+      );
+    }
+
     if (
       !orderId ||
       !serviceId ||
@@ -213,6 +234,9 @@ export async function POST(
       notes:
         notes ||
         service.notes ||
+        null,
+      lrImageUrl:
+        lrImageUrl ||
         null,
       dispatchedAt:
         new Date().toISOString(),
