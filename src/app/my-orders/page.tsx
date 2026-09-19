@@ -50,6 +50,7 @@ type Shipment = {
   referenceNumber?: string;
   estimatedDelivery?: string | null;
   notes?: string | null;
+  lrImageUrl?: string | null;
   dispatchedAt?: string;
   createdAt?: string;
 };
@@ -1218,6 +1219,16 @@ export default function MyOrdersPage() {
                               <p className="mt-3 text-[9px] leading-5 text-violet-700">
                                 {order.shipment.notes}
                               </p>
+                            )}
+
+                            {order.shipment.lrImageUrl && (
+                              <div className="mt-4 overflow-hidden rounded-xl border border-violet-200 bg-white">
+                                <img
+                                  src={order.shipment.lrImageUrl}
+                                  alt="LR / dispatch receipt"
+                                  className="max-h-[320px] w-full object-contain"
+                                />
+                              </div>
                             )}
                           </div>
                         </section>
