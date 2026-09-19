@@ -503,7 +503,27 @@ export default function CheckoutPage() {
   ]);
 
   useEffect(() => {
+    const hasBulkItems =
+      cart.some(
+        (item) =>
+          item.mode ===
+          "RESELLER",
+      );
+
+    const hasRetailItems =
+      cart.some(
+        (item) =>
+          (item.mode ??
+            "RETAIL") ===
+          "RETAIL",
+      );
+
+    const bulkCheckout =
+      hasBulkItems &&
+      !hasRetailItems;
+
     if (
+      bulkCheckout ||
       !/^\d{6}$/.test(
         pincode.trim(),
       )
@@ -620,6 +640,7 @@ export default function CheckoutPage() {
       controller.abort();
     };
   }, [
+    cart,
     pincode,
     paymentChoice,
   ]);
@@ -1944,93 +1965,121 @@ export default function CheckoutPage() {
                     </p>
                   </div>
 
-                  <div
-                    className={`rounded-[1rem] border px-4 py-3 sm:col-span-2 ${
-                      shippingCheck.checking
-                        ? "border-[#E4D7C4] bg-[#FAF7F0]"
-                        : shippingCheck.enabled &&
-                            shippingCheck.serviceable ===
-                              true
-                          ? "border-[#D4AF37]/35 bg-[#F8F1E7]"
-                          : shippingCheck.enabled &&
-                              shippingCheck.serviceable ===
-                                false
-                            ? "border-red-200 bg-red-50"
-                            : "border-[#E4D7C4] bg-[#FFFDF9]"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <span
-                        className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-[10px] font-black ${
-                          shippingCheck.checking
-                            ? "bg-[#F4EBDD] text-[#6B5435]"
-                            : shippingCheck.enabled &&
-                                shippingCheck.serviceable ===
-                                  true
-                              ? "bg-[#031B14] text-[#FFFDF9]"
-                              : shippingCheck.enabled &&
-                                  shippingCheck.serviceable ===
-                                    false
-                                ? "bg-red-100 text-red-700"
-                                : "bg-[#F4EBDD] text-[#6B5435]"
-                        }`}
-                      >
-                        {shippingCheck.checking
-                          ? "…"
+                  {isResellerOrder ? (
+                    <div className="rounded-[1rem] border border-violet-200 bg-violet-50 px-4 py-3 sm:col-span-2">
+                      <div className="flex items-start gap-3">
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-violet-700 text-[10px] font-black text-white">
+                          B2B
+                        </span>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[7px] font-black uppercase tracking-[0.14em] text-violet-700">
+                            Bulk Delivery
+                          </p>
+
+                          <p className="mt-1 text-[10px] font-black text-violet-950">
+                            Parcel / transport service will be assigned after packing
+                          </p>
+
+                          <p className="mt-1 text-[8px] leading-4 text-violet-700">
+                            {deliverySettings.bulkFreightMessage}
+                          </p>
+
+                          <p className="mt-2 text-[7px] font-black uppercase tracking-[0.08em] text-violet-600">
+                            Admin will add the final freight, transport / parcel agency and LR / tracking number.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className={`rounded-[1rem] border px-4 py-3 sm:col-span-2 ${
+                        shippingCheck.checking
+                          ? "border-[#E4D7C4] bg-[#FAF7F0]"
                           : shippingCheck.enabled &&
                               shippingCheck.serviceable ===
                                 true
-                            ? "✓"
+                            ? "border-[#D4AF37]/35 bg-[#F8F1E7]"
                             : shippingCheck.enabled &&
                                 shippingCheck.serviceable ===
                                   false
-                              ? "!"
-                              : "↗"}
-                      </span>
-
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[7px] font-black uppercase tracking-[0.14em] text-[#6B5435]">
-                          Delivery Availability
-                        </p>
-
-                        <p className="mt-1 text-[10px] font-black text-[#211C18]">
+                              ? "border-red-200 bg-red-50"
+                              : "border-[#E4D7C4] bg-[#FFFDF9]"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span
+                          className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-[10px] font-black ${
+                            shippingCheck.checking
+                              ? "bg-[#F4EBDD] text-[#6B5435]"
+                              : shippingCheck.enabled &&
+                                  shippingCheck.serviceable ===
+                                    true
+                                ? "bg-[#031B14] text-[#FFFDF9]"
+                                : shippingCheck.enabled &&
+                                    shippingCheck.serviceable ===
+                                      false
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-[#F4EBDD] text-[#6B5435]"
+                          }`}
+                        >
                           {shippingCheck.checking
-                            ? "Checking courier service..."
+                            ? "…"
                             : shippingCheck.enabled &&
                                 shippingCheck.serviceable ===
                                   true
-                              ? "Delivery available for this address"
+                              ? "✓"
                               : shippingCheck.enabled &&
                                   shippingCheck.serviceable ===
                                     false
-                                ? "Delivery not available for this pincode"
-                                : "Courier integration setup pending"}
-                        </p>
-
-                        <p className="mt-1 text-[8px] leading-4 text-zinc-500">
-                          {shippingCheck.checking
-                            ? `Checking ${pincode} with Shiprocket.`
-                            : shippingCheck.enabled &&
-                                shippingCheck.serviceable ===
-                                  true
-                              ? [
-                                  shippingCheck.courierName,
-                                  shippingCheck.estimatedDays
-                                    ? `~${shippingCheck.estimatedDays} days`
-                                    : null,
-                                ]
-                                  .filter(Boolean)
-                                  .join(" · ") ||
-                                "Shiprocket courier is serviceable."
+                                ? "!"
+                                : "↗"}
+                        </span>
+  
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[7px] font-black uppercase tracking-[0.14em] text-[#6B5435]">
+                            Delivery Availability
+                          </p>
+  
+                          <p className="mt-1 text-[10px] font-black text-[#211C18]">
+                            {shippingCheck.checking
+                              ? "Checking courier service..."
                               : shippingCheck.enabled &&
                                   shippingCheck.serviceable ===
-                                    false
-                                ? `No serviceable Shiprocket courier was found for ${pincode}.`
-                                : "Once Shiprocket credentials are connected, courier availability and delivery estimate will appear here automatically."}
-                        </p>
+                                    true
+                                ? "Delivery available for this address"
+                                : shippingCheck.enabled &&
+                                    shippingCheck.serviceable ===
+                                      false
+                                  ? "Delivery not available for this pincode"
+                                  : "Courier integration setup pending"}
+                          </p>
+  
+                          <p className="mt-1 text-[8px] leading-4 text-zinc-500">
+                            {shippingCheck.checking
+                              ? `Checking ${pincode} with Shiprocket.`
+                              : shippingCheck.enabled &&
+                                  shippingCheck.serviceable ===
+                                    true
+                                ? [
+                                    shippingCheck.courierName,
+                                    shippingCheck.estimatedDays
+                                      ? `~${shippingCheck.estimatedDays} days`
+                                      : null,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(" · ") ||
+                                  "Shiprocket courier is serviceable."
+                                : shippingCheck.enabled &&
+                                    shippingCheck.serviceable ===
+                                      false
+                                  ? `No serviceable Shiprocket courier was found for ${pincode}.`
+                                  : "Once Shiprocket credentials are connected, courier availability and delivery estimate will appear here automatically."}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                    )}
 
                   <button
                     type="button"
