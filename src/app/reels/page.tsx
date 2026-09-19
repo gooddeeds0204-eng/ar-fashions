@@ -159,14 +159,16 @@ function ReelVideo({
       <div className="relative h-full w-full overflow-hidden bg-black">
         <iframe
           src={
-            reel.instagramEmbedUrl
+            reel.instagramEmbedUrl +
+            "?autoplay=1&muted=1"
           }
           title={
             reel.caption
           }
-          tabIndex={-1}
-          className="pointer-events-none absolute left-1/2 top-[-7%] h-full w-full origin-top -translate-x-1/2 scale-[1.65] border-0 bg-black"
-          allow="autoplay; encrypted-media"
+          tabIndex={0}
+          className="pointer-events-auto absolute left-1/2 top-[-7%] h-full w-full origin-top -translate-x-1/2 scale-[1.65] border-0 bg-black"
+          allow="autoplay; encrypted-media; picture-in-picture"
+          allowFullScreen
         />
 
         <div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-black to-transparent" />
