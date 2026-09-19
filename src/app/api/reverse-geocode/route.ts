@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 
 import {
-  getAuthenticatedCustomer,
-} from "@/lib/customer-auth";
-
-import {
   enforcePublicRateLimit,
   requireSameOriginJson,
 } from "@/lib/public-write-security";
@@ -19,21 +15,6 @@ export async function POST(
 
   if (requestGuard) {
     return requestGuard;
-  }
-
-  const user =
-    await getAuthenticatedCustomer();
-
-  if (!user) {
-    return NextResponse.json(
-      {
-        error:
-          "Login required.",
-      },
-      {
-        status: 401,
-      },
-    );
   }
 
   const rateLimit =
@@ -130,7 +111,7 @@ export async function POST(
             "Accept-Language":
               "en",
             "User-Agent":
-              "AR-Fashions/1.0",
+              "AS-Fashions/1.0",
           },
         },
       );
