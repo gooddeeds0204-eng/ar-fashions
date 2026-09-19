@@ -7,6 +7,9 @@ import {
   enforcePublicRateLimit,
   requireSameOriginJson,
 } from "@/lib/public-write-security";
+import {
+  normalizeRetailerState,
+} from "@/lib/retailer-locations";
 
 function cleanString(
   value: unknown,
@@ -163,7 +166,11 @@ export async function POST(
       cleanString(body.city);
 
     const state =
-      cleanString(body.state);
+      normalizeRetailerState(
+        cleanString(
+          body.state,
+        ),
+      );
 
     const pincode =
       cleanString(
@@ -266,11 +273,23 @@ export async function POST(
       );
     }
 
-    if (!city || !state) {
+    if (!state) {
       return NextResponse.json(
         {
           error:
-            "Business city and state are required.",
+            "Retailer verification is currently available in Andhra Pradesh and Telangana only.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (!city) {
+      return NextResponse.json(
+        {
+          error:
+            "Select your business city or town.",
         },
         {
           status: 400,
