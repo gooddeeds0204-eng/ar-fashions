@@ -30,6 +30,10 @@ type Reel = {
     | string
     | null;
 
+  resolvedVideoUrl:
+    | string
+    | null;
+
   product: {
     id: string;
     name: string;
@@ -73,14 +77,19 @@ function ReelVideo({
       null,
     );
 
+  const playableUrl =
+    reel.source ===
+      "INSTAGRAM"
+      ? reel.resolvedVideoUrl
+      : reel.url;
+
   useEffect(() => {
     const video =
       videoRef.current;
 
     if (
       !video ||
-      reel.source !==
-        "UPLOAD"
+      !playableUrl
     ) {
       return;
     }
@@ -120,8 +129,26 @@ function ReelVideo({
     };
   }, [
     reel.id,
-    reel.source,
+    playableUrl,
   ]);
+
+  if (playableUrl) {
+    return (
+      <video
+        ref={videoRef}
+        src={playableUrl}
+        poster={
+          reel.thumbnailUrl ??
+          undefined
+        }
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        className="h-full w-full object-cover object-center"
+      />
+    );
+  }
 
   if (
     reel.source ===
@@ -129,33 +156,36 @@ function ReelVideo({
     reel.instagramEmbedUrl
   ) {
     return (
-      <iframe
-        src={
-          reel.instagramEmbedUrl
-        }
-        title={
-          reel.caption
-        }
-        className="pointer-events-none h-full w-full border-0 bg-black"
-        allow="autoplay; encrypted-media"
-      />
+      <div className="relative h-full w-full overflow-hidden bg-black">
+        <iframe
+          src={
+            reel.instagramEmbedUrl
+          }
+          title={
+            reel.caption
+          }
+          tabIndex={-1}
+          className="pointer-events-none absolute left-1/2 top-[-7%] h-full w-full origin-top -translate-x-1/2 scale-[1.65] border-0 bg-black"
+          allow="autoplay; encrypted-media"
+        />
+
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-black to-transparent" />
+      </div>
     );
   }
 
   return (
-    <video
-      ref={videoRef}
-      src={reel.url}
-      poster={
-        reel.thumbnailUrl ??
-        undefined
-      }
-      muted
-      loop
-      playsInline
-      preload="metadata"
-      className="h-full w-full object-cover"
-    />
+    <div className="flex h-full w-full items-center justify-center bg-zinc-950">
+      {reel.thumbnailUrl ? (
+        <img
+          src={
+            reel.thumbnailUrl
+          }
+          alt=""
+          className="h-full w-full object-cover"
+        />
+      ) : null}
+    </div>
   );
 }
 
@@ -493,7 +523,7 @@ export default function ReelsPage() {
     <main className="h-[100dvh] overflow-hidden bg-black text-white">
       {/* FIXED HEADER */}
       <div className="pointer-events-none fixed inset-x-0 top-0 z-40">
-        <div className="mx-auto flex max-w-md items-center justify-between px-4 pb-4 pt-4">
+        <div className="mx-auto flex w-full max-w-[680px] items-center justify-between px-4 pb-4 pt-4">
           <button
             type="button"
             onClick={() =>
@@ -543,7 +573,7 @@ export default function ReelsPage() {
                   reel.id
                 }
                 id={`reel-${reel.id}`}
-                className="relative mx-auto h-[100dvh] max-w-md snap-start snap-always overflow-hidden bg-zinc-950"
+                className="relative mx-auto h-[100dvh] w-full max-w-[680px] snap-start snap-always overflow-hidden bg-zinc-950"
               >
                 <div
                   role="button"
@@ -581,10 +611,7 @@ export default function ReelsPage() {
                 {/* SOURCE BADGE */}
                 <div className="pointer-events-none absolute left-4 top-20">
                   <span className="rounded-full bg-black/55 px-3 py-1.5 text-[9px] font-black backdrop-blur">
-                    {reel.source ===
-                    "INSTAGRAM"
-                      ? "INSTAGRAM REEL"
-                      : "AS FASHIONS"}
+                    AS FASHIONS
                   </span>
                 </div>
 
