@@ -13,6 +13,19 @@ type OrderItem = {
   inventoryRestored: boolean;
 };
 
+type BulkDeliveryService = {
+  id: string;
+  type:
+    | "PARCEL"
+    | "TRANSPORT";
+  name: string;
+  phone: string;
+  branch: string;
+  serviceArea: string;
+  notes: string;
+  isActive: boolean;
+};
+
 type ShipmentInfo = {
   provider?: string;
   providerOrderId?:
@@ -34,6 +47,18 @@ type ShipmentInfo = {
     breadthCm?: number;
     heightCm?: number;
   };
+  serviceId?: string;
+  serviceType?:
+    | "PARCEL"
+    | "TRANSPORT";
+  serviceName?: string;
+  agencyContact?: string;
+  branch?: string;
+  serviceArea?: string;
+  referenceNumber?: string;
+  estimatedDelivery?: string | null;
+  notes?: string | null;
+  dispatchedAt?: string;
   createdAt?: string;
 };
 
@@ -297,6 +322,69 @@ export default function AdminOrdersPage() {
     breadthCm: "15",
     heightCm: "5",
   });
+
+  const [
+    bulkServices,
+    setBulkServices,
+  ] =
+    useState<
+      BulkDeliveryService[]
+    >([]);
+
+  const [
+    bulkDispatching,
+    setBulkDispatching,
+  ] = useState(false);
+
+  const [
+    bulkDispatch,
+    setBulkDispatch,
+  ] = useState({
+    serviceId: "",
+    referenceNumber: "",
+    estimatedDelivery: "",
+    notes: "",
+  });
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const response =
+          await fetch(
+            "/api/admin/bulk-delivery-services",
+            {
+              cache: "no-store",
+            },
+          );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        setBulkServices(
+          Array.isArray(
+            data.services,
+          )
+            ? data.services.filter(
+                (
+                  item:
+                    BulkDeliveryService,
+                ) =>
+                  item.isActive,
+              )
+            : [],
+        );
+      } catch (error) {
+        console.error(
+          "Bulk delivery services load failed:",
+          error,
+        );
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (!selectedOrder) {
@@ -589,6 +677,121 @@ export default function AdminOrdersPage() {
       );
     } finally {
       setShipmentLoading(
+        false,
+      );
+    }
+  }
+
+  async function dispatchBulkOrder() {
+    if (!selectedOrder) {
+      return;
+    }
+
+    if (
+      selectedOrder.status !==
+      "PACKED"
+    ) {
+      alert(
+        "Mark the bulk order as PACKED before dispatch.",
+      );
+      return;
+    }
+
+    if (
+      selectedOrder.deliveryChargePending
+    ) {
+      alert(
+        "Finalize the freight charge before dispatch.",
+      );
+      return;
+    }
+
+    if (
+      !bulkDispatch.serviceId ||
+      !bulkDispatch.referenceNumber.trim()
+    ) {
+      alert(
+        "Select parcel / transport service and enter LR / tracking number.",
+      );
+      return;
+    }
+
+    try {
+      setBulkDispatching(
+        true,
+      );
+
+      const response =
+        await fetch(
+          "/api/admin/bulk-dispatch",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body:
+              JSON.stringify({
+                orderId:
+                  selectedOrder.id,
+                ...bulkDispatch,
+              }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "Bulk dispatch failed.",
+        );
+      }
+
+      setShipmentInfo(
+        data.shipment ??
+          null,
+      );
+
+      setOrders(
+        (current) =>
+          current.map(
+            (order) =>
+              order.id ===
+              selectedOrder.id
+                ? {
+                    ...order,
+                    status:
+                      "SHIPPED",
+                  }
+                : order,
+          ),
+      );
+
+      setSelectedOrder(
+        (current) =>
+          current
+            ? {
+                ...current,
+                status:
+                  "SHIPPED",
+              }
+            : current,
+      );
+
+      alert(
+        data.message ||
+          "Bulk order dispatched.",
+      );
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Bulk dispatch failed.",
+      );
+    } finally {
+      setBulkDispatching(
         false,
       );
     }
@@ -1218,173 +1421,389 @@ export default function AdminOrdersPage() {
               </div>
             )}
 
-            <section className="mt-4 rounded-2xl border border-[#E4D7C4] bg-[#FFFDF9] p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#6B5435]">
-                    Delivery Integration
-                  </p>
+            {selectedOrder.type ===
+            "RESELLER" ? (
+              <section className="mt-4 rounded-2xl border border-violet-200 bg-violet-50 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-violet-700">
+                      Bulk Delivery
+                    </p>
 
-                  <h3 className="mt-1 text-sm font-black">
-                    Shiprocket Courier
-                  </h3>
-                </div>
-
-                <span className={`rounded-full px-3 py-1 text-[9px] font-black uppercase ${
-                  shiprocketConfigured
-                    ? "bg-[#F4EBDD] text-[#031B14]"
-                    : "bg-zinc-100 text-zinc-500"
-                }`}>
-                  {shiprocketConfigured
-                    ? "Connected"
-                    : "Setup Pending"}
-                </span>
-              </div>
-
-              {shipmentLoading ? (
-                <p className="mt-4 text-xs font-semibold text-zinc-500">
-                  Loading shipment details...
-                </p>
-              ) : shipmentInfo?.awbCode ? (
-                <div className="mt-4 rounded-2xl bg-[#FAF7F0] p-4">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <p className="text-[9px] font-bold uppercase text-zinc-400">
-                        Courier
-                      </p>
-                      <p className="mt-1 text-sm font-black">
-                        {shipmentInfo.courierName || "Shiprocket"}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-[9px] font-bold uppercase text-zinc-400">
-                        AWB
-                      </p>
-                      <p className="mt-1 break-all text-sm font-black">
-                        {shipmentInfo.awbCode}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-[9px] font-bold uppercase text-zinc-400">
-                        Courier Rate
-                      </p>
-                      <p className="mt-1 text-sm font-black">
-                        {money(
-                          Number(
-                            shipmentInfo.courierRate ?? 0,
-                          ),
-                        )}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-[9px] font-bold uppercase text-zinc-400">
-                        Estimate
-                      </p>
-                      <p className="mt-1 text-sm font-black">
-                        {shipmentInfo.estimatedDeliveryDays
-                          ? `${shipmentInfo.estimatedDeliveryDays} days`
-                          : shipmentInfo.etd || "—"}
-                      </p>
-                    </div>
+                    <h3 className="mt-1 text-sm font-black text-violet-950">
+                      Parcel / Transport Dispatch
+                    </h3>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={refreshTracking}
-                    disabled={shipmentLoading}
-                    className="mt-4 rounded-xl bg-[#031B14] px-4 py-3 text-[10px] font-black uppercase tracking-[0.08em] text-white disabled:opacity-50"
-                  >
-                    Refresh Tracking
-                  </button>
-
-                  {trackingInfo && (
-                    <p className="mt-3 text-[10px] leading-5 text-zinc-500">
-                      Live Shiprocket tracking data refreshed successfully.
-                    </p>
-                  )}
+                  <span className="rounded-full bg-violet-700 px-3 py-1 text-[9px] font-black uppercase text-white">
+                    Manual B2B
+                  </span>
                 </div>
-              ) : shiprocketConfigured ? (
-                <div className="mt-4">
-                  <p className="text-[10px] leading-5 text-zinc-500">
-                    Confirm/pack the order, enter the final parcel size, then create the courier shipment. AWB and pickup request are generated automatically.
-                  </p>
 
-                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {[
-                      ["weightKg", "Weight kg"],
-                      ["lengthCm", "Length cm"],
-                      ["breadthCm", "Breadth cm"],
-                      ["heightCm", "Height cm"],
-                    ].map(
-                      ([key, label]) => (
-                        <label
-                          key={key}
-                          className="text-[9px] font-black uppercase text-zinc-500"
-                        >
-                          {label}
-                          <input
-                            type="number"
-                            min="0.1"
-                            step="0.1"
-                            value={
-                              packageForm[
-                                key as keyof typeof packageForm
-                              ]
-                            }
-                            onChange={(event) =>
-                              setPackageForm(
-                                (current) => ({
-                                  ...current,
-                                  [key]:
-                                    event.target.value,
-                                }),
-                              )
-                            }
-                            className="mt-2 w-full rounded-xl border border-[#E4D7C4] bg-white px-3 py-2.5 text-sm font-bold text-[#211C18] outline-none focus:border-[#D4AF37]"
-                          />
-                        </label>
-                      ),
+                {shipmentInfo?.provider ===
+                "MANUAL_BULK" ? (
+                  <div className="mt-4 rounded-2xl bg-white p-4">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <p className="text-[9px] font-bold uppercase text-zinc-400">
+                          Service
+                        </p>
+                        <p className="mt-1 text-sm font-black">
+                          {shipmentInfo.serviceName ||
+                            "Bulk Delivery"}
+                        </p>
+                        <p className="mt-1 text-[10px] font-bold uppercase text-violet-600">
+                          {shipmentInfo.serviceType ===
+                          "TRANSPORT"
+                            ? "Transport Agency"
+                            : "Parcel Service"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-[9px] font-bold uppercase text-zinc-400">
+                          LR / Tracking
+                        </p>
+                        <p className="mt-1 break-all text-sm font-black">
+                          {shipmentInfo.referenceNumber ||
+                            "—"}
+                        </p>
+                      </div>
+
+                      {shipmentInfo.branch && (
+                        <div>
+                          <p className="text-[9px] font-bold uppercase text-zinc-400">
+                            Branch
+                          </p>
+                          <p className="mt-1 text-sm font-black">
+                            {shipmentInfo.branch}
+                          </p>
+                        </div>
+                      )}
+
+                      {shipmentInfo.agencyContact && (
+                        <div>
+                          <p className="text-[9px] font-bold uppercase text-zinc-400">
+                            Contact
+                          </p>
+                          <p className="mt-1 text-sm font-black">
+                            {shipmentInfo.agencyContact}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {shipmentInfo.estimatedDelivery && (
+                      <p className="mt-3 text-[10px] font-bold text-violet-700">
+                        Estimate: {shipmentInfo.estimatedDelivery}
+                      </p>
                     )}
                   </div>
+                ) : (
+                  <div className="mt-4">
+                    <p className="text-[10px] leading-5 text-violet-700">
+                      Packing complete ayyaka parcel service ledha transport agency select chesi LR / tracking number enter cheyyandi.
+                    </p>
 
-                  <button
-                    type="button"
-                    onClick={createShipment}
-                    disabled={
-                      shipmentCreating ||
-                      ![
-                        "CONFIRMED",
-                        "PACKED",
-                      ].includes(
-                        selectedOrder.status,
-                      ) ||
-                      selectedOrder.deliveryChargePending
-                    }
-                    className="mt-4 w-full rounded-xl bg-[#031B14] px-4 py-3 text-[10px] font-black uppercase tracking-[0.08em] text-white disabled:cursor-not-allowed disabled:opacity-45"
-                  >
-                    {shipmentCreating
-                      ? "Creating Shipment..."
-                      : selectedOrder.deliveryChargePending
-                        ? "Finalize Freight First"
-                        : ![
-                              "CONFIRMED",
-                              "PACKED",
-                            ].includes(
-                              selectedOrder.status,
+                    <label className="mt-4 block text-[9px] font-black uppercase tracking-[0.08em] text-violet-800">
+                      Parcel / Transport Service
+
+                      <select
+                        value={bulkDispatch.serviceId}
+                        onChange={(event) =>
+                          setBulkDispatch(
+                            (current) => ({
+                              ...current,
+                              serviceId:
+                                event.target.value,
+                            }),
+                          )
+                        }
+                        className="mt-2 w-full rounded-xl border border-violet-200 bg-white px-3 py-3 text-sm font-bold text-[#211C18] outline-none"
+                      >
+                        <option value="">
+                          Select service
+                        </option>
+
+                        {bulkServices.map(
+                          (service) => (
+                            <option
+                              key={service.id}
+                              value={service.id}
+                            >
+                              {service.type ===
+                              "TRANSPORT"
+                                ? "Transport"
+                                : "Parcel"}{" "}
+                              · {service.name}
+                              {service.branch
+                                ? " · " +
+                                  service.branch
+                                : ""}
+                            </option>
+                          ),
+                        )}
+                      </select>
+                    </label>
+
+                    {bulkServices.length ===
+                      0 && (
+                      <p className="mt-2 text-[9px] font-bold text-red-600">
+                        First add parcel / transport agencies in Admin → Delivery Settings.
+                      </p>
+                    )}
+
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <label className="text-[9px] font-black uppercase tracking-[0.08em] text-violet-800">
+                        LR / Tracking Number
+                        <input
+                          value={bulkDispatch.referenceNumber}
+                          onChange={(event) =>
+                            setBulkDispatch(
+                              (current) => ({
+                                ...current,
+                                referenceNumber:
+                                  event.target.value,
+                              }),
                             )
-                          ? "Confirm Order First"
-                          : "Create Shiprocket Shipment"}
-                  </button>
+                          }
+                          placeholder="LR / docket / tracking no."
+                          className="mt-2 w-full rounded-xl border border-violet-200 bg-white px-3 py-3 text-sm font-bold text-[#211C18] outline-none"
+                        />
+                      </label>
+
+                      <label className="text-[9px] font-black uppercase tracking-[0.08em] text-violet-800">
+                        Delivery Estimate
+                        <input
+                          value={bulkDispatch.estimatedDelivery}
+                          onChange={(event) =>
+                            setBulkDispatch(
+                              (current) => ({
+                                ...current,
+                                estimatedDelivery:
+                                  event.target.value,
+                              }),
+                            )
+                          }
+                          placeholder="Ex: 2-4 days / 22 Sep"
+                          className="mt-2 w-full rounded-xl border border-violet-200 bg-white px-3 py-3 text-sm font-bold text-[#211C18] outline-none"
+                        />
+                      </label>
+                    </div>
+
+                    <label className="mt-3 block text-[9px] font-black uppercase tracking-[0.08em] text-violet-800">
+                      Dispatch Notes
+                      <textarea
+                        rows={3}
+                        value={bulkDispatch.notes}
+                        onChange={(event) =>
+                          setBulkDispatch(
+                            (current) => ({
+                              ...current,
+                              notes:
+                                event.target.value,
+                            }),
+                          )
+                        }
+                        placeholder="Optional booking / delivery notes"
+                        className="mt-2 w-full rounded-xl border border-violet-200 bg-white px-3 py-3 text-sm text-[#211C18] outline-none"
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={dispatchBulkOrder}
+                      disabled={
+                        bulkDispatching ||
+                        selectedOrder.status !==
+                          "PACKED" ||
+                        selectedOrder.deliveryChargePending ||
+                        bulkServices.length ===
+                          0
+                      }
+                      className="mt-4 w-full rounded-xl bg-violet-800 px-4 py-3 text-[10px] font-black uppercase tracking-[0.08em] text-white disabled:cursor-not-allowed disabled:opacity-45"
+                    >
+                      {bulkDispatching
+                        ? "Dispatching..."
+                        : selectedOrder.deliveryChargePending
+                          ? "Finalize Freight First"
+                          : selectedOrder.status !==
+                              "PACKED"
+                            ? "Mark Order Packed First"
+                            : "Save Dispatch & Mark Shipped"}
+                    </button>
+                  </div>
+                )}
+              </section>
+            ) : (
+              <section className="mt-4 rounded-2xl border border-[#E4D7C4] bg-[#FFFDF9] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#6B5435]">
+                      Delivery Integration
+                    </p>
+  
+                    <h3 className="mt-1 text-sm font-black">
+                      Shiprocket Courier
+                    </h3>
+                  </div>
+  
+                  <span className={`rounded-full px-3 py-1 text-[9px] font-black uppercase ${
+                    shiprocketConfigured
+                      ? "bg-[#F4EBDD] text-[#031B14]"
+                      : "bg-zinc-100 text-zinc-500"
+                  }`}>
+                    {shiprocketConfigured
+                      ? "Connected"
+                      : "Setup Pending"}
+                  </span>
                 </div>
-              ) : (
-                <p className="mt-4 text-[10px] leading-5 text-zinc-500">
-                  Shiprocket API credentials are not configured yet. After setup, courier creation, AWB and pickup controls will appear here automatically.
-                </p>
+  
+                {shipmentLoading ? (
+                  <p className="mt-4 text-xs font-semibold text-zinc-500">
+                    Loading shipment details...
+                  </p>
+                ) : shipmentInfo?.awbCode ? (
+                  <div className="mt-4 rounded-2xl bg-[#FAF7F0] p-4">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <p className="text-[9px] font-bold uppercase text-zinc-400">
+                          Courier
+                        </p>
+                        <p className="mt-1 text-sm font-black">
+                          {shipmentInfo.courierName || "Shiprocket"}
+                        </p>
+                      </div>
+  
+                      <div>
+                        <p className="text-[9px] font-bold uppercase text-zinc-400">
+                          AWB
+                        </p>
+                        <p className="mt-1 break-all text-sm font-black">
+                          {shipmentInfo.awbCode}
+                        </p>
+                      </div>
+  
+                      <div>
+                        <p className="text-[9px] font-bold uppercase text-zinc-400">
+                          Courier Rate
+                        </p>
+                        <p className="mt-1 text-sm font-black">
+                          {money(
+                            Number(
+                              shipmentInfo.courierRate ?? 0,
+                            ),
+                          )}
+                        </p>
+                      </div>
+  
+                      <div>
+                        <p className="text-[9px] font-bold uppercase text-zinc-400">
+                          Estimate
+                        </p>
+                        <p className="mt-1 text-sm font-black">
+                          {shipmentInfo.estimatedDeliveryDays
+                            ? `${shipmentInfo.estimatedDeliveryDays} days`
+                            : shipmentInfo.etd || "—"}
+                        </p>
+                      </div>
+                    </div>
+  
+                    <button
+                      type="button"
+                      onClick={refreshTracking}
+                      disabled={shipmentLoading}
+                      className="mt-4 rounded-xl bg-[#031B14] px-4 py-3 text-[10px] font-black uppercase tracking-[0.08em] text-white disabled:opacity-50"
+                    >
+                      Refresh Tracking
+                    </button>
+  
+                    {trackingInfo && (
+                      <p className="mt-3 text-[10px] leading-5 text-zinc-500">
+                        Live Shiprocket tracking data refreshed successfully.
+                      </p>
+                    )}
+                  </div>
+                ) : shiprocketConfigured ? (
+                  <div className="mt-4">
+                    <p className="text-[10px] leading-5 text-zinc-500">
+                      Confirm/pack the order, enter the final parcel size, then create the courier shipment. AWB and pickup request are generated automatically.
+                    </p>
+  
+                    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      {[
+                        ["weightKg", "Weight kg"],
+                        ["lengthCm", "Length cm"],
+                        ["breadthCm", "Breadth cm"],
+                        ["heightCm", "Height cm"],
+                      ].map(
+                        ([key, label]) => (
+                          <label
+                            key={key}
+                            className="text-[9px] font-black uppercase text-zinc-500"
+                          >
+                            {label}
+                            <input
+                              type="number"
+                              min="0.1"
+                              step="0.1"
+                              value={
+                                packageForm[
+                                  key as keyof typeof packageForm
+                                ]
+                              }
+                              onChange={(event) =>
+                                setPackageForm(
+                                  (current) => ({
+                                    ...current,
+                                    [key]:
+                                      event.target.value,
+                                  }),
+                                )
+                              }
+                              className="mt-2 w-full rounded-xl border border-[#E4D7C4] bg-white px-3 py-2.5 text-sm font-bold text-[#211C18] outline-none focus:border-[#D4AF37]"
+                            />
+                          </label>
+                        ),
+                      )}
+                    </div>
+  
+                    <button
+                      type="button"
+                      onClick={createShipment}
+                      disabled={
+                        shipmentCreating ||
+                        ![
+                          "CONFIRMED",
+                          "PACKED",
+                        ].includes(
+                          selectedOrder.status,
+                        ) ||
+                        selectedOrder.deliveryChargePending
+                      }
+                      className="mt-4 w-full rounded-xl bg-[#031B14] px-4 py-3 text-[10px] font-black uppercase tracking-[0.08em] text-white disabled:cursor-not-allowed disabled:opacity-45"
+                    >
+                      {shipmentCreating
+                        ? "Creating Shipment..."
+                        : selectedOrder.deliveryChargePending
+                          ? "Finalize Freight First"
+                          : ![
+                                "CONFIRMED",
+                                "PACKED",
+                              ].includes(
+                                selectedOrder.status,
+                              )
+                            ? "Confirm Order First"
+                            : "Create Shiprocket Shipment"}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="mt-4 text-[10px] leading-5 text-zinc-500">
+                    Shiprocket API credentials are not configured yet. After setup, courier creation, AWB and pickup controls will appear here automatically.
+                  </p>
+                )}
+              </section>
               )}
-            </section>
 
             <div className="mt-6">
               <h3 className="font-black">
