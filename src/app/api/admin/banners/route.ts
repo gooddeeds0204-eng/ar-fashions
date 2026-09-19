@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
+import {
+  bannerPresentationKey,
+  normalizeBannerPresentation,
+  parseBannerPresentationJson,
+} from "@/lib/banner-presentation";
 
 type BannerPlacement =
   | "HOME_HERO"
@@ -56,6 +61,105 @@ function cleanString(value: unknown) {
 
 function optionalString(value: unknown) {
   return cleanString(value) || null;
+}
+
+const presentationFields = [
+  "eyebrowText",
+  "eyebrowFont",
+  "eyebrowColor",
+  "titleFont",
+  "titleColor",
+  "subtitleFont",
+  "subtitleColor",
+  "buttonFont",
+  "buttonTextColor",
+  "buttonBackgroundColor",
+  "buttonBorderColor",
+  "ctaCategoryId",
+  "ctaCategoryName",
+] as const;
+
+function hasPresentationInput(
+  body: Record<string, unknown>,
+) {
+  return presentationFields.some(
+    (key) =>
+      body[key] !==
+      undefined,
+  );
+}
+
+async function presentationForBanner(
+  bannerId: string,
+) {
+  const row =
+    await prisma.siteSetting.findUnique({
+      where: {
+        key:
+          bannerPresentationKey(
+            bannerId,
+          ),
+      },
+    });
+
+  return parseBannerPresentationJson(
+    row?.value,
+  );
+}
+
+async function savePresentation(
+  bannerId: string,
+  body: Record<string, unknown>,
+) {
+  const existing =
+    await prisma.siteSetting.findUnique({
+      where: {
+        key:
+          bannerPresentationKey(
+            bannerId,
+          ),
+      },
+    });
+
+  const base =
+    existing
+      ? parseBannerPresentationJson(
+          existing.value,
+        )
+      : {};
+
+  const presentation =
+    normalizeBannerPresentation({
+      ...base,
+      ...body,
+    });
+
+  await prisma.siteSetting.upsert({
+    where: {
+      key:
+        bannerPresentationKey(
+          bannerId,
+        ),
+    },
+    update: {
+      value:
+        JSON.stringify(
+          presentation,
+        ),
+    },
+    create: {
+      key:
+        bannerPresentationKey(
+          bannerId,
+        ),
+      value:
+        JSON.stringify(
+          presentation,
+        ),
+    },
+  });
+
+  return presentation;
 }
 
 function optionalDate(value: unknown) {
@@ -132,9 +236,51 @@ export async function GET() {
         ],
       });
 
+    const presentationRows =
+      banners.length > 0
+        ? await prisma.siteSetting.findMany({
+            where: {
+              key: {
+                in:
+                  banners.map(
+                    (banner) =>
+                      bannerPresentationKey(
+                        banner.id,
+                      ),
+                  ),
+              },
+            },
+          })
+        : [];
+
+    const presentationMap =
+      new Map(
+        presentationRows.map(
+          (row) => [
+            row.key,
+            parseBannerPresentationJson(
+              row.value,
+            ),
+          ],
+        ),
+      );
+
     return NextResponse.json({
       success: true,
-      banners,
+      banners:
+        banners.map(
+          (banner) => ({
+            ...banner,
+            ...(presentationMap.get(
+              bannerPresentationKey(
+                banner.id,
+              ),
+            ) ??
+              normalizeBannerPresentation(
+                {},
+              )),
+          }),
+        ),
     });
   } catch (error) {
     console.error(
@@ -450,9 +596,18 @@ export async function POST(
         },
       });
 
+    const presentation =
+      await savePresentation(
+        banner.id,
+        body,
+      );
+
     return NextResponse.json({
       success: true,
-      banner,
+      banner: {
+        ...banner,
+        ...presentation,
+      },
     });
   } catch (error) {
     console.error(
@@ -966,9 +1121,24 @@ export async function PATCH(
         data,
       });
 
+    const presentation =
+      hasPresentationInput(
+        body,
+      )
+        ? await savePresentation(
+            banner.id,
+            body,
+          )
+        : await presentationForBanner(
+            banner.id,
+          );
+
     return NextResponse.json({
       success: true,
-      banner,
+      banner: {
+        ...banner,
+        ...presentation,
+      },
     });
   } catch (error) {
     console.error(
@@ -1019,6 +1189,19 @@ export async function DELETE(
           id,
         },
       });
+
+    if (
+      deleted.count > 0
+    ) {
+      await prisma.siteSetting.deleteMany({
+        where: {
+          key:
+            bannerPresentationKey(
+              id,
+            ),
+        },
+      });
+    }
 
     if (
       deleted.count === 0
