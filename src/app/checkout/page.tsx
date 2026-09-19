@@ -2253,35 +2253,49 @@ export default function CheckoutPage() {
                     className="mt-2 w-full rounded-[1rem] border border-black/[0.08] bg-[#FFFDF9] px-4 py-3.5 text-sm outline-none focus:border-[#D4AF37]"
                   />
 
-                  {shippingCheck.checking && (
-                    <p className="mt-2 text-[7px] font-bold text-[#7B7066]">
-                      Checking courier service...
-                    </p>
+                  {isResellerOrder ? (
+                    <div className="mt-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2.5">
+                      <p className="text-[7px] font-black uppercase tracking-[0.08em] text-violet-700">
+                        Bulk delivery
+                      </p>
+
+                      <p className="mt-1 text-[8px] leading-4 text-violet-700">
+                        Parcel / transport agency and final freight will be assigned by admin after packing.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {shippingCheck.checking && (
+                        <p className="mt-2 text-[7px] font-bold text-[#7B7066]">
+                          Checking courier service...
+                        </p>
+                      )}
+
+                      {!shippingCheck.checking &&
+                        shippingCheck.enabled &&
+                        shippingCheck.serviceable ===
+                          true && (
+                          <p className="mt-2 text-[7px] font-bold text-[#0F5A38]">
+                            ✓ Shiprocket delivery available
+                            {shippingCheck.courierName
+                              ? ` · ${shippingCheck.courierName}`
+                              : ""}
+                            {shippingCheck.estimatedDays
+                              ? ` · ~${shippingCheck.estimatedDays} days`
+                              : ""}
+                          </p>
+                        )}
+
+                      {!shippingCheck.checking &&
+                        shippingCheck.enabled &&
+                        shippingCheck.serviceable ===
+                          false && (
+                          <p className="mt-2 text-[7px] font-bold text-[#9F2F3D]">
+                            Delivery is not serviceable for this pincode.
+                          </p>
+                        )}
+                    </>
                   )}
-
-                  {!shippingCheck.checking &&
-                    shippingCheck.enabled &&
-                    shippingCheck.serviceable ===
-                      true && (
-                      <p className="mt-2 text-[7px] font-bold text-[#0F5A38]">
-                        ✓ Shiprocket delivery available
-                        {shippingCheck.courierName
-                          ? ` · ${shippingCheck.courierName}`
-                          : ""}
-                        {shippingCheck.estimatedDays
-                          ? ` · ~${shippingCheck.estimatedDays} days`
-                          : ""}
-                      </p>
-                    )}
-
-                  {!shippingCheck.checking &&
-                    shippingCheck.enabled &&
-                    shippingCheck.serviceable ===
-                      false && (
-                      <p className="mt-2 text-[7px] font-bold text-[#9F2F3D]">
-                        Delivery is not serviceable for this pincode.
-                      </p>
-                    )}
                 </div>
 
                 <div>
