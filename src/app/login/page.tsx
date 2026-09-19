@@ -197,17 +197,31 @@ export default function LoginPage() {
               retailer account.
             </p>
 
-            <button
-              type="button"
-              onClick={() =>
-                router.push(
-                  "/signup",
-                )
-              }
-              className="mt-4 rounded-full border border-[#D4AF37]/25 px-4 py-2.5 text-[9px] font-black uppercase tracking-wider text-[#D9C29A]"
-            >
-              Create Account →
-            </button>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    "/signup",
+                  )
+                }
+                className="rounded-full border border-[#D4AF37]/25 px-4 py-2.5 text-[9px] font-black uppercase tracking-wider text-[#D9C29A]"
+              >
+                Customer Sign Up →
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    "/signup?type=retailer",
+                  )
+                }
+                className="rounded-full bg-[#D4AF37] px-4 py-2.5 text-[9px] font-black uppercase tracking-wider text-[#031B14]"
+              >
+                Retailer Sign Up →
+              </button>
+            </div>
           </div>
         </section>
       </div>
