@@ -321,6 +321,15 @@ export async function POST(
     }
 
     if (
+      order.type !==
+      "RETAIL"
+    ) {
+      throw new Error(
+        "Shiprocket auto-shipping is only for retail orders. Use manual parcel / transport dispatch for reseller bulk orders.",
+      );
+    }
+
+    if (
       !order.address
     ) {
       throw new Error(
