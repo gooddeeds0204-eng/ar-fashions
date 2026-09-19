@@ -621,7 +621,7 @@ export default function ResellerApplyPage() {
           <p className="mt-4 max-w-md text-sm leading-6 text-[#7B7066]">
             Submit your shop or business
             details. Wholesale access is
-            enabled after AR approval.
+            enabled after AS Fashions approval.
           </p>
 
           <form
@@ -808,10 +808,25 @@ export default function ResellerApplyPage() {
               </button>
             </div>
 
-            <div className="rounded-[1.2rem] border border-[#E4D7C4] bg-[#FFFDF9] p-4">
-              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#D4AF37]">
-                Verification Photos
-              </p>
+            <div
+              id="verification-photos"
+              className="rounded-[1.2rem] border border-[#D4AF37]/35 bg-[#FFFDF9] p-4 shadow-[0_8px_24px_rgba(0,0,0,0.04)]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#D4AF37]">
+                    Shop Verification
+                  </p>
+
+                  <h2 className="mt-1 text-sm font-black text-[#211C18]">
+                    Visiting Card & Shop Photos
+                  </h2>
+                </div>
+
+                <span className="rounded-full bg-[#031B14] px-2.5 py-1 text-[8px] font-black uppercase text-[#FFFDF9]">
+                  Required
+                </span>
+              </div>
 
               <p className="mt-1 text-[9px] leading-4 text-[#7B7066]">
                 Visiting card + actual shop photos upload చేయండి.
