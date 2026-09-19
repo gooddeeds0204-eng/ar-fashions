@@ -156,6 +156,22 @@ const audienceLabels: Record<
   RESELLER: "Reseller Only",
 };
 
+const fontLabels: Record<
+  BannerFont,
+  string
+> = {
+  EDITORIAL_SERIF:
+    "Editorial Serif",
+  CLASSIC_SERIF:
+    "Classic Serif",
+  MODERN_SANS:
+    "Modern Sans",
+  CLEAN_SANS:
+    "Clean Sans",
+  FASHION_DISPLAY:
+    "Fashion Display",
+};
+
 const emptyForm: FormState = {
   title: "",
   subtitle: "",
@@ -1417,6 +1433,247 @@ export default function AdminBannersPage() {
               />
             </div>
           </div>
+
+          {form.placement ===
+            "HOME_HERO" && (
+            <div className="mt-6 rounded-[1.6rem] border border-[#D4AF37]/30 bg-[#FAF7F0] p-4 sm:p-5">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#6B5435]">
+                  Hero Content Studio
+                </p>
+
+                <h3 className="mt-1 text-base font-black">
+                  Text, fonts, colours & CTA category
+                </h3>
+
+                <p className="mt-1 text-xs leading-5 text-zinc-500">
+                  Poster upload paina unna media controls lo change cheyyachu. Ikkada hero text each element ni separate ga style cheyyachu.
+                </p>
+              </div>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <label className="text-xs font-bold text-zinc-500 sm:col-span-2">
+                  Small Top Text
+
+                  <input
+                    value={
+                      form.eyebrowText
+                    }
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        eyebrowText:
+                          e.target.value,
+                      })
+                    }
+                    placeholder="New Season"
+                    className="mt-2 w-full rounded-xl border border-[#E4D7C4] bg-white px-4 py-3 text-sm"
+                  />
+                </label>
+
+                {[
+                  [
+                    "eyebrowFont",
+                    "Top Text Font",
+                    form.eyebrowFont,
+                  ],
+                  [
+                    "titleFont",
+                    "Title Font",
+                    form.titleFont,
+                  ],
+                  [
+                    "subtitleFont",
+                    "Subtitle Font",
+                    form.subtitleFont,
+                  ],
+                  [
+                    "buttonFont",
+                    "CTA Font",
+                    form.buttonFont,
+                  ],
+                ].map(
+                  ([
+                    key,
+                    label,
+                    value,
+                  ]) => (
+                    <label
+                      key={key}
+                      className="text-xs font-bold text-zinc-500"
+                    >
+                      {label}
+
+                      <select
+                        value={value}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            [key]:
+                              e.target.value as BannerFont,
+                          })
+                        }
+                        className="mt-2 w-full rounded-xl border border-[#E4D7C4] bg-white px-4 py-3 text-sm font-bold text-zinc-900"
+                      >
+                        {BANNER_FONT_OPTIONS.map(
+                          (
+                            fontName,
+                          ) => (
+                            <option
+                              key={
+                                fontName
+                              }
+                              value={
+                                fontName
+                              }
+                            >
+                              {
+                                fontLabels[
+                                  fontName
+                                ]
+                              }
+                            </option>
+                          ),
+                        )}
+                      </select>
+                    </label>
+                  ),
+                )}
+
+                {[
+                  [
+                    "eyebrowColor",
+                    "Top Text Colour",
+                    form.eyebrowColor,
+                  ],
+                  [
+                    "titleColor",
+                    "Title Colour",
+                    form.titleColor,
+                  ],
+                  [
+                    "subtitleColor",
+                    "Subtitle Colour",
+                    form.subtitleColor,
+                  ],
+                  [
+                    "buttonTextColor",
+                    "CTA Text Colour",
+                    form.buttonTextColor,
+                  ],
+                  [
+                    "buttonBackgroundColor",
+                    "CTA Background",
+                    form.buttonBackgroundColor,
+                  ],
+                  [
+                    "buttonBorderColor",
+                    "CTA Border",
+                    form.buttonBorderColor,
+                  ],
+                ].map(
+                  ([
+                    key,
+                    label,
+                    value,
+                  ]) => (
+                    <label
+                      key={key}
+                      className="text-xs font-bold text-zinc-500"
+                    >
+                      {label}
+
+                      <div className="mt-2 flex gap-2">
+                        <input
+                          type="color"
+                          value={
+                            value
+                          }
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              [key]:
+                                e.target.value.toUpperCase(),
+                            })
+                          }
+                          className="h-12 w-14 rounded-xl border bg-white p-1"
+                        />
+
+                        <input
+                          value={
+                            value
+                          }
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              [key]:
+                                e.target.value,
+                            })
+                          }
+                          className="min-w-0 flex-1 rounded-xl border border-[#E4D7C4] bg-white px-4 py-3 text-sm"
+                        />
+                      </div>
+                    </label>
+                  ),
+                )}
+
+                <label className="text-xs font-bold text-zinc-500 sm:col-span-2">
+                  CTA Category Target
+
+                  <select
+                    value={
+                      form.ctaCategoryId
+                    }
+                    onChange={(e) => {
+                      const selected =
+                        categoryOptions.find(
+                          (option) =>
+                            option.id ===
+                            e.target.value,
+                        );
+
+                      setForm({
+                        ...form,
+                        ctaCategoryId:
+                          e.target.value,
+                        ctaCategoryName:
+                          selected?.name ??
+                          "",
+                      });
+                    }}
+                    className="mt-2 w-full rounded-xl border border-[#E4D7C4] bg-white px-4 py-3 text-sm font-bold text-zinc-900"
+                  >
+                    <option value="">
+                      No category — use custom URL / scroll
+                    </option>
+
+                    {categoryOptions.map(
+                      (
+                        option,
+                      ) => (
+                        <option
+                          key={
+                            option.id
+                          }
+                          value={
+                            option.id
+                          }
+                        >
+                          {
+                            option.label
+                          }
+                        </option>
+                      ),
+                    )}
+                  </select>
+
+                  <p className="mt-2 text-[10px] leading-5 text-zinc-400">
+                    Category select chesthe CTA click direct ga aa category products ki scroll/filter avtundi. Category empty unte CTA URL field use avtundi.
+                  </p>
+                </label>
+              </div>
+            </div>
+          )}
 
           <div className="mt-6">
             <p className="text-sm font-black">
