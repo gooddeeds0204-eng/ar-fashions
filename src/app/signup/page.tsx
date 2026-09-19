@@ -7,6 +7,11 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import BrandLogo from "@/components/BrandLogo";
+import {
+  RETAILER_CITIES,
+  normalizeRetailerState,
+  type RetailerState,
+} from "@/lib/retailer-locations";
 
 type AccountType =
   | "RETAIL"
@@ -64,7 +69,12 @@ export default function SignupPage() {
     useState("");
 
   const [state, setState] =
-    useState("");
+    useState<RetailerState | "">("");
+
+  const [
+    detectedCity,
+    setDetectedCity,
+  ] = useState("");
 
   const [pincode, setPincode] =
     useState("");
@@ -88,6 +98,8 @@ export default function SignupPage() {
     accountType === "RESELLER";
 
   function requestCurrentLocation() {
+    setError("");
+
     if (
       typeof navigator ===
         "undefined" ||
@@ -95,6 +107,9 @@ export default function SignupPage() {
     ) {
       setLocationStatus(
         "ERROR",
+      );
+      setError(
+        "Location is not supported on this device.",
       );
       return;
     }
@@ -104,7 +119,7 @@ export default function SignupPage() {
     );
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const latitude =
           position.coords.latitude;
 
@@ -115,14 +130,121 @@ export default function SignupPage() {
           `https://www.google.com/maps?q=${latitude},${longitude}`,
         );
 
-        setLocationStatus(
-          "SUCCESS",
-        );
+        try {
+          const response =
+            await fetch(
+              "/api/reverse-geocode",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+                credentials:
+                  "same-origin",
+                body:
+                  JSON.stringify({
+                    latitude,
+                    longitude,
+                  }),
+              },
+            );
+
+          const data =
+            await response.json();
+
+          if (!response.ok) {
+            throw new Error(
+              data.error ??
+                "Unable to detect address.",
+            );
+          }
+
+          const detectedState =
+            normalizeRetailerState(
+              String(
+                data.state ?? "",
+              ),
+            );
+
+          if (!detectedState) {
+            setLocationStatus(
+              "ERROR",
+            );
+            setError(
+              "Current shop location must be in Andhra Pradesh or Telangana.",
+            );
+            return;
+          }
+
+          const nextCity =
+            String(
+              data.city ?? "",
+            ).trim();
+
+          setState(
+            detectedState,
+          );
+
+          setCity(
+            nextCity,
+          );
+
+          setDetectedCity(
+            nextCity,
+          );
+
+          if (
+            data.addressLine
+          ) {
+            setAddressLine(
+              String(
+                data.addressLine,
+              ),
+            );
+          }
+
+          if (
+            data.pincode
+          ) {
+            setPincode(
+              String(
+                data.pincode,
+              )
+                .replace(
+                  /\D/g,
+                  "",
+                )
+                .slice(
+                  0,
+                  6,
+                ),
+            );
+          }
+
+          setLocationStatus(
+            "SUCCESS",
+          );
+        } catch (error) {
+          setLocationStatus(
+            "ERROR",
+          );
+
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Unable to detect address from current location.",
+          );
+        }
       },
 
       () => {
         setLocationStatus(
           "ERROR",
+        );
+
+        setError(
+          "Location permission allow chesi malli try cheyyandi.",
         );
       },
 
@@ -448,27 +570,87 @@ export default function SignupPage() {
                 />
 
                 <div className="grid grid-cols-2 gap-3">
-                  <input
+                  <select
+                    value={state}
+                    onChange={(event) => {
+                      const nextState =
+                        event.target
+                          .value as RetailerState | "";
+
+                      setState(
+                        nextState,
+                      );
+                      setCity("");
+                      setDetectedCity("");
+                    }}
+                    required
+                    className={inputClass}
+                  >
+                    <option value="">
+                      Select State *
+                    </option>
+
+                    <option value="Andhra Pradesh">
+                      Andhra Pradesh
+                    </option>
+
+                    <option value="Telangana">
+                      Telangana
+                    </option>
+                  </select>
+
+                  <select
                     value={city}
                     onChange={(event) =>
                       setCity(
                         event.target.value,
                       )
                     }
-                    placeholder="City *"
-                    className={inputClass}
-                  />
+                    required
+                    disabled={!state}
+                    className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-50`}
+                  >
+                    <option value="">
+                      {state
+                        ? "Select City / Town *"
+                        : "Select State First"}
+                    </option>
 
-                  <input
-                    value={state}
-                    onChange={(event) =>
-                      setState(
-                        event.target.value,
-                      )
-                    }
-                    placeholder="State *"
-                    className={inputClass}
-                  />
+                    {detectedCity &&
+                    state &&
+                    !RETAILER_CITIES[
+                      state
+                    ].includes(
+                      detectedCity,
+                    ) ? (
+                      <option value={detectedCity}>
+                        {detectedCity}
+                      </option>
+                    ) : null}
+
+                    {state
+                      ? RETAILER_CITIES[
+                          state
+                        ].map(
+                          (
+                            cityName,
+                          ) => (
+                            <option
+                              key={
+                                cityName
+                              }
+                              value={
+                                cityName
+                              }
+                            >
+                              {
+                                cityName
+                              }
+                            </option>
+                          ),
+                        )
+                      : null}
+                  </select>
                 </div>
 
                 <input
@@ -493,7 +675,7 @@ export default function SignupPage() {
                       </p>
 
                       <p className="mt-1 text-[9px] leading-4 text-[#7B7066]">
-                        Location permission Allow chesthe mee current shop location automatic ga Google Maps lo save avutundi.
+                        Button tap chesthe current shop location capture ayi full address, State, City / Town, pincode automatic ga fill avutayi.
                       </p>
                     </div>
 
@@ -516,7 +698,7 @@ export default function SignupPage() {
                   "SUCCESS" ? (
                     <div className="mt-3 rounded-xl border border-[#D4AF37]/20 bg-black/20 p-3">
                       <p className="text-[9px] font-bold text-[#D9C29A]">
-                        ✓ Current location captured
+                        ✓ Location & address filled automatically
                       </p>
 
                       <a
