@@ -400,9 +400,24 @@ export async function POST(
         },
       });
 
-    if (
+    const existingPendingIsComplete =
       existing?.status ===
-      "PENDING"
+        "PENDING" &&
+      Boolean(
+        existing.visitingCardUrl,
+      ) &&
+      Array.isArray(
+        existing.shopPhotoUrls,
+      ) &&
+      existing.shopPhotoUrls.length >
+        0 &&
+      typeof existing.latitude ===
+        "number" &&
+      typeof existing.longitude ===
+        "number";
+
+    if (
+      existingPendingIsComplete
     ) {
       return NextResponse.json(
         {
