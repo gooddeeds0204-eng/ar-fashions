@@ -1944,6 +1944,94 @@ export default function CheckoutPage() {
                     </p>
                   </div>
 
+                  <div
+                    className={`rounded-[1rem] border px-4 py-3 sm:col-span-2 ${
+                      shippingCheck.checking
+                        ? "border-[#E4D7C4] bg-[#FAF7F0]"
+                        : shippingCheck.enabled &&
+                            shippingCheck.serviceable ===
+                              true
+                          ? "border-[#D4AF37]/35 bg-[#F8F1E7]"
+                          : shippingCheck.enabled &&
+                              shippingCheck.serviceable ===
+                                false
+                            ? "border-red-200 bg-red-50"
+                            : "border-[#E4D7C4] bg-[#FFFDF9]"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span
+                        className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-[10px] font-black ${
+                          shippingCheck.checking
+                            ? "bg-[#F4EBDD] text-[#6B5435]"
+                            : shippingCheck.enabled &&
+                                shippingCheck.serviceable ===
+                                  true
+                              ? "bg-[#031B14] text-[#FFFDF9]"
+                              : shippingCheck.enabled &&
+                                  shippingCheck.serviceable ===
+                                    false
+                                ? "bg-red-100 text-red-700"
+                                : "bg-[#F4EBDD] text-[#6B5435]"
+                        }`}
+                      >
+                        {shippingCheck.checking
+                          ? "…"
+                          : shippingCheck.enabled &&
+                              shippingCheck.serviceable ===
+                                true
+                            ? "✓"
+                            : shippingCheck.enabled &&
+                                shippingCheck.serviceable ===
+                                  false
+                              ? "!"
+                              : "↗"}
+                      </span>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[7px] font-black uppercase tracking-[0.14em] text-[#6B5435]">
+                          Delivery Availability
+                        </p>
+
+                        <p className="mt-1 text-[10px] font-black text-[#211C18]">
+                          {shippingCheck.checking
+                            ? "Checking courier service..."
+                            : shippingCheck.enabled &&
+                                shippingCheck.serviceable ===
+                                  true
+                              ? "Delivery available for this address"
+                              : shippingCheck.enabled &&
+                                  shippingCheck.serviceable ===
+                                    false
+                                ? "Delivery not available for this pincode"
+                                : "Courier integration setup pending"}
+                        </p>
+
+                        <p className="mt-1 text-[8px] leading-4 text-zinc-500">
+                          {shippingCheck.checking
+                            ? `Checking ${pincode} with Shiprocket.`
+                            : shippingCheck.enabled &&
+                                shippingCheck.serviceable ===
+                                  true
+                              ? [
+                                  shippingCheck.courierName,
+                                  shippingCheck.estimatedDays
+                                    ? `~${shippingCheck.estimatedDays} days`
+                                    : null,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" · ") ||
+                                "Shiprocket courier is serviceable."
+                              : shippingCheck.enabled &&
+                                  shippingCheck.serviceable ===
+                                    false
+                                ? `No serviceable Shiprocket courier was found for ${pincode}.`
+                                : "Once Shiprocket credentials are connected, courier availability and delivery estimate will appear here automatically."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <button
                     type="button"
                     onClick={() =>
