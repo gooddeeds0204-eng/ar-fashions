@@ -339,6 +339,83 @@ export default function AdminBannersPage() {
 
   useEffect(() => {
     loadBanners();
+
+    (async () => {
+      try {
+        const response =
+          await fetch(
+            "/api/categories",
+            {
+              cache:
+                "no-store",
+              credentials:
+                "same-origin",
+            },
+          );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        const options:
+          CategoryOption[] =
+          [];
+
+        if (
+          Array.isArray(
+            data,
+          )
+        ) {
+          data.forEach(
+            (main: {
+              id: string;
+              name: string;
+              children?: Array<{
+                id: string;
+                name: string;
+              }>;
+            }) => {
+              options.push({
+                id:
+                  main.id,
+                name:
+                  main.name,
+                label:
+                  main.name,
+              });
+
+              (
+                main.children ??
+                []
+              ).forEach(
+                (child) => {
+                  options.push({
+                    id:
+                      child.id,
+                    name:
+                      child.name,
+                    label:
+                      `${main.name} → ${child.name}`,
+                  });
+                },
+              );
+            },
+          );
+        }
+
+        setCategoryOptions(
+          options,
+        );
+      } catch (error) {
+        console.error(
+          "Banner category load failed:",
+          error,
+        );
+      }
+    })();
   }, []);
 
   async function uploadMedia(
