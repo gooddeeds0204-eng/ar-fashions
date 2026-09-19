@@ -1938,33 +1938,71 @@ export default function AdminBannersPage() {
 
               <div
                 className={`absolute inset-0 z-10 flex flex-col justify-center p-6 ${previewAlignment}`}
-                style={{
-                  color:
-                    form.textColor ||
-                    "#ffffff",
-                }}
               >
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] opacity-70">
-                  {
-                    placementLabels[
-                      form
-                        .placement
-                    ]
-                  }
-                </p>
+                {form.eyebrowText && (
+                  <p
+                    className="text-[10px] font-black uppercase tracking-[0.22em]"
+                    style={{
+                      color:
+                        form.eyebrowColor,
+                      fontFamily:
+                        bannerFontFamily(
+                          form.eyebrowFont,
+                        ),
+                    }}
+                  >
+                    {
+                      form.eyebrowText
+                    }
+                  </p>
+                )}
 
-                <h3 className="mt-3 max-w-xl text-2xl font-black sm:text-4xl">
+                <h3
+                  className="mt-3 max-w-xl text-2xl font-black sm:text-4xl"
+                  style={{
+                    color:
+                      form.titleColor,
+                    fontFamily:
+                      bannerFontFamily(
+                        form.titleFont,
+                      ),
+                  }}
+                >
                   {form.title ||
                     "Your headline"}
                 </h3>
 
-                <p className="mt-2 max-w-lg text-sm opacity-80">
+                <p
+                  className="mt-2 max-w-lg text-sm"
+                  style={{
+                    color:
+                      form.subtitleColor,
+                    fontFamily:
+                      bannerFontFamily(
+                        form.subtitleFont,
+                      ),
+                  }}
+                >
                   {form.subtitle ||
                     "Your promotional message appears here."}
                 </p>
 
                 {form.buttonText && (
-                  <span className="mt-5 inline-flex w-fit rounded-xl bg-white px-4 py-3 text-xs font-black text-zinc-950">
+                  <span
+                    className="mt-5 inline-flex w-fit rounded-xl border px-4 py-3 text-xs font-black"
+                    style={{
+                      color:
+                        form.buttonTextColor,
+                      backgroundColor:
+                        form.buttonBackgroundColor,
+                      borderColor:
+                        form.buttonBorderColor,
+                      fontFamily:
+                        bannerFontFamily(
+                          form.buttonFont,
+                        ),
+                    }}
+                  >
                     {
                       form.buttonText
                     }
