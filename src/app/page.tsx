@@ -1702,6 +1702,94 @@ export default function Home() {
     setMenuOpen(false);
   }
 
+  function openManagedHeroCta() {
+    if (!activeBanner) {
+      return;
+    }
+
+    const targetId =
+      activeBanner.ctaCategoryId;
+
+    if (targetId) {
+      const main =
+        menuCategories.find(
+          (item) =>
+            item.id ===
+            targetId,
+        );
+
+      if (main) {
+        applyMenuCategory(
+          [
+            main.id,
+            ...main.children.map(
+              (child) =>
+                child.id,
+            ),
+          ],
+          activeBanner.ctaCategoryName ||
+            main.name,
+        );
+
+        return;
+      }
+
+      for (
+        const mainCategory of
+        menuCategories
+      ) {
+        const child =
+          mainCategory.children.find(
+            (item) =>
+              item.id ===
+              targetId,
+          );
+
+        if (child) {
+          applyMenuCategory(
+            [
+              child.id,
+            ],
+            activeBanner.ctaCategoryName ||
+              child.name,
+          );
+
+          return;
+        }
+      }
+    }
+
+    const url =
+      activeBanner.buttonUrl?.trim();
+
+    if (url) {
+      if (
+        /^https?:\/\//i.test(
+          url,
+        )
+      ) {
+        window.location.href =
+          url;
+      } else {
+        router.push(
+          url.startsWith("/")
+            ? url
+            : `/${url}`,
+        );
+      }
+
+      return;
+    }
+
+    document
+      .getElementById(
+        "shop-categories",
+      )
+      ?.scrollIntoView({
+        behavior: "smooth",
+      });
+  }
+
   async function logoutCustomer() {
     try {
       const response =
