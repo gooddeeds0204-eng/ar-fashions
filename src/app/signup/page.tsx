@@ -4,7 +4,10 @@ import {
   FormEvent,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
+import {
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 import BrandLogo from "@/components/BrandLogo";
 
 type AccountType =
@@ -13,10 +16,16 @@ type AccountType =
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams =
+    useSearchParams();
 
   const [accountType, setAccountType] =
     useState<AccountType>(
-      "RETAIL",
+      searchParams.get(
+        "type",
+      ) === "retailer"
+        ? "RESELLER"
+        : "RETAIL",
     );
 
   const [name, setName] =
@@ -170,7 +179,7 @@ export default function SignupPage() {
 
       if (isReseller) {
         router.replace(
-          "/reseller-status",
+          "/reseller-apply?complete=1",
         );
       } else {
         router.replace("/");
@@ -222,14 +231,14 @@ export default function SignupPage() {
           <h1 className="mt-4 font-serif text-5xl leading-[0.94]">
             Choose your
             <br />
-            AR experience.
+            AS experience.
           </h1>
 
           <p className="mt-5 text-sm leading-6 text-[#7B7066]">
             Customer accounts shop at
             retail prices. Retailer
             accounts unlock wholesale
-            pricing only after AR
+            pricing only after AS Fashions
             approval.
           </p>
 
@@ -373,10 +382,9 @@ export default function SignupPage() {
                   </p>
 
                   <p className="mt-1 text-[9px] leading-4 text-[#7B7066]">
-                    These details will
-                    be reviewed before
-                    reseller pricing is
-                    activated.
+                    Step 1: create the retailer account with business details.
+                    Step 2 opens automatically for live shop location,
+                    visiting card and 1–3 shop photos before review.
                   </p>
                 </div>
 
@@ -560,7 +568,7 @@ export default function SignupPage() {
               {loading
                 ? "Creating Account..."
                 : isReseller
-                  ? "Submit Retailer Application →"
+                  ? "Continue to Shop Verification →"
                   : "Create Customer Account →"}
             </button>
           </form>
@@ -574,7 +582,7 @@ export default function SignupPage() {
                 ],
                 [
                   "02",
-                  "AR Review",
+                  "AS Review",
                 ],
                 [
                   "03",
