@@ -2,12 +2,10 @@
 
 import {
   FormEvent,
+  useEffect,
   useState,
 } from "react";
-import {
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
+import { useRouter } from "next/navigation";
 import BrandLogo from "@/components/BrandLogo";
 
 type AccountType =
@@ -16,17 +14,24 @@ type AccountType =
 
 export default function SignupPage() {
   const router = useRouter();
-  const searchParams =
-    useSearchParams();
 
   const [accountType, setAccountType] =
     useState<AccountType>(
-      searchParams.get(
-        "type",
-      ) === "retailer"
-        ? "RESELLER"
-        : "RETAIL",
+      "RETAIL",
     );
+
+  useEffect(() => {
+    if (
+      new URLSearchParams(
+        window.location.search,
+      ).get("type") ===
+      "retailer"
+    ) {
+      setAccountType(
+        "RESELLER",
+      );
+    }
+  }, []);
 
   const [name, setName] =
     useState("");
