@@ -2602,29 +2602,143 @@ export default function Home() {
             className="relative h-[390px] touch-pan-y overflow-hidden bg-[#082219] sm:h-[500px] sm:rounded-b-[2rem]"
             onTouchStart={(event) => {
               setHeroTouchStartX(
-                event.touches[0]?.clientX ?? null,
+                event.touches[0]?.clientX ??
+                  null,
               );
             }}
             onTouchEnd={(event) => {
-              if (heroTouchStartX === null) return;
-              const endX =
-                event.changedTouches[0]?.clientX ??
-                heroTouchStartX;
-              const distance =
-                endX - heroTouchStartX;
-              setHeroTouchStartX(null);
-
-              if (Math.abs(distance) >= 45) {
-                moveHeroSlide(distance < 0 ? 1 : -1);
+              if (
+                heroTouchStartX ===
+                null
+              ) {
+                return;
               }
+
+              const endX =
+                event.changedTouches[0]
+                  ?.clientX ??
+                heroTouchStartX;
+
+              const distance =
+                endX -
+                heroTouchStartX;
+
+              setHeroTouchStartX(
+                null,
+              );
+
+              if (
+                Math.abs(
+                  distance,
+                ) < 45
+              ) {
+                return;
+              }
+
+              if (
+                activeBanner &&
+                banners.length > 1
+              ) {
+                setBannerIndex(
+                  (current) =>
+                    (current +
+                      (distance <
+                      0
+                        ? 1
+                        : -1) +
+                      banners.length) %
+                    banners.length,
+                );
+
+                return;
+              }
+
+              moveHeroSlide(
+                distance < 0
+                  ? 1
+                  : -1,
+              );
             }}
           >
-            <div className="absolute inset-0">
-              {heroSlideMedia ? (
-                heroSlideMedia.type === "VIDEO" ? (
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  activeBanner
+                    ?.backgroundGradient ||
+                  activeBanner
+                    ?.backgroundColor ||
+                  "#082219",
+              }}
+            >
+              {activeBanner ? (
+                activeBanner.contentType ===
+                  "VIDEO" &&
+                (activeBanner.videoUrl ||
+                  activeBanner.mobileVideoUrl) ? (
+                  <>
+                    <video
+                      src={
+                        activeBanner.mobileVideoUrl ||
+                        activeBanner.videoUrl ||
+                        ""
+                      }
+                      muted
+                      autoPlay
+                      loop
+                      playsInline
+                      className="h-full w-full object-cover sm:hidden"
+                    />
+
+                    <video
+                      src={
+                        activeBanner.videoUrl ||
+                        activeBanner.mobileVideoUrl ||
+                        ""
+                      }
+                      muted
+                      autoPlay
+                      loop
+                      playsInline
+                      className="hidden h-full w-full object-cover sm:block"
+                    />
+                  </>
+                ) : activeBanner.imageUrl ||
+                  activeBanner.mobileImageUrl ? (
+                  <picture>
+                    {activeBanner.mobileImageUrl ? (
+                      <source
+                        media="(max-width: 639px)"
+                        srcSet={
+                          activeBanner.mobileImageUrl
+                        }
+                      />
+                    ) : null}
+
+                    <img
+                      src={
+                        activeBanner.imageUrl ||
+                        activeBanner.mobileImageUrl ||
+                        ""
+                      }
+                      alt={
+                        activeBanner.title ||
+                        "AS Fashions"
+                      }
+                      className="h-full w-full object-cover"
+                    />
+                  </picture>
+                ) : null
+              ) : heroSlideMedia ? (
+                heroSlideMedia.type ===
+                "VIDEO" ? (
                   <video
-                    key={heroSlideProduct?.id}
-                    src={heroSlideMedia.url}
+                    key={
+                      heroSlideProduct?.id
+                    }
+                    src={
+                      heroSlideMedia.url
+                    }
                     muted
                     autoPlay
                     loop
@@ -2633,123 +2747,269 @@ export default function Home() {
                   />
                 ) : (
                   <img
-                    key={heroSlideProduct?.id}
-                    src={heroSlideMedia.url}
+                    key={
+                      heroSlideProduct?.id
+                    }
+                    src={
+                      heroSlideMedia.url
+                    }
                     alt={
                       heroSlideMedia.altText ??
-                      heroSlideProduct?.name ??
+                      heroSlideProduct
+                        ?.name ??
                       "AS Fashions"
                     }
                     className="h-full w-full object-cover"
                   />
                 )
-              ) : activeBanner?.imageUrl ||
-                activeBanner?.mobileImageUrl ? (
-                <picture>
-                  {activeBanner.mobileImageUrl ? (
-                    <source
-                      media="(max-width: 639px)"
-                      srcSet={activeBanner.mobileImageUrl}
-                    />
-                  ) : null}
-                  <img
-                    src={
-                      activeBanner.imageUrl ||
-                      activeBanner.mobileImageUrl ||
-                      ""
-                    }
-                    alt={
-                      activeBanner.title ??
-                      "AS Fashions"
-                    }
-                    className="h-full w-full object-cover"
-                  />
-                </picture>
               ) : (
                 <div className="h-full w-full bg-[radial-gradient(circle_at_72%_24%,rgba(197,161,105,0.24),transparent_28%),linear-gradient(135deg,#082B20,#031B14_58%,#020B08)]" />
               )}
 
-              <div className="absolute inset-0 bg-gradient-to-r from-[#02150F]/95 via-[#02150F]/60 to-black/12" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#02150F]/72 via-transparent to-transparent" />
+              <div
+                className="absolute inset-0 bg-black"
+                style={{
+                  opacity:
+                    activeBanner
+                      ? Math.min(
+                          1,
+                          Math.max(
+                            0,
+                            activeBanner.overlayOpacity /
+                              100,
+                          ),
+                        )
+                      : 0.24,
+                }}
+              />
+
+              <div className="absolute inset-0 bg-gradient-to-t from-[#02150F]/58 via-transparent to-transparent" />
             </div>
 
-            {heroSlideProduct ? (
+            {!activeBanner &&
+            heroSlideProduct ? (
               <button
                 type="button"
-                onClick={openHeroProduct}
+                onClick={
+                  openHeroProduct
+                }
                 aria-label={`View ${heroSlideProduct.name}`}
                 className="absolute inset-0 z-10"
               />
             ) : null}
 
-            <div className="pointer-events-none relative z-20 flex h-full items-end p-6 pb-14 sm:items-center sm:p-10 lg:p-14">
-              <div className="max-w-[560px]">
-                <p className="text-[8px] font-black uppercase tracking-[0.42em] text-[#F4E8D6] sm:text-[10px]">
-                  New Season
+            <div
+              className={`pointer-events-none relative z-20 flex h-full p-6 pb-14 sm:p-10 lg:p-14 ${
+                activeBanner?.textAlign ===
+                "CENTER"
+                  ? "items-end justify-center text-center sm:items-center"
+                  : activeBanner?.textAlign ===
+                    "RIGHT"
+                    ? "items-end justify-end text-right sm:items-center"
+                    : "items-end justify-start text-left sm:items-center"
+              }`}
+            >
+              <div
+                className={`max-w-[560px] ${
+                  activeBanner?.textAlign ===
+                  "CENTER"
+                    ? "flex flex-col items-center"
+                    : activeBanner?.textAlign ===
+                      "RIGHT"
+                      ? "ml-auto flex flex-col items-end"
+                      : ""
+                }`}
+              >
+                <p
+                  className="text-[8px] font-black uppercase tracking-[0.42em] sm:text-[10px]"
+                  style={{
+                    color:
+                      activeBanner
+                        ?.eyebrowColor ||
+                      "#F4E8D6",
+                    fontFamily:
+                      bannerFontFamily(
+                        activeBanner
+                          ?.eyebrowFont ||
+                          "MODERN_SANS",
+                      ),
+                  }}
+                >
+                  {activeBanner
+                    ?.eyebrowText ||
+                    "New Season"}
                 </p>
 
-                <h1 className="mt-3 max-w-[520px] font-serif text-[2.9rem] leading-[0.9] tracking-[-0.045em] text-white sm:text-[4.8rem]">
-                  Tradition
-                  <br />
-                  Reimagined
+                <h1
+                  className="mt-3 max-w-[520px] whitespace-pre-line text-[2.9rem] font-black leading-[0.9] tracking-[-0.045em] sm:text-[4.8rem]"
+                  style={{
+                    color:
+                      activeBanner
+                        ?.titleColor ||
+                      "#FFFFFF",
+                    fontFamily:
+                      bannerFontFamily(
+                        activeBanner
+                          ?.titleFont ||
+                          "EDITORIAL_SERIF",
+                      ),
+                  }}
+                >
+                  {activeBanner
+                    ?.title ||
+                    "Tradition\nReimagined"}
                 </h1>
 
-                <p className="mt-4 max-w-[340px] font-serif text-[1.02rem] leading-6 text-white/88 sm:text-[1.3rem]">
-                  Ethnic looks for your modern era
+                <p
+                  className="mt-4 max-w-[360px] whitespace-pre-line text-[1.02rem] leading-6 sm:text-[1.3rem]"
+                  style={{
+                    color:
+                      activeBanner
+                        ?.subtitleColor ||
+                      "#F8F1E7",
+                    fontFamily:
+                      bannerFontFamily(
+                        activeBanner
+                          ?.subtitleFont ||
+                          "CLASSIC_SERIF",
+                      ),
+                  }}
+                >
+                  {activeBanner
+                    ?.subtitle ||
+                    "Ethnic looks for your modern era"}
                 </p>
 
                 <div className="pointer-events-auto mt-6">
                   <button
                     type="button"
                     onClick={() => {
-                      if (heroSlideProduct) {
+                      if (
+                        activeBanner
+                      ) {
+                        openManagedHeroCta();
+                      } else if (
+                        heroSlideProduct
+                      ) {
                         openHeroProduct();
                       } else {
                         document
-                          .getElementById("shop-categories")
+                          .getElementById(
+                            "shop-categories",
+                          )
                           ?.scrollIntoView({
-                            behavior: "smooth",
+                            behavior:
+                              "smooth",
                           });
                       }
                     }}
-                    className="inline-flex items-center gap-4 rounded-[0.2rem] bg-[#FFF8EC] px-5 py-3.5 text-[9px] font-black uppercase tracking-[0.13em] text-[#17130F] shadow-[0_12px_30px_rgba(0,0,0,0.16)]"
+                    className="inline-flex items-center gap-4 rounded-[0.2rem] border px-5 py-3.5 text-[9px] font-black uppercase tracking-[0.13em] shadow-[0_12px_30px_rgba(0,0,0,0.16)] transition-[transform,opacity] duration-200 active:scale-[0.98]"
+                    style={{
+                      color:
+                        activeBanner
+                          ?.buttonTextColor ||
+                        "#17130F",
+                      backgroundColor:
+                        activeBanner
+                          ?.buttonBackgroundColor ||
+                        "#FFF8EC",
+                      borderColor:
+                        activeBanner
+                          ?.buttonBorderColor ||
+                        "#FFF8EC",
+                      fontFamily:
+                        bannerFontFamily(
+                          activeBanner
+                            ?.buttonFont ||
+                            "MODERN_SANS",
+                        ),
+                    }}
                   >
-                    Shop the collection
+                    {activeBanner
+                      ?.buttonText ||
+                      "Shop the collection"}
                     <span>→</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            <div className="pointer-events-none absolute right-6 top-16 z-20 hidden border-l border-[#C79C55]/75 pl-5 text-right sm:block">
-              <p className="font-serif text-[1.55rem] italic leading-8 text-white/90">
-                Your Story
-                <br />
-                in Every Drape
-              </p>
-              <p className="mt-6 text-[7px] font-black uppercase tracking-[0.32em] text-white/65">
-                Ethnic · Fusion
-                <br />
-                Everyday Luxe
-              </p>
-            </div>
+            {!activeBanner ? (
+              <div className="pointer-events-none absolute right-6 top-16 z-20 hidden border-l border-[#C79C55]/75 pl-5 text-right sm:block">
+                <p className="font-serif text-[1.55rem] italic leading-8 text-white/90">
+                  Your Story
+                  <br />
+                  in Every Drape
+                </p>
 
-            {heroProducts.length > 1 ? (
+                <p className="mt-6 text-[7px] font-black uppercase tracking-[0.32em] text-white/65">
+                  Ethnic · Fusion
+                  <br />
+                  Everyday Luxe
+                </p>
+              </div>
+            ) : null}
+
+            {activeBanner &&
+            banners.length > 1 ? (
               <div className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2">
-                {heroProducts.map((product, index) => (
-                  <button
-                    key={product.id}
-                    type="button"
-                    aria-label={`Show ${product.name}`}
-                    onClick={() => setHeroSlideIndex(index)}
-                    className={`h-2 w-2 rounded-full border border-white/70 ${
-                      index ===
-                      heroSlideIndex % heroProducts.length
-                        ? "bg-white"
-                        : "bg-transparent"
-                    }`}
-                  />
-                ))}
+                {banners.map(
+                  (
+                    banner,
+                    index,
+                  ) => (
+                    <button
+                      key={
+                        banner.id
+                      }
+                      type="button"
+                      aria-label={`Show ${banner.title || "banner"}`}
+                      onClick={() =>
+                        setBannerIndex(
+                          index,
+                        )
+                      }
+                      className={`h-2 w-2 rounded-full border border-white/70 ${
+                        index ===
+                        bannerIndex %
+                          banners.length
+                          ? "bg-white"
+                          : "bg-transparent"
+                      }`}
+                    />
+                  ),
+                )}
+              </div>
+            ) : !activeBanner &&
+              heroProducts.length >
+                1 ? (
+              <div className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2">
+                {heroProducts.map(
+                  (
+                    product,
+                    index,
+                  ) => (
+                    <button
+                      key={
+                        product.id
+                      }
+                      type="button"
+                      aria-label={`Show ${product.name}`}
+                      onClick={() =>
+                        setHeroSlideIndex(
+                          index,
+                        )
+                      }
+                      className={`h-2 w-2 rounded-full border border-white/70 ${
+                        index ===
+                        heroSlideIndex %
+                          heroProducts.length
+                          ? "bg-white"
+                          : "bg-transparent"
+                      }`}
+                    />
+                  ),
+                )}
               </div>
             ) : null}
           </div>
