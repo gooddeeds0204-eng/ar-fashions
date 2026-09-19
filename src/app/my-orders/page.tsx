@@ -40,6 +40,17 @@ type Shipment = {
     | number;
   etd?: string | null;
   pickupScheduled?: boolean;
+  serviceType?:
+    | "PARCEL"
+    | "TRANSPORT";
+  serviceName?: string;
+  agencyContact?: string;
+  branch?: string;
+  serviceArea?: string;
+  referenceNumber?: string;
+  estimatedDelivery?: string | null;
+  notes?: string | null;
+  dispatchedAt?: string;
   createdAt?: string;
 };
 
@@ -1126,7 +1137,91 @@ export default function MyOrdersPage() {
                       </section>
 
                       {/* DELIVERY ADDRESS */}
-                      {order.shipment?.awbCode && (
+                      {order.shipment?.provider ===
+                      "MANUAL_BULK" &&
+                      order.shipment
+                        .referenceNumber ? (
+                        <section className="border-t border-[#E4D7C4] p-4 sm:p-5">
+                          <div className="rounded-[1.3rem] border border-violet-200 bg-violet-50 p-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-[8px] font-black uppercase tracking-[0.18em] text-violet-700">
+                                  Bulk Dispatch
+                                </p>
+
+                                <h3 className="mt-1 text-[13px] font-black text-violet-950">
+                                  {order.shipment.serviceName ||
+                                    "Parcel / Transport"}
+                                </h3>
+
+                                <p className="mt-1 text-[8px] font-black uppercase tracking-[0.08em] text-violet-600">
+                                  {order.shipment.serviceType ===
+                                  "TRANSPORT"
+                                    ? "Transport Agency"
+                                    : "Parcel Service"}
+                                </p>
+                              </div>
+
+                              <span className="rounded-full bg-violet-800 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.08em] text-white">
+                                Dispatched
+                              </span>
+                            </div>
+
+                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                              <div className="rounded-xl bg-white p-3">
+                                <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                                  LR / Tracking Number
+                                </p>
+
+                                <p className="mt-1 break-all text-[11px] font-black">
+                                  {order.shipment.referenceNumber}
+                                </p>
+                              </div>
+
+                              <div className="rounded-xl bg-white p-3">
+                                <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                                  Delivery Estimate
+                                </p>
+
+                                <p className="mt-1 text-[11px] font-black">
+                                  {order.shipment.estimatedDelivery ||
+                                    "Contact agency for estimate"}
+                                </p>
+                              </div>
+
+                              {order.shipment.branch && (
+                                <div className="rounded-xl bg-white p-3">
+                                  <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                                    Branch
+                                  </p>
+
+                                  <p className="mt-1 text-[11px] font-black">
+                                    {order.shipment.branch}
+                                  </p>
+                                </div>
+                              )}
+
+                              {order.shipment.agencyContact && (
+                                <div className="rounded-xl bg-white p-3">
+                                  <p className="text-[7px] font-black uppercase tracking-[0.12em] text-zinc-400">
+                                    Agency Contact
+                                  </p>
+
+                                  <p className="mt-1 text-[11px] font-black">
+                                    {order.shipment.agencyContact}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
+                            {order.shipment.notes && (
+                              <p className="mt-3 text-[9px] leading-5 text-violet-700">
+                                {order.shipment.notes}
+                              </p>
+                            )}
+                          </div>
+                        </section>
+                      ) : order.shipment?.awbCode ? (
                         <section className="border-t border-[#E4D7C4] p-4 sm:p-5">
                           <div className="rounded-[1.3rem] border border-[#D4AF37]/25 bg-[#F8F1E7] p-4">
                             <div className="flex items-start justify-between gap-3">
@@ -1161,8 +1256,12 @@ export default function MyOrdersPage() {
                                 </p>
                                 <p className="mt-1 text-[11px] font-black">
                                   {order.shipment.estimatedDeliveryDays
-                                    ? `${order.shipment.estimatedDeliveryDays} days`
-                                    : order.shipment.etd || "Courier estimate pending"}
+                                    ? String(
+                                        order.shipment
+                                          .estimatedDeliveryDays,
+                                      ) + " days"
+                                    : order.shipment.etd ||
+                                      "Courier estimate pending"}
                                 </p>
                               </div>
                             </div>
@@ -1192,7 +1291,7 @@ export default function MyOrdersPage() {
                             )}
                           </div>
                         </section>
-                      )}
+                      ) : null}
 
                       {order.address && (
                         <section className="border-t border-[#E4D7C4] p-4 sm:p-5">
