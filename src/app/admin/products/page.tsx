@@ -44,6 +44,7 @@ type ProductMedia = {
   altText?: string | null;
   sortOrder: number;
   isActive: boolean;
+  colorId?: string | null;
 };
 
 type Product = {
@@ -106,7 +107,10 @@ export default function ProductsPage() {
   >("BOTH");
 
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
-  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [
+    colorSizeSelections,
+    setColorSizeSelections,
+  ] = useState<Record<string, string[]>>({});
   const [sizeSearch, setSizeSearch] = useState("");
   const [expandedColorFamily, setExpandedColorFamily] = useState<string | null>(null);
 
@@ -120,6 +124,10 @@ export default function ProductsPage() {
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [mediaError, setMediaError] = useState("");
+  const [
+    mediaColorId,
+    setMediaColorId,
+  ] = useState("");
 
 
 
@@ -325,41 +333,143 @@ export default function ProductsPage() {
   }, [applicableSizes, sizeSearch]);
 
   function toggleColor(colorId: string) {
-    setSelectedColors((current) =>
-      current.includes(colorId)
-        ? current.filter((id) => id !== colorId)
-        : [...current, colorId],
+    setSelectedColors((current) => {
+      const removing =
+        current.includes(colorId);
+
+      const next =
+        removing
+          ? current.filter(
+              (id) =>
+                id !== colorId,
+            )
+          : [
+              ...current,
+              colorId,
+            ];
+
+      setColorSizeSelections(
+        (currentSizes) => {
+          const nextSizes = {
+            ...currentSizes,
+          };
+
+          if (removing) {
+            delete nextSizes[
+              colorId
+            ];
+          } else if (
+            !nextSizes[colorId]
+          ) {
+            nextSizes[colorId] =
+              [];
+          }
+
+          return nextSizes;
+        },
+      );
+
+      if (
+        removing &&
+        mediaColorId ===
+          colorId
+      ) {
+        setMediaColorId(
+          next[0] ?? "",
+        );
+      } else if (
+        !mediaColorId &&
+        !removing
+      ) {
+        setMediaColorId(
+          colorId,
+        );
+      }
+
+      return next;
+    });
+  }
+
+  function toggleSizeForColor(
+    colorId: string,
+    sizeId: string,
+  ) {
+    setColorSizeSelections(
+      (current) => {
+        const currentIds =
+          current[colorId] ??
+          [];
+
+        return {
+          ...current,
+          [colorId]:
+            currentIds.includes(
+              sizeId,
+            )
+              ? currentIds.filter(
+                  (id) =>
+                    id !== sizeId,
+                )
+              : [
+                  ...currentIds,
+                  sizeId,
+                ],
+        };
+      },
     );
   }
 
-  function toggleSize(sizeId: string) {
-    setSelectedSizes((current) =>
-      current.includes(sizeId)
-        ? current.filter((id) => id !== sizeId)
-        : [...current, sizeId],
+  function selectAllSizesForColor(
+    colorId: string,
+  ) {
+    setColorSizeSelections(
+      (current) => ({
+        ...current,
+        [colorId]:
+          applicableSizes.map(
+            (size) =>
+              size.id,
+          ),
+      }),
     );
   }
 
-  function selectAllSizes() {
-    setSelectedSizes(
-      applicableSizes.map((size) => size.id),
+  function clearAllSizesForColor(
+    colorId: string,
+  ) {
+    setColorSizeSelections(
+      (current) => ({
+        ...current,
+        [colorId]: [],
+      }),
     );
-  }
-
-  function clearAllSizes() {
-    setSelectedSizes([]);
   }
 
   function generateVariants() {
-    const generated: Variant[] = [];
+    const generated: Variant[] =
+      [];
 
-    for (const colorId of selectedColors) {
-      for (const sizeId of selectedSizes) {
-        const existing = variants.find(
-          (variant) =>
-            variant.colorId === colorId &&
-            variant.sizeId === sizeId,
-        );
+    for (
+      const colorId of
+      selectedColors
+    ) {
+      const sizeIds =
+        colorSizeSelections[
+          colorId
+        ] ?? [];
+
+      for (
+        const sizeId of
+        sizeIds
+      ) {
+        const existing =
+          variants.find(
+            (variant) =>
+              variant.colorId ===
+                colorId &&
+              variant.sizeId ===
+                sizeId,
+          );
 
         generated.push(
           existing ?? {
@@ -368,25 +478,34 @@ export default function ProductsPage() {
             sku: "",
             stock: 0,
             costPrice: "",
-            retailPrice: retailPrice,
-            resellerPrice: resellerPrice,
+            retailPrice:
+              retailPrice,
+            resellerPrice:
+              resellerPrice,
             isActive: true,
           },
         );
       }
     }
 
-    setVariants(generated);
+    setVariants(
+      generated,
+    );
   }
 
   useEffect(() => {
-    if (selectedColors.length && selectedSizes.length) {
+    if (
+      selectedColors.length
+    ) {
       generateVariants();
     } else {
       setVariants([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedColors, selectedSizes]);
+  }, [
+    selectedColors,
+    colorSizeSelections,
+  ]);
 
   function updateVariant(
     colorId: string,
@@ -426,7 +545,8 @@ export default function ProductsPage() {
     setResellerPrice("");
     setResellerMOQ("");
     setSelectedColors([]);
-    setSelectedSizes([]);
+    setColorSizeSelections({});
+    setMediaColorId("");
     setVariants([]);
     setIsFeatured(false);
     setIsTrending(false);
@@ -436,6 +556,13 @@ export default function ProductsPage() {
 
   async function uploadMediaFile(file: File) {
     setMediaError("");
+
+    if (!mediaColorId) {
+      setMediaError(
+        "Select a product colour before uploading its photos or video.",
+      );
+      return;
+    }
     setUploadingMedia(true);
     setUploadProgress(0);
 
@@ -487,6 +614,8 @@ export default function ProductsPage() {
           altText: file.name,
           sortOrder: current.length,
           isActive: true,
+          colorId:
+            mediaColorId,
         },
       ]);
 
@@ -537,11 +666,49 @@ export default function ProductsPage() {
     }
 
     if (
-      selectedColors.length > 0 &&
-      selectedSizes.length > 0 &&
+      selectedColors.length ===
+      0
+    ) {
+      alert(
+        "Select at least one product colour.",
+      );
+      return;
+    }
+
+    if (
+      selectedColors.some(
+        (colorId) =>
+          (
+            colorSizeSelections[
+              colorId
+            ] ?? []
+          ).length === 0,
+      )
+    ) {
+      alert(
+        "Select available sizes separately for every selected colour.",
+      );
+      return;
+    }
+
+    if (
       variants.length === 0
     ) {
-      alert("Generate product variants first");
+      alert(
+        "Select colour-wise sizes to create variants.",
+      );
+      return;
+    }
+
+    if (
+      media.some(
+        (item) =>
+          !item.colorId,
+      )
+    ) {
+      alert(
+        "Every product photo/video must be assigned to a colour.",
+      );
       return;
     }
 
@@ -623,6 +790,9 @@ export default function ProductsPage() {
               url: item.url,
               thumbnailUrl: item.thumbnailUrl ?? null,
               altText: item.altText ?? null,
+              colorId:
+                item.colorId ??
+                null,
             }),
           });
 
