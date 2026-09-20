@@ -834,13 +834,27 @@ export async function DELETE(
       );
     }
 
-    await prisma.product.delete({
-      where: { id },
-    });
+    const archivedProduct =
+      await prisma.product.update({
+        where: { id },
+        data: {
+          status: "INACTIVE",
+          isFeatured: false,
+          isTrending: false,
+          isNewArrival: false,
+        },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+        },
+      });
 
     return NextResponse.json({
       success: true,
-      message: "Product deleted successfully",
+      message:
+        "Product archived successfully",
+      product: archivedProduct,
     });
   } catch (error) {
     console.error("DELETE /api/products/[id] failed:", error);
