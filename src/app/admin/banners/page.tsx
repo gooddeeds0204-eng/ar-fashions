@@ -8,6 +8,9 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import {
+  uploadAdminProductMedia,
+} from "@/lib/admin-client-upload";
+import {
   BANNER_FONT_OPTIONS,
   bannerFontFamily,
   type BannerFont,
@@ -452,34 +455,10 @@ export default function AdminBannersPage() {
         target,
       );
 
-      const formData =
-        new FormData();
-
-      formData.append(
-        "file",
-        file,
-      );
-
-      const response =
-        await fetch(
-          "/api/upload",
-          {
-            method: "POST",
-            credentials:
-              "same-origin",
-            body: formData,
-          },
-        );
-
       const data =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error ??
-            "Upload failed.",
+        await uploadAdminProductMedia(
+          file,
         );
-      }
 
       const uploadedType =
         data.type === "VIDEO"
