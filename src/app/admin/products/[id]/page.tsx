@@ -1355,7 +1355,7 @@ export default function EditProductPage() {
           </div>
         </section>
 
-        {/* SIZES */}
+        {/* COLOUR-WISE SIZES */}
         <section className="mb-6 rounded-3xl border border-white/10 bg-white/[0.04] p-5 sm:p-7">
           <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -1364,65 +1364,154 @@ export default function EditProductPage() {
               </p>
 
               <h2 className="mt-1 text-xl font-bold">
-                Product Sizes
+                Available Sizes by Colour
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                {selectedSizes.length} sizes selected
+                Prathi colour ki actual ga available unna sizes maatrame select cheyyandi.
               </p>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <input
-                value={sizeSearch}
-                onChange={(event) =>
-                  setSizeSearch(event.target.value)
-                }
-                placeholder="Search size..."
-                className="rounded-xl border border-white/10 bg-slate-900 px-4 py-2.5 text-sm outline-none focus:border-emerald-400"
-              />
+            <input
+              value={sizeSearch}
+              onChange={(event) =>
+                setSizeSearch(
+                  event.target.value,
+                )
+              }
+              placeholder="Search size..."
+              className="rounded-xl border border-white/10 bg-slate-900 px-4 py-2.5 text-sm outline-none focus:border-emerald-400"
+            />
+          </div>
 
-              <button
-                type="button"
-                onClick={selectAllSizes}
-                className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2.5 text-sm font-semibold text-emerald-400"
-              >
-                Select All
-              </button>
+          {selectedColors.length ===
+          0 ? (
+            <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center">
+              <p className="font-semibold text-slate-300">
+                Select product colours first
+              </p>
 
-              <button
-                type="button"
-                onClick={clearAllSizes}
-                className="rounded-xl border border-white/10 px-4 py-2.5 text-sm text-slate-400"
-              >
-                Clear
-              </button>
+              <p className="mt-1 text-sm text-slate-500">
+                Colour select chesaka aa colour ki sizes ikkada manage cheyyachu.
+              </p>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4">
+              {selectedColors.map(
+                (colorId) => {
+                  const selectedForColor =
+                    colorSizeSelections[
+                      colorId
+                    ] ?? [];
 
-          <div className="flex flex-wrap gap-3">
-            {filteredSizes.map((size) => {
-              const selected =
-                selectedSizes.includes(size.id);
+                  return (
+                    <div
+                      key={colorId}
+                      className="rounded-2xl border border-white/10 bg-slate-900/70 p-4"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <span
+                            className="h-9 w-9 rounded-full border border-white/20"
+                            style={{
+                              backgroundColor:
+                                colors.find(
+                                  (color) =>
+                                    color.id ===
+                                    colorId,
+                                )?.hexCode ??
+                                "#7B7066",
+                            }}
+                          />
 
-              return (
-                <button
-                  key={size.id}
-                  type="button"
-                  onClick={() =>
-                    toggleSize(size.id)
-                  }
-                  className={`min-w-16 rounded-xl border px-4 py-3 text-sm font-bold transition ${
-                    selected
-                      ? "border-emerald-400 bg-emerald-400 text-slate-950"
-                      : "border-white/10 bg-slate-900 text-slate-300"
-                  }`}
-                >
-                  {size.name}
-                </button>
-              );
-            })}
-          </div>
+                          <div>
+                            <p className="font-bold text-white">
+                              {getColorName(
+                                colorId,
+                              )}
+                            </p>
+
+                            <p className="text-xs text-slate-500">
+                              {
+                                selectedForColor.length
+                              }{" "}
+                              size
+                              {selectedForColor.length ===
+                              1
+                                ? ""
+                                : "s"}{" "}
+                              available
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              selectAllSizesForColor(
+                                colorId,
+                              )
+                            }
+                            className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-xs font-bold text-emerald-400"
+                          >
+                            All
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              clearAllSizesForColor(
+                                colorId,
+                              )
+                            }
+                            className="rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-slate-400"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {filteredSizes.map(
+                          (size) => {
+                            const selected =
+                              selectedForColor.includes(
+                                size.id,
+                              );
+
+                            return (
+                              <button
+                                key={
+                                  size.id
+                                }
+                                type="button"
+                                onClick={() =>
+                                  toggleSizeForColor(
+                                    colorId,
+                                    size.id,
+                                  )
+                                }
+                                className={`min-w-14 rounded-xl border px-3 py-2.5 text-sm font-bold transition ${
+                                  selected
+                                    ? "border-emerald-400 bg-emerald-400 text-slate-950"
+                                    : "border-white/10 bg-slate-950 text-slate-300 hover:border-white/20"
+                                }`}
+                              >
+                                {
+                                  size.name
+                                }
+                              </button>
+                            );
+                          },
+                        )}
+                      </div>
+                    </div>
+                  );
+                },
+              )}
+            </div>
+          )}
         </section>
 
         {/* VARIANTS */}
@@ -1443,8 +1532,8 @@ export default function EditProductPage() {
             </div>
 
             <div className="rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-sm text-slate-400">
-              {selectedColors.length} ×{" "}
-              {selectedSizes.length} combinations
+              {selectedColors.length} colours ·{" "}
+              {variants.length} available combinations
             </div>
           </div>
 
@@ -1613,10 +1702,62 @@ export default function EditProductPage() {
               Add New Image / Video
             </p>
 
+            <div className="mb-4 rounded-2xl border border-purple-400/20 bg-slate-950/60 p-4">
+              <p className="text-xs font-black uppercase tracking-wider text-purple-300">
+                Select media colour
+              </p>
+
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                Upload chese photos/video ee selected colour ki link avutayi.
+              </p>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {selectedColors.map(
+                  (colorId) => (
+                    <button
+                      key={colorId}
+                      type="button"
+                      onClick={() =>
+                        setMediaColorId(
+                          colorId,
+                        )
+                      }
+                      className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold ${
+                        mediaColorId ===
+                        colorId
+                          ? "border-purple-300 bg-purple-300 text-slate-950"
+                          : "border-white/10 bg-slate-900 text-slate-300"
+                      }`}
+                    >
+                      <span
+                        className="h-4 w-4 rounded-full border border-black/20"
+                        style={{
+                          backgroundColor:
+                            colors.find(
+                              (color) =>
+                                color.id ===
+                                colorId,
+                            )?.hexCode ??
+                            "#7B7066",
+                        }}
+                      />
+
+                      {getColorName(
+                        colorId,
+                      )}
+                    </button>
+                  ),
+                )}
+              </div>
+            </div>
+
             <input
               type="file"
               accept="image/*,video/*"
-              disabled={addingMedia}
+              disabled={
+                addingMedia ||
+                !mediaColorId
+              }
               onChange={async (event) => {
                 const file = event.target.files?.[0];
 
@@ -1661,6 +1802,8 @@ export default function EditProductPage() {
                         url: uploadData.url,
                         thumbnailUrl: null,
                         altText: product.name,
+                        colorId:
+                          mediaColorId,
                       }),
                     },
                   );
@@ -1769,6 +1912,114 @@ export default function EditProductPage() {
                         #{index + 1}
                       </span>
                     </div>
+
+                    <label className="mb-3 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Colour
+                      <select
+                        value={
+                          item.colorId ??
+                          ""
+                        }
+                        onChange={async (
+                          event,
+                        ) => {
+                          const nextColorId =
+                            event.target
+                              .value;
+
+                          setMediaActionId(
+                            item.id,
+                          );
+
+                          try {
+                            const response =
+                              await fetch(
+                                "/api/media",
+                                {
+                                  method:
+                                    "PATCH",
+                                  headers: {
+                                    "Content-Type":
+                                      "application/json",
+                                  },
+                                  body:
+                                    JSON.stringify({
+                                      id:
+                                        item.id,
+                                      colorId:
+                                        nextColorId,
+                                    }),
+                                },
+                              );
+
+                            const data =
+                              await response.json();
+
+                            if (
+                              !response.ok
+                            ) {
+                              throw new Error(
+                                data.error ??
+                                  "Failed to update media colour",
+                              );
+                            }
+
+                            setProduct({
+                              ...product,
+                              media:
+                                product.media.map(
+                                  (
+                                    mediaItem,
+                                  ) =>
+                                    mediaItem.id ===
+                                    item.id
+                                      ? data
+                                      : mediaItem,
+                                ),
+                            });
+                          } catch (
+                            error
+                          ) {
+                            alert(
+                              error instanceof
+                                Error
+                                ? error.message
+                                : "Failed to update media colour",
+                            );
+                          } finally {
+                            setMediaActionId(
+                              null,
+                            );
+                          }
+                        }}
+                        className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950 px-2 py-2 text-xs text-slate-200"
+                      >
+                        <option value="">
+                          General
+                        </option>
+
+                        {selectedColors.map(
+                          (
+                            colorId,
+                          ) => (
+                            <option
+                              key={
+                                colorId
+                              }
+                              value={
+                                colorId
+                              }
+                            >
+                              {
+                                getColorName(
+                                  colorId,
+                                )
+                              }
+                            </option>
+                          ),
+                        )}
+                      </select>
+                    </label>
 
                     <div className="grid grid-cols-2 gap-2">
                       <button
