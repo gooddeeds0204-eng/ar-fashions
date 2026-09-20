@@ -3,6 +3,7 @@ name: Launch Check
 on:
   push:
     branches:
+      - main
       - launch-hardening-20260917
   pull_request:
     branches:
