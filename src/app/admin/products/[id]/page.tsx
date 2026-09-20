@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { uploadAdminProductMedia } from "@/lib/admin-client-upload";
 
 type Category = {
   id: string;
@@ -776,26 +777,10 @@ export default function EditProductPage() {
     try {
       setReplacingMediaId(mediaId);
 
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const uploadResponse = await fetch(
-        "/api/upload",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      const uploadData = await uploadResponse.json();
-
-      if (!uploadResponse.ok) {
-        alert(
-          uploadData.error ??
-            "Replacement upload failed"
+      const uploadData =
+        await uploadAdminProductMedia(
+          file,
         );
-        return;
-      }
 
       const patchResponse = await fetch(
         "/api/media",
@@ -1779,27 +1764,10 @@ export default function EditProductPage() {
                 try {
                   setAddingMedia(true);
 
-                  const formData = new FormData();
-                  formData.append("file", file);
-
-                  const uploadResponse = await fetch(
-                    "/api/upload",
-                    {
-                      method: "POST",
-                      body: formData,
-                    },
-                  );
-
                   const uploadData =
-                    await uploadResponse.json();
-
-                  if (!uploadResponse.ok) {
-                    alert(
-                      uploadData.error ??
-                        "Upload failed",
+                    await uploadAdminProductMedia(
+                      file,
                     );
-                    return;
-                  }
 
                   const mediaResponse = await fetch(
                     "/api/media",
