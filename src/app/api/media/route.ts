@@ -1,6 +1,11 @@
 import { requireAdmin } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  decodeProductMediaAlt,
+  encodeProductMediaAlt,
+  publicProductMedia,
+} from "@/lib/product-media-color";
 
 export async function GET(request: Request) {
   /* ADMIN_GUARD_GET */
@@ -32,7 +37,11 @@ export async function GET(request: Request) {
       ],
     });
 
-    return NextResponse.json(media);
+    return NextResponse.json(
+      media.map(
+        publicProductMedia,
+      ),
+    );
   } catch (error) {
     console.error("GET /api/media failed:", error);
 
@@ -57,6 +66,10 @@ export async function POST(request: Request) {
     const productId = String(body.productId ?? "").trim();
     const url = String(body.url ?? "").trim();
     const type = String(body.type ?? "").trim().toUpperCase();
+    const colorId =
+      String(
+        body.colorId ?? "",
+      ).trim();
 
     if (!productId) {
       return NextResponse.json(
@@ -81,7 +94,14 @@ export async function POST(request: Request) {
 
     const product = await prisma.product.findUnique({
       where: { id: productId },
-      select: { id: true },
+      select: {
+        id: true,
+        variants: {
+          select: {
+            colorId: true,
+          },
+        },
+      },
     });
 
     if (!product) {
@@ -89,6 +109,25 @@ export async function POST(request: Request) {
         { error: "Product not found" },
         { status: 404 },
       );
+    }
+
+    if (colorId) {
+      const belongsToProduct =
+        product.variants.some(
+          (variant) =>
+            variant.colorId ===
+            colorId,
+        );
+
+      if (!belongsToProduct) {
+        return NextResponse.json(
+          {
+            error:
+              "Selected media color does not belong to this product.",
+          },
+          { status: 400 },
+        );
+      }
     }
 
     const lastMedia = await prisma.productMedia.findFirst({
@@ -105,15 +144,26 @@ export async function POST(request: Request) {
         thumbnailUrl: body.thumbnailUrl
           ? String(body.thumbnailUrl).trim()
           : null,
-        altText: body.altText
-          ? String(body.altText).trim()
-          : null,
+        altText:
+          encodeProductMediaAlt(
+            colorId,
+            body.altText
+              ? String(
+                  body.altText,
+                ).trim()
+              : null,
+          ),
         sortOrder: (lastMedia?.sortOrder ?? -1) + 1,
         isActive: body.isActive !== false,
       },
     });
 
-    return NextResponse.json(media, { status: 201 });
+    return NextResponse.json(
+      publicProductMedia(
+        media,
+      ),
+      { status: 201 },
+    );
   } catch (error) {
     console.error("POST /api/media failed:", error);
 
@@ -152,6 +202,14 @@ export async function PATCH(request: Request) {
       isActive?: boolean;
     } = {};
 
+    const colorId =
+      body.colorId ===
+      undefined
+        ? undefined
+        : String(
+            body.colorId ?? "",
+          ).trim();
+
     if (body.url !== undefined) {
       const url = String(body.url ?? "").trim();
 
@@ -186,10 +244,76 @@ export async function PATCH(request: Request) {
         : null;
     }
 
-    if (body.altText !== undefined) {
-      updateData.altText = body.altText
-        ? String(body.altText).trim()
-        : null;
+    if (
+      body.altText !==
+        undefined ||
+      colorId !== undefined
+    ) {
+      const currentMedia =
+        await prisma.productMedia.findUnique({
+          where: {
+            id,
+          },
+          select: {
+            productId: true,
+            altText: true,
+          },
+        });
+
+      if (!currentMedia) {
+        return NextResponse.json(
+          {
+            error:
+              "Media not found",
+          },
+          { status: 404 },
+        );
+      }
+
+      const decoded =
+        decodeProductMediaAlt(
+          currentMedia.altText,
+        );
+
+      if (colorId) {
+        const matchingVariant =
+          await prisma.productVariant.findFirst({
+            where: {
+              productId:
+                currentMedia.productId,
+              colorId,
+            },
+            select: {
+              id: true,
+            },
+          });
+
+        if (!matchingVariant) {
+          return NextResponse.json(
+            {
+              error:
+                "Selected media color does not belong to this product.",
+            },
+            { status: 400 },
+          );
+        }
+      }
+
+      updateData.altText =
+        encodeProductMediaAlt(
+          colorId !==
+            undefined
+            ? colorId
+            : decoded.colorId,
+          body.altText !==
+            undefined
+            ? body.altText
+              ? String(
+                  body.altText,
+                ).trim()
+              : null
+            : decoded.altText,
+        );
     }
 
     if (body.sortOrder !== undefined) {
@@ -226,7 +350,11 @@ export async function PATCH(request: Request) {
       data: updateData,
     });
 
-    return NextResponse.json(media);
+    return NextResponse.json(
+      publicProductMedia(
+        media,
+      ),
+    );
   } catch (error) {
     console.error("PATCH /api/media failed:", error);
 
