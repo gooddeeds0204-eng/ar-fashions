@@ -585,45 +585,6 @@ export async function PUT(
       }
     }
 
-    if (Array.isArray(body.variants)) {
-      const representedExistingIds = new Set<string>();
-
-      for (const variant of variants) {
-        const matched = variant.id
-          ? currentById.get(variant.id)
-          : currentByCombination.get(
-              `${variant.colorId}:${variant.sizeId}`,
-            );
-
-        if (matched) {
-          representedExistingIds.add(matched.id);
-        }
-      }
-
-      for (const current of existingProduct.variants) {
-        if (representedExistingIds.has(current.id)) {
-          continue;
-        }
-
-        const referenceCount =
-          current._count.cartItems +
-          current._count.orderItems +
-          current._count.inventoryAdjustments +
-          current._count.purchaseOrderItems +
-          current._count.supplierCosts;
-
-        if (referenceCount > 0 || current.preferredSupplierId) {
-          return NextResponse.json(
-            {
-              error:
-                "A removed variant has cart/order/inventory/supplier history. Keep it in the matrix and switch Active off instead of deleting it.",
-            },
-            { status: 409 },
-          );
-        }
-      }
-    }
-
     const updatedProduct = await prisma.$transaction(async (tx) => {
       await tx.product.update({
         where: { id },
@@ -719,14 +680,81 @@ export async function PUT(
           });
         }
 
-        const removableIds = existingProduct.variants
-          .filter((variant) => !representedExistingIds.has(variant.id))
-          .map((variant) => variant.id);
+        const missingVariants =
+          existingProduct.variants.filter(
+            (variant) =>
+              !representedExistingIds.has(
+                variant.id,
+              ),
+          );
 
-        if (removableIds.length > 0) {
+        const protectedIds =
+          missingVariants
+            .filter(
+              (variant) => {
+                const referenceCount =
+                  variant._count.cartItems +
+                  variant._count.orderItems +
+                  variant._count.inventoryAdjustments +
+                  variant._count.purchaseOrderItems +
+                  variant._count.supplierCosts;
+
+                return (
+                  referenceCount >
+                    0 ||
+                  Boolean(
+                    variant.preferredSupplierId,
+                  )
+                );
+              },
+            )
+            .map(
+              (variant) =>
+                variant.id,
+            );
+
+        const removableIds =
+          missingVariants
+            .filter(
+              (variant) =>
+                !protectedIds.includes(
+                  variant.id,
+                ),
+            )
+            .map(
+              (variant) =>
+                variant.id,
+            );
+
+        if (
+          protectedIds.length >
+          0
+        ) {
+          await tx.productVariant.updateMany({
+            where: {
+              id: {
+                in:
+                  protectedIds,
+              },
+              productId: id,
+            },
+            data: {
+              isActive:
+                false,
+            },
+          });
+        }
+
+        if (
+          removableIds.length >
+          0
+        ) {
           await tx.productVariant.deleteMany({
             where: {
-              id: { in: removableIds },
+              id: {
+                in:
+                  removableIds,
+              },
               productId: id,
             },
           });
