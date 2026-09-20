@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { uploadAdminProductMedia } from "@/lib/admin-client-upload";
 
 type Category = {
   id: string;
@@ -586,23 +587,22 @@ export default function ProductsPage() {
         );
       }
 
-      const formData = new FormData();
-      formData.append("file", file);
+      setUploadProgress(1);
 
-      setUploadProgress(25);
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      setUploadProgress(75);
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error ?? "Upload failed");
-      }
+      const data =
+        await uploadAdminProductMedia(
+          file,
+          (
+            percentage,
+          ) => {
+            setUploadProgress(
+              Math.max(
+                1,
+                percentage,
+              ),
+            );
+          },
+        );
 
       setMedia((current) => [
         ...current,
