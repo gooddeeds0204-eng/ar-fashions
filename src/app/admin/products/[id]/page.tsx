@@ -40,6 +40,7 @@ type Media = {
   altText?: string | null;
   sortOrder: number;
   isActive: boolean;
+  colorId?: string | null;
 };
 
 type Product = {
@@ -94,9 +95,21 @@ export default function EditProductPage() {
     [],
   );
 
-  const [selectedSizes, setSelectedSizes] = useState<string[]>(
-    [],
-  );
+  const [
+    colorSizeSelections,
+    setColorSizeSelections,
+  ] =
+    useState<
+      Record<
+        string,
+        string[]
+      >
+    >({});
+
+  const [
+    mediaColorId,
+    setMediaColorId,
+  ] = useState("");
 
   const [variants, setVariants] = useState<Variant[]>([]);
 
@@ -194,17 +207,63 @@ export default function EditProductPage() {
         ),
       );
 
-      const loadedSizeIds: string[] = Array.from(
-        new Set<string>(
-          productData.variants.map(
-            (variant: Product["variants"][number]) =>
-              String(variant.sizeId),
-          ),
-        ),
+      const loadedColorSizes:
+        Record<
+          string,
+          string[]
+        > = {};
+
+      for (
+        const variant of
+        productData.variants
+      ) {
+        const colorId =
+          String(
+            variant.colorId,
+          );
+
+        const sizeId =
+          String(
+            variant.sizeId,
+          );
+
+        if (
+          !loadedColorSizes[
+            colorId
+          ]
+        ) {
+          loadedColorSizes[
+            colorId
+          ] = [];
+        }
+
+        if (
+          !loadedColorSizes[
+            colorId
+          ].includes(
+            sizeId,
+          )
+        ) {
+          loadedColorSizes[
+            colorId
+          ].push(
+            sizeId,
+          );
+        }
+      }
+
+      setSelectedColors(
+        loadedColorIds,
       );
 
-      setSelectedColors(loadedColorIds);
-      setSelectedSizes(loadedSizeIds);
+      setColorSizeSelections(
+        loadedColorSizes,
+      );
+
+      setMediaColorId(
+        loadedColorIds[0] ??
+          "",
+      );
 
       setVariants(
         productData.variants.map(
@@ -276,69 +335,225 @@ export default function EditProductPage() {
     );
   }, [sizes, sizeSearch]);
 
-  function toggleColor(colorId: string) {
-    setSelectedColors((current) => {
-      const exists = current.includes(colorId);
-
-      const next = exists
-        ? current.filter((id) => id !== colorId)
-        : [...current, colorId];
-
-      rebuildVariants(next, selectedSizes);
-
-      return next;
-    });
-  }
-
-  function toggleSize(sizeId: string) {
-    setSelectedSizes((current) => {
-      const exists = current.includes(sizeId);
-
-      const next = exists
-        ? current.filter((id) => id !== sizeId)
-        : [...current, sizeId];
-
-      rebuildVariants(selectedColors, next);
-
-      return next;
-    });
-  }
-
   function rebuildVariants(
     colorIds: string[],
-    sizeIds: string[],
+    selections:
+      Record<
+        string,
+        string[]
+      >,
   ) {
-    setVariants((current) => {
-      const map = new Map(
-        current.map((variant) => [
-          `${variant.colorId}:${variant.sizeId}`,
-          variant,
-        ]),
-      );
+    setVariants(
+      (current) => {
+        const map =
+          new Map(
+            current.map(
+              (variant) => [
+                `${variant.colorId}:${variant.sizeId}`,
+                variant,
+              ],
+            ),
+          );
 
-      return colorIds.flatMap((colorId) =>
-        sizeIds.map((sizeId) => {
-          const key = `${colorId}:${sizeId}`;
+        return colorIds.flatMap(
+          (colorId) =>
+            (
+              selections[
+                colorId
+              ] ?? []
+            ).map(
+              (sizeId) => {
+                const key =
+                  `${colorId}:${sizeId}`;
 
-          const existing = map.get(key);
+                const existing =
+                  map.get(key);
 
-          if (existing) {
-            return existing;
-          }
+                if (
+                  existing
+                ) {
+                  return existing;
+                }
 
-          return {
+                return {
+                  colorId,
+                  sizeId,
+                  stock: 0,
+                  costPrice:
+                    "",
+                  retailPrice:
+                    "",
+                  resellerPrice:
+                    "",
+                  sku: null,
+                  isActive:
+                    true,
+                };
+              },
+            ),
+        );
+      },
+    );
+  }
+
+  function toggleColor(
+    colorId: string,
+  ) {
+    setSelectedColors(
+      (current) => {
+        const removing =
+          current.includes(
             colorId,
+          );
+
+        const next =
+          removing
+            ? current.filter(
+                (id) =>
+                  id !==
+                  colorId,
+              )
+            : [
+                ...current,
+                colorId,
+              ];
+
+        setColorSizeSelections(
+          (
+            currentSizes,
+          ) => {
+            const nextSizes = {
+              ...currentSizes,
+            };
+
+            if (removing) {
+              delete nextSizes[
+                colorId
+              ];
+            } else if (
+              !nextSizes[
+                colorId
+              ]
+            ) {
+              nextSizes[
+                colorId
+              ] = [];
+            }
+
+            rebuildVariants(
+              next,
+              nextSizes,
+            );
+
+            return nextSizes;
+          },
+        );
+
+        if (
+          removing &&
+          mediaColorId ===
+            colorId
+        ) {
+          setMediaColorId(
+            next[0] ??
+              "",
+          );
+        } else if (
+          !removing &&
+          !mediaColorId
+        ) {
+          setMediaColorId(
+            colorId,
+          );
+        }
+
+        return next;
+      },
+    );
+  }
+
+  function toggleSizeForColor(
+    colorId: string,
+    sizeId: string,
+  ) {
+    setColorSizeSelections(
+      (current) => {
+        const currentIds =
+          current[colorId] ??
+          [];
+
+        const nextIds =
+          currentIds.includes(
             sizeId,
-            stock: 0,
-            costPrice: "",
-            retailPrice: "",
-            resellerPrice: "",
-            sku: null,
-            isActive: true,
-          };
-        }),
-      );
-    });
+          )
+            ? currentIds.filter(
+                (id) =>
+                  id !==
+                  sizeId,
+              )
+            : [
+                ...currentIds,
+                sizeId,
+              ];
+
+        const next = {
+          ...current,
+          [colorId]:
+            nextIds,
+        };
+
+        rebuildVariants(
+          selectedColors,
+          next,
+        );
+
+        return next;
+      },
+    );
+  }
+
+  function selectAllSizesForColor(
+    colorId: string,
+  ) {
+    setColorSizeSelections(
+      (current) => {
+        const next = {
+          ...current,
+          [colorId]:
+            filteredSizes.map(
+              (size) =>
+                size.id,
+            ),
+        };
+
+        rebuildVariants(
+          selectedColors,
+          next,
+        );
+
+        return next;
+      },
+    );
+  }
+
+  function clearAllSizesForColor(
+    colorId: string,
+  ) {
+    setColorSizeSelections(
+      (current) => {
+        const next = {
+          ...current,
+          [colorId]: [],
+        };
+
+        rebuildVariants(
+          selectedColors,
+          next,
+        );
+
+        return next;
+      },
+    );
   }
 
   function updateVariant(
@@ -365,26 +580,54 @@ export default function EditProductPage() {
   }
 
   function selectAllColors() {
-    const ids = filteredColors.map((color) => color.id);
+    const ids =
+      filteredColors.map(
+        (color) =>
+          color.id,
+      );
 
-    setSelectedColors(ids);
-    rebuildVariants(ids, selectedSizes);
+    setSelectedColors(
+      ids,
+    );
+
+    setColorSizeSelections(
+      (current) => {
+        const next = {
+          ...current,
+        };
+
+        for (
+          const id of ids
+        ) {
+          next[id] =
+            next[id] ?? [];
+        }
+
+        rebuildVariants(
+          ids,
+          next,
+        );
+
+        return next;
+      },
+    );
+
+    if (
+      !mediaColorId &&
+      ids[0]
+    ) {
+      setMediaColorId(
+        ids[0],
+      );
+    }
   }
 
   function clearAllColors() {
     setSelectedColors([]);
-    setVariants([]);
-  }
-
-  function selectAllSizes() {
-    const ids = filteredSizes.map((size) => size.id);
-
-    setSelectedSizes(ids);
-    rebuildVariants(selectedColors, ids);
-  }
-
-  function clearAllSizes() {
-    setSelectedSizes([]);
+    setColorSizeSelections(
+      {},
+    );
+    setMediaColorId("");
     setVariants([]);
   }
 
