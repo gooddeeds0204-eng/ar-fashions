@@ -18,6 +18,7 @@ type Media = {
   altText?: string | null;
   sortOrder: number;
   isActive: boolean;
+  colorId?: string | null;
 };
 
 type Variant = {
@@ -550,6 +551,7 @@ export default function ProductDetailPage() {
     for (const variant of product.variants) {
       if (
         variant.color.id === selectedColorId &&
+        variant.stock > 0 &&
         !map.has(variant.size.id)
       ) {
         map.set(variant.size.id, variant.size);
@@ -574,6 +576,78 @@ export default function ProductDetailPage() {
     selectedColorId,
     selectedSizeId,
   ]);
+
+  const colorMedia =
+    useMemo(() => {
+      if (!product) {
+        return [];
+      }
+
+      const exact =
+        product.media.filter(
+          (item) =>
+            item.colorId ===
+            selectedColorId,
+        );
+
+      if (
+        exact.length > 0
+      ) {
+        return exact;
+      }
+
+      const generic =
+        product.media.filter(
+          (item) =>
+            !item.colorId,
+        );
+
+      return generic.length >
+        0
+        ? generic
+        : product.media;
+    }, [
+      product,
+      selectedColorId,
+    ]);
+
+  useEffect(() => {
+    setSelectedMedia(0);
+  }, [
+    selectedColorId,
+  ]);
+
+  function imageForColor(
+    colorId: string,
+  ) {
+    if (!product) {
+      return null;
+    }
+
+    return (
+      product.media.find(
+        (item) =>
+          item.type ===
+            "IMAGE" &&
+          item.colorId ===
+            colorId,
+      )?.url ??
+      product.media.find(
+        (item) =>
+          item.type ===
+            "IMAGE" &&
+          !item.colorId,
+      )?.url ??
+      product.media.find(
+        (item) =>
+          item.type ===
+          "IMAGE",
+      )?.url ??
+      product.media[0]
+        ?.url ??
+      null
+    );
+  }
 
   const minimumQuantity = isReseller
     ? Math.max(1, product?.resellerMOQ ?? 1)
@@ -861,11 +935,9 @@ export default function ProductDetailPage() {
           productId: product.id,
           productName: product.name,
           image:
-            product.media.find(
-              (item) => item.type === "IMAGE",
-            )?.url ??
-            product.media[0]?.url ??
-            null,
+            imageForColor(
+              variant.color.id,
+            ),
           variantId: variant.id,
           colorId: variant.color.id,
           colorName: variant.color.name,
@@ -993,11 +1065,9 @@ export default function ProductDetailPage() {
         productId: product.id,
         productName: product.name,
         image:
-          product.media.find(
-            (item) => item.type === "IMAGE",
-          )?.url ??
-          product.media[0]?.url ??
-          null,
+          imageForColor(
+            selectedVariant.color.id,
+          ),
         variantId: selectedVariant.id,
         colorId: selectedVariant.color.id,
         colorName: selectedVariant.color.name,
@@ -1157,12 +1227,9 @@ export default function ProductDetailPage() {
         productId: product.id,
         productName: product.name,
         image:
-          product.media.find(
-            (item) =>
-              item.type === "IMAGE",
-          )?.url ??
-          product.media[0]?.url ??
-          null,
+          imageForColor(
+            selectedVariant.color.id,
+          ),
         variantId:
           selectedVariant.id,
         colorId:
@@ -1252,9 +1319,11 @@ export default function ProductDetailPage() {
   }
 
   const media =
-    product.media.length > 0
-      ? product.media[selectedMedia] ??
-        product.media[0]
+    colorMedia.length > 0
+      ? colorMedia[
+          selectedMedia
+        ] ??
+        colorMedia[0]
       : null;
 
   return (
@@ -1311,9 +1380,9 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {product.media.length > 1 && (
+          {colorMedia.length > 1 && (
             <div className="mt-3 grid grid-cols-5 gap-2 px-4 pb-2 sm:mt-4 sm:gap-3 sm:px-0 sm:pb-0">
-              {product.media.map(
+              {colorMedia.map(
                 (item, index) => (
                   <button
                     key={item.id}
@@ -2175,18 +2244,14 @@ export default function ProductDetailPage() {
               <div className="px-5">
                 <div className="flex gap-4 rounded-[1.3rem] border border-black/[0.06] bg-[#F8F1E7] p-3">
                   <div className="h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-zinc-200">
-                    {product.media.find(
-                      (item) =>
-                        item.type ===
-                        "IMAGE",
+                    {imageForColor(
+                      selectedVariant.color.id,
                     ) ? (
                       <img
                         src={
-                          product.media.find(
-                            (item) =>
-                              item.type ===
-                              "IMAGE",
-                          )!.url
+                          imageForColor(
+                            selectedVariant.color.id,
+                          )!
                         }
                         alt={
                           product.name
