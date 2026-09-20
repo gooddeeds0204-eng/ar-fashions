@@ -2,6 +2,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { getSalesAccess } from "@/lib/sales-access";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { publicProductMedia } from "@/lib/product-media-color";
 
 const PRODUCT_STATUSES = [
   "DRAFT",
@@ -120,7 +121,17 @@ export async function GET() {
     });
 
     if (access.isAdmin) {
-      return NextResponse.json(products);
+      return NextResponse.json(
+        products.map(
+          (product) => ({
+            ...product,
+            media:
+              product.media.map(
+                publicProductMedia,
+              ),
+          }),
+        ),
+      );
     }
 
     const canSeeResellerPricing =
@@ -141,6 +152,10 @@ export async function GET() {
             canSeeResellerPricing,
           ),
         ),
+        media:
+          product.media.map(
+            publicProductMedia,
+          ),
       })),
     );
   } catch (error) {
