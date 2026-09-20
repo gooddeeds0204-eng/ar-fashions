@@ -198,11 +198,24 @@ export default function EditProductPage() {
           : sizesData.sizes ?? [],
       );
 
+      const activeLoadedVariants =
+        productData.variants.filter(
+          (
+            variant: Product["variants"][number],
+          ) =>
+            variant.isActive !==
+            false,
+        );
+
       const loadedColorIds: string[] = Array.from(
         new Set<string>(
-          productData.variants.map(
-            (variant: Product["variants"][number]) =>
-              String(variant.colorId),
+          activeLoadedVariants.map(
+            (
+              variant: Product["variants"][number],
+            ) =>
+              String(
+                variant.colorId,
+              ),
           ),
         ),
       );
@@ -215,7 +228,7 @@ export default function EditProductPage() {
 
       for (
         const variant of
-        productData.variants
+        activeLoadedVariants
       ) {
         const colorId =
           String(
@@ -266,7 +279,7 @@ export default function EditProductPage() {
       );
 
       setVariants(
-        productData.variants.map(
+        activeLoadedVariants.map(
           (variant: Product["variants"][number]) => ({
             id: variant.id,
             colorId: variant.colorId,
