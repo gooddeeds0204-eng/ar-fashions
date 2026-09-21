@@ -30,6 +30,7 @@ model User {
   offerReferrals       CampaignReferral[] @relation("CampaignReferrer")
   referredCampaigns    CampaignReferral[] @relation("CampaignReferredUser")
   campaignClaims       CampaignClaim[]
+  campaignReferralVisits CampaignReferralVisit[] @relation("CampaignReferralVisitor")
 }
 
 model Address {
@@ -846,8 +847,9 @@ model OfferCampaign {
   updatedAt                 DateTime @updatedAt
 
   product   Product              @relation(fields: [productId], references: [id])
-  referrals CampaignReferral[]
-  claims    CampaignClaim[]
+  referrals      CampaignReferral[]
+  referralVisits CampaignReferralVisit[]
+  claims         CampaignClaim[]
 
   @@index([productId])
   @@index([isActive, isArchived])
@@ -870,6 +872,7 @@ model CampaignReferral {
   campaign     OfferCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   referrer     User          @relation("CampaignReferrer", fields: [referrerId], references: [id], onDelete: Cascade)
   referredUser User?         @relation("CampaignReferredUser", fields: [referredUserId], references: [id], onDelete: SetNull)
+  visits       CampaignReferralVisit[]
 
   @@unique([campaignId, referrerId])
   @@unique([campaignId, referredUserId])
@@ -896,4 +899,27 @@ model CampaignClaim {
   @@unique([campaignId, userId])
   @@index([campaignId, status])
   @@index([userId])
+}
+
+
+model CampaignReferralVisit {
+  id             String                 @id @default(cuid())
+  campaignId     String
+  referralId     String
+  visitorKeyHash String
+  referredUserId String?
+  status         CampaignReferralStatus @default(QUALIFIED)
+  clickedAt      DateTime               @default(now())
+  qualifiedAt    DateTime?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  campaign     OfferCampaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  referral     CampaignReferral @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  referredUser User?            @relation("CampaignReferralVisitor", fields: [referredUserId], references: [id], onDelete: SetNull)
+
+  @@unique([campaignId, visitorKeyHash])
+  @@unique([campaignId, referredUserId])
+  @@index([referralId, status])
+  @@index([campaignId, status])
 }

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import PromoSlot from "@/components/PromoSlot";
 import BrandLogo from "@/components/BrandLogo";
 import StorefrontDrawer from "@/components/StorefrontDrawer";
+import CampaignOfferSection from "@/components/CampaignOfferSection";
 import {
   bannerFontFamily,
   type BannerFont,
@@ -3131,6 +3132,8 @@ export default function Home() {
         </div>
       </section>
 
+
+      <CampaignOfferSection />
 
       <PromoSlot
         placement="SHOP_TOP"

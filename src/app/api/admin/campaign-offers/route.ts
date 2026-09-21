@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
+import { ensureCampaignReferralVisitStorage } from "@/lib/campaign-offer-storage";
 
 function cleanString(value: unknown) {
   return String(value ?? "").trim();
@@ -151,6 +152,8 @@ export async function GET() {
   if (adminError) return adminError;
 
   try {
+    await ensureCampaignReferralVisitStorage();
+
     const [campaigns, products] = await Promise.all([
       prisma.offerCampaign.findMany({
         orderBy: [{ isArchived: "asc" }, { createdAt: "desc" }],
@@ -171,7 +174,7 @@ export async function GET() {
           },
           _count: {
             select: {
-              referrals: { where: { status: "QUALIFIED" } },
+              referralVisits: { where: { status: "QUALIFIED" } },
               claims: { where: { status: "CLAIMED" } },
             },
           },
@@ -216,7 +219,7 @@ export async function GET() {
           ...campaign.product,
           retailPrice: Number(campaign.product.retailPrice),
         },
-        qualifiedReferralCount: campaign._count.referrals,
+        qualifiedReferralCount: campaign._count.referralVisits,
         claimedCount: campaign._count.claims,
       })),
       products: products.map((product) => ({
