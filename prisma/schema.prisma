@@ -27,6 +27,9 @@ model User {
   reviews             Review[]
   wishlist            WishlistItem[]
   resellerApplication ResellerApplication?
+  offerReferrals       CampaignReferral[] @relation("CampaignReferrer")
+  referredCampaigns    CampaignReferral[] @relation("CampaignReferredUser")
+  campaignClaims       CampaignClaim[]
 }
 
 model Address {
@@ -129,6 +132,7 @@ model Product {
   resellerItems     ResellerSetItem[]
   reviews           Review[]
   wishlistItems     WishlistItem[]
+  offerCampaigns    OfferCampaign[]
 
   @@index([categoryId])
   @@index([status])
@@ -798,4 +802,98 @@ enum PurchaseOrderStatus {
   PARTIALLY_RECEIVED
   RECEIVED
   CANCELLED
+}
+
+
+enum CampaignReferralStatus {
+  CLICKED
+  QUALIFIED
+  REJECTED
+}
+
+enum CampaignClaimStatus {
+  PENDING
+  CLAIMED
+  CANCELLED
+}
+
+model OfferCampaign {
+  id                        String   @id @default(cuid())
+  title                     String
+  subtitle                  String?
+  announcementText          String?
+  badgeText                 String   @default("FREE DROP")
+  buttonText                String   @default("Unlock Now")
+  productId                 String
+  variantIds                String[] @default([])
+  requiredReferrals         Int      @default(5)
+  whatsappShareRequired     Boolean  @default(true)
+  whatsappGroupJoinRequired Boolean  @default(false)
+  whatsappGroupUrl          String?
+  startsAt                  DateTime
+  endsAt                    DateTime
+  showCountdown             Boolean  @default(true)
+  maxClaims                 Int?
+  oneClaimPerCustomer       Boolean  @default(true)
+  deliveryChargeEnabled     Boolean  @default(false)
+  useStoreDeliveryRules     Boolean  @default(false)
+  fixedDeliveryCharge       Decimal? @db.Decimal(10, 2)
+  codAllowed                Boolean  @default(true)
+  onlinePaymentAllowed      Boolean  @default(true)
+  isActive                  Boolean  @default(true)
+  isArchived                Boolean  @default(false)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  product   Product              @relation(fields: [productId], references: [id])
+  referrals CampaignReferral[]
+  claims    CampaignClaim[]
+
+  @@index([productId])
+  @@index([isActive, isArchived])
+  @@index([startsAt, endsAt])
+}
+
+model CampaignReferral {
+  id             String                 @id @default(cuid())
+  campaignId     String
+  referrerId     String
+  referredUserId String?
+  referralCode   String                 @unique
+  visitorKeyHash String?
+  status         CampaignReferralStatus @default(CLICKED)
+  clickedAt      DateTime               @default(now())
+  qualifiedAt    DateTime?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  campaign     OfferCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  referrer     User          @relation("CampaignReferrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredUser User?         @relation("CampaignReferredUser", fields: [referredUserId], references: [id], onDelete: SetNull)
+
+  @@unique([campaignId, referrerId])
+  @@unique([campaignId, referredUserId])
+  @@unique([campaignId, visitorKeyHash])
+  @@index([campaignId, status])
+  @@index([referrerId])
+}
+
+model CampaignClaim {
+  id                    String              @id @default(cuid())
+  campaignId            String
+  userId                String
+  variantId             String?
+  orderId               String?             @unique
+  status                CampaignClaimStatus @default(PENDING)
+  groupJoinAcknowledged Boolean             @default(false)
+  claimedAt             DateTime?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  campaign OfferCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, userId])
+  @@index([campaignId, status])
+  @@index([userId])
 }

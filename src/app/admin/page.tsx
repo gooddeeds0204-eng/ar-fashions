@@ -18,6 +18,7 @@ const menu = [
   { label: "Suppliers", href: "/admin/suppliers", icon: "◈" },
   { label: "Purchase Orders", href: "/admin/purchase-orders", icon: "▧" },
   { label: "Coupons", href: "/admin/coupons", icon: "%" },
+  { label: "Campaign Offers", href: "/admin/campaign-offers", icon: "✦" },
   { label: "Banners", href: "/admin/banners", icon: "▱" },
   { label: "Home Content", href: "/admin/home-content", icon: "⌂" },
   { label: "Video Content", href: "/admin/video-content", icon: "▶" },
