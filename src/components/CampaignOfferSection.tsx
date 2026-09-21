@@ -85,7 +85,7 @@ export default function CampaignOfferSection() {
     useState<CampaignOffer | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(0);
 
   const loadCampaign = useCallback(async () => {
     try {
@@ -115,12 +115,22 @@ export default function CampaignOfferSection() {
   }, [loadCampaign]);
 
   useEffect(() => {
+    const tick = () => setNow(Date.now());
+
+    const kickoff = window.setTimeout(
+      tick,
+      0,
+    );
+
     const timer = window.setInterval(
-      () => setNow(Date.now()),
+      tick,
       1000,
     );
 
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearTimeout(kickoff);
+      window.clearInterval(timer);
+    };
   }, []);
 
   useEffect(() => {
@@ -168,7 +178,7 @@ export default function CampaignOfferSection() {
   }, [loadCampaign]);
 
   const countdown = useMemo(() => {
-    if (!campaign) return null;
+    if (!campaign || now === 0) return null;
 
     return timeParts(
       campaign.status === "SCHEDULED"
