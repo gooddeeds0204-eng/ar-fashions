@@ -192,6 +192,8 @@ export default function CampaignOfferSection() {
     return null;
   }
 
+  const activeCampaign = campaign;
+
   const image =
     campaign.product.media.find(
       (item) => item.type === "IMAGE",
@@ -225,12 +227,12 @@ export default function CampaignOfferSection() {
   );
 
   async function shareOffer() {
-    if (!campaign.progress.loggedIn) {
+    if (!activeCampaign.progress.loggedIn) {
       router.push("/login");
       return;
     }
 
-    if (campaign.status !== "LIVE") {
+    if (activeCampaign.status !== "LIVE") {
       return;
     }
 
@@ -245,7 +247,7 @@ export default function CampaignOfferSection() {
         credentials: "same-origin",
         body: JSON.stringify({
           action: "share",
-          campaignId: campaign.id,
+          campaignId: activeCampaign.id,
         }),
       });
 
@@ -269,8 +271,8 @@ export default function CampaignOfferSection() {
         "#campaign-offer";
 
       const text = [
-        campaign.title,
-        campaign.subtitle ||
+        activeCampaign.title,
+        activeCampaign.subtitle ||
           "Open this AR Fashions offer.",
         "Open my link to help me unlock the offer:",
         shareUrl,
@@ -291,14 +293,14 @@ export default function CampaignOfferSection() {
   }
 
   async function joinGroup() {
-    if (!campaign.progress.loggedIn) {
+    if (!activeCampaign.progress.loggedIn) {
       router.push("/login");
       return;
     }
 
-    if (campaign.whatsappGroupUrl) {
+    if (activeCampaign.whatsappGroupUrl) {
       window.open(
-        campaign.whatsappGroupUrl,
+        activeCampaign.whatsappGroupUrl,
         "_blank",
         "noopener,noreferrer",
       );
@@ -315,7 +317,7 @@ export default function CampaignOfferSection() {
         credentials: "same-origin",
         body: JSON.stringify({
           action: "group-ack",
-          campaignId: campaign.id,
+          campaignId: activeCampaign.id,
         }),
       });
 
