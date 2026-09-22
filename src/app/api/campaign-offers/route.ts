@@ -185,6 +185,8 @@ export async function GET() {
     let referralCode: string | null = null;
     let qualifiedReferrals = 0;
     let groupJoinAcknowledged = false;
+    let alreadyClaimed = false;
+    let claimInProgress = false;
 
     if (user) {
       const referral = await prisma.campaignReferral.findUnique({
@@ -221,11 +223,24 @@ export async function GET() {
         },
         select: {
           groupJoinAcknowledged: true,
+          status: true,
+          orderId: true,
         },
       });
 
       groupJoinAcknowledged =
         claim?.groupJoinAcknowledged === true;
+
+      alreadyClaimed =
+        claim?.status ===
+        "CLAIMED";
+
+      claimInProgress =
+        claim?.status ===
+          "PENDING" &&
+        Boolean(
+          claim.orderId,
+        );
     }
 
     const status = campaignStatus(
@@ -305,11 +320,15 @@ export async function GET() {
           groupJoinAcknowledged,
           referralsComplete,
           groupComplete,
+          alreadyClaimed,
+          claimInProgress,
           unlocked:
             Boolean(user) &&
             status === "LIVE" &&
             referralsComplete &&
             groupComplete &&
+            !alreadyClaimed &&
+            !claimInProgress &&
             availableStock > 0,
         },
       },
