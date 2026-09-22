@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { uploadAdminProductMedia } from "@/lib/admin-client-upload";
+import ProductMediaUploadComposer from "@/components/admin/ProductMediaUploadComposer";
 
 type Category = {
   id: string;
@@ -84,7 +85,6 @@ type Product = {
 
 export default function EditProductPage() {
   const [product, setProduct] = useState<Product | null>(null);
-  const [addingMedia, setAddingMedia] = useState(false);
   const [mediaActionId, setMediaActionId] = useState<string | null>(null);
   const [replacingMediaId, setReplacingMediaId] = useState<string | null>(null);
 
@@ -1749,95 +1749,25 @@ export default function EditProductPage() {
               </div>
             </div>
 
-            <input
-              type="file"
-              accept="image/*,video/*"
-              disabled={
-                addingMedia ||
-                !mediaColorId
-              }
-              onChange={async (event) => {
-                const file = event.target.files?.[0];
-
-                if (!file) return;
-
-                try {
-                  setAddingMedia(true);
-
-                  const uploadData =
-                    await uploadAdminProductMedia(
-                      file,
-                    );
-
-                  const mediaResponse = await fetch(
-                    "/api/media",
-                    {
-                      method: "POST",
-                      headers: {
-                        "Content-Type":
-                          "application/json",
-                      },
-                      body: JSON.stringify({
-                        productId: product.id,
-                        type: uploadData.type,
-                        url: uploadData.url,
-                        thumbnailUrl: null,
-                        altText: product.name,
-                        colorId:
-                          mediaColorId,
-                      }),
-                    },
-                  );
-
-                  const mediaData =
-                    await mediaResponse.json();
-
-                  if (!mediaResponse.ok) {
-                    alert(
-                      mediaData.error ??
-                        "Failed to save media",
-                    );
-                    return;
-                  }
-
-                  setProduct({
-                    ...product,
-                    media: [
-                      ...product.media,
-                      mediaData,
-                    ],
-                  });
-
-                  event.target.value = "";
-
-                  alert(
-                    "Media uploaded successfully",
-                  );
-                } catch (error) {
-                  console.error(
-                    "Media upload failed:",
-                    error,
-                  );
-
-                  alert(
-                    "Something went wrong while uploading",
-                  );
-                } finally {
-                  setAddingMedia(false);
-                }
+            <ProductMediaUploadComposer
+              productId={product.id}
+              productName={product.name}
+              colorId={mediaColorId}
+              disabled={!mediaColorId}
+              onCreated={(mediaData) => {
+                setProduct((current) =>
+                  current
+                    ? {
+                        ...current,
+                        media: [
+                          ...current.media,
+                          mediaData,
+                        ],
+                      }
+                    : current,
+                );
               }}
-              className="block w-full cursor-pointer rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-purple-400 file:px-4 file:py-2 file:font-bold file:text-slate-950"
             />
-
-            {addingMedia && (
-              <p className="mt-3 text-sm font-semibold text-purple-400">
-                Uploading...
-              </p>
-            )}
-
-            <p className="mt-3 text-xs text-slate-500">
-              Images up to 10MB · Videos up to 50MB
-            </p>
           </div>
 
           {product.media.length === 0 ? (
