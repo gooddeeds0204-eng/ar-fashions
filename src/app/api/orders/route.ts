@@ -1401,25 +1401,6 @@ export async function POST(request: Request) {
             }
           }
 
-          if (
-            paymentMethod ===
-              "COD" &&
-            !campaign.codAllowed
-          ) {
-            throw new Error(
-              "Cash on Delivery is not available for this campaign.",
-            );
-          }
-
-          if (
-            isRazorpayPayment &&
-            !campaign.onlinePaymentAllowed
-          ) {
-            throw new Error(
-              "Online payment is not available for this campaign.",
-            );
-          }
-
           campaignReward = {
             id: campaign.id,
             productId:
@@ -2496,6 +2477,52 @@ export async function POST(request: Request) {
               ) * 100,
             ) / 100,
           );
+
+        if (
+          paymentMethod === "COD" &&
+          totalAmount > 0
+        ) {
+          if (
+            campaignOnlyMerchandise &&
+            campaignReward
+          ) {
+            if (
+              !campaignReward.codAllowed
+            ) {
+              throw new Error(
+                "Cash on Delivery is not available for this campaign.",
+              );
+            }
+          } else {
+            if (
+              !siteSettings.codEnabled
+            ) {
+              throw new Error(
+                "Cash on Delivery is currently unavailable.",
+              );
+            }
+
+            if (
+              campaignReward &&
+              !campaignReward.codAllowed
+            ) {
+              throw new Error(
+                "Cash on Delivery is not available for this campaign.",
+              );
+            }
+          }
+        }
+
+        if (
+          isRazorpayPayment &&
+          campaignReward &&
+          !campaignReward
+            .onlinePaymentAllowed
+        ) {
+          throw new Error(
+            "Online payment is not available for this campaign.",
+          );
+        }
 
         if (
           isRazorpayPayment &&
