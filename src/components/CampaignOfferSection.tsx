@@ -71,6 +71,8 @@ type CampaignOffer = {
     groupJoinAcknowledged: boolean;
     referralsComplete: boolean;
     groupComplete: boolean;
+    alreadyClaimed: boolean;
+    claimInProgress: boolean;
     unlocked: boolean;
   };
 };
@@ -782,7 +784,34 @@ export default function CampaignOfferSection() {
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">
-              {!unlocked ? (
+              {activeCampaign.progress
+                .alreadyClaimed ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(
+                      "/my-orders",
+                    )
+                  }
+                  className="min-h-10 w-full rounded-xl bg-emerald-300/15 px-4 text-[9px] font-black uppercase tracking-[0.07em] text-emerald-200"
+                >
+                  Reward Claimed ✓ · View Order
+                </button>
+              ) : activeCampaign
+                  .progress
+                  .claimInProgress ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(
+                      "/my-orders",
+                    )
+                  }
+                  className="min-h-10 w-full rounded-xl border border-[#D9C29A]/25 bg-white/[0.05] px-4 text-[9px] font-black uppercase tracking-[0.07em] text-[#E5D0AC]"
+                >
+                  Claim Started · View Order
+                </button>
+              ) : !unlocked ? (
                 <>
                   <button
                     type="button"
