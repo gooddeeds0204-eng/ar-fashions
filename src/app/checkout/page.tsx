@@ -25,6 +25,14 @@ type CartItem = {
   resellerSetCount?: number;
   resellerSetName?: string;
   resellerSetPrice?: number;
+
+  campaignOfferId?: string;
+  campaignReward?: boolean;
+  campaignDeliveryChargeEnabled?: boolean;
+  campaignUseStoreDeliveryRules?: boolean;
+  campaignFixedDeliveryCharge?: number | null;
+  campaignCodAllowed?: boolean;
+  campaignOnlinePaymentAllowed?: boolean;
 };
 
 type AppliedCoupon = {
@@ -771,6 +779,25 @@ export default function CheckoutPage() {
     [cart],
   );
 
+  const campaignReward =
+    cart.find(
+      (item) =>
+        Boolean(
+          item.campaignOfferId &&
+            item.campaignReward === true,
+        ),
+    ) ?? null;
+
+  const campaignOnlyOrder =
+    Boolean(
+      campaignReward &&
+        cart.every(
+          (item) =>
+            item.campaignOfferId ===
+            campaignReward.campaignOfferId,
+        ),
+    );
+
   const hasCuratedSetItems =
     cart.some(
       (item) =>
@@ -953,20 +980,100 @@ export default function CheckoutPage() {
     !isResellerOrder &&
     minimumRetailOrder > 0 &&
     subtotal <
-      minimumRetailOrder;
+      minimumRetailOrder &&
+    !campaignOnlyOrder;
 
   const resellerFreightPending =
     isResellerOrder &&
     deliverySettings.resellerDeliveryMode ===
       "ACTUAL_FREIGHT";
 
+  const deliveryCharge =
+    campaignOnlyOrder &&
+    campaignReward
+      ? !campaignReward
+          .campaignDeliveryChargeEnabled
+        ? 0
+        : campaignReward
+              .campaignUseStoreDeliveryRules
+          ? Math.max(
+              0,
+              Number(
+                deliverySettings.retailDeliveryCharge,
+              ) || 0,
+            )
+          : Math.max(
+              0,
+              Number(
+                campaignReward
+                  .campaignFixedDeliveryCharge ??
+                  0,
+              ) || 0,
+            )
+      : isResellerOrder
+        ? resellerFreightPending
+          ? 0
+          : Math.max(
+              0,
+              Number(
+                deliverySettings.resellerFlatDeliveryCharge,
+              ) || 0,
+            )
+        : subtotal >=
+            Math.max(
+              0,
+              Number(
+                deliverySettings.retailFreeDeliveryThreshold,
+              ) || 0,
+            )
+          ? 0
+          : Math.max(
+              0,
+              Number(
+                deliverySettings.retailDeliveryCharge,
+              ) || 0,
+            );
+
+  const discountAmount =
+    appliedCoupon?.discountAmount ??
+    0;
+
+  const total = Math.max(
+    0,
+    subtotal -
+      discountAmount +
+      deliveryCharge,
+  );
+
+  const campaignCodAllowed =
+    campaignReward
+      ? campaignReward
+          .campaignCodAllowed !==
+        false
+      : true;
+
+  const campaignOnlineAllowed =
+    campaignReward
+      ? campaignReward
+          .campaignOnlinePaymentAllowed !==
+        false
+      : true;
+
+  const codPaymentAvailable =
+    campaignOnlyOrder
+      ? campaignCodAllowed
+      : siteSettings.codEnabled &&
+        campaignCodAllowed;
+
   const onlinePaymentAvailable =
     razorpayEnabled &&
-    !resellerFreightPending;
+    !resellerFreightPending &&
+    campaignOnlineAllowed &&
+    total >= 1;
 
   const selectedPaymentUnavailable =
     paymentChoice === "COD"
-      ? !siteSettings.codEnabled
+      ? !codPaymentAvailable
       : !onlinePaymentAvailable;
 
   const checkoutBlocked =
@@ -982,21 +1089,30 @@ export default function CheckoutPage() {
         ? activeSalesMessage
         : paymentChoice ===
               "COD" &&
-            !siteSettings.codEnabled
-          ? "Cash on Delivery is currently unavailable."
+            !codPaymentAvailable
+          ? "Cash on Delivery is not available for this order."
           : paymentChoice ===
                 "RAZORPAY" &&
-              resellerFreightPending
-            ? "Online payment is available for reseller orders after freight is fixed. Choose COD or use flat reseller freight."
+              campaignReward &&
+              !campaignOnlineAllowed
+            ? "Online payment is not available for this campaign."
+            : paymentChoice ===
+                "RAZORPAY" &&
+              total < 1
+            ? "No payment is required for this free reward."
             : paymentChoice ===
                   "RAZORPAY" &&
-                !razorpayEnabled
-              ? "Online payment gateway is not configured yet."
-              : retailMinimumNotMet
-                ? `Minimum retail order is ${money(
-                    minimumRetailOrder,
-                  )}.`
-                : "";
+                resellerFreightPending
+              ? "Online payment is available for reseller orders after freight is fixed."
+              : paymentChoice ===
+                    "RAZORPAY" &&
+                  !razorpayEnabled
+                ? "Online payment gateway is not configured yet."
+                : retailMinimumNotMet
+                  ? `Minimum retail order is ${money(
+                      minimumRetailOrder,
+                    )}.`
+                  : "";
 
   const shippingUnavailable =
     shippingCheck.enabled &&
@@ -1010,42 +1126,6 @@ export default function CheckoutPage() {
     !checkoutBlocked &&
     !shippingUnavailable;
 
-  const deliveryCharge =
-    isResellerOrder
-      ? resellerFreightPending
-        ? 0
-        : Math.max(
-            0,
-            Number(
-              deliverySettings.resellerFlatDeliveryCharge,
-            ) || 0,
-          )
-      : subtotal >=
-          Math.max(
-            0,
-            Number(
-              deliverySettings.retailFreeDeliveryThreshold,
-            ) || 0,
-          )
-        ? 0
-        : Math.max(
-            0,
-            Number(
-              deliverySettings.retailDeliveryCharge,
-            ) || 0,
-          );
-
-  const discountAmount =
-    appliedCoupon?.discountAmount ??
-    0;
-
-  const total = Math.max(
-    0,
-    subtotal -
-      discountAmount +
-      deliveryCharge,
-  );
-
   /*
    * If cart value or order mode changes,
    * previously validated coupon preview
@@ -1058,6 +1138,74 @@ export default function CheckoutPage() {
   }, [
     subtotal,
     isResellerOrder,
+  ]);
+
+  useEffect(() => {
+    if (
+      campaignOnlyOrder &&
+      total === 0 &&
+      paymentChoice !== "COD"
+    ) {
+      const timer =
+        window.setTimeout(
+          () =>
+            setPaymentChoice(
+              "COD",
+            ),
+          0,
+        );
+
+      return () =>
+        window.clearTimeout(
+          timer,
+        );
+    }
+
+    if (
+      paymentChoice === "COD" &&
+      !codPaymentAvailable &&
+      onlinePaymentAvailable
+    ) {
+      const timer =
+        window.setTimeout(
+          () =>
+            setPaymentChoice(
+              "RAZORPAY",
+            ),
+          0,
+        );
+
+      return () =>
+        window.clearTimeout(
+          timer,
+        );
+    }
+
+    if (
+      paymentChoice === "RAZORPAY" &&
+      !onlinePaymentAvailable &&
+      codPaymentAvailable
+    ) {
+      const timer =
+        window.setTimeout(
+          () =>
+            setPaymentChoice(
+              "COD",
+            ),
+          0,
+        );
+
+      return () =>
+        window.clearTimeout(
+          timer,
+        );
+    }
+  }, [
+    campaignOnlyOrder,
+    total,
+    paymentChoice,
+    codPaymentAvailable,
+    onlinePaymentAvailable,
   ]);
 
   /*
@@ -1269,10 +1417,10 @@ export default function CheckoutPage() {
     if (
       paymentChoice ===
         "COD" &&
-      !siteSettings.codEnabled
+      !codPaymentAvailable
     ) {
       showCheckoutAlert(
-        "Cash on Delivery is currently unavailable.",
+        "Cash on Delivery is not available for this order.",
       );
       return;
     }
@@ -1450,6 +1598,9 @@ export default function CheckoutPage() {
             quantity: item.quantity,
             unitPrice: item.price,
             mode: item.mode ?? "RETAIL",
+            campaignOfferId:
+              item.campaignOfferId ??
+              null,
           })),
         }),
       });
@@ -2361,11 +2512,15 @@ export default function CheckoutPage() {
                       </p>
 
                       <p className="mt-1 text-[9px] leading-4 text-zinc-500">
-                        {razorpayEnabled
-                          ? resellerFreightPending
-                            ? "Available after reseller freight is fixed."
-                            : "UPI, Cards, Net Banking & Wallets via Razorpay."
-                          : "Online payment setup is pending."}
+                        {!campaignOnlineAllowed
+                          ? "Online payment is disabled for this campaign."
+                          : total < 1
+                            ? "No online payment is required for this free reward."
+                            : razorpayEnabled
+                              ? resellerFreightPending
+                                ? "Available after reseller freight is fixed."
+                                : "UPI, Cards, Net Banking & Wallets via Razorpay."
+                              : "Online payment setup is pending."}
                       </p>
                     </div>
 
@@ -2382,7 +2537,7 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   disabled={
-                    !siteSettings.codEnabled
+                    !codPaymentAvailable
                   }
                   onClick={() =>
                     setPaymentChoice(
@@ -2407,15 +2562,18 @@ export default function CheckoutPage() {
                       </p>
 
                       <p className="mt-1 text-[9px] leading-4 text-zinc-500">
-                        {siteSettings.codEnabled
-                          ? "Pay when your order reaches you."
-                          : "COD is currently unavailable."}
+                        {campaignOnlyOrder &&
+                        total === 0
+                          ? "Free reward · no payment due."
+                          : codPaymentAvailable
+                            ? "Pay when your order reaches you."
+                            : "COD is unavailable for this order."}
                       </p>
                     </div>
 
                     {paymentChoice ===
                       "COD" &&
-                      siteSettings.codEnabled && (
+                      codPaymentAvailable && (
                         <span className="grid h-7 w-7 place-items-center rounded-full bg-[#D4AF37] text-[9px] font-black text-[#031B14]">
                           ✓
                         </span>
