@@ -773,26 +773,27 @@ export default function AccountPage() {
         </div>
       )}
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-[#E4D7C4] bg-[#FFFDF9]/95 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#031B14]/95 text-white shadow-[0_8px_28px_rgba(3,27,20,0.16)] backdrop-blur-xl">
         <div className="mx-auto flex h-[72px] max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
           <button
             type="button"
             onClick={() =>
               router.back()
             }
-            className="grid h-10 w-10 place-items-center rounded-full border border-[#E4D7C4] bg-[#FFFDF9] text-sm font-black"
+            className="grid h-10 w-10 place-items-center rounded-full border border-white/15 bg-white/[0.06] text-sm font-black text-white transition active:scale-95"
           >
             ←
           </button>
 
           <BrandLogo
             compact
+            light
             onClick={() =>
               router.push("/")
             }
           />
 
-          <span className="ml-auto rounded-full bg-[#F4EBDD] px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-zinc-500">
+          <span className="ml-auto rounded-full border border-[#D4AF37]/25 bg-[#D4AF37]/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-[#E7D29F]">
             My Account
           </span>
         </div>
@@ -830,26 +831,26 @@ export default function AccountPage() {
         ) : (
           <div className="space-y-4">
             {/* CLEAN PROFILE HERO */}
-            <section className="relative overflow-hidden rounded-[1.8rem] border border-[#E4D7C4] bg-[#FFFDF9] text-[#211C18] shadow-[0_20px_55px_rgba(61,48,37,0.08)]">
-              <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-[#D9C29A]/35 blur-3xl" />
+            <section className="relative overflow-hidden rounded-[1.8rem] border border-[#D4AF37]/20 bg-[radial-gradient(circle_at_88%_10%,rgba(212,175,55,0.14),transparent_30%),linear-gradient(145deg,#0A3529,#031B14_72%)] text-[#FFFDF9] shadow-[0_22px_58px_rgba(3,27,20,0.18)]">
+              <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-[#D4AF37]/15 blur-3xl" />
               <div className="pointer-events-none absolute bottom-[-90px] left-[-50px] h-48 w-48 rounded-full bg-[#D4AF37]/10 blur-3xl" />
 
               <div className="relative p-5 sm:p-7">
                 <div className="flex items-center gap-4">
-                  <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-[#D4AF37]/35 bg-[#F1E8DA] font-serif text-2xl text-[#D4AF37]">
+                  <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-[#D4AF37]/45 bg-[#D4AF37]/10 font-serif text-2xl text-[#F2D88E] shadow-[0_0_24px_rgba(212,175,55,0.12)]">
                     {customerInitial}
                   </div>
 
                   <div className="min-w-0 flex-1">
                     <p className="text-[7px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">
-                      My AR Account
+                      My AS Account
                     </p>
 
                     <h1 className="mt-1 truncate text-[1.65rem] font-black tracking-[-0.035em]">
                       {customerName}
                     </h1>
 
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-[#7B7066]">
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-white/55">
                       <span>{customerPhone}</span>
                       <span>•</span>
                       <span>{customerType}</span>
@@ -859,13 +860,13 @@ export default function AccountPage() {
                   <button
                     type="button"
                     onClick={openProfileEditor}
-                    className="shrink-0 rounded-full border border-[#E4D7C4] bg-[#FAF7F0] px-3.5 py-2 text-[8px] font-black uppercase tracking-[0.1em] text-white"
+                    className="shrink-0 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-3.5 py-2 text-[8px] font-black uppercase tracking-[0.1em] text-[#E7D29F]"
                   >
                     Edit
                   </button>
                 </div>
 
-                <div className="mt-5 grid grid-cols-4 divide-x divide-[#E4D7C4] rounded-[1.1rem] border border-[#E4D7C4] bg-[#FAF7F0]">
+                <div className="mt-5 grid grid-cols-4 divide-x divide-white/10 rounded-[1.1rem] border border-white/10 bg-white/[0.055]">
                   {[
                     [
                       String(orders.length),
@@ -888,11 +889,11 @@ export default function AccountPage() {
                       key={label}
                       className="min-w-0 px-2 py-3 text-center"
                     >
-                      <p className="truncate text-[13px] font-black text-[#211C18] sm:text-lg">
+                      <p className="truncate text-[13px] font-black text-white sm:text-lg">
                         {value}
                       </p>
 
-                      <p className="mt-1 text-[6px] font-black uppercase tracking-[0.12em] text-[#7B7066] sm:text-[7px]">
+                      <p className="mt-1 text-[6px] font-black uppercase tracking-[0.12em] text-white/45 sm:text-[7px]">
                         {label}
                       </p>
                     </div>
@@ -905,7 +906,7 @@ export default function AccountPage() {
             <section>
               <div className="mb-3 flex items-end justify-between">
                 <div>
-                  <p className="text-[7px] font-black uppercase tracking-[0.22em] text-[#7C3A45]">
+                  <p className="text-[7px] font-black uppercase tracking-[0.22em] text-[#0F5A38]">
                     Account
                   </p>
 
@@ -921,14 +922,14 @@ export default function AccountPage() {
                     key={item.title}
                     type="button"
                     onClick={item.onClick}
-                    className="group min-h-[112px] rounded-[1.25rem] border border-[#E4D7C4] bg-[#FFFDF9] p-4 text-left shadow-[0_7px_20px_rgba(0,0,0,0.035)] transition active:scale-[0.98]"
+                    className="group min-h-[112px] rounded-[1.25rem] border border-[#D9C29A]/55 bg-[#FFFDF9] p-4 text-left shadow-[0_8px_24px_rgba(3,27,20,0.055)] transition hover:border-[#0F5A38]/30 active:scale-[0.98]"
                   >
                     <div className="flex items-start justify-between">
-                      <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#f7f3ee] text-base">
+                      <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#EAF0EB] text-base text-[#031B14]">
                         {item.icon}
                       </div>
 
-                      <span className="text-sm text-zinc-300 transition group-hover:translate-x-0.5">
+                      <span className="text-sm text-[#0F5A38]/45 transition group-hover:translate-x-0.5">
                         →
                       </span>
                     </div>
@@ -951,7 +952,7 @@ export default function AccountPage() {
               <section className="overflow-hidden rounded-[1.5rem] border border-[#E4D7C4] bg-[#FFFDF9] shadow-sm">
                 <div className="flex items-center justify-between border-b border-[#E4D7C4] px-4 py-4 sm:px-5">
                   <div>
-                    <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#7C3A45]">
+                    <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#0F5A38]">
                       Orders
                     </p>
 
@@ -967,7 +968,7 @@ export default function AccountPage() {
                         "/my-orders",
                       )
                     }
-                    className="rounded-full border border-[#E4D7C4] px-3 py-2 text-[8px] font-black uppercase tracking-[0.08em]"
+                    className="rounded-full border border-[#0F5A38]/18 bg-[#EAF0EB] px-3 py-2 text-[8px] font-black uppercase tracking-[0.08em] text-[#031B14]"
                   >
                     View All
                   </button>
@@ -1049,7 +1050,7 @@ export default function AccountPage() {
                       </div>
                     </div>
 
-                    <div className="mt-4 flex items-center justify-between rounded-xl bg-[#0b0b0c] px-4 py-3 text-white">
+                    <div className="mt-4 flex items-center justify-between rounded-xl bg-[#031B14] px-4 py-3 text-white shadow-[0_10px_24px_rgba(3,27,20,0.12)]">
                       <span className="text-[8px] font-semibold text-white/55">
                         Track order details
                       </span>
@@ -1086,7 +1087,7 @@ export default function AccountPage() {
               <section className="overflow-hidden rounded-[1.5rem] border border-[#E4D7C4] bg-[#FFFDF9] shadow-sm">
                 <div className="flex items-center justify-between border-b border-[#E4D7C4] px-4 py-4 sm:px-5">
                   <div>
-                    <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#7C3A45]">
+                    <p className="text-[7px] font-black uppercase tracking-[0.2em] text-[#0F5A38]">
                       Personal
                     </p>
 
@@ -1098,7 +1099,7 @@ export default function AccountPage() {
                   <button
                     type="button"
                     onClick={openProfileEditor}
-                    className="text-[8px] font-black uppercase tracking-[0.08em] text-[#7C3A45]"
+                    className="text-[8px] font-black uppercase tracking-[0.08em] text-[#0F5A38]"
                   >
                     Edit
                   </button>
@@ -1128,7 +1129,7 @@ export default function AccountPage() {
                             "/addresses",
                           )
                         }
-                        className="text-[7px] font-black uppercase tracking-[0.08em] text-[#7C3A45]"
+                        className="text-[7px] font-black uppercase tracking-[0.08em] text-[#0F5A38]"
                       >
                         Manage
                       </button>
@@ -1160,7 +1161,7 @@ export default function AccountPage() {
                             "/addresses",
                           )
                         }
-                        className="mt-2 text-[10px] font-black text-[#7C3A45]"
+                        className="mt-2 text-[10px] font-black text-[#0F5A38]"
                       >
                         + Add delivery address
                       </button>
@@ -1178,7 +1179,7 @@ export default function AccountPage() {
                       </p>
                     </div>
 
-                    <span className="rounded-full bg-[#f7f3ee] px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.08em] text-[#7C3A45]">
+                    <span className="rounded-full border border-[#0F5A38]/12 bg-[#EAF0EB] px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.08em] text-[#0F5A38]">
                       Active
                     </span>
                   </div>
@@ -1187,7 +1188,7 @@ export default function AccountPage() {
             </div>
 
             {/* RESELLER */}
-            <section className="relative overflow-hidden rounded-[1.5rem] border border-[#D9C29A] bg-gradient-to-r from-[#F1E8DA] via-[#FFF8ED] to-[#FFFDF9] p-5 text-[#211C18]">
+            <section className="relative overflow-hidden rounded-[1.5rem] border border-[#D4AF37]/25 bg-[radial-gradient(circle_at_90%_0%,rgba(212,175,55,0.16),transparent_35%),linear-gradient(135deg,#0B3528,#031B14)] p-5 text-[#FFFDF9] shadow-[0_18px_45px_rgba(3,27,20,0.13)]">
               <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-[#D4AF37]/10 blur-3xl" />
 
               <div className="relative flex items-center gap-4">
@@ -1202,7 +1203,7 @@ export default function AccountPage() {
                       : "Wholesale shopping"}
                   </h2>
 
-                  <p className="mt-2 max-w-xl text-[9px] leading-4 text-[#7B7066]">
+                  <p className="mt-2 max-w-xl text-[9px] leading-4 text-white/55">
                     {profile?.isReseller
                       ? "Manage reseller orders, bulk shopping and business activity."
                       : "Explore reseller pricing, MOQ-based quantities and bulk-friendly ordering."}
@@ -1239,7 +1240,7 @@ export default function AccountPage() {
                       "/reseller-apply",
                     );
                   }}
-                  className="shrink-0 rounded-full bg-[#D4AF37] px-4 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] text-black"
+                  className="shrink-0 rounded-full bg-[#D4AF37] px-4 py-2.5 text-[8px] font-black uppercase tracking-[0.08em] text-[#031B14] shadow-[0_8px_22px_rgba(212,175,55,0.18)]"
                 >
                   {profile?.isReseller ||
                   resellerApplicationStatus ===
@@ -1274,7 +1275,7 @@ export default function AccountPage() {
                     Personal Information
                   </h2>
 
-                  <p className="mt-3 max-w-sm text-[10px] leading-5 text-[#7B7066]">
+                  <p className="mt-3 max-w-sm text-[10px] leading-5 text-white/55">
                     Keep your account contact information accurate for orders and account communication.
                   </p>
                 </div>
@@ -1421,14 +1422,14 @@ export default function AccountPage() {
       )}
 
       {/* MOBILE NAV */}
-      <nav className="fixed bottom-2 left-3 right-3 z-50 rounded-[1.35rem] border border-[#E4D7C4] bg-[#FFFDF9]/95 px-1 pb-1.5 pt-1 shadow-[0_18px_55px_rgba(61,48,37,0.14)] backdrop-blur-2xl sm:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-[#031B14]/97 px-1 pb-[max(8px,env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-12px_36px_rgba(3,27,20,0.18)] backdrop-blur-2xl sm:hidden">
         <div className="grid grid-cols-5 items-end">
           <button
             type="button"
             onClick={() =>
               router.push("/")
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#7B7066]"
+            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-white/65"
           >
             <span className="text-lg">
               ⌂
@@ -1445,7 +1446,7 @@ export default function AccountPage() {
                 "/wishlist",
               )
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#7B7066]"
+            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-white/65"
           >
             <span className="text-lg">
               ♡
@@ -1464,7 +1465,7 @@ export default function AccountPage() {
             }
             className="relative flex min-h-[52px] flex-col items-center justify-center"
           >
-            <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-[4px] border-[#031B14] bg-[#D4AF37] font-serif text-[14px] font-black text-[#031B14] shadow-[0_0_28px_rgba(212,175,55,0.22)]">
+            <span className="-mt-6 grid h-13 w-13 place-items-center rounded-full border-[3px] border-[#031B14] bg-[#D4AF37] font-serif text-[13px] font-black text-[#031B14] shadow-[0_0_24px_rgba(212,175,55,0.2)]">
               AS
             </span>
 
@@ -1478,7 +1479,7 @@ export default function AccountPage() {
             onClick={() =>
               router.push("/cart")
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#7B7066]"
+            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-white/65"
           >
             <span className="text-lg">
               🛍
@@ -1490,7 +1491,7 @@ export default function AccountPage() {
 
           <button
             type="button"
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#D9C29A]"
+            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#F0D98F]"
           >
             <span className="grid h-5 w-5 place-items-center rounded-full border border-current text-[7px]">
               A
