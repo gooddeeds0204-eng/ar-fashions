@@ -1060,10 +1060,13 @@ export default function CheckoutPage() {
       : true;
 
   const codPaymentAvailable =
-    campaignOnlyOrder
-      ? campaignCodAllowed
-      : siteSettings.codEnabled &&
-        campaignCodAllowed;
+    campaignOnlyOrder &&
+    total === 0
+      ? true
+      : campaignOnlyOrder
+        ? campaignCodAllowed
+        : siteSettings.codEnabled &&
+          campaignCodAllowed;
 
   const onlinePaymentAvailable =
     razorpayEnabled &&
