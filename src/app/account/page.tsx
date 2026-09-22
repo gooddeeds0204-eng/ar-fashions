@@ -162,6 +162,73 @@ function statusTone(
   return "bg-amber-50 text-amber-700 border-amber-200";
 }
 
+
+function AccountNavIcon({
+  name,
+}: {
+  name:
+    | "home"
+    | "grid"
+    | "play"
+    | "bag"
+    | "user";
+}) {
+  const common = {
+    className: "h-5 w-5",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.7,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+
+  if (name === "home") {
+    return (
+      <svg {...common}>
+        <path d="m4 11 8-7 8 7" />
+        <path d="M6.5 10.5V20h11v-9.5" />
+      </svg>
+    );
+  }
+
+  if (name === "grid") {
+    return (
+      <svg {...common}>
+        <rect x="4" y="4" width="6" height="6" rx="1.2" />
+        <rect x="14" y="4" width="6" height="6" rx="1.2" />
+        <rect x="4" y="14" width="6" height="6" rx="1.2" />
+        <rect x="14" y="14" width="6" height="6" rx="1.2" />
+      </svg>
+    );
+  }
+
+  if (name === "bag") {
+    return (
+      <svg {...common}>
+        <path d="M6.5 8h11l1 12h-13l1-12Z" />
+        <path d="M9 9V6.5a3 3 0 0 1 6 0V9" />
+      </svg>
+    );
+  }
+
+  if (name === "user") {
+    return (
+      <svg {...common}>
+        <circle cx="12" cy="8" r="3.5" />
+        <path d="M5 20c.8-4 3.1-6 7-6s6.2 2 7 6" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg {...common}>
+      <path d="m9 7 8 5-8 5V7Z" />
+    </svg>
+  );
+}
+
 export default function AccountPage() {
   const router = useRouter();
 
@@ -1422,19 +1489,17 @@ export default function AccountPage() {
       )}
 
       {/* MOBILE NAV */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-[#031B14]/97 px-1 pb-[max(8px,env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-12px_36px_rgba(3,27,20,0.18)] backdrop-blur-2xl sm:hidden">
-        <div className="grid grid-cols-5 items-end">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-[#031B14]/98 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 text-[#FFF8EC] shadow-[0_-14px_34px_rgba(0,0,0,0.18)] backdrop-blur-2xl sm:hidden">
+        <div className="grid grid-cols-5">
           <button
             type="button"
             onClick={() =>
               router.push("/")
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-white/65"
+            className="flex min-h-[54px] flex-col items-center justify-center gap-1 text-white/72"
           >
-            <span className="text-lg">
-              ⌂
-            </span>
-            <span className="text-[7px] font-black">
+            <AccountNavIcon name="home" />
+            <span className="text-[7px] font-bold">
               Home
             </span>
           </button>
@@ -1443,16 +1508,14 @@ export default function AccountPage() {
             type="button"
             onClick={() =>
               router.push(
-                "/wishlist",
+                "/#shop-categories",
               )
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-white/65"
+            className="flex min-h-[54px] flex-col items-center justify-center gap-1 text-white/72"
           >
-            <span className="text-lg">
-              ♡
-            </span>
-            <span className="text-[7px] font-black">
-              Wishlist
+            <AccountNavIcon name="grid" />
+            <span className="text-[7px] font-bold">
+              Categories
             </span>
           </button>
 
@@ -1460,17 +1523,16 @@ export default function AccountPage() {
             type="button"
             onClick={() =>
               router.push(
-                "/my-orders",
+                profile?.isReseller
+                  ? "/reels?mode=reseller"
+                  : "/reels?mode=retail",
               )
             }
-            className="relative flex min-h-[52px] flex-col items-center justify-center"
+            className="flex min-h-[54px] flex-col items-center justify-center gap-1 text-white/72"
           >
-            <span className="-mt-6 grid h-13 w-13 place-items-center rounded-full border-[3px] border-[#031B14] bg-[#D4AF37] font-serif text-[13px] font-black text-[#031B14] shadow-[0_0_24px_rgba(212,175,55,0.2)]">
-              AS
-            </span>
-
-            <span className="mt-0.5 text-[7px] font-black text-white">
-              Orders
+            <AccountNavIcon name="play" />
+            <span className="text-[7px] font-bold">
+              Reels
             </span>
           </button>
 
@@ -1479,29 +1541,27 @@ export default function AccountPage() {
             onClick={() =>
               router.push("/cart")
             }
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-white/65"
+            className="flex min-h-[54px] flex-col items-center justify-center gap-1 text-white/72"
           >
-            <span className="text-lg">
-              🛍
-            </span>
-            <span className="text-[7px] font-black">
+            <AccountNavIcon name="bag" />
+            <span className="text-[7px] font-bold">
               Cart
             </span>
           </button>
 
           <button
             type="button"
-            className="flex min-h-[52px] flex-col items-center justify-center gap-1 text-[#F0D98F]"
+            aria-current="page"
+            className="flex min-h-[54px] flex-col items-center justify-center gap-1 text-[#F0D98F]"
           >
-            <span className="grid h-5 w-5 place-items-center rounded-full border border-current text-[7px]">
-              A
-            </span>
-            <span className="text-[7px] font-black">
+            <AccountNavIcon name="user" />
+            <span className="text-[7px] font-bold">
               Account
             </span>
           </button>
         </div>
       </nav>
+
     </main>
   );
 }
