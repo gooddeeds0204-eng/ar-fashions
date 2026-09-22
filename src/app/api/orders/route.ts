@@ -27,12 +27,14 @@ import {
   isRazorpayConfigured,
   refundRazorpayPayment,
 } from "@/lib/razorpay";
+import { ensureCampaignReferralVisitStorage } from "@/lib/campaign-offer-storage";
 
 type OrderItemInput = {
   productId?: unknown;
   variantId?: unknown;
   quantity?: unknown;
   mode?: unknown;
+  campaignOfferId?: unknown;
 };
 
 function sizeLabel(
@@ -950,6 +952,53 @@ export async function POST(request: Request) {
 
     const items: OrderItemInput[] = rawItems;
 
+    const submittedCampaignIds =
+      Array.from(
+        new Set(
+          items
+            .map((item) =>
+              cleanString(
+                item.campaignOfferId,
+              ),
+            )
+            .filter(Boolean),
+        ),
+      );
+
+    if (
+      submittedCampaignIds.length >
+      1
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Only one campaign reward can be used per order.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const requestedCampaignId =
+      submittedCampaignIds[0] ??
+      null;
+
+    if (
+      requestedCampaignId &&
+      type !== "RETAIL"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Campaign rewards can only be claimed in retail checkout.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (requestedCampaignId) {
+      await ensureCampaignReferralVisitStorage();
+    }
+
     /*
      * Saved addresses are only accepted
      * when the signed customer cookie
@@ -1021,7 +1070,8 @@ export async function POST(request: Request) {
 
         if (
           paymentMethod === "COD" &&
-          !siteSettings.codEnabled
+          !siteSettings.codEnabled &&
+          !requestedCampaignId
         ) {
           throw new Error(
             "Cash on Delivery is currently unavailable.",
@@ -1125,6 +1175,273 @@ export async function POST(request: Request) {
           throw new Error(
             "This reseller account can only place reseller orders.",
           );
+        }
+
+        let campaignReward:
+          | {
+              id: string;
+              productId: string;
+              variantId: string;
+              deliveryChargeEnabled: boolean;
+              useStoreDeliveryRules: boolean;
+              fixedDeliveryCharge: number | null;
+              codAllowed: boolean;
+              onlinePaymentAllowed: boolean;
+            }
+          | null = null;
+
+        if (requestedCampaignId) {
+          if (
+            !sessionUserId ||
+            sessionUserId !==
+              user.id
+          ) {
+            throw new Error(
+              "Please sign in again to claim this campaign reward.",
+            );
+          }
+
+          const rewardItems =
+            items.filter(
+              (item) =>
+                cleanString(
+                  item.campaignOfferId,
+                ) ===
+                requestedCampaignId,
+            );
+
+          if (
+            rewardItems.length !==
+            1
+          ) {
+            throw new Error(
+              "Campaign reward cart is invalid.",
+            );
+          }
+
+          const rewardItem =
+            rewardItems[0];
+
+          const rewardProductId =
+            cleanString(
+              rewardItem.productId,
+            );
+
+          const rewardVariantId =
+            cleanString(
+              rewardItem.variantId,
+            );
+
+          const rewardQuantity =
+            validQuantity(
+              rewardItem.quantity,
+            );
+
+          if (
+            !rewardProductId ||
+            !rewardVariantId ||
+            rewardQuantity !== 1
+          ) {
+            throw new Error(
+              "Campaign reward must contain exactly one eligible item.",
+            );
+          }
+
+          const campaign =
+            await tx.offerCampaign.findUnique({
+              where: {
+                id:
+                  requestedCampaignId,
+              },
+            });
+
+          if (
+            !campaign ||
+            !campaign.isActive ||
+            campaign.isArchived
+          ) {
+            throw new Error(
+              "This campaign is no longer available.",
+            );
+          }
+
+          const campaignNow =
+            new Date();
+
+          if (
+            campaignNow <
+              campaign.startsAt ||
+            campaignNow >
+              campaign.endsAt
+          ) {
+            throw new Error(
+              "This campaign is not open right now.",
+            );
+          }
+
+          if (
+            campaign.productId !==
+            rewardProductId
+          ) {
+            throw new Error(
+              "Campaign reward product does not match.",
+            );
+          }
+
+          if (
+            campaign.variantIds
+              .length > 0 &&
+            !campaign.variantIds.includes(
+              rewardVariantId,
+            )
+          ) {
+            throw new Error(
+              "Selected colour or size is not eligible for this campaign.",
+            );
+          }
+
+          const referral =
+            await tx.campaignReferral.findUnique({
+              where: {
+                campaignId_referrerId: {
+                  campaignId:
+                    campaign.id,
+                  referrerId:
+                    user.id,
+                },
+              },
+              select: {
+                id: true,
+              },
+            });
+
+          const qualifiedReferrals =
+            referral
+              ? await tx.campaignReferralVisit.count({
+                  where: {
+                    referralId:
+                      referral.id,
+                    status:
+                      "QUALIFIED",
+                  },
+                })
+              : 0;
+
+          if (
+            qualifiedReferrals <
+            campaign.requiredReferrals
+          ) {
+            throw new Error(
+              "Complete the required friend shares before claiming this reward.",
+            );
+          }
+
+          const existingClaim =
+            await tx.campaignClaim.findUnique({
+              where: {
+                campaignId_userId: {
+                  campaignId:
+                    campaign.id,
+                  userId:
+                    user.id,
+                },
+              },
+            });
+
+          if (
+            campaign.whatsappGroupJoinRequired &&
+            existingClaim?.groupJoinAcknowledged !==
+              true
+          ) {
+            throw new Error(
+              "Complete the WhatsApp group step before claiming this reward.",
+            );
+          }
+
+          if (
+            existingClaim?.status ===
+              "CLAIMED" ||
+            Boolean(
+              existingClaim?.orderId,
+            )
+          ) {
+            throw new Error(
+              "This campaign reward has already been claimed.",
+            );
+          }
+
+          if (
+            campaign.maxClaims !==
+            null
+          ) {
+            const reservedClaims =
+              await tx.campaignClaim.count({
+                where: {
+                  campaignId:
+                    campaign.id,
+                  orderId: {
+                    not: null,
+                  },
+                  status: {
+                    in: [
+                      "PENDING",
+                      "CLAIMED",
+                    ],
+                  },
+                },
+              });
+
+            if (
+              reservedClaims >=
+              campaign.maxClaims
+            ) {
+              throw new Error(
+                "All campaign rewards have been claimed.",
+              );
+            }
+          }
+
+          if (
+            paymentMethod ===
+              "COD" &&
+            !campaign.codAllowed
+          ) {
+            throw new Error(
+              "Cash on Delivery is not available for this campaign.",
+            );
+          }
+
+          if (
+            isRazorpayPayment &&
+            !campaign.onlinePaymentAllowed
+          ) {
+            throw new Error(
+              "Online payment is not available for this campaign.",
+            );
+          }
+
+          campaignReward = {
+            id: campaign.id,
+            productId:
+              campaign.productId,
+            variantId:
+              rewardVariantId,
+            deliveryChargeEnabled:
+              campaign.deliveryChargeEnabled,
+            useStoreDeliveryRules:
+              campaign.useStoreDeliveryRules,
+            fixedDeliveryCharge:
+              campaign.fixedDeliveryCharge ===
+              null
+                ? null
+                : Number(
+                    campaign.fixedDeliveryCharge,
+                  ),
+            codAllowed:
+              campaign.codAllowed,
+            onlinePaymentAllowed:
+              campaign.onlinePaymentAllowed,
+          };
         }
 
         /*
@@ -1347,6 +1664,36 @@ export async function POST(request: Request) {
           const itemMode =
             cleanString(item.mode) || "RETAIL";
 
+          const itemCampaignId =
+            cleanString(
+              item.campaignOfferId,
+            );
+
+          const isCampaignRewardItem =
+            Boolean(
+              campaignReward &&
+                itemCampaignId ===
+                  campaignReward.id,
+            );
+
+          if (
+            itemCampaignId &&
+            !isCampaignRewardItem
+          ) {
+            throw new Error(
+              "Campaign reward identity is invalid.",
+            );
+          }
+
+          if (
+            isCampaignRewardItem &&
+            quantity !== 1
+          ) {
+            throw new Error(
+              "Campaign reward quantity must be one.",
+            );
+          }
+
           if (itemMode !== type) {
             throw new Error(
               "Retail and reseller items cannot be mixed in the same order.",
@@ -1395,6 +1742,7 @@ export async function POST(request: Request) {
 
           if (
             type === "RETAIL" &&
+            !isCampaignRewardItem &&
             variant.product.salesMode !== "RETAIL" &&
             variant.product.salesMode !== "BOTH"
           ) {
@@ -1417,11 +1765,13 @@ export async function POST(request: Request) {
            * Price always comes from database.
            */
           const rawPrice =
-            type === "RESELLER"
-              ? variant.resellerPrice ??
-                variant.product.resellerPrice
-              : variant.retailPrice ??
-                variant.product.retailPrice;
+            isCampaignRewardItem
+              ? 0
+              : type === "RESELLER"
+                ? variant.resellerPrice ??
+                  variant.product.resellerPrice
+                : variant.retailPrice ??
+                  variant.product.retailPrice;
 
           if (
             rawPrice === null ||
@@ -1917,7 +2267,11 @@ export async function POST(request: Request) {
           siteSettings.minimumRetailOrder >
             0 &&
           couponBaseSubtotal <
-            siteSettings.minimumRetailOrder
+            siteSettings.minimumRetailOrder &&
+          !(
+            campaignReward &&
+            couponBaseSubtotal === 0
+          )
         ) {
           throw new Error(
             `Minimum retail order is ₹${siteSettings.minimumRetailOrder.toLocaleString(
@@ -2069,7 +2423,41 @@ export async function POST(request: Request) {
 
         let deliveryCharge = 0;
 
-        if (isResellerDelivery) {
+        const campaignOnlyMerchandise =
+          Boolean(
+            campaignReward &&
+            couponBaseSubtotal === 0,
+          );
+
+        if (
+          campaignOnlyMerchandise &&
+          campaignReward
+        ) {
+          if (
+            !campaignReward
+              .deliveryChargeEnabled
+          ) {
+            deliveryCharge = 0;
+          } else if (
+            campaignReward
+              .useStoreDeliveryRules
+          ) {
+            const retailCharge =
+              safeDeliveryNumber(
+                deliverySettings.retailDeliveryCharge,
+                79,
+              );
+
+            deliveryCharge =
+              retailCharge;
+          } else {
+            deliveryCharge =
+              safeDeliveryNumber(
+                campaignReward.fixedDeliveryCharge,
+                0,
+              );
+          }
+        } else if (isResellerDelivery) {
           deliveryCharge =
             resellerActualFreight
               ? 0
@@ -2108,6 +2496,15 @@ export async function POST(request: Request) {
               ) * 100,
             ) / 100,
           );
+
+        if (
+          isRazorpayPayment &&
+          totalAmount < 1
+        ) {
+          throw new Error(
+            "No online payment is required for this free campaign order. Continue with the free checkout option.",
+          );
+        }
 
         /*
          * 6. Generate order number.
@@ -2250,6 +2647,53 @@ export async function POST(request: Request) {
           }
         }
 
+        if (campaignReward) {
+          await tx.campaignClaim.upsert({
+            where: {
+              campaignId_userId: {
+                campaignId:
+                  campaignReward.id,
+                userId:
+                  user.id,
+              },
+            },
+            create: {
+              campaignId:
+                campaignReward.id,
+              userId:
+                user.id,
+              variantId:
+                campaignReward.variantId,
+              orderId:
+                order.id,
+              status:
+                isRazorpayPayment
+                  ? "PENDING"
+                  : "CLAIMED",
+              groupJoinAcknowledged:
+                true,
+              claimedAt:
+                isRazorpayPayment
+                  ? null
+                  : new Date(),
+            },
+            update: {
+              variantId:
+                campaignReward.variantId,
+              orderId:
+                order.id,
+              status:
+                isRazorpayPayment
+                  ? "PENDING"
+                  : "CLAIMED",
+              claimedAt:
+                isRazorpayPayment
+                  ? null
+                  : new Date(),
+            },
+          });
+        }
+
         /*
          * Link curated-set orders through
          * the existing ResellerContent
@@ -2301,6 +2745,9 @@ export async function POST(request: Request) {
           totalAmount,
           couponCode:
             appliedCouponCode,
+          campaignOfferId:
+            campaignReward?.id ??
+            null,
           paymentRequired:
             isRazorpayPayment,
           razorpay:
