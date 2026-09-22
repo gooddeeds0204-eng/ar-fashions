@@ -137,6 +137,9 @@ export default function CampaignOfferSection() {
   const [rewardInCart, setRewardInCart] =
     useState(false);
 
+  const [referralArrival, setReferralArrival] =
+    useState(false);
+
   const [
     variantPickerOpen,
     setVariantPickerOpen,
@@ -217,57 +220,96 @@ export default function CampaignOfferSection() {
       return;
     }
 
+    setReferralArrival(true);
+
     const seenKey =
       "ar-campaign-ref-" +
       referralCode;
 
+    async function registerReferralVisit() {
+      try {
+        if (
+          sessionStorage.getItem(
+            seenKey,
+          ) !== "1"
+        ) {
+          const response =
+            await fetch(
+              "/api/campaign-offers",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+                credentials:
+                  "same-origin",
+                body: JSON.stringify({
+                  action: "visit",
+                  referralCode,
+                }),
+              },
+            );
+
+          if (response.ok) {
+            sessionStorage.setItem(
+              seenKey,
+              "1",
+            );
+          }
+        }
+
+        await loadCampaign();
+      } catch (error) {
+        console.error(
+          "Campaign referral visit failed:",
+          error,
+        );
+      } finally {
+        url.searchParams.delete("ref");
+
+        window.history.replaceState(
+          {},
+          "",
+          url.pathname +
+            url.search +
+            "#campaign-offer",
+        );
+      }
+    }
+
+    void registerReferralVisit();
+  }, [loadCampaign]);
+
+  useEffect(() => {
     if (
-      sessionStorage.getItem(
-        seenKey,
-      ) === "1"
+      !campaign ||
+      !referralArrival
     ) {
       return;
     }
 
-    sessionStorage.setItem(
-      seenKey,
-      "1",
-    );
-
-    void fetch(
-      "/api/campaign-offers",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type":
-            "application/json",
+    const timer =
+      window.setTimeout(
+        () => {
+          document
+            .getElementById(
+              "campaign-offer",
+            )
+            ?.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
         },
-        credentials:
-          "same-origin",
-        body: JSON.stringify({
-          action: "visit",
-          referralCode,
-        }),
-      },
-    )
-      .then(() => loadCampaign())
-      .catch((error) =>
-        console.error(
-          "Campaign referral visit failed:",
-          error,
-        ),
+        120,
       );
 
-    url.searchParams.delete("ref");
-
-    window.history.replaceState(
-      {},
-      "",
-      url.pathname +
-        url.search +
-        url.hash,
-    );
-  }, [loadCampaign]);
+    return () =>
+      window.clearTimeout(timer);
+  }, [
+    campaign,
+    referralArrival,
+  ]);
 
   useEffect(() => {
     if (!campaign) return;
@@ -632,14 +674,6 @@ export default function CampaignOfferSection() {
 
   async function shareOffer() {
     if (
-      !activeCampaign.progress
-        .loggedIn
-    ) {
-      router.push("/login");
-      return;
-    }
-
-    if (
       activeCampaign.status !==
       "LIVE"
     ) {
@@ -670,13 +704,6 @@ export default function CampaignOfferSection() {
 
       const data =
         await response.json();
-
-      if (
-        response.status === 401
-      ) {
-        router.push("/login");
-        return;
-      }
 
       if (!response.ok) {
         throw new Error(
@@ -716,14 +743,6 @@ export default function CampaignOfferSection() {
   }
 
   async function joinGroup() {
-    if (
-      !activeCampaign.progress
-        .loggedIn
-    ) {
-      router.push("/login");
-      return;
-    }
-
     if (
       activeCampaign
         .whatsappGroupUrl

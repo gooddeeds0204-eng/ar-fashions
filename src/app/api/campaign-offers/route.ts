@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedCustomer } from "@/lib/customer-auth";
 import {
+  CUSTOMER_SESSION_COOKIE,
+  CUSTOMER_SESSION_OPTIONS,
+  createCustomerSessionToken,
+} from "@/lib/customer-session";
+import {
   enforcePublicRateLimit,
   requireSameOriginJson,
 } from "@/lib/public-write-security";
@@ -500,20 +505,6 @@ export async function POST(request: Request) {
       });
     }
 
-    const user = await getAuthenticatedCustomer();
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          error:
-            "Please login to participate in this offer.",
-        },
-        {
-          status: 401,
-        },
-      );
-    }
-
     const campaignId = cleanString(body.campaignId);
 
     if (!campaignId) {
@@ -557,6 +548,44 @@ export async function POST(request: Request) {
         },
         {
           status: 409,
+        },
+      );
+    }
+
+    let user = await getAuthenticatedCustomer();
+    let guestSessionUserId: string | null = null;
+
+    if (
+      !user &&
+      (action === "share" || action === "group-ack")
+    ) {
+      user = await prisma.user.create({
+        data: {
+          role: "CUSTOMER",
+          status: "ACTIVE",
+          isReseller: false,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          role: true,
+          isReseller: true,
+        },
+      });
+
+      guestSessionUserId = user.id;
+    }
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          error:
+            "Customer session is required for this campaign action.",
+        },
+        {
+          status: 401,
         },
       );
     }
@@ -607,10 +636,20 @@ export async function POST(request: Request) {
         throw new Error("Unable to create referral link.");
       }
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         referralCode: referral.referralCode,
       });
+
+      if (guestSessionUserId) {
+        response.cookies.set(
+          CUSTOMER_SESSION_COOKIE,
+          createCustomerSessionToken(guestSessionUserId),
+          CUSTOMER_SESSION_OPTIONS,
+        );
+      }
+
+      return response;
     }
 
     if (action === "group-ack") {
@@ -639,10 +678,20 @@ export async function POST(request: Request) {
         },
       });
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         acknowledged: true,
       });
+
+      if (guestSessionUserId) {
+        response.cookies.set(
+          CUSTOMER_SESSION_COOKIE,
+          createCustomerSessionToken(guestSessionUserId),
+          CUSTOMER_SESSION_OPTIONS,
+        );
+      }
+
+      return response;
     }
 
     return NextResponse.json(
