@@ -31,6 +31,14 @@ type CartItem = {
   resellerSetCount?: number;
   resellerSetName?: string;
   resellerSetPrice?: number;
+
+  campaignOfferId?: string;
+  campaignReward?: boolean;
+  campaignDeliveryChargeEnabled?: boolean;
+  campaignUseStoreDeliveryRules?: boolean;
+  campaignFixedDeliveryCharge?: number | null;
+  campaignCodAllowed?: boolean;
+  campaignOnlinePaymentAllowed?: boolean;
 };
 
 type ToastState = {
@@ -54,6 +62,15 @@ function isSmartPackItem(
     item.mode === "RESELLER" &&
     item.smartStockBalance === true &&
     !item.resellerSetId
+  );
+}
+
+function isCampaignRewardItem(
+  item: CartItem,
+) {
+  return Boolean(
+    item.campaignOfferId &&
+      item.campaignReward === true,
   );
 }
 
@@ -165,6 +182,20 @@ export default function CartPage() {
         "ERROR",
         "Smart Pack Locked",
         "Change the number of Smart Packs from the product page.",
+      );
+      return;
+    }
+
+    if (
+      current &&
+      isCampaignRewardItem(
+        current,
+      )
+    ) {
+      notify(
+        "ERROR",
+        "Free Gift Locked",
+        "Campaign reward quantity is fixed at 1.",
       );
       return;
     }
@@ -598,16 +629,51 @@ export default function CartPage() {
     invalidResellerGroups.length ===
       0;
 
+  const campaignReward =
+    cart.find(
+      (item) =>
+        isCampaignRewardItem(
+          item,
+        ),
+    ) ?? null;
+
+  const campaignOnlyOrder =
+    Boolean(
+      campaignReward &&
+        cart.every(
+          (item) =>
+            isCampaignRewardItem(
+              item,
+            ),
+        ),
+    );
+
   /*
    * Cart shows a quick delivery estimate.
-   * Checkout performs the final server
-   * validated delivery calculation.
+   * Checkout and the server perform the
+   * final campaign-aware calculation.
    */
   const delivery =
-    subtotal >= 999 ||
-    subtotal === 0
-      ? 0
-      : 79;
+    campaignOnlyOrder &&
+    campaignReward
+      ? !campaignReward
+          .campaignDeliveryChargeEnabled
+        ? 0
+        : campaignReward
+              .campaignUseStoreDeliveryRules
+          ? 79
+          : Math.max(
+              0,
+              Number(
+                campaignReward
+                  .campaignFixedDeliveryCharge ??
+                  0,
+              ) || 0,
+            )
+      : subtotal >= 999 ||
+          subtotal === 0
+        ? 0
+        : 79;
 
   const total =
     subtotal +
@@ -962,6 +1028,14 @@ export default function CartPage() {
                                         Set Item
                                       </span>
                                     )}
+
+                                    {isCampaignRewardItem(
+                                      item,
+                                    ) ? (
+                                      <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[6px] font-black uppercase tracking-[0.12em] text-amber-700">
+                                        Free Reward
+                                      </span>
+                                    ) : null}
                                   </div>
 
                                   <button
@@ -1040,9 +1114,13 @@ export default function CartPage() {
                                       </p>
 
                                       <p className="mt-1 text-[14px] font-black">
-                                        {money(
-                                          item.price,
-                                        )}
+                                        {isCampaignRewardItem(
+                                          item,
+                                        )
+                                          ? "FREE"
+                                          : money(
+                                              item.price,
+                                            )}
                                       </p>
                                     </>
                                   )}
@@ -1054,6 +1132,18 @@ export default function CartPage() {
                                     {
                                       item.quantity
                                     }
+                                  </div>
+                                ) : isCampaignRewardItem(
+                                    item,
+                                  ) ? (
+                                  <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-2 text-center">
+                                    <p className="text-[8px] font-black uppercase tracking-wider text-amber-700">
+                                      Free Gift
+                                    </p>
+
+                                    <p className="mt-0.5 text-sm font-black text-amber-900">
+                                      Qty 1
+                                    </p>
                                   </div>
                                 ) : item.smartStockBalance ? (
                                   <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-2 text-center">
@@ -1112,9 +1202,13 @@ export default function CartPage() {
                                 </span>
 
                                 <span className="text-[15px] font-black">
-                                  {money(
-                                    lineTotal,
-                                  )}
+                                  {isCampaignRewardItem(
+                                    item,
+                                  )
+                                    ? "FREE"
+                                    : money(
+                                        lineTotal,
+                                      )}
                                 </span>
                               </div>
 
