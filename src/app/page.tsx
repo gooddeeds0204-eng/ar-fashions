@@ -3253,7 +3253,7 @@ export default function Home() {
               router.push(
                 mode === "RESELLER"
                   ? "/reseller-sets"
-                  : "/account",
+                  : "/reseller-apply",
               )
             }
             className="relative min-h-[190px] overflow-hidden rounded-[0.95rem] border border-[#DECDB6] bg-[linear-gradient(120deg,#F3E7D5,#E5D1B6)] text-left text-[#211C18] sm:min-h-[240px]"
