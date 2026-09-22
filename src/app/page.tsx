@@ -3074,65 +3074,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* TRUST STRIP */}
-      <section className="border-b border-[#E6DBCD] bg-[#F8F1E7]">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 px-4 sm:grid-cols-4 sm:px-6 lg:px-8">
-          {[
-            {
-              key: "COD" as BenefitKey,
-              icon: "truck" as const,
-              title: siteSettings.codEnabled
-                ? "Cash on Delivery"
-                : "Easy Checkout",
-              subtitle: siteSettings.codEnabled
-                ? "Pay when delivered"
-                : "Simple order flow",
-            },
-            {
-              key: "QUALITY" as BenefitKey,
-              icon: "shield" as const,
-              title: "Premium Quality",
-              subtitle: "AS curated fashion",
-            },
-            {
-              key: "RESELLER" as BenefitKey,
-              icon: "box" as const,
-              title: "Retail + Reseller",
-              subtitle: "Two shopping modes",
-            },
-            {
-              key: "SUPPORT" as BenefitKey,
-              icon: "users" as const,
-              title: "Customer Support",
-              subtitle: "Help when you need it",
-            },
-          ].map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() =>
-                setSelectedBenefit(item.key)
-              }
-              className="flex min-h-[78px] items-center gap-3 border-[#E5D9C9] px-2 py-4 text-left even:border-l sm:min-h-[86px] sm:border-l sm:px-5 sm:first:border-l-0"
-            >
-              <StoreIcon
-                name={item.icon}
-                className="h-7 w-7 shrink-0 text-[#1F1A16]"
-              />
-              <span>
-                <span className="block text-[9px] font-black text-[#211C18] sm:text-[10px]">
-                  {item.title}
-                </span>
-                <span className="mt-1 block text-[7px] font-medium text-[#7B7066] sm:text-[8px]">
-                  {item.subtitle}
-                </span>
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
-
-
       <CampaignOfferSection />
 
       <PromoSlot
@@ -3346,6 +3287,64 @@ export default function Home() {
         className="pb-6 sm:pb-10"
       />
 
+
+      {/* TRUST STRIP — BOTTOM */}
+      <section className="border-b border-[#E6DBCD] bg-[#F8F1E7]">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 px-4 sm:grid-cols-4 sm:px-6 lg:px-8">
+          {[
+            {
+              key: "COD" as BenefitKey,
+              icon: "truck" as const,
+              title: siteSettings.codEnabled
+                ? "Cash on Delivery"
+                : "Easy Checkout",
+              subtitle: siteSettings.codEnabled
+                ? "Pay when delivered"
+                : "Simple order flow",
+            },
+            {
+              key: "QUALITY" as BenefitKey,
+              icon: "shield" as const,
+              title: "Premium Quality",
+              subtitle: "AS curated fashion",
+            },
+            {
+              key: "RESELLER" as BenefitKey,
+              icon: "box" as const,
+              title: "Retail + Reseller",
+              subtitle: "Two shopping modes",
+            },
+            {
+              key: "SUPPORT" as BenefitKey,
+              icon: "users" as const,
+              title: "Customer Support",
+              subtitle: "Help when you need it",
+            },
+          ].map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() =>
+                setSelectedBenefit(item.key)
+              }
+              className="flex min-h-[78px] items-center gap-3 border-[#E5D9C9] px-2 py-4 text-left even:border-l sm:min-h-[86px] sm:border-l sm:px-5 sm:first:border-l-0"
+            >
+              <StoreIcon
+                name={item.icon}
+                className="h-7 w-7 shrink-0 text-[#1F1A16]"
+              />
+              <span>
+                <span className="block text-[9px] font-black text-[#211C18] sm:text-[10px]">
+                  {item.title}
+                </span>
+                <span className="mt-1 block text-[7px] font-medium text-[#7B7066] sm:text-[8px]">
+                  {item.subtitle}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
 
       {/* FOOTER */}
       <footer className="border-t border-[#E4D7C4] bg-[#F4EBDD]">
