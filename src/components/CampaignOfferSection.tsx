@@ -8,6 +8,19 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
+type CampaignVariant = {
+  id: string;
+  stock: number;
+  color: {
+    id: string;
+    name: string;
+  };
+  size: {
+    id: string;
+    name: string;
+  };
+};
+
 type CampaignOffer = {
   id: string;
   title: string;
@@ -27,6 +40,8 @@ type CampaignOffer = {
   deliveryChargeEnabled: boolean;
   useStoreDeliveryRules: boolean;
   fixedDeliveryCharge: number | null;
+  codAllowed: boolean;
+  onlinePaymentAllowed: boolean;
   status:
     | "SCHEDULED"
     | "LIVE"
@@ -46,6 +61,7 @@ type CampaignOffer = {
       thumbnailUrl: string | null;
       altText: string | null;
     }>;
+    variants: CampaignVariant[];
   };
   progress: {
     loggedIn: boolean;
@@ -57,6 +73,10 @@ type CampaignOffer = {
     groupComplete: boolean;
     unlocked: boolean;
   };
+};
+
+type StoredCartItem = {
+  campaignOfferId?: string;
 };
 
 function timeParts(target: string, now: number) {
@@ -79,53 +99,102 @@ function pad(value: number) {
   return String(value).padStart(2, "0");
 }
 
+function readStoredCart() {
+  try {
+    const raw = localStorage.getItem(
+      "ar-fashions-cart",
+    );
+
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw);
+
+    return Array.isArray(parsed)
+      ? parsed
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function CampaignOfferSection() {
   const router = useRouter();
+
   const [campaign, setCampaign] =
     useState<CampaignOffer | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [now, setNow] = useState(0);
 
-  const loadCampaign = useCallback(async () => {
-    try {
-      const response = await fetch("/api/campaign-offers", {
-        cache: "no-store",
-        credentials: "same-origin",
-      });
+  const [loading, setLoading] =
+    useState(true);
 
-      const data = await response.json();
+  const [actionLoading, setActionLoading] =
+    useState(false);
 
-      if (!response.ok) {
-        throw new Error(
-          data.error ?? "Failed to load offer.",
+  const [now, setNow] =
+    useState(0);
+
+  const [rewardInCart, setRewardInCart] =
+    useState(false);
+
+  const [
+    variantPickerOpen,
+    setVariantPickerOpen,
+  ] = useState(false);
+
+  const loadCampaign =
+    useCallback(async () => {
+      try {
+        const response =
+          await fetch(
+            "/api/campaign-offers",
+            {
+              cache: "no-store",
+              credentials:
+                "same-origin",
+            },
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error ??
+              "Failed to load offer.",
+          );
+        }
+
+        setCampaign(
+          data.campaign ?? null,
         );
+      } catch (error) {
+        console.error(
+          "Campaign offer load failed:",
+          error,
+        );
+      } finally {
+        setLoading(false);
       }
-
-      setCampaign(data.campaign ?? null);
-    } catch (error) {
-      console.error("Campaign offer load failed:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    }, []);
 
   useEffect(() => {
     void loadCampaign();
   }, [loadCampaign]);
 
   useEffect(() => {
-    const tick = () => setNow(Date.now());
+    const tick = () =>
+      setNow(Date.now());
 
-    const kickoff = window.setTimeout(
-      tick,
-      0,
-    );
+    const kickoff =
+      window.setTimeout(
+        tick,
+        0,
+      );
 
-    const timer = window.setInterval(
-      tick,
-      1000,
-    );
+    const timer =
+      window.setInterval(
+        tick,
+        1000,
+      );
 
     return () => {
       window.clearTimeout(kickoff);
@@ -134,32 +203,51 @@ export default function CampaignOfferSection() {
   }, []);
 
   useEffect(() => {
-    const url = new URL(window.location.href);
-    const referralCode = url.searchParams.get("ref");
+    const url =
+      new URL(
+        window.location.href,
+      );
+
+    const referralCode =
+      url.searchParams.get("ref");
 
     if (!referralCode) {
       return;
     }
 
-    const seenKey = "ar-campaign-ref-" + referralCode;
+    const seenKey =
+      "ar-campaign-ref-" +
+      referralCode;
 
-    if (sessionStorage.getItem(seenKey) === "1") {
+    if (
+      sessionStorage.getItem(
+        seenKey,
+      ) === "1"
+    ) {
       return;
     }
 
-    sessionStorage.setItem(seenKey, "1");
+    sessionStorage.setItem(
+      seenKey,
+      "1",
+    );
 
-    void fetch("/api/campaign-offers", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    void fetch(
+      "/api/campaign-offers",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        credentials:
+          "same-origin",
+        body: JSON.stringify({
+          action: "visit",
+          referralCode,
+        }),
       },
-      credentials: "same-origin",
-      body: JSON.stringify({
-        action: "visit",
-        referralCode,
-      }),
-    })
+    )
       .then(() => loadCampaign())
       .catch((error) =>
         console.error(
@@ -173,108 +261,284 @@ export default function CampaignOfferSection() {
     window.history.replaceState(
       {},
       "",
-      url.pathname + url.search + url.hash,
+      url.pathname +
+        url.search +
+        url.hash,
     );
   }, [loadCampaign]);
 
+  useEffect(() => {
+    if (!campaign) return;
+
+    const inCart =
+      readStoredCart().some(
+        (
+          item:
+            StoredCartItem,
+        ) =>
+          item.campaignOfferId ===
+          campaign.id,
+      );
+
+    const timer =
+      window.setTimeout(
+        () =>
+          setRewardInCart(
+            inCart,
+          ),
+        0,
+      );
+
+    return () =>
+      window.clearTimeout(timer);
+  }, [campaign]);
+
   const countdown = useMemo(() => {
-    if (!campaign || now === 0) return null;
+    if (
+      !campaign ||
+      now === 0
+    ) {
+      return null;
+    }
 
     return timeParts(
-      campaign.status === "SCHEDULED"
+      campaign.status ===
+        "SCHEDULED"
         ? campaign.startsAt
         : campaign.endsAt,
       now,
     );
   }, [campaign, now]);
 
-  if (loading || !campaign) {
+  if (
+    loading ||
+    !campaign
+  ) {
     return null;
   }
 
-  const activeCampaign = campaign;
+  const activeCampaign =
+    campaign;
 
   const image =
-    campaign.product.media.find(
-      (item) => item.type === "IMAGE",
-    ) ?? campaign.product.media[0];
+    activeCampaign.product.media.find(
+      (item) =>
+        item.type === "IMAGE",
+    ) ??
+    activeCampaign.product.media[0];
+
+  const progressPercent =
+    Math.min(
+      100,
+      Math.round(
+        (
+          activeCampaign.progress
+            .qualifiedReferrals /
+          Math.max(
+            1,
+            activeCampaign
+              .requiredReferrals,
+          )
+        ) *
+          100,
+      ),
+    );
 
   const remainingClaims =
-    campaign.maxClaims === null
+    activeCampaign.maxClaims === null
       ? null
       : Math.max(
           0,
-          campaign.maxClaims - campaign.claimedCount,
+          activeCampaign.maxClaims -
+            activeCampaign.claimedCount,
         );
 
   const deliveryText =
-    !campaign.deliveryChargeEnabled
-      ? "FREE DELIVERY"
-      : campaign.useStoreDeliveryRules
-        ? "DELIVERY AS PER STORE RULES"
-        : "DELIVERY ₹" +
+    !activeCampaign
+      .deliveryChargeEnabled
+      ? "Free delivery"
+      : activeCampaign
+          .useStoreDeliveryRules
+        ? "Normal delivery"
+        : "Delivery ₹" +
           Number(
-            campaign.fixedDeliveryCharge ?? 0,
-          ).toLocaleString("en-IN");
+            activeCampaign
+              .fixedDeliveryCharge ??
+              0,
+          ).toLocaleString(
+            "en-IN",
+          );
 
-  const progressPercent = Math.min(
-    100,
-    Math.round(
-      (campaign.progress.qualifiedReferrals /
-        Math.max(1, campaign.requiredReferrals)) *
-        100,
-    ),
-  );
+  function addRewardToCart(
+    variant: CampaignVariant,
+  ) {
+    const current =
+      readStoredCart();
+
+    const next =
+      current.filter(
+        (
+          item:
+            StoredCartItem,
+        ) =>
+          item.campaignOfferId !==
+          activeCampaign.id,
+      );
+
+    next.push({
+      id:
+        "campaign-" +
+        activeCampaign.id +
+        "-" +
+        variant.id,
+      productId:
+        activeCampaign.product.id,
+      productName:
+        activeCampaign.product.name,
+      image:
+        image?.thumbnailUrl ??
+        image?.url ??
+        null,
+      variantId:
+        variant.id,
+      colorId:
+        variant.color.id,
+      colorName:
+        variant.color.name,
+      sizeId:
+        variant.size.id,
+      sizeName:
+        variant.size.name,
+      price: 0,
+      quantity: 1,
+      mode: "RETAIL",
+      campaignOfferId:
+        activeCampaign.id,
+      campaignReward: true,
+      campaignDeliveryChargeEnabled:
+        activeCampaign
+          .deliveryChargeEnabled,
+      campaignUseStoreDeliveryRules:
+        activeCampaign
+          .useStoreDeliveryRules,
+      campaignFixedDeliveryCharge:
+        activeCampaign
+          .fixedDeliveryCharge,
+      campaignCodAllowed:
+        activeCampaign.codAllowed,
+      campaignOnlinePaymentAllowed:
+        activeCampaign
+          .onlinePaymentAllowed,
+    });
+
+    localStorage.setItem(
+      "ar-fashions-cart",
+      JSON.stringify(next),
+    );
+
+    setRewardInCart(true);
+    setVariantPickerOpen(false);
+
+    window.dispatchEvent(
+      new Event(
+        "ar-fashions-cart-updated",
+      ),
+    );
+  }
+
+  function handleUnlockedReward() {
+    if (rewardInCart) {
+      router.push("/cart");
+      return;
+    }
+
+    const variants =
+      activeCampaign.product
+        .variants.filter(
+          (variant) =>
+            variant.stock > 0,
+        );
+
+    if (variants.length === 1) {
+      addRewardToCart(
+        variants[0],
+      );
+      return;
+    }
+
+    setVariantPickerOpen(
+      true,
+    );
+  }
 
   async function shareOffer() {
-    if (!activeCampaign.progress.loggedIn) {
+    if (
+      !activeCampaign.progress
+        .loggedIn
+    ) {
       router.push("/login");
       return;
     }
 
-    if (activeCampaign.status !== "LIVE") {
+    if (
+      activeCampaign.status !==
+      "LIVE"
+    ) {
       return;
     }
 
     try {
       setActionLoading(true);
 
-      const response = await fetch("/api/campaign-offers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "same-origin",
-        body: JSON.stringify({
-          action: "share",
-          campaignId: activeCampaign.id,
-        }),
-      });
+      const response =
+        await fetch(
+          "/api/campaign-offers",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            credentials:
+              "same-origin",
+            body: JSON.stringify({
+              action: "share",
+              campaignId:
+                activeCampaign.id,
+            }),
+          },
+        );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
-      if (response.status === 401) {
+      if (
+        response.status === 401
+      ) {
         router.push("/login");
         return;
       }
 
       if (!response.ok) {
         throw new Error(
-          data.error ?? "Unable to create share link.",
+          data.error ??
+            "Unable to create share link.",
         );
       }
 
       const shareUrl =
         window.location.origin +
         "/?ref=" +
-        encodeURIComponent(data.referralCode) +
+        encodeURIComponent(
+          data.referralCode,
+        ) +
         "#campaign-offer";
 
       const text = [
         activeCampaign.title,
         activeCampaign.subtitle ||
-          "Open this AR Fashions offer.",
-        "Open my link to help me unlock the offer:",
+          "Open this AS Fashions offer.",
+        "Open my link:",
         shareUrl,
       ].join("\n");
 
@@ -293,14 +557,21 @@ export default function CampaignOfferSection() {
   }
 
   async function joinGroup() {
-    if (!activeCampaign.progress.loggedIn) {
+    if (
+      !activeCampaign.progress
+        .loggedIn
+    ) {
       router.push("/login");
       return;
     }
 
-    if (activeCampaign.whatsappGroupUrl) {
+    if (
+      activeCampaign
+        .whatsappGroupUrl
+    ) {
       window.open(
-        activeCampaign.whatsappGroupUrl,
+        activeCampaign
+          .whatsappGroupUrl,
         "_blank",
         "noopener,noreferrer",
       );
@@ -309,23 +580,32 @@ export default function CampaignOfferSection() {
     try {
       setActionLoading(true);
 
-      const response = await fetch("/api/campaign-offers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "same-origin",
-        body: JSON.stringify({
-          action: "group-ack",
-          campaignId: activeCampaign.id,
-        }),
-      });
+      const response =
+        await fetch(
+          "/api/campaign-offers",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            credentials:
+              "same-origin",
+            body: JSON.stringify({
+              action: "group-ack",
+              campaignId:
+                activeCampaign.id,
+            }),
+          },
+        );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.error ?? "Unable to update group step.",
+          data.error ??
+            "Unable to update group step.",
         );
       }
 
@@ -341,257 +621,319 @@ export default function CampaignOfferSection() {
     }
   }
 
+  const unlocked =
+    activeCampaign.progress
+      .unlocked;
+
+  const compactTime =
+    countdown
+      ? [
+          countdown.days > 0
+            ? String(countdown.days) +
+              "d"
+            : null,
+          pad(
+            countdown.hours,
+          ) +
+            ":" +
+            pad(
+              countdown.minutes,
+            ) +
+            ":" +
+            pad(
+              countdown.seconds,
+            ),
+        ]
+          .filter(Boolean)
+          .join(" ")
+      : "";
+
   return (
     <section
       id="campaign-offer"
-      className="border-y border-[#D9C29A]/20 bg-[#031B14] px-4 py-8 text-[#FFF8EC] sm:px-6 sm:py-12"
+      className="mx-auto max-w-7xl px-4 pb-5 sm:px-6 lg:px-8"
     >
-      <div className="mx-auto max-w-7xl">
-        {campaign.announcementText ? (
-          <div className="mb-4 flex items-center justify-center gap-2 rounded-full border border-[#D9C29A]/20 bg-[#D9C29A]/[0.08] px-4 py-2 text-center text-[8px] font-black uppercase tracking-[0.18em] text-[#E5D0AC]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
-            {campaign.announcementText}
-          </div>
-        ) : null}
+      {activeCampaign
+        .announcementText ? (
+        <div className="mb-2 flex min-h-8 items-center justify-center gap-2 rounded-full border border-[#D4AF37]/20 bg-[#06261D] px-3 text-center text-[7px] font-black uppercase tracking-[0.16em] text-[#DFC995]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
+          {
+            activeCampaign
+              .announcementText
+          }
+        </div>
+      ) : null}
 
-        <div className="overflow-hidden rounded-[1.8rem] border border-white/10 bg-[radial-gradient(circle_at_80%_8%,rgba(212,175,55,0.16),transparent_30%),linear-gradient(145deg,#0B3528,#031B14_68%)] shadow-[0_28px_80px_rgba(0,0,0,0.24)]">
-          <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="relative min-h-[330px] overflow-hidden bg-[#102B22] sm:min-h-[440px]">
-              {image?.type === "VIDEO" ? (
-                <video
-                  src={image.url}
-                  muted
-                  autoPlay
-                  loop
-                  playsInline
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : image ? (
-                <img
-                  src={image.url}
-                  alt={image.altText ?? campaign.product.name}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 grid place-items-center bg-[linear-gradient(145deg,#183D30,#09231B)] font-serif text-7xl text-[#D9C29A]">
-                  AS
-                </div>
-              )}
-
-              <div className="absolute inset-0 bg-gradient-to-t from-[#031B14]/85 via-transparent to-black/10" />
-
-              <div className="absolute left-5 top-5 rounded-full border border-white/15 bg-black/35 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.18em] backdrop-blur">
-                {campaign.badgeText}
+      <div className="overflow-hidden rounded-[1.25rem] border border-white/10 bg-[#06261D] text-white shadow-[0_14px_34px_rgba(0,0,0,0.14)]">
+        <div className="flex gap-3 p-3 sm:items-center sm:p-4">
+          <div className="relative h-[112px] w-[88px] shrink-0 overflow-hidden rounded-[0.9rem] bg-[#15372D] sm:h-[126px] sm:w-[100px]">
+            {image?.type ===
+            "VIDEO" ? (
+              <video
+                src={image.url}
+                muted
+                autoPlay
+                loop
+                playsInline
+                className="h-full w-full object-cover"
+              />
+            ) : image ? (
+              <img
+                src={image.url}
+                alt={
+                  image.altText ??
+                  activeCampaign
+                    .product.name
+                }
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="grid h-full place-items-center font-serif text-3xl text-[#D9C29A]">
+                AS
               </div>
+            )}
 
-              <div className="absolute bottom-5 left-5 right-5">
-                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#D9C29A]">
-                  Selected Reward
+            <span className="absolute left-2 top-2 rounded-full bg-black/55 px-2 py-1 text-[6px] font-black uppercase tracking-[0.1em] backdrop-blur">
+              {
+                activeCampaign
+                  .badgeText
+              }
+            </span>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[7px] font-black uppercase tracking-[0.18em] text-[#D4AF37]">
+                  Free Gift Offer
                 </p>
-                <h3 className="mt-2 font-serif text-3xl leading-none">
-                  {campaign.product.name}
-                </h3>
 
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="text-sm text-white/55 line-through">
+                <h2 className="mt-1 truncate font-serif text-[1.45rem] leading-none">
+                  {
+                    activeCampaign
+                      .title
+                  }
+                </h2>
+
+                <p className="mt-1 truncate text-[9px] text-white/48">
+                  {
+                    activeCampaign
+                      .product.name
+                  }{" "}
+                  <span className="line-through">
                     ₹
-                    {campaign.product.retailPrice.toLocaleString(
+                    {activeCampaign.product.retailPrice.toLocaleString(
                       "en-IN",
                     )}
                   </span>
-                  <span className="rounded-full bg-[#D4AF37] px-3 py-1 text-[10px] font-black text-[#031B14]">
-                    PRODUCT ₹0
+                  <span className="ml-1 font-black text-[#D4AF37]">
+                    FREE
                   </span>
+                </p>
+              </div>
+
+              {activeCampaign
+                .showCountdown &&
+              compactTime ? (
+                <div className="shrink-0 rounded-xl border border-white/10 bg-white/[0.05] px-2.5 py-2 text-right">
+                  <p className="text-[6px] font-black uppercase tracking-[0.12em] text-white/35">
+                    {activeCampaign.status ===
+                    "SCHEDULED"
+                      ? "Opens"
+                      : "Ends"}
+                  </p>
+                  <p className="mt-0.5 text-[10px] font-black text-[#F4E7C8]">
+                    {compactTime}
+                  </p>
                 </div>
+              ) : null}
+            </div>
+
+            <div className="mt-3">
+              <div className="flex items-center justify-between text-[8px] font-bold">
+                <span className="text-white/52">
+                  {
+                    activeCampaign
+                      .progress
+                      .qualifiedReferrals
+                  }
+                  /
+                  {
+                    activeCampaign
+                      .requiredReferrals
+                  }{" "}
+                  friends
+                </span>
+                <span className="text-[#D4AF37]">
+                  {progressPercent}%
+                </span>
+              </div>
+
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full bg-[#D4AF37] transition-all duration-500"
+                  style={{
+                    width:
+                      progressPercent +
+                      "%",
+                  }}
+                />
               </div>
             </div>
 
-            <div className="p-5 sm:p-8 lg:p-10">
-              <p className="text-[9px] font-black uppercase tracking-[0.28em] text-[#D4AF37]">
-                Limited Campaign
-              </p>
-
-              <h2 className="mt-3 font-serif text-[2.45rem] leading-[0.95] sm:text-[3.2rem]">
-                {campaign.title}
-              </h2>
-
-              {campaign.subtitle ? (
-                <p className="mt-4 max-w-xl text-sm leading-6 text-white/58">
-                  {campaign.subtitle}
-                </p>
-              ) : null}
-
-              {campaign.showCountdown && countdown ? (
-                <div className="mt-6">
-                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/42">
-                    {campaign.status === "SCHEDULED"
-                      ? "Opens in"
-                      : campaign.status === "LIVE"
-                        ? "Ends in"
-                        : "Campaign"}
-                  </p>
-
-                  <div className="mt-3 grid grid-cols-4 gap-2">
-                    {[
-                      [countdown.days, "Days"],
-                      [countdown.hours, "Hours"],
-                      [countdown.minutes, "Min"],
-                      [countdown.seconds, "Sec"],
-                    ].map(([value, label]) => (
-                      <div
-                        key={String(label)}
-                        className="rounded-2xl border border-white/10 bg-white/[0.05] px-2 py-3 text-center"
-                      >
-                        <div className="font-serif text-2xl text-[#FFF8EC]">
-                          {pad(Number(value))}
-                        </div>
-                        <div className="mt-1 text-[7px] font-black uppercase tracking-wider text-white/35">
-                          {label}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="mt-6 rounded-[1.4rem] border border-white/10 bg-black/15 p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[8px] font-black uppercase tracking-[0.18em] text-white/40">
-                      Friend Unlock
-                    </p>
-                    <p className="mt-1 text-sm font-black">
-                      {campaign.progress.qualifiedReferrals} /{" "}
-                      {campaign.requiredReferrals} friends opened your link
-                    </p>
-                  </div>
-
-                  <span className="text-lg font-black text-[#D4AF37]">
-                    {progressPercent}%
-                  </span>
-                </div>
-
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-[#D4AF37] transition-all duration-500"
-                    style={{
-                      width: progressPercent + "%",
-                    }}
-                  />
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2 text-[8px] font-black uppercase tracking-[0.08em]">
-                  <span
-                    className={
-                      campaign.progress.referralsComplete
-                        ? "rounded-full bg-emerald-400/15 px-3 py-1.5 text-emerald-300"
-                        : "rounded-full bg-white/[0.06] px-3 py-1.5 text-white/45"
-                    }
-                  >
-                    {campaign.progress.referralsComplete
-                      ? "✓ Friends Complete"
-                      : "Share with " + campaign.requiredReferrals}
-                  </span>
-
-                  {campaign.whatsappGroupJoinRequired ? (
-                    <span
-                      className={
-                        campaign.progress.groupJoinAcknowledged
-                          ? "rounded-full bg-emerald-400/15 px-3 py-1.5 text-emerald-300"
-                          : "rounded-full bg-white/[0.06] px-3 py-1.5 text-white/45"
-                      }
-                    >
-                      {campaign.progress.groupJoinAcknowledged
-                        ? "✓ Group Step Done"
-                        : "Join WhatsApp Group"}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-2 sm:grid-cols-2">
-                <button
-                  type="button"
-                  disabled={
-                    actionLoading ||
-                    campaign.status !== "LIVE"
-                  }
-                  onClick={shareOffer}
-                  className="rounded-2xl bg-[#25D366] px-4 py-4 text-[10px] font-black uppercase tracking-[0.08em] text-[#052014] disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {campaign.progress.loggedIn
-                    ? "Share on WhatsApp →"
-                    : "Login to Unlock →"}
-                </button>
-
-                {campaign.whatsappGroupJoinRequired ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {!unlocked ? (
+                <>
                   <button
                     type="button"
                     disabled={
                       actionLoading ||
-                      campaign.status !== "LIVE"
+                      activeCampaign
+                        .status !==
+                        "LIVE"
                     }
-                    onClick={joinGroup}
-                    className="rounded-2xl border border-[#D9C29A]/25 bg-[#D9C29A]/[0.08] px-4 py-4 text-[10px] font-black uppercase tracking-[0.08em] text-[#E5D0AC] disabled:opacity-40"
-                  >
-                    {campaign.progress.groupJoinAcknowledged
-                      ? "Group Step ✓"
-                      : "Join WhatsApp Group →"}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      router.push(
-                        "/products/" + campaign.product.id,
-                      )
+                    onClick={
+                      shareOffer
                     }
-                    className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-4 text-[10px] font-black uppercase tracking-[0.08em] text-white/75"
+                    className="min-h-9 flex-1 rounded-xl bg-[#25D366] px-3 text-[8px] font-black uppercase tracking-[0.06em] text-[#052014] disabled:opacity-40"
                   >
-                    View Product →
+                    {activeCampaign
+                      .progress
+                      .loggedIn
+                      ? "Share on WhatsApp"
+                      : "Login to Unlock"}
                   </button>
-                )}
-              </div>
 
-              <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[8px] font-bold uppercase tracking-[0.1em] text-white/38">
-                <span>{deliveryText}</span>
-                {remainingClaims !== null ? (
-                  <span>{remainingClaims} claims left</span>
-                ) : null}
-                <span>{campaign.availableStock} pcs available</span>
-              </div>
-
-              {campaign.status === "SCHEDULED" ? (
-                <p className="mt-4 rounded-xl border border-[#D4AF37]/15 bg-[#D4AF37]/[0.06] px-4 py-3 text-[10px] font-semibold leading-5 text-[#E5D0AC]">
-                  Sharing opens automatically when the campaign timer reaches
-                  zero.
-                </p>
-              ) : null}
-
-              {campaign.status === "SOLD_OUT" ? (
-                <p className="mt-4 rounded-xl border border-red-300/15 bg-red-300/[0.06] px-4 py-3 text-[10px] font-semibold text-red-100">
-                  All campaign claims have been used.
-                </p>
-              ) : null}
-
-              {campaign.progress.unlocked ? (
-                <div className="mt-5 rounded-2xl border border-emerald-300/20 bg-emerald-300/[0.08] p-4">
-                  <p className="text-sm font-black text-emerald-200">
-                    Reward unlocked ✓
-                  </p>
-                  <p className="mt-1 text-[10px] leading-5 text-white/48">
-                    Your referral and WhatsApp steps are complete. Your
-                    protected claim checkout is the next campaign step.
-                  </p>
-                </div>
-              ) : null}
-
-              <p className="mt-5 text-[8px] leading-4 text-white/30">
-                Unique visitors are counted once per campaign. Self-referrals
-                and repeat opens do not increase progress.
-              </p>
+                  {activeCampaign
+                    .whatsappGroupJoinRequired ? (
+                    <button
+                      type="button"
+                      disabled={
+                        actionLoading ||
+                        activeCampaign
+                          .status !==
+                          "LIVE"
+                      }
+                      onClick={
+                        joinGroup
+                      }
+                      className="min-h-9 flex-1 rounded-xl border border-[#D9C29A]/25 bg-white/[0.04] px-3 text-[8px] font-black uppercase tracking-[0.05em] text-[#E5D0AC] disabled:opacity-40"
+                    >
+                      {activeCampaign
+                        .progress
+                        .groupJoinAcknowledged
+                        ? "Group ✓"
+                        : "Join Group"}
+                    </button>
+                  ) : null}
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={
+                    handleUnlockedReward
+                  }
+                  className="min-h-10 w-full rounded-xl bg-[#D4AF37] px-4 text-[9px] font-black uppercase tracking-[0.07em] text-[#031B14]"
+                >
+                  {rewardInCart
+                    ? "Reward in Cart · View Cart →"
+                    : activeCampaign
+                          .product
+                          .variants
+                          .length > 1
+                      ? "Unlocked · Choose Size →"
+                      : "Unlocked · Add Free Gift →"}
+                </button>
+              )}
             </div>
           </div>
+        </div>
+
+        {variantPickerOpen &&
+        unlocked &&
+        !rewardInCart ? (
+          <div className="border-t border-white/10 px-3 py-3 sm:px-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[8px] font-black uppercase tracking-[0.12em] text-[#D9C29A]">
+                Select colour / size
+              </p>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setVariantPickerOpen(
+                    false,
+                  )
+                }
+                className="text-[9px] text-white/40"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-2 flex flex-wrap gap-2">
+              {activeCampaign.product.variants
+                .filter(
+                  (variant) =>
+                    variant.stock >
+                    0,
+                )
+                .map(
+                  (variant) => (
+                    <button
+                      key={
+                        variant.id
+                      }
+                      type="button"
+                      onClick={() =>
+                        addRewardToCart(
+                          variant,
+                        )
+                      }
+                      className="rounded-full border border-white/15 bg-white/[0.05] px-3 py-2 text-[8px] font-bold text-white/75"
+                    >
+                      {
+                        variant
+                          .color
+                          .name
+                      }{" "}
+                      ·{" "}
+                      {
+                        variant.size
+                          .name
+                      }
+                    </button>
+                  ),
+                )}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/[0.07] px-3 py-2 text-[6.5px] font-bold uppercase tracking-[0.08em] text-white/35 sm:px-4">
+          <span>
+            {deliveryText}
+          </span>
+
+          {remainingClaims !==
+          null ? (
+            <span>
+              {remainingClaims} left
+            </span>
+          ) : null}
+
+          <span>
+            {
+              activeCampaign
+                .availableStock
+            }{" "}
+            pcs
+          </span>
+
+          {rewardInCart ? (
+            <span className="text-emerald-300">
+              ✓ Added to cart
+            </span>
+          ) : null}
         </div>
       </div>
     </section>
