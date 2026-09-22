@@ -874,34 +874,36 @@ export default function CampaignOfferSection() {
                   }
                 </h2>
 
-                <p className="mt-1 truncate text-[9px] text-white/48">
-                  {
-                    activeCampaign
-                      .product.name
-                  }{" "}
-                  <span className="line-through">
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <span className="max-w-[9rem] truncate text-[9px] text-white/52 sm:max-w-none">
+                    {
+                      activeCampaign
+                        .product.name
+                    }
+                  </span>
+                  <span className="text-[9px] text-white/38 line-through">
                     ₹
                     {activeCampaign.product.retailPrice.toLocaleString(
                       "en-IN",
                     )}
                   </span>
-                  <span className="ml-1 font-black text-[#D4AF37]">
+                  <span className="rounded-full bg-[#D4AF37] px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.08em] text-[#031B14] shadow-[0_4px_14px_rgba(212,175,55,0.24)]">
                     FREE
                   </span>
-                </p>
+                </div>
               </div>
 
               {activeCampaign
                 .showCountdown &&
               compactTime ? (
-                <div className="shrink-0 rounded-xl border border-white/10 bg-white/[0.05] px-2.5 py-2 text-right">
-                  <p className="text-[6px] font-black uppercase tracking-[0.12em] text-white/35">
+                <div className="shrink-0 rounded-[0.9rem] border border-[#D4AF37]/20 bg-[#0B3025] px-3 py-2.5 text-center shadow-[0_8px_22px_rgba(0,0,0,0.12)]">
+                  <p className="text-[7px] font-black uppercase tracking-[0.16em] text-[#D9C29A]">
                     {activeCampaign.status ===
                     "SCHEDULED"
-                      ? "Opens"
-                      : "Ends"}
+                      ? "Opens In"
+                      : "Ends In"}
                   </p>
-                  <p className="mt-0.5 text-[10px] font-black text-[#F4E7C8]">
+                  <p className="mt-1 whitespace-nowrap font-serif text-[15px] font-bold leading-none tracking-[0.02em] text-[#FFF3D6] sm:text-[17px]">
                     {compactTime}
                   </p>
                 </div>
@@ -986,8 +988,8 @@ export default function CampaignOfferSection() {
                     {activeCampaign
                       .progress
                       .loggedIn
-                      ? "Share on WhatsApp"
-                      : "Login to Unlock"}
+                      ? "Share to Unlock Free Gift"
+                      : "Login to Unlock Free Gift"}
                   </button>
 
                   {activeCampaign
