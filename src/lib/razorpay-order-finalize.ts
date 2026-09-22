@@ -225,6 +225,22 @@ export async function finalizeRazorpayPayment(
         },
       });
 
+      await tx.campaignClaim.updateMany({
+        where: {
+          orderId:
+            currentPayment
+              .order.id,
+          status:
+            "PENDING",
+        },
+        data: {
+          status:
+            "CLAIMED",
+          claimedAt:
+            new Date(),
+        },
+      });
+
       return {
         orderId:
           updatedOrder.id,
@@ -315,6 +331,19 @@ export async function refundAndCancelRazorpayOrder(
           .notes
           ? `${payment.order.notes}\n${input.reason}`
           : input.reason,
+      },
+    }),
+
+    prisma.campaignClaim.updateMany({
+      where: {
+        orderId:
+          payment.orderId,
+        status:
+          "PENDING",
+      },
+      data: {
+        status:
+          "CANCELLED",
       },
     }),
   ]);
