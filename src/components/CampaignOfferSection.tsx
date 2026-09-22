@@ -295,6 +295,31 @@ export default function CampaignOfferSection() {
       window.clearTimeout(timer);
   }, [campaign]);
 
+  useEffect(() => {
+    if (
+      !campaign ||
+      !campaign.progress.loggedIn ||
+      campaign.status !== "LIVE" ||
+      campaign.progress.alreadyClaimed ||
+      campaign.progress.claimInProgress
+    ) {
+      return;
+    }
+
+    const poller = window.setInterval(
+      () => {
+        void loadCampaign();
+      },
+      5000,
+    );
+
+    return () =>
+      window.clearInterval(poller);
+  }, [
+    campaign,
+    loadCampaign,
+  ]);
+
   const countdown = useMemo(() => {
     if (
       !campaign ||
@@ -311,6 +336,138 @@ export default function CampaignOfferSection() {
       now,
     );
   }, [campaign, now]);
+
+  useEffect(() => {
+    if (
+      !campaign ||
+      !campaign.progress.unlocked ||
+      campaign.progress.alreadyClaimed ||
+      campaign.progress.claimInProgress ||
+      rewardInCart
+    ) {
+      return;
+    }
+
+    const availableVariants =
+      campaign.product.variants.filter(
+        (variant) =>
+          variant.stock > 0,
+      );
+
+    if (availableVariants.length === 0) {
+      return;
+    }
+
+    const timer = window.setTimeout(
+      () => {
+        if (availableVariants.length === 1) {
+          const variant =
+            availableVariants[0];
+
+          const current =
+            readStoredCart();
+
+          const alreadyThere =
+            current.some(
+              (
+                item:
+                  StoredCartItem,
+              ) =>
+                item.campaignOfferId ===
+                campaign.id,
+            );
+
+          if (alreadyThere) {
+            setRewardInCart(true);
+            return;
+          }
+
+          const media =
+            campaign.product.media.find(
+              (item) =>
+                item.type === "IMAGE",
+            ) ??
+            campaign.product.media[0];
+
+          const next =
+            current.filter(
+              (
+                item:
+                  StoredCartItem,
+              ) =>
+                item.campaignOfferId !==
+                campaign.id,
+            );
+
+          next.push({
+            id:
+              "campaign-" +
+              campaign.id +
+              "-" +
+              variant.id,
+            productId:
+              campaign.product.id,
+            productName:
+              campaign.product.name,
+            image:
+              media?.thumbnailUrl ??
+              media?.url ??
+              null,
+            variantId:
+              variant.id,
+            colorId:
+              variant.color.id,
+            colorName:
+              variant.color.name,
+            sizeId:
+              variant.size.id,
+            sizeName:
+              variant.size.name,
+            price: 0,
+            quantity: 1,
+            mode: "RETAIL",
+            campaignOfferId:
+              campaign.id,
+            campaignReward: true,
+            campaignDeliveryChargeEnabled:
+              campaign.deliveryChargeEnabled,
+            campaignUseStoreDeliveryRules:
+              campaign.useStoreDeliveryRules,
+            campaignFixedDeliveryCharge:
+              campaign.fixedDeliveryCharge,
+            campaignCodAllowed:
+              campaign.codAllowed,
+            campaignOnlinePaymentAllowed:
+              campaign.onlinePaymentAllowed,
+          });
+
+          localStorage.setItem(
+            "ar-fashions-cart",
+            JSON.stringify(next),
+          );
+
+          setRewardInCart(true);
+
+          window.dispatchEvent(
+            new Event(
+              "ar-fashions-cart-updated",
+            ),
+          );
+
+          return;
+        }
+
+        setVariantPickerOpen(true);
+      },
+      0,
+    );
+
+    return () =>
+      window.clearTimeout(timer);
+  }, [
+    campaign,
+    rewardInCart,
+  ]);
 
   if (
     loading ||
