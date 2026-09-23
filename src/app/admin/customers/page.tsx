@@ -1104,6 +1104,28 @@ export default function AdminCustomersPage() {
                     </span>
                   </div>
 
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(
+                        `/admin/customers/${customer.id}`,
+                      )
+                    }
+                    className="mt-4 flex w-full items-center justify-between rounded-2xl border border-[#D4AF37]/25 bg-[#D4AF37]/[0.07] px-4 py-3 text-left transition hover:border-[#D4AF37]/50"
+                  >
+                    <span>
+                      <span className="block text-[9px] font-black uppercase tracking-[0.18em] text-[#8A6E1C]">
+                        Customer 360°
+                      </span>
+                      <span className="mt-1 block text-[10px] text-zinc-500">
+                        Profile · addresses · orders · wishlist · reviews · reseller data
+                      </span>
+                    </span>
+                    <span className="text-lg text-[#8A6E1C]">
+                      →
+                    </span>
+                  </button>
+
                   <div className="mt-5 border-t border-black/5 pt-5">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
