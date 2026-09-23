@@ -1854,6 +1854,9 @@ export default function ProductDetailPage() {
                         variant.color.id === color.id,
                     );
 
+                  const colorImage =
+                    imageForColor(color.id);
+
                   return (
                     <div
                       key={color.id}
@@ -1861,14 +1864,43 @@ export default function ProductDetailPage() {
                     >
                       <div className="mb-4 flex items-center justify-between gap-3">
                         <div className="flex min-w-0 items-center gap-3">
-                          <span
-                            className="h-8 w-8 shrink-0 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.12)]"
-                            style={{
-                              background:
-                                color.hexCode ||
-                                "#d4d4d8",
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedColorId(
+                                color.id,
+                              );
+                              setSelectedMedia(0);
                             }}
-                          />
+                            className="relative h-16 w-14 shrink-0 overflow-hidden rounded-xl border border-[#E4D7C4] bg-[#F4EBDD]"
+                            aria-label={`View ${color.name} product image`}
+                          >
+                            {colorImage ? (
+                              <img
+                                src={colorImage}
+                                alt={`${product.name} - ${color.name}`}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <span
+                                className="absolute inset-0"
+                                style={{
+                                  background:
+                                    color.hexCode ||
+                                    "#d4d4d8",
+                                }}
+                              />
+                            )}
+
+                            <span
+                              className="absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border border-white shadow"
+                              style={{
+                                background:
+                                  color.hexCode ||
+                                  "#d4d4d8",
+                              }}
+                            />
+                          </button>
 
                           <div className="min-w-0">
                             <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#9A7518]">
@@ -1878,6 +1910,19 @@ export default function ProductDetailPage() {
                             <p className="truncate text-sm font-black text-[#211C18]">
                               {color.name}
                             </p>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedColorId(
+                                  color.id,
+                                );
+                                setSelectedMedia(0);
+                              }}
+                              className="mt-1 text-[9px] font-black uppercase tracking-[0.08em] text-[#0D5A43] underline underline-offset-2"
+                            >
+                              View Product
+                            </button>
                           </div>
                         </div>
 
