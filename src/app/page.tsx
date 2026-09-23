@@ -3440,6 +3440,28 @@ export default function Home() {
             </button>
           </div>
 
+          <div className="mt-5 flex flex-wrap justify-center gap-x-4 gap-y-2 text-[8px] font-semibold text-[#8C8177]">
+            {[
+              ["About", "/about"],
+              ["Contact", "/contact"],
+              ["Privacy", "/privacy"],
+              ["Terms", "/terms"],
+              ["Returns & Refunds", "/returns-refunds"],
+              ["Shipping", "/shipping-policy"],
+            ].map(([label, href]) => (
+              <button
+                key={href}
+                type="button"
+                onClick={() =>
+                  router.push(href)
+                }
+                className="transition hover:text-[#D4AF37]"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           <p className="mt-8 text-[7px] text-[#7B7066]">
             © 2026 AS Fashions
           </p>
