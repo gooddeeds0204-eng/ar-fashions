@@ -2,6 +2,7 @@
 
 import {
   FormEvent,
+  Suspense,
   useState,
 } from "react";
 import {
@@ -10,7 +11,7 @@ import {
 } from "next/navigation";
 import BrandLogo from "@/components/BrandLogo";
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const router =
     useRouter();
   const searchParams =
@@ -221,5 +222,22 @@ export default function ResetPasswordPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#FAF7F0] p-6 text-[#211C18]">
+          <div className="mx-auto max-w-md rounded-2xl bg-white p-8 text-center text-sm">
+            Loading secure reset...
+          </div>
+        </main>
+      }
+    >
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
