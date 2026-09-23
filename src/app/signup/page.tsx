@@ -669,10 +669,10 @@ export default function SignupPage() {
                   className={inputClass}
                 />
 
-                <div className="rounded-2xl border border-[#D4AF37]/20 bg-[#D4AF37]/[0.05] p-4">
+                <div className="rounded-2xl border border-[#D9C29A] bg-[#FBF5EA] p-4 shadow-[0_8px_22px_rgba(48,35,22,0.06)]">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-[8px] font-black uppercase tracking-[0.16em] text-[#D9C29A]">
+                      <p className="text-[8px] font-black uppercase tracking-[0.16em] text-[#9A7518]">
                         Shop Location
                       </p>
 
@@ -698,8 +698,8 @@ export default function SignupPage() {
 
                   {locationStatus ===
                   "SUCCESS" ? (
-                    <div className="mt-3 rounded-xl border border-[#D4AF37]/20 bg-black/20 p-3">
-                      <p className="text-[9px] font-bold text-[#D9C29A]">
+                    <div className="mt-3 rounded-xl border border-[#BFD2C8] bg-[#EEF5F1] p-3">
+                      <p className="text-[9px] font-bold text-[#0D5A43]">
                         ✓ Location & address filled automatically
                       </p>
 
@@ -707,7 +707,7 @@ export default function SignupPage() {
                         href={mapsUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="mt-2 inline-block text-[9px] font-black text-white underline underline-offset-4"
+                        className="mt-2 inline-block text-[9px] font-black text-[#031B14] underline underline-offset-4"
                       >
                         Preview in Google Maps ↗
                       </a>
@@ -716,8 +716,8 @@ export default function SignupPage() {
 
                   {locationStatus ===
                   "ERROR" ? (
-                    <div className="mt-3 rounded-xl border border-amber-300/15 bg-amber-400/[0.06] p-3">
-                      <p className="text-[9px] leading-4 text-amber-200">
+                    <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3">
+                      <p className="text-[9px] font-semibold leading-4 text-amber-900">
                         Location permission allow cheyyandi, taruvata button press cheyyandi.
                       </p>
                     </div>
@@ -732,12 +732,15 @@ export default function SignupPage() {
                       locationStatus ===
                       "LOADING"
                     }
-                    className="mt-3 w-full rounded-xl border border-[#D4AF37]/25 bg-[#D4AF37]/10 py-3 text-[9px] font-black uppercase tracking-wider text-[#D9C29A] disabled:opacity-40"
+                    className="mt-4 flex min-h-12 w-full items-center justify-center rounded-xl border border-[#031B14] bg-[#031B14] px-4 py-3 text-center text-[10px] font-black uppercase tracking-[0.12em] text-[#FFFDF9] shadow-[0_8px_18px_rgba(3,27,20,0.18)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:border-[#A79A89] disabled:bg-[#A79A89] disabled:text-white disabled:opacity-70"
                   >
                     {locationStatus ===
                     "SUCCESS"
                       ? "↻ Update Current Location"
-                      : "◎ Use Current Location"}
+                      : locationStatus ===
+                          "LOADING"
+                        ? "Getting Current Location..."
+                        : "◎ Use Current Location"}
                   </button>
                 </div>
               </div>
@@ -752,7 +755,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-2xl bg-white py-4 text-[11px] font-black uppercase tracking-[0.12em] text-[#031B14] transition active:scale-[0.99] disabled:opacity-40"
+              className="min-h-14 w-full rounded-2xl border border-[#031B14] bg-[#D4AF37] px-4 py-4 text-[11px] font-black uppercase tracking-[0.12em] text-[#031B14] shadow-[0_8px_18px_rgba(48,35,22,0.12)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading
                 ? "Creating Account..."
