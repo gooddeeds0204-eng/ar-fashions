@@ -165,7 +165,7 @@ export default function LoginPage() {
             </label>
 
             {error ? (
-              <div className="rounded-2xl border border-red-400/20 bg-red-500/10 p-4 text-xs font-semibold leading-5 text-red-200">
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold leading-5 text-red-700">
                 {error}
               </div>
             ) : null}
@@ -177,7 +177,7 @@ export default function LoginPage() {
                 !identifier.trim() ||
                 !password
               }
-              className="w-full rounded-2xl bg-white py-4 text-[11px] font-black uppercase tracking-[0.12em] text-[#031B14] transition active:scale-[0.99] disabled:opacity-40"
+              className="w-full rounded-2xl border border-[#031B14] bg-[#031B14] py-4 text-[11px] font-black uppercase tracking-[0.12em] text-white shadow-[0_10px_24px_rgba(3,27,20,0.14)] transition active:scale-[0.99] disabled:border-[#D8D2C8] disabled:bg-[#E7E1D8] disabled:text-[#6F675F] disabled:shadow-none disabled:opacity-100"
             >
               {loading
                 ? "Signing In..."
@@ -196,7 +196,7 @@ export default function LoginPage() {
               reseller account.
             </p>
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <button
                 type="button"
                 onClick={() =>
@@ -204,7 +204,7 @@ export default function LoginPage() {
                     "/signup",
                   )
                 }
-                className="rounded-full border border-[#D4AF37]/25 px-4 py-2.5 text-[9px] font-black uppercase tracking-wider text-[#D9C29A]"
+                className="w-full rounded-xl border border-[#0F5A38] bg-[#FFFDF9] px-4 py-3 text-[9px] font-black uppercase tracking-wider text-[#0F5A38] shadow-sm transition active:scale-[0.99]"
               >
                 Customer Sign Up →
               </button>
@@ -213,10 +213,10 @@ export default function LoginPage() {
                 type="button"
                 onClick={() =>
                   router.push(
-                    "/signup?type=retailer",
+                    "/signup?type=reseller",
                   )
                 }
-                className="rounded-full bg-[#D4AF37] px-4 py-2.5 text-[9px] font-black uppercase tracking-wider text-[#031B14]"
+                className="w-full rounded-xl border border-[#D4AF37] bg-[#D4AF37] px-4 py-3 text-[9px] font-black uppercase tracking-wider text-[#031B14] shadow-sm transition active:scale-[0.99]"
               >
                 Reseller Sign Up →
               </button>
