@@ -9,9 +9,9 @@ import { useRouter } from "next/navigation";
 import BrandLogo from "@/components/BrandLogo";
 import {
   RETAILER_CITIES,
-  normalizeRetailerState,
-  type RetailerState,
-} from "@/lib/retailer-locations";
+  normalizeResellerState,
+  type ResellerState,
+} from "@/lib/reseller-locations";
 
 type AccountType =
   | "RETAIL"
@@ -29,8 +29,11 @@ export default function SignupPage() {
     if (
       new URLSearchParams(
         window.location.search,
-      ).get("type") ===
-      "retailer"
+      ).get("type");
+
+    if (
+      requestedType === "reseller" ||
+      requestedType === "reseller"
     ) {
       setAccountType(
         "RESELLER",
@@ -69,7 +72,7 @@ export default function SignupPage() {
     useState("");
 
   const [state, setState] =
-    useState<RetailerState | "">("");
+    useState<ResellerState | "">("");
 
   const [
     detectedCity,
@@ -161,7 +164,7 @@ export default function SignupPage() {
           }
 
           const detectedState =
-            normalizeRetailerState(
+            normalizeResellerState(
               String(
                 data.state ?? "",
               ),
@@ -332,7 +335,6 @@ export default function SignupPage() {
       <div className="mx-auto max-w-lg">
         <header className="flex items-center justify-between">
           <BrandLogo
-            light
             compact
             onClick={() =>
               router.push("/")
@@ -363,7 +365,7 @@ export default function SignupPage() {
 
           <p className="mt-5 text-sm leading-6 text-[#7B7066]">
             Customer accounts shop at
-            retail prices. Retailer
+            retail prices. Reseller
             accounts unlock wholesale
             pricing only after AS Fashions
             approval.
@@ -423,11 +425,11 @@ export default function SignupPage() {
               }`}
             >
               <p className="text-[9px] font-black uppercase tracking-[0.16em]">
-                Retailer
+                Reseller
               </p>
 
               <p className="mt-2 text-sm font-black">
-                Register as Retailer
+                Register as Reseller
               </p>
 
               <p
@@ -509,7 +511,7 @@ export default function SignupPage() {
                   </p>
 
                   <p className="mt-1 text-[9px] leading-4 text-[#7B7066]">
-                    Step 1: create the retailer account with business details.
+                    Step 1: create the reseller account with business details.
                     Step 2 opens automatically for live shop location,
                     visiting card and 1–3 shop photos before review.
                   </p>
@@ -575,7 +577,7 @@ export default function SignupPage() {
                     onChange={(event) => {
                       const nextState =
                         event.target
-                          .value as RetailerState | "";
+                          .value as ResellerState | "";
 
                       setState(
                         nextState,

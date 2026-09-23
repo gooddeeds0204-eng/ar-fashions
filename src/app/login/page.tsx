@@ -88,7 +88,6 @@ export default function LoginPage() {
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-md flex-col">
         <header className="flex items-center justify-between">
           <BrandLogo
-            light
             compact
             onClick={() =>
               router.push("/")
@@ -112,7 +111,7 @@ export default function LoginPage() {
           </p>
 
           <h1 className="mt-4 font-serif text-5xl leading-[0.95]">
-            Your AR
+            Your AS
             <br />
             wardrobe awaits.
           </h1>
@@ -194,7 +193,7 @@ export default function LoginPage() {
             <p className="mt-1 text-[10px] leading-5 text-[#7B7066]">
               Create a normal customer
               account or apply for a
-              retailer account.
+              reseller account.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -219,7 +218,7 @@ export default function LoginPage() {
                 }
                 className="rounded-full bg-[#D4AF37] px-4 py-2.5 text-[9px] font-black uppercase tracking-wider text-[#031B14]"
               >
-                Retailer Sign Up →
+                Reseller Sign Up →
               </button>
             </div>
           </div>
