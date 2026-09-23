@@ -1828,9 +1828,18 @@ export default function ProductDetailPage() {
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   {colors.map((color) => (
-                    <span
+                    <button
                       key={color.id}
-                      className="inline-flex items-center gap-2 rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-3 py-2 text-[10px] font-black text-[#211C18]"
+                      type="button"
+                      onClick={() =>
+                        selectColor(color.id)
+                      }
+                      className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[10px] font-black transition active:scale-[0.98] ${
+                        selectedColorId ===
+                        color.id
+                          ? "border-[#031B14] bg-[#031B14] text-[#FFFDF9]"
+                          : "border-[#E4D7C4] bg-[#FFFDF9] text-[#211C18]"
+                      }`}
                     >
                       <span
                         className="h-4 w-4 rounded-full border border-black/10 shadow-inner"
@@ -1841,7 +1850,7 @@ export default function ProductDetailPage() {
                         }}
                       />
                       {color.name}
-                    </span>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -1866,12 +1875,9 @@ export default function ProductDetailPage() {
                         <div className="flex min-w-0 items-center gap-3">
                           <button
                             type="button"
-                            onClick={() => {
-                              setSelectedColorId(
-                                color.id,
-                              );
-                              setSelectedMedia(0);
-                            }}
+                            onClick={() =>
+                              selectColor(color.id)
+                            }
                             className="relative h-16 w-14 shrink-0 overflow-hidden rounded-xl border border-[#E4D7C4] bg-[#F4EBDD]"
                             aria-label={`View ${color.name} product image`}
                           >
@@ -1913,12 +1919,9 @@ export default function ProductDetailPage() {
 
                             <button
                               type="button"
-                              onClick={() => {
-                                setSelectedColorId(
-                                  color.id,
-                                );
-                                setSelectedMedia(0);
-                              }}
+                              onClick={() =>
+                                selectColor(color.id)
+                              }
                               className="mt-1 text-[9px] font-black uppercase tracking-[0.08em] text-[#0D5A43] underline underline-offset-2"
                             >
                               View Product
