@@ -3019,6 +3019,8 @@ export default function Home() {
         </div>
       </section>
 
+      <CampaignOfferSection />
+
       {/* ARCH CATEGORY RAIL */}
       <section
         id="shop-categories"
@@ -3075,8 +3077,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      <CampaignOfferSection />
 
       <PromoSlot
         placement="SHOP_TOP"
