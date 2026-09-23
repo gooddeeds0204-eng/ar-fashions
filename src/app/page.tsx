@@ -1816,7 +1816,7 @@ export default function Home() {
       setMode("RETAIL");
       setMenuOpen(false);
 
-      window.location.href = "/";
+      window.location.href = "/login";
     } catch (error) {
       console.error(
         "Customer logout failed:",
@@ -2442,7 +2442,9 @@ export default function Home() {
         onAccount={() => {
           setMenuOpen(false);
           router.push(
-            "/account",
+            customerLoggedIn
+              ? "/account"
+              : "/login",
           );
         }}
         onResellerDashboard={() => {

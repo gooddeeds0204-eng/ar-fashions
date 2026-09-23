@@ -327,6 +327,15 @@ export default function AccountPage() {
         const data =
           await response.json();
 
+        if (
+          response.status === 401
+        ) {
+          router.replace(
+            "/login",
+          );
+          return;
+        }
+
         if (!response.ok) {
           return;
         }
@@ -343,7 +352,7 @@ export default function AccountPage() {
     }
 
     void loadProfile();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     async function loadResellerApplicationStatus() {
@@ -584,6 +593,42 @@ export default function AccountPage() {
     profile?.isReseller
       ? "Reseller Customer"
       : "Retail Customer";
+
+  async function logoutCustomer() {
+    try {
+      const response =
+        await fetch(
+          "/api/auth/logout",
+          {
+            method: "POST",
+            credentials:
+              "same-origin",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: "{}",
+          },
+        );
+
+      if (!response.ok) {
+        throw new Error(
+          "Unable to logout.",
+        );
+      }
+
+      window.location.href =
+        "/login";
+    } catch (error) {
+      showAccountToast(
+        "ERROR",
+        "Logout Failed",
+        error instanceof Error
+          ? error.message
+          : "Unable to logout.",
+      );
+    }
+  }
 
   function openProfileEditor() {
     setProfileName(
@@ -924,13 +969,23 @@ export default function AccountPage() {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={openProfileEditor}
-                    className="shrink-0 rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-3.5 py-2 text-[8px] font-black uppercase tracking-[0.1em] text-[#E7D29F]"
-                  >
-                    Edit
-                  </button>
+                  <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={openProfileEditor}
+                      className="rounded-full border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-3.5 py-2 text-[8px] font-black uppercase tracking-[0.1em] text-[#E7D29F]"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={logoutCustomer}
+                      className="rounded-full border border-red-300/25 bg-red-400/10 px-3.5 py-2 text-[8px] font-black uppercase tracking-[0.1em] text-red-100"
+                    >
+                      Logout
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mt-5 grid grid-cols-4 divide-x divide-white/10 rounded-[1.1rem] border border-white/10 bg-white/[0.055]">
