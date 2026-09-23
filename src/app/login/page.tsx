@@ -146,8 +146,22 @@ export default function LoginPage() {
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-[9px] font-black uppercase tracking-[0.16em] text-[#7B7066]">
-                Password
+              <span className="mb-2 flex items-center justify-between gap-3">
+                <span className="text-[9px] font-black uppercase tracking-[0.16em] text-[#7B7066]">
+                  Password
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(
+                      "/forgot-password",
+                    )
+                  }
+                  className="text-[9px] font-black text-[#0F5A38] underline decoration-[#D4AF37]/50 underline-offset-4"
+                >
+                  Forgot Password?
+                </button>
               </span>
 
               <input
