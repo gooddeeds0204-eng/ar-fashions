@@ -844,7 +844,7 @@ export default function ResellerApplyPage() {
               className={inputClass}
             />
 
-            <div className="rounded-[1.2rem] border border-[#D4AF37]/25 bg-[#D4AF37]/[0.04] p-4">
+            <div className="rounded-[1.2rem] border border-[#D9C29A] bg-[#FBF5EA] p-4 shadow-[0_8px_22px_rgba(48,35,22,0.06)]">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#D4AF37]">
@@ -904,12 +904,14 @@ export default function ResellerApplyPage() {
                   locationStatus ===
                   "LOADING"
                 }
-                className="mt-3 w-full rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 py-3 text-[9px] font-black uppercase tracking-wider text-[#D4AF37] disabled:opacity-40"
+                className="mt-4 flex min-h-12 w-full items-center justify-center rounded-xl border border-[#031B14] bg-[#031B14] px-4 py-3 text-center text-[10px] font-black uppercase tracking-[0.12em] text-[#FFFDF9] shadow-[0_8px_18px_rgba(3,27,20,0.18)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:border-[#A79A89] disabled:bg-[#A79A89] disabled:text-white disabled:opacity-70"
               >
                 {locationStatus ===
                 "SUCCESS"
-                  ? "↻ Update Live Location"
-                  : "◎ Use Current Shop Location"}
+                  ? "↻ Update Current Location"
+                  : locationStatus === "LOADING"
+                    ? "Getting Current Location..."
+                    : "◎ Use Current Location"}
               </button>
             </div>
 
@@ -1134,7 +1136,7 @@ export default function ResellerApplyPage() {
             <button
               type="submit"
               disabled={saving}
-              className="w-full rounded-[1rem] bg-[#D4AF37] py-4 text-[10px] font-black uppercase tracking-[0.12em] text-black disabled:opacity-50"
+              className="min-h-14 w-full rounded-[1rem] border border-[#031B14] bg-[#D4AF37] px-4 py-4 text-[10px] font-black uppercase tracking-[0.12em] text-[#031B14] shadow-[0_8px_18px_rgba(48,35,22,0.12)] transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving
                 ? "Submitting..."
