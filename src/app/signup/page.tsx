@@ -9,9 +9,9 @@ import { useRouter } from "next/navigation";
 import BrandLogo from "@/components/BrandLogo";
 import {
   RETAILER_CITIES,
-  normalizeResellerState,
-  type ResellerState,
-} from "@/lib/reseller-locations";
+  normalizeRetailerState,
+  type RetailerState,
+} from "@/lib/retailer-locations";
 
 type AccountType =
   | "RETAIL"
@@ -26,13 +26,13 @@ export default function SignupPage() {
     );
 
   useEffect(() => {
-    if (
+    const requestedType =
       new URLSearchParams(
         window.location.search,
       ).get("type");
 
     if (
-      requestedType === "reseller" ||
+      requestedType === "retailer" ||
       requestedType === "reseller"
     ) {
       setAccountType(
@@ -72,7 +72,7 @@ export default function SignupPage() {
     useState("");
 
   const [state, setState] =
-    useState<ResellerState | "">("");
+    useState<RetailerState | "">("");
 
   const [
     detectedCity,
@@ -164,7 +164,7 @@ export default function SignupPage() {
           }
 
           const detectedState =
-            normalizeResellerState(
+            normalizeRetailerState(
               String(
                 data.state ?? "",
               ),
@@ -577,7 +577,7 @@ export default function SignupPage() {
                     onChange={(event) => {
                       const nextState =
                         event.target
-                          .value as ResellerState | "";
+                          .value as RetailerState | "";
 
                       setState(
                         nextState,
