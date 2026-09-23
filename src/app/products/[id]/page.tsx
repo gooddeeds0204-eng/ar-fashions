@@ -1815,6 +1815,37 @@ export default function ProductDetailPage() {
                 </div>
               ) : null}
 
+              <div className="mb-5 rounded-[1.35rem] border border-[#D9C29A] bg-[#FBF5EA] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#6B5435]">
+                    Available Colors
+                  </p>
+
+                  <span className="text-[10px] font-bold text-[#7B7066]">
+                    {colors.length} color{colors.length === 1 ? "" : "s"}
+                  </span>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {colors.map((color) => (
+                    <span
+                      key={color.id}
+                      className="inline-flex items-center gap-2 rounded-full border border-[#E4D7C4] bg-[#FFFDF9] px-3 py-2 text-[10px] font-black text-[#211C18]"
+                    >
+                      <span
+                        className="h-4 w-4 rounded-full border border-black/10 shadow-inner"
+                        style={{
+                          background:
+                            color.hexCode ||
+                            "#d4d4d8",
+                        }}
+                      />
+                      {color.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
               <div className="space-y-5">
                 {colors.map((color) => {
                   const colorVariants =
@@ -1828,12 +1859,29 @@ export default function ProductDetailPage() {
                       key={color.id}
                       className="rounded-2xl border border-black/[0.07] bg-[#FFFDF9] p-4 shadow-sm"
                     >
-                      <div className="mb-4 flex items-center justify-between">
-                        <p className="font-black">
-                          {color.name}
-                        </p>
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span
+                            className="h-8 w-8 shrink-0 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.12)]"
+                            style={{
+                              background:
+                                color.hexCode ||
+                                "#d4d4d8",
+                            }}
+                          />
 
-                        <p className="text-xs font-bold text-zinc-500">
+                          <div className="min-w-0">
+                            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#9A7518]">
+                              Color Variant
+                            </p>
+
+                            <p className="truncate text-sm font-black text-[#211C18]">
+                              {color.name}
+                            </p>
+                          </div>
+                        </div>
+
+                        <p className="shrink-0 text-xs font-bold text-zinc-500">
                           {colorVariants.reduce(
                             (total, variant) =>
                               total + variant.stock,
