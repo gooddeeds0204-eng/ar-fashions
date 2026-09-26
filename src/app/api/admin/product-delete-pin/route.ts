@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/admin-auth";
+import {
+  getAuthenticatedAdmin,
+  requireAdmin,
+} from "@/lib/admin-auth";
+import { prisma } from "@/lib/prisma";
+import { verifyPassword } from "@/lib/password";
 import {
   hasProductDeletePin,
   setProductDeletePin,
@@ -41,10 +46,17 @@ export async function PUT(
         body.pin ?? "",
       ).trim();
 
-    const currentPin =
+    const adminEmail =
       String(
-        body.currentPin ?? "",
-      ).trim();
+        body.adminEmail ?? "",
+      )
+        .trim()
+        .toLowerCase();
+
+    const adminPassword =
+      String(
+        body.adminPassword ?? "",
+      );
 
     const validation =
       validateProductDeletePin(pin);
@@ -56,25 +68,83 @@ export async function PUT(
       );
     }
 
+    if (
+      !adminEmail ||
+      !adminPassword
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Admin ID/email and password are required.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const sessionAdmin =
+      await getAuthenticatedAdmin();
+
+    if (!sessionAdmin) {
+      return NextResponse.json(
+        {
+          error:
+            "Admin session expired. Please login again.",
+        },
+        { status: 401 },
+      );
+    }
+
+    if (
+      (
+        sessionAdmin.email ??
+        ""
+      ).toLowerCase() !==
+      adminEmail
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Admin ID/email does not match the logged-in admin.",
+        },
+        { status: 403 },
+      );
+    }
+
+    const admin =
+      await prisma.user.findFirst({
+        where: {
+          id:
+            sessionAdmin.id,
+          role: "ADMIN",
+          status: "ACTIVE",
+        },
+        select: {
+          passwordHash: true,
+        },
+      });
+
+    const passwordValid =
+      Boolean(
+        admin?.passwordHash,
+      ) &&
+      await verifyPassword(
+        adminPassword,
+        admin?.passwordHash ??
+          "",
+      );
+
+    if (!passwordValid) {
+      return NextResponse.json(
+        {
+          error:
+            "Admin password is incorrect.",
+        },
+        { status: 403 },
+      );
+    }
+
     const configured =
       await hasProductDeletePin();
-
-    if (configured) {
-      const current =
-        await verifyProductDeletePin(
-          currentPin,
-        );
-
-      if (!current.valid) {
-        return NextResponse.json(
-          {
-            error:
-              "Current delete PIN is incorrect.",
-          },
-          { status: 403 },
-        );
-      }
-    }
 
     await setProductDeletePin(pin);
 
@@ -82,8 +152,8 @@ export async function PUT(
       success: true,
       configured: true,
       message: configured
-        ? "Product delete PIN changed successfully."
-        : "Product delete PIN set successfully.",
+        ? "Product delete PIN changed after admin verification."
+        : "Product delete PIN set after admin verification.",
     });
   } catch (error) {
     console.error(
