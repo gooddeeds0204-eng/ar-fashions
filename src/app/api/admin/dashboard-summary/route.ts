@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
+import { ensureProductSoftDeleteStorage } from "@/lib/product-soft-delete-storage";
 
 const LOW_STOCK_SETTING_KEY =
   "inventoryLowStockThreshold";
@@ -71,8 +72,14 @@ export async function GET() {
   }
 
   try {
+    await ensureProductSoftDeleteStorage();
+
     const products =
-      await prisma.product.count();
+      await prisma.product.count({
+        where: {
+          deletedAt: null,
+        },
+      });
 
     const categories =
       await prisma.category.count({
