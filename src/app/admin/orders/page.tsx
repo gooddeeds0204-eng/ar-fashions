@@ -1299,6 +1299,17 @@ export default function AdminOrdersPage() {
                         View Details
                       </button>
 
+                      <a
+                        href={`/invoice/${encodeURIComponent(
+                          order.orderNumber,
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-xl bg-[#031B14] px-4 py-3 text-xs font-black text-white"
+                      >
+                        Invoice
+                      </a>
+
                       <select
                         value={order.status}
                         disabled={
