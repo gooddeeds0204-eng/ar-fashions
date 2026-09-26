@@ -1,15 +1,56 @@
 import { requireAdmin } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  ensureKidsSizeGuideStorage,
+  hasKidsSizeGuideValues,
+  kidsSizeGuideData,
+} from "@/lib/kids-size-guide-storage";
+
+const GUIDE_KEYS = [
+  "ageGuide",
+  "heightCm",
+  "chestIn",
+  "waistIn",
+  "hipIn",
+  "garmentLengthIn",
+  "fitNote",
+] as const;
+
+function hasGuideFields(body: Record<string, unknown>) {
+  return GUIDE_KEYS.some(
+    (key) => body[key] !== undefined,
+  );
+}
+
+function withGuide(size: Record<string, any>) {
+  const guide = size.kidsGuide ?? null;
+  const { kidsGuide, ...base } = size;
+
+  return {
+    ...base,
+    ageGuide: guide?.ageGuide ?? null,
+    heightCm: guide?.heightCm ?? null,
+    chestIn: guide?.chestIn ?? null,
+    waistIn: guide?.waistIn ?? null,
+    hipIn: guide?.hipIn ?? null,
+    garmentLengthIn:
+      guide?.garmentLengthIn ?? null,
+    fitNote: guide?.fitNote ?? null,
+  };
+}
 
 export async function GET() {
   try {
+    await ensureKidsSizeGuideStorage();
+
     const sizes = await prisma.size.findMany({
       orderBy: [
         { sortOrder: "asc" },
         { name: "asc" },
       ],
       include: {
+        kidsGuide: true,
         _count: {
           select: {
             variants: true,
@@ -18,7 +59,13 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json(sizes);
+    return NextResponse.json(
+      sizes.map((size) =>
+        withGuide(
+          size as unknown as Record<string, any>,
+        ),
+      ),
+    );
   } catch (error) {
     console.error("GET /api/sizes failed:", error);
 
@@ -30,7 +77,6 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  /* ADMIN_GUARD_POST */
   const adminError = await requireAdmin();
 
   if (adminError) {
@@ -38,7 +84,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = await request.json();
+    await ensureKidsSizeGuideStorage();
+
+    const body =
+      (await request.json()) as Record<string, unknown>;
 
     const name = String(body.name ?? "").trim();
     const category = body.category
@@ -47,7 +96,6 @@ export async function POST(request: Request) {
     const sizeType = body.sizeType
       ? String(body.sizeType).trim()
       : null;
-
     const inches = body.inches
       ? String(body.inches).trim()
       : null;
@@ -81,7 +129,36 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(size, { status: 201 });
+    if (hasKidsSizeGuideValues(body)) {
+      await prisma.kidsSizeGuide.create({
+        data: {
+          sizeId: size.id,
+          ...kidsSizeGuideData(body),
+        },
+      });
+    }
+
+    const created =
+      await prisma.size.findUnique({
+        where: { id: size.id },
+        include: {
+          kidsGuide: true,
+          _count: {
+            select: {
+              variants: true,
+            },
+          },
+        },
+      });
+
+    return NextResponse.json(
+      created
+        ? withGuide(
+            created as unknown as Record<string, any>,
+          )
+        : size,
+      { status: 201 },
+    );
   } catch (error) {
     console.error("POST /api/sizes failed:", error);
 
@@ -93,7 +170,6 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  /* ADMIN_GUARD_PATCH */
   const adminError = await requireAdmin();
 
   if (adminError) {
@@ -101,7 +177,10 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    const body = await request.json();
+    await ensureKidsSizeGuideStorage();
+
+    const body =
+      (await request.json()) as Record<string, unknown>;
     const id = String(body.id ?? "").trim();
 
     if (!id) {
@@ -111,7 +190,7 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const size = await prisma.size.update({
+    await prisma.size.update({
       where: { id },
       data: {
         ...(body.name !== undefined && {
@@ -141,7 +220,45 @@ export async function PATCH(request: Request) {
       },
     });
 
-    return NextResponse.json(size);
+    if (hasGuideFields(body)) {
+      if (hasKidsSizeGuideValues(body)) {
+        const guideData = kidsSizeGuideData(body);
+
+        await prisma.kidsSizeGuide.upsert({
+          where: { sizeId: id },
+          create: {
+            sizeId: id,
+            ...guideData,
+          },
+          update: guideData,
+        });
+      } else {
+        await prisma.kidsSizeGuide.deleteMany({
+          where: { sizeId: id },
+        });
+      }
+    }
+
+    const updated =
+      await prisma.size.findUnique({
+        where: { id },
+        include: {
+          kidsGuide: true,
+          _count: {
+            select: {
+              variants: true,
+            },
+          },
+        },
+      });
+
+    return NextResponse.json(
+      updated
+        ? withGuide(
+            updated as unknown as Record<string, any>,
+          )
+        : { id },
+    );
   } catch (error) {
     console.error("PATCH /api/sizes failed:", error);
 
@@ -153,7 +270,6 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  /* ADMIN_GUARD_DELETE */
   const adminError = await requireAdmin();
 
   if (adminError) {
@@ -161,7 +277,10 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    const body = await request.json();
+    await ensureKidsSizeGuideStorage();
+
+    const body =
+      (await request.json()) as Record<string, unknown>;
     const id = String(body.id ?? "").trim();
 
     if (!id) {
@@ -171,9 +290,10 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const variantCount = await prisma.productVariant.count({
-      where: { sizeId: id },
-    });
+    const variantCount =
+      await prisma.productVariant.count({
+        where: { sizeId: id },
+      });
 
     if (variantCount > 0) {
       const size = await prisma.size.update({
@@ -182,7 +302,8 @@ export async function DELETE(request: Request) {
       });
 
       return NextResponse.json({
-        message: "Size has variants, so it was deactivated",
+        message:
+          "Size has variants, so it was deactivated",
         size,
       });
     }
