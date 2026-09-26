@@ -113,7 +113,21 @@ export default function ProductsPage() {
     setColorSizeSelections,
   ] = useState<Record<string, string[]>>({});
   const [sizeSearch, setSizeSearch] = useState("");
+  const [colorSearch, setColorSearch] = useState("");
   const [expandedColorFamily, setExpandedColorFamily] = useState<string | null>(null);
+
+  const [showCreateColor, setShowCreateColor] = useState(false);
+  const [newColorName, setNewColorName] = useState("");
+  const [newColorFamily, setNewColorFamily] = useState("");
+  const [newColorHex, setNewColorHex] = useState("#7B7066");
+  const [creatingColor, setCreatingColor] = useState(false);
+
+  const [showCreateSize, setShowCreateSize] = useState(false);
+  const [newSizeName, setNewSizeName] = useState("");
+  const [newSizeCategory, setNewSizeCategory] = useState("Kids");
+  const [newSizeType, setNewSizeType] = useState("AGE");
+  const [newSizeInches, setNewSizeInches] = useState("");
+  const [creatingSize, setCreatingSize] = useState(false);
 
   const [variants, setVariants] = useState<Variant[]>([]);
   const [media, setMedia] = useState<ProductMedia[]>([]);
@@ -297,11 +311,175 @@ export default function ProductsPage() {
     );
   }, [colors]);
 
+  const filteredColorFamilies = useMemo(() => {
+    const query = colorSearch.trim().toLowerCase();
+
+    if (!query) {
+      return colorFamilies;
+    }
+
+    return colorFamilies
+      .map(([family, familyColors]) => [
+        family,
+        familyColors.filter((color) =>
+          [
+            color.name,
+            color.family ?? "",
+            color.hexCode ?? "",
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(query),
+        ),
+      ] as [string, Color[]])
+      .filter(
+        ([family, familyColors]) =>
+          family.toLowerCase().includes(query) ||
+          familyColors.length > 0,
+      )
+      .map(([family, familyColors]) => {
+        if (family.toLowerCase().includes(query)) {
+          return [
+            family,
+            colorFamilies.find(([name]) => name === family)?.[1] ?? familyColors,
+          ] as [string, Color[]];
+        }
+
+        return [family, familyColors] as [string, Color[]];
+      });
+  }, [colorFamilies, colorSearch]);
+
   function toggleColorFamily(family: string) {
     setExpandedColorFamily((current) =>
       current === family ? null : family,
     );
   }
+
+  async function quickCreateColor() {
+    const name = newColorName.trim();
+
+    if (!name) {
+      alert("Colour name is required");
+      return;
+    }
+
+    setCreatingColor(true);
+
+    try {
+      const response = await fetch("/api/colors", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name,
+          family: newColorFamily.trim() || null,
+          hexCode: newColorHex.trim() || null,
+          isActive: true,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error ?? "Failed to create colour");
+        return;
+      }
+
+      const created = data as Color;
+
+      setColors((current) => [...current, created]);
+      setSelectedColors((current) =>
+        current.includes(created.id)
+          ? current
+          : [...current, created.id],
+      );
+      setColorSizeSelections((current) => ({
+        ...current,
+        [created.id]: current[created.id] ?? [],
+      }));
+      setMediaColorId((current) => current || created.id);
+      setExpandedColorFamily(created.family?.trim() || "Other");
+      setColorSearch("");
+      setNewColorName("");
+      setNewColorFamily("");
+      setNewColorHex("#7B7066");
+      setShowCreateColor(false);
+    } catch (error) {
+      console.error("Quick colour create failed:", error);
+      alert("Something went wrong while creating colour");
+    } finally {
+      setCreatingColor(false);
+    }
+  }
+
+  async function quickCreateSize() {
+    const name = newSizeName.trim();
+
+    if (!name) {
+      alert("Size name is required");
+      return;
+    }
+
+    setCreatingSize(true);
+
+    try {
+      const response = await fetch("/api/sizes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          name,
+          category: newSizeCategory.trim() || null,
+          sizeType: newSizeType.trim() || null,
+          inches: newSizeInches.trim() || null,
+          isActive: true,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error ?? "Failed to create size");
+        return;
+      }
+
+      const created = data as Size;
+
+      setSizes((current) => [...current, created]);
+      setSizeSearch(created.name);
+      setNewSizeName("");
+      setNewSizeInches("");
+      setShowCreateSize(false);
+    } catch (error) {
+      console.error("Quick size create failed:", error);
+      alert("Something went wrong while creating size");
+    } finally {
+      setCreatingSize(false);
+    }
+  }
+
+  useEffect(() => {
+    const selectedCategory = categories.find(
+      (category) => category.id === categoryId,
+    );
+
+    const categoryName =
+      selectedCategory?.name.toLowerCase() ?? "";
+
+    const isKids =
+      gender === "KIDS" ||
+      categoryName.includes("kids") ||
+      categoryName.includes("girls") ||
+      categoryName.includes("boys") ||
+      categoryName.includes("baby");
+
+    setNewSizeCategory(isKids ? "Kids" : "Adult");
+    setNewSizeType(isKids ? "AGE" : "LETTER");
+  }, [categories, categoryId, gender]);
 
   const applicableSizes = useMemo(() => {
     const selectedCategory = categories.find(
@@ -545,6 +723,10 @@ export default function ProductsPage() {
     setRetailPrice("");
     setResellerPrice("");
     setResellerMOQ("");
+    setColorSearch("");
+    setSizeSearch("");
+    setShowCreateColor(false);
+    setShowCreateSize(false);
     setSelectedColors([]);
     setColorSizeSelections({});
     setMediaColorId("");
@@ -1224,27 +1406,114 @@ export default function ProductsPage() {
           {/* COLORS */}
           <section className="mb-6 rounded-3xl border border-white/10 bg-white/[0.04] p-5 sm:p-7">
             <div className="mb-6">
-              <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
-                03
-              </p>
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
+                    03
+                  </p>
 
-              <h2 className="mt-1 text-xl font-bold">
-                Product Colors
-              </h2>
+                  <h2 className="mt-1 text-xl font-bold">
+                    Product Colors
+                  </h2>
 
-              <p className="mt-1 text-sm text-slate-500">
-                {selectedColors.length} shades selected
-              </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {selectedColors.length} shades selected
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowCreateColor((current) => !current)
+                  }
+                  className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2.5 text-sm font-bold text-emerald-400 transition hover:bg-emerald-400 hover:text-slate-950"
+                >
+                  {showCreateColor ? "Close" : "+ Create Colour"}
+                </button>
+              </div>
+
+              <div className="mt-4 relative">
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
+                  ⌕
+                </span>
+                <input
+                  value={colorSearch}
+                  onChange={(event) =>
+                    setColorSearch(event.target.value)
+                  }
+                  placeholder="Search colour name, family or hex..."
+                  className="w-full rounded-2xl border border-white/10 bg-slate-900 py-3.5 pl-11 pr-4 text-sm outline-none transition placeholder:text-slate-600 focus:border-emerald-400"
+                />
+              </div>
+
+              {showCreateColor && (
+                <div className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.05] p-4">
+                  <p className="text-sm font-bold text-emerald-300">
+                    Quick Create Colour
+                  </p>
+
+                  <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                    <input
+                      value={newColorName}
+                      onChange={(event) =>
+                        setNewColorName(event.target.value)
+                      }
+                      placeholder="Colour name *"
+                      className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                    />
+
+                    <input
+                      value={newColorFamily}
+                      onChange={(event) =>
+                        setNewColorFamily(event.target.value)
+                      }
+                      placeholder="Family e.g. Red / Blue"
+                      className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                    />
+
+                    <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950 px-3">
+                      <input
+                        type="color"
+                        value={newColorHex}
+                        onChange={(event) =>
+                          setNewColorHex(event.target.value)
+                        }
+                        className="h-9 w-10 cursor-pointer bg-transparent"
+                      />
+                      <input
+                        value={newColorHex}
+                        onChange={(event) =>
+                          setNewColorHex(event.target.value)
+                        }
+                        placeholder="#000000"
+                        className="min-w-0 flex-1 bg-transparent py-3 text-sm outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => void quickCreateColor()}
+                      disabled={creatingColor}
+                      className="rounded-xl bg-emerald-400 px-5 py-2.5 text-sm font-black text-slate-950 disabled:opacity-50"
+                    >
+                      {creatingColor ? "Creating..." : "Create & Select Colour"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {colorFamilies.length === 0 ? (
+            {filteredColorFamilies.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-slate-500">
                 No active colors found.
               </div>
             ) : (
               <div className="space-y-3">
-                {colorFamilies.map(([family, familyColors]) => {
+                {filteredColorFamilies.map(([family, familyColors]) => {
                   const expanded =
+                    colorSearch.trim().length > 0 ||
                     expandedColorFamily === family;
 
                   const selectedCount = familyColors.filter(
@@ -1367,31 +1636,109 @@ export default function ProductsPage() {
 
           {/* COLOUR-WISE SIZES */}
           <section className="mb-6 rounded-3xl border border-white/10 bg-white/[0.04] p-5 sm:p-7">
-            <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
-                  04
-                </p>
+            <div className="mb-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
+                    04
+                  </p>
 
-                <h2 className="mt-1 text-xl font-bold">
-                  Available Sizes by Colour
-                </h2>
+                  <h2 className="mt-1 text-xl font-bold">
+                    Available Sizes by Colour
+                  </h2>
 
-                <p className="mt-1 text-sm text-slate-500">
-                  Prathi colour ki actual ga available unna sizes maatrame select cheyyandi.
-                </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Prathi colour ki actual ga available unna sizes maatrame select cheyyandi.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    value={sizeSearch}
+                    onChange={(event) =>
+                      setSizeSearch(
+                        event.target.value,
+                      )
+                    }
+                    placeholder="Search size..."
+                    className="rounded-xl border border-white/10 bg-slate-900 px-4 py-2.5 text-sm outline-none focus:border-emerald-400"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowCreateSize((current) => !current)
+                    }
+                    className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2.5 text-sm font-bold text-emerald-400 transition hover:bg-emerald-400 hover:text-slate-950"
+                  >
+                    {showCreateSize ? "Close" : "+ Create Size"}
+                  </button>
+                </div>
               </div>
 
-              <input
-                value={sizeSearch}
-                onChange={(event) =>
-                  setSizeSearch(
-                    event.target.value,
-                  )
-                }
-                placeholder="Search size..."
-                className="rounded-xl border border-white/10 bg-slate-900 px-4 py-2.5 text-sm outline-none focus:border-emerald-400"
-              />
+              {showCreateSize && (
+                <div className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.05] p-4">
+                  <p className="text-sm font-bold text-emerald-300">
+                    Quick Create Size
+                  </p>
+
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <input
+                      value={newSizeName}
+                      onChange={(event) =>
+                        setNewSizeName(event.target.value)
+                      }
+                      placeholder="Size name * e.g. 15-16Y"
+                      className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                    />
+
+                    <select
+                      value={newSizeCategory}
+                      onChange={(event) =>
+                        setNewSizeCategory(event.target.value)
+                      }
+                      className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                    >
+                      <option value="Kids">Kids</option>
+                      <option value="Adult">Adult</option>
+                      <option value="Clothing">Clothing / Free Size</option>
+                    </select>
+
+                    <select
+                      value={newSizeType}
+                      onChange={(event) =>
+                        setNewSizeType(event.target.value)
+                      }
+                      className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                    >
+                      <option value="AGE">Age</option>
+                      <option value="LETTER">Letter</option>
+                      <option value="NUMERIC">Numeric</option>
+                      <option value="GENERAL">General / Free</option>
+                    </select>
+
+                    <input
+                      value={newSizeInches}
+                      onChange={(event) =>
+                        setNewSizeInches(event.target.value)
+                      }
+                      placeholder="Height/Inches optional"
+                      className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                    />
+                  </div>
+
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => void quickCreateSize()}
+                      disabled={creatingSize}
+                      className="rounded-xl bg-emerald-400 px-5 py-2.5 text-sm font-black text-slate-950 disabled:opacity-50"
+                    >
+                      {creatingSize ? "Creating..." : "Create Size"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {selectedColors.length ===
