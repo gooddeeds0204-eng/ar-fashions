@@ -28,6 +28,7 @@ import {
   refundRazorpayPayment,
 } from "@/lib/razorpay";
 import { ensureCampaignReferralVisitStorage } from "@/lib/campaign-offer-storage";
+import { ensureOrderLocationStorage } from "@/lib/order-location-storage";
 
 type OrderItemInput = {
   productId?: unknown;
@@ -140,6 +141,8 @@ export async function GET(request: Request) {
   }
 
   try {
+    await ensureOrderLocationStorage();
+
     const { searchParams } = new URL(request.url);
 
     const status = searchParams.get("status");
@@ -213,6 +216,21 @@ export async function GET(request: Request) {
             landmark: order.address.landmark,
           }
         : null,
+
+      location:
+        order.deliveryLatitude !== null &&
+        order.deliveryLongitude !== null
+          ? {
+              latitude:
+                order.deliveryLatitude,
+              longitude:
+                order.deliveryLongitude,
+              accuracy:
+                order.deliveryLocationAccuracy,
+              capturedAt:
+                order.deliveryLocationCapturedAt,
+            }
+          : null,
 
       items: order.items.map((item) => ({
         id: item.id,
@@ -762,6 +780,8 @@ export async function PATCH(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    await ensureOrderLocationStorage();
+
     const requestGuard =
       requireSameOriginJson(
         request,
@@ -880,6 +900,41 @@ export async function POST(request: Request) {
     }
 
     const customer = body.customer ?? {};
+
+    const rawLocation =
+      body.orderLocation &&
+      typeof body.orderLocation === "object"
+        ? body.orderLocation
+        : null;
+
+    const latitude = rawLocation
+      ? Number(rawLocation.latitude)
+      : NaN;
+
+    const longitude = rawLocation
+      ? Number(rawLocation.longitude)
+      : NaN;
+
+    const accuracy = rawLocation
+      ? Number(rawLocation.accuracy)
+      : NaN;
+
+    const hasValidLocation =
+      Number.isFinite(latitude) &&
+      latitude >= -90 &&
+      latitude <= 90 &&
+      Number.isFinite(longitude) &&
+      longitude >= -180 &&
+      longitude <= 180;
+
+    const locationCapturedAt =
+      hasValidLocation
+        ? new Date(
+            cleanString(
+              rawLocation?.capturedAt,
+            ) || Date.now(),
+          )
+        : null;
 
     const selectedAddressId =
       cleanString(body.addressId);
@@ -2600,6 +2655,34 @@ export async function POST(request: Request) {
             totalAmount,
             couponCode:
               appliedCouponCode,
+            deliveryLatitude:
+              hasValidLocation
+                ? latitude
+                : null,
+            deliveryLongitude:
+              hasValidLocation
+                ? longitude
+                : null,
+            deliveryLocationAccuracy:
+              hasValidLocation &&
+              Number.isFinite(
+                accuracy,
+              )
+                ? Math.max(
+                    0,
+                    accuracy,
+                  )
+                : null,
+            deliveryLocationCapturedAt:
+              hasValidLocation &&
+              locationCapturedAt &&
+              !Number.isNaN(
+                locationCapturedAt.getTime(),
+              )
+                ? locationCapturedAt
+                : hasValidLocation
+                  ? new Date()
+                  : null,
             items: {
               create: orderItems.map(
                 (item) => ({
