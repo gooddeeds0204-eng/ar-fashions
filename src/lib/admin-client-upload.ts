@@ -75,6 +75,24 @@ export async function uploadAdminProductMedia(
   const pathname =
     `${folder}/${Date.now()}-${safeName}`;
 
+  const sessionResponse =
+    await fetch(
+      "/api/admin/session",
+      {
+        method: "GET",
+        cache: "no-store",
+        credentials: "include",
+      },
+    );
+
+  if (!sessionResponse.ok) {
+    throw new Error(
+      sessionResponse.status === 401
+        ? "Admin session expired. Please login again and retry the upload."
+        : "Could not verify admin session. Please retry.",
+    );
+  }
+
   const blob =
     await upload(
       pathname,
