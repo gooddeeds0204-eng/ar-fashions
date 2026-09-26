@@ -200,6 +200,27 @@ type SalesRow = {
   products: string;
 };
 
+type GstAuditRow = {
+  invoiceNumber: string;
+  invoiceDate: string;
+  orderNumber: string;
+  orderType: string;
+  customerName: string;
+  phone: string | null;
+  customerState: string;
+  pincode: string;
+  productName: string;
+  colorName: string | null;
+  sizeName: string | null;
+  quantity: number;
+  unitPrice: number;
+  lineAmount: number;
+  orderDiscount: number;
+  deliveryCharge: number;
+  orderTotal: number;
+  paymentMethod: string | null;
+};
+
 type ReportData = {
   range: {
     days: number;
@@ -228,6 +249,9 @@ type ReportData = {
 
   salesRows:
     SalesRow[];
+
+  gstAuditRows:
+    GstAuditRow[];
 
   profitAnalytics:
     ProfitAnalytics;
@@ -525,6 +549,184 @@ export default function ReportsPage() {
     );
   }
 
+  function downloadGstAuditorReport() {
+    if (!data) {
+      return;
+    }
+
+    const csvCell = (
+      value:
+        | string
+        | number
+        | null
+        | undefined,
+    ) => {
+      const text =
+        String(
+          value ?? "",
+        );
+
+      return `"${text.replaceAll(
+        '"',
+        '""',
+      )}"`;
+    };
+
+    const rows: Array<
+      Array<
+        string | number
+      >
+    > = [
+      [
+        "AS FASHIONS GST AUDITOR WORKING REPORT",
+      ],
+      [
+        "Period",
+        `${data.range.days} Days`,
+      ],
+      [
+        "From",
+        new Date(
+          data.range.from,
+        ).toLocaleDateString(
+          "en-IN",
+        ),
+      ],
+      [
+        "To",
+        new Date(
+          data.range.to,
+        ).toLocaleDateString(
+          "en-IN",
+        ),
+      ],
+      [
+        "Note",
+        "Editable working file. GSTIN, HSN/SAC, taxable value and tax breakup are intentionally left blank for auditor verification/update.",
+      ],
+      [],
+      [
+        "INVOICE NO",
+        "INVOICE DATE",
+        "ORDER NO",
+        "SALE TYPE",
+        "CUSTOMER",
+        "PHONE",
+        "CUSTOMER GSTIN",
+        "PLACE OF SUPPLY / STATE",
+        "PINCODE",
+        "PRODUCT",
+        "COLOUR",
+        "SIZE",
+        "QTY",
+        "UNIT PRICE",
+        "GROSS LINE VALUE",
+        "ORDER DISCOUNT",
+        "DELIVERY CHARGE",
+        "ORDER TOTAL",
+        "PAYMENT METHOD",
+        "HSN / SAC",
+        "TAXABLE VALUE",
+        "GST RATE %",
+        "CGST %",
+        "CGST AMOUNT",
+        "SGST %",
+        "SGST AMOUNT",
+        "IGST %",
+        "IGST AMOUNT",
+        "CESS",
+        "AUDITOR NOTES",
+      ],
+      ...data.gstAuditRows.map(
+        (row) => [
+          row.invoiceNumber,
+          new Date(
+            row.invoiceDate,
+          ).toLocaleDateString(
+            "en-IN",
+          ),
+          row.orderNumber,
+          row.orderType,
+          row.customerName,
+          row.phone ?? "",
+          "",
+          row.customerState,
+          row.pincode,
+          row.productName,
+          row.colorName ?? "",
+          row.sizeName ?? "",
+          row.quantity,
+          row.unitPrice,
+          row.lineAmount,
+          row.orderDiscount,
+          row.deliveryCharge,
+          row.orderTotal,
+          row.paymentMethod ?? "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+        ],
+      ),
+    ];
+
+    const csv =
+      "\uFEFF" +
+      rows
+        .map((row) =>
+          row
+            .map(csvCell)
+            .join(","),
+        )
+        .join("\r\n");
+
+    const blob =
+      new Blob(
+        [csv],
+        {
+          type:
+            "text/csv;charset=utf-8;",
+        },
+      );
+
+    const url =
+      URL.createObjectURL(
+        blob,
+      );
+
+    const link =
+      document.createElement(
+        "a",
+      );
+
+    const stamp =
+      new Date()
+        .toISOString()
+        .slice(0, 10);
+
+    link.href = url;
+    link.download =
+      `AS-Fashions-GST-Auditor-Working-${data.range.days}D-${stamp}.csv`;
+
+    document.body.appendChild(
+      link,
+    );
+
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(
+      url,
+    );
+  }
+
   useEffect(() => {
     loadReports();
   }, [days]);
@@ -592,6 +794,20 @@ export default function ReportsPage() {
               className="rounded-xl bg-emerald-700 px-4 py-2.5 text-xs font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
             >
               ↓ Download Sales Report
+            </button>
+
+            <button
+              type="button"
+              onClick={
+                downloadGstAuditorReport
+              }
+              disabled={
+                !data ||
+                loading
+              }
+              className="rounded-xl bg-[#031B14] px-4 py-2.5 text-xs font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              ↓ GST Auditor Report
             </button>
 
             <button
