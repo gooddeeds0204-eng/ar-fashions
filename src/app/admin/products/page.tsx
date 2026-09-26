@@ -23,6 +23,14 @@ type Size = {
   name: string;
   category?: string | null;
   sizeType?: string | null;
+  inches?: string | null;
+  ageGuide?: string | null;
+  heightCm?: string | null;
+  chestIn?: string | null;
+  waistIn?: string | null;
+  hipIn?: string | null;
+  garmentLengthIn?: string | null;
+  fitNote?: string | null;
   isActive: boolean;
 };
 
@@ -127,6 +135,12 @@ export default function ProductsPage() {
   const [newSizeCategory, setNewSizeCategory] = useState("Kids");
   const [newSizeType, setNewSizeType] = useState("AGE");
   const [newSizeInches, setNewSizeInches] = useState("");
+  const [newSizeAgeGuide, setNewSizeAgeGuide] = useState("");
+  const [newSizeHeightCm, setNewSizeHeightCm] = useState("");
+  const [newSizeChestIn, setNewSizeChestIn] = useState("");
+  const [newSizeWaistIn, setNewSizeWaistIn] = useState("");
+  const [newSizeHipIn, setNewSizeHipIn] = useState("");
+  const [newSizeGarmentLengthIn, setNewSizeGarmentLengthIn] = useState("");
   const [creatingSize, setCreatingSize] = useState(false);
 
   const [variants, setVariants] = useState<Variant[]>([]);
@@ -436,6 +450,12 @@ export default function ProductsPage() {
           category: newSizeCategory.trim() || null,
           sizeType: newSizeType.trim() || null,
           inches: newSizeInches.trim() || null,
+          ageGuide: newSizeAgeGuide.trim() || null,
+          heightCm: newSizeHeightCm.trim() || null,
+          chestIn: newSizeChestIn.trim() || null,
+          waistIn: newSizeWaistIn.trim() || null,
+          hipIn: newSizeHipIn.trim() || null,
+          garmentLengthIn: newSizeGarmentLengthIn.trim() || null,
           isActive: true,
         }),
       });
@@ -453,6 +473,12 @@ export default function ProductsPage() {
       setSizeSearch(created.name);
       setNewSizeName("");
       setNewSizeInches("");
+      setNewSizeAgeGuide("");
+      setNewSizeHeightCm("");
+      setNewSizeChestIn("");
+      setNewSizeWaistIn("");
+      setNewSizeHipIn("");
+      setNewSizeGarmentLengthIn("");
       setShowCreateSize(false);
     } catch (error) {
       console.error("Quick size create failed:", error);
@@ -1688,7 +1714,7 @@ export default function ProductsPage() {
                       onChange={(event) =>
                         setNewSizeName(event.target.value)
                       }
-                      placeholder="Size name * e.g. 15-16Y"
+                      placeholder="Size label * e.g. 28 / 15-16Y"
                       className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
                     />
 
@@ -1722,10 +1748,26 @@ export default function ProductsPage() {
                       onChange={(event) =>
                         setNewSizeInches(event.target.value)
                       }
-                      placeholder="Height/Inches optional"
+                      placeholder="Legacy height/inches optional"
                       className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
                     />
                   </div>
+
+                  {newSizeCategory === "Kids" && (
+                    <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/50 p-3">
+                      <p className="mb-3 text-xs font-bold text-emerald-300">
+                        Kids Fit Measurements — age is only a guide
+                      </p>
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <input value={newSizeAgeGuide} onChange={(event) => setNewSizeAgeGuide(event.target.value)} placeholder="Age guide e.g. 7-8Y" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
+                        <input value={newSizeHeightCm} onChange={(event) => setNewSizeHeightCm(event.target.value)} placeholder="Height cm e.g. 122-128" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
+                        <input value={newSizeChestIn} onChange={(event) => setNewSizeChestIn(event.target.value)} placeholder="Chest in e.g. 26-27" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
+                        <input value={newSizeWaistIn} onChange={(event) => setNewSizeWaistIn(event.target.value)} placeholder="Waist in e.g. 23-24" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
+                        <input value={newSizeHipIn} onChange={(event) => setNewSizeHipIn(event.target.value)} placeholder="Hip in optional" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
+                        <input value={newSizeGarmentLengthIn} onChange={(event) => setNewSizeGarmentLengthIn(event.target.value)} placeholder="Garment length in optional" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
+                      </div>
+                    </div>
+                  )}
 
                   <div className="mt-3 flex justify-end">
                     <button
