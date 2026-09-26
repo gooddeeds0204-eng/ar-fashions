@@ -107,6 +107,26 @@ export default function SettingsPage() {
   ] =
     useState("");
 
+  const [
+    deletePinConfigured,
+    setDeletePinConfigured,
+  ] = useState(false);
+
+  const [
+    currentDeletePin,
+    setCurrentDeletePin,
+  ] = useState("");
+
+  const [
+    newDeletePin,
+    setNewDeletePin,
+  ] = useState("");
+
+  const [
+    savingDeletePin,
+    setSavingDeletePin,
+  ] = useState(false);
+
   async function loadSettings() {
     try {
       setLoading(true);
@@ -154,6 +174,26 @@ export default function SettingsPage() {
         ...defaultSalesMode,
         ...data.salesMode,
       });
+
+      const pinResponse =
+        await fetch(
+          "/api/admin/product-delete-pin",
+          {
+            cache: "no-store",
+            credentials:
+              "same-origin",
+          },
+        );
+
+      if (pinResponse.ok) {
+        const pinData =
+          await pinResponse.json();
+
+        setDeletePinConfigured(
+          pinData.configured ===
+            true,
+        );
+      }
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -225,6 +265,73 @@ export default function SettingsPage() {
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function saveDeletePin() {
+    if (
+      !/^\d{4,8}$/.test(
+        newDeletePin,
+      )
+    ) {
+      setMessage(
+        "Delete PIN must be 4 to 8 digits.",
+      );
+      return;
+    }
+
+    try {
+      setSavingDeletePin(true);
+      setMessage("");
+
+      const response =
+        await fetch(
+          "/api/admin/product-delete-pin",
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            credentials:
+              "same-origin",
+            body:
+              JSON.stringify({
+                pin:
+                  newDeletePin,
+                currentPin:
+                  currentDeletePin,
+              }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Delete PIN save failed.",
+        );
+      }
+
+      setDeletePinConfigured(
+        true,
+      );
+      setCurrentDeletePin("");
+      setNewDeletePin("");
+      setMessage(
+        data.message ??
+          "Delete PIN saved successfully.",
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Delete PIN save failed.",
+      );
+    } finally {
+      setSavingDeletePin(false);
     }
   }
 
@@ -595,6 +702,103 @@ export default function SettingsPage() {
                 className="h-5 w-5"
               />
             </label>
+          </section>
+
+          <section className="rounded-3xl border border-red-100 bg-white p-6 shadow-sm">
+            <p className="text-xs font-black uppercase text-red-600">
+              Product Delete Security
+            </p>
+
+            <h2 className="mt-1 text-xl font-black">
+              Delete PIN
+            </h2>
+
+            <p className="mt-2 text-xs leading-5 text-zinc-500">
+              Product delete cheyyadaniki ee PIN compulsory.
+              PIN server-side secure hash ga save avutundi.
+            </p>
+
+            <div className="mt-4 rounded-2xl bg-zinc-50 p-4">
+              <p className="text-xs font-black">
+                Status:{" "}
+                <span
+                  className={
+                    deletePinConfigured
+                      ? "text-emerald-600"
+                      : "text-amber-600"
+                  }
+                >
+                  {deletePinConfigured
+                    ? "PIN SET"
+                    : "PIN NOT SET"}
+                </span>
+              </p>
+            </div>
+
+            {deletePinConfigured && (
+              <label className="mt-4 block text-xs font-black">
+                Current PIN
+
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={8}
+                  value={
+                    currentDeletePin
+                  }
+                  onChange={(event) =>
+                    setCurrentDeletePin(
+                      event.target.value.replace(
+                        /\D/g,
+                        "",
+                      ),
+                    )
+                  }
+                  placeholder="Enter current PIN"
+                  className="mt-2 w-full rounded-2xl border p-3"
+                />
+              </label>
+            )}
+
+            <label className="mt-4 block text-xs font-black">
+              {deletePinConfigured
+                ? "New PIN"
+                : "Create Delete PIN"}
+
+              <input
+                type="password"
+                inputMode="numeric"
+                maxLength={8}
+                value={newDeletePin}
+                onChange={(event) =>
+                  setNewDeletePin(
+                    event.target.value.replace(
+                      /\D/g,
+                      "",
+                    ),
+                  )
+                }
+                placeholder="4 to 8 digits"
+                className="mt-2 w-full rounded-2xl border p-3"
+              />
+            </label>
+
+            <button
+              type="button"
+              onClick={
+                saveDeletePin
+              }
+              disabled={
+                savingDeletePin
+              }
+              className="mt-4 w-full rounded-2xl bg-red-600 px-5 py-3 text-sm font-black text-white disabled:opacity-50"
+            >
+              {savingDeletePin
+                ? "Saving PIN..."
+                : deletePinConfigured
+                  ? "Change Delete PIN"
+                  : "Set Delete PIN"}
+            </button>
           </section>
 
           <section className="rounded-3xl bg-white p-6 shadow-sm">
