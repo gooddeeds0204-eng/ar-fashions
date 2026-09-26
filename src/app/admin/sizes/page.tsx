@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  KIDS_SIZE_PRESETS,
+  KIDS_SIZE_REFERENCE_NOTE,
+  getKidsSizePreset,
+  kidsHeightCmToInches,
+} from "@/lib/kids-size-presets";
 
 type Size = {
   id: string;
@@ -46,6 +52,7 @@ export default function SizesPage() {
     useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [agePreset, setAgePreset] = useState("");
 
   async function loadSizes() {
     setLoading(true);
@@ -120,10 +127,49 @@ export default function SizesPage() {
   function resetForm() {
     setForm(emptyForm);
     setEditingId(null);
+    setAgePreset("");
+  }
+
+  function applyKidsPreset(value: string) {
+    setAgePreset(value);
+
+    const preset = getKidsSizePreset(value);
+
+    if (!preset) {
+      return;
+    }
+
+    setForm((current) => ({
+      ...current,
+      name: preset.sizeLabel,
+      category: "Kids",
+      sizeType: "AGE",
+      inches: kidsHeightCmToInches(
+        preset.heightCm,
+      ),
+      ageGuide: preset.ageGuide,
+      heightCm: preset.heightCm,
+      chestIn: preset.chestIn,
+      waistIn: preset.waistIn,
+      hipIn: preset.hipIn,
+      garmentLengthIn:
+        "Product-specific",
+      fitNote:
+        KIDS_SIZE_REFERENCE_NOTE,
+    }));
   }
 
   function startEdit(size: Size) {
     setEditingId(size.id);
+    setAgePreset(
+      KIDS_SIZE_PRESETS.some(
+        (preset) =>
+          preset.value ===
+          (size.ageGuide ?? ""),
+      )
+        ? size.ageGuide ?? ""
+        : "",
+    );
 
     setForm({
       name: size.name,
@@ -447,19 +493,52 @@ export default function SizesPage() {
 
           {isKids && (
             <section className="mt-6 rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.04] p-4 sm:p-5">
-              <div>
-                <p className="text-xs font-black uppercase tracking-widest text-emerald-400">
-                  Kids Fit Measurements
-                </p>
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-widest text-emerald-400">
+                    Kids Fit Measurements
+                  </p>
 
-                <h3 className="mt-1 text-lg font-bold">
-                  Measurement-based sizing
-                </h3>
+                  <h3 className="mt-1 text-lg font-bold">
+                    Measurement-based sizing
+                  </h3>
 
-                <p className="mt-1 text-xs leading-5 text-slate-400">
-                  Age is only a guide. Customer actual body
-                  measurements tho compare chesi size select chestaru.
-                </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-400">
+                    Age is only a guide. Customer actual body
+                    measurements tho compare chesi size select chestaru.
+                  </p>
+                </div>
+
+                <div className="min-w-[230px]">
+                  <Label>Auto Fill by Age</Label>
+                  <select
+                    value={agePreset}
+                    onChange={(event) =>
+                      applyKidsPreset(
+                        event.target.value,
+                      )
+                    }
+                    className={inputClass}
+                  >
+                    <option value="">
+                      Select age / months...
+                    </option>
+                    {KIDS_SIZE_PRESETS.map(
+                      (preset) => (
+                        <option
+                          key={preset.value}
+                          value={preset.value}
+                        >
+                          {preset.label}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3 text-[11px] leading-5 text-slate-400">
+                Preset values are a reference starting point. Supplier or product-specific chart unte fields ni manual ga edit cheyyandi.
               </div>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -524,7 +603,7 @@ export default function SizesPage() {
                 />
 
                 <Field
-                  label="Garment Length (in)"
+                  label="Garment Length / Product-specific"
                   value={
                     form.garmentLengthIn
                   }
