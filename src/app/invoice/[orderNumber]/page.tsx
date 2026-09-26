@@ -218,12 +218,18 @@ export default function InvoicePage() {
       <style>{`
         @media print {
           @page {
-            size: A4;
-            margin: 12mm;
+            size: A4 portrait;
+            margin: 10mm;
           }
 
+          html,
           body {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
             background: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
 
           .invoice-controls {
@@ -231,10 +237,64 @@ export default function InvoicePage() {
           }
 
           .invoice-sheet {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
             box-shadow: none !important;
             border: 0 !important;
             border-radius: 0 !important;
-            max-width: none !important;
+            overflow: visible !important;
+          }
+
+          .invoice-items-section {
+            overflow: visible !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+
+          .invoice-table {
+            width: 100% !important;
+            min-width: 0 !important;
+            table-layout: fixed !important;
+            font-size: 9px !important;
+          }
+
+          .invoice-table th,
+          .invoice-table td {
+            box-sizing: border-box !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+          }
+
+          .invoice-table th:nth-child(1),
+          .invoice-table td:nth-child(1) {
+            width: 5% !important;
+          }
+
+          .invoice-table th:nth-child(2),
+          .invoice-table td:nth-child(2) {
+            width: 30% !important;
+          }
+
+          .invoice-table th:nth-child(3),
+          .invoice-table td:nth-child(3) {
+            width: 23% !important;
+          }
+
+          .invoice-table th:nth-child(4),
+          .invoice-table td:nth-child(4) {
+            width: 8% !important;
+          }
+
+          .invoice-table th:nth-child(5),
+          .invoice-table td:nth-child(5) {
+            width: 16% !important;
+          }
+
+          .invoice-table th:nth-child(6),
+          .invoice-table td:nth-child(6) {
+            width: 18% !important;
           }
         }
       `}</style>
@@ -426,8 +486,8 @@ export default function InvoicePage() {
           </div>
         </section>
 
-        <section className="overflow-x-auto px-5 py-5 sm:px-8">
-          <table className="w-full min-w-[650px] border-collapse text-left text-xs">
+        <section className="invoice-items-section overflow-x-auto px-5 py-5 sm:px-8">
+          <table className="invoice-table w-full min-w-[650px] border-collapse text-left text-xs">
             <thead>
               <tr className="border-b-2 border-[#031B14] text-[9px] uppercase tracking-wider text-zinc-500">
                 <th className="py-3 pr-3">
