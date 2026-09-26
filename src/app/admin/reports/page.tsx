@@ -185,6 +185,21 @@ type PurchaseAnalytics = {
     CostAlertItem[];
 };
 
+type SalesRow = {
+  orderNumber: string;
+  date: string;
+  type: string;
+  customerName: string;
+  phone: string | null;
+  paymentMethod: string | null;
+  subtotal: number;
+  discountAmount: number;
+  deliveryCharge: number;
+  totalAmount: number;
+  itemQuantity: number;
+  products: string;
+};
+
 type ReportData = {
   range: {
     days: number;
@@ -210,6 +225,9 @@ type ReportData = {
 
   topCustomers:
     CustomerItem[];
+
+  salesRows:
+    SalesRow[];
 
   profitAnalytics:
     ProfitAnalytics;
@@ -329,6 +347,184 @@ export default function ReportsPage() {
     }
   }
 
+  function downloadSalesReport() {
+    if (!data) {
+      return;
+    }
+
+    const csvCell = (
+      value:
+        | string
+        | number
+        | null
+        | undefined,
+    ) => {
+      const text =
+        String(
+          value ?? "",
+        );
+
+      return `"${text.replaceAll(
+        '"',
+        '""',
+      )}"`;
+    };
+
+    const rows: Array<
+      Array<
+        string | number
+      >
+    > = [
+      [
+        "AS FASHIONS SALES REPORT",
+      ],
+      [
+        "Period",
+        `${data.range.days} Days`,
+      ],
+      [
+        "From",
+        new Date(
+          data.range.from,
+        ).toLocaleDateString(
+          "en-IN",
+        ),
+      ],
+      [
+        "To",
+        new Date(
+          data.range.to,
+        ).toLocaleDateString(
+          "en-IN",
+        ),
+      ],
+      [],
+      [
+        "SUMMARY",
+      ],
+      [
+        "Delivered Sales",
+        data.summary
+          .deliveredSales,
+      ],
+      [
+        "Delivered Orders",
+        data.summary
+          .deliveredOrders,
+      ],
+      [
+        "Average Order Value",
+        data.summary
+          .averageOrderValue,
+      ],
+      [
+        "Retail Sales",
+        data.salesByType
+          .RETAIL.sales,
+      ],
+      [
+        "Reseller Sales",
+        data.salesByType
+          .RESELLER.sales,
+      ],
+      [
+        "Discounts",
+        data.summary
+          .discountTotal,
+      ],
+      [
+        "Delivery Revenue",
+        data.summary
+          .deliveryRevenue,
+      ],
+      [],
+      [
+        "ORDER NUMBER",
+        "DATE",
+        "TYPE",
+        "CUSTOMER",
+        "PHONE",
+        "PAYMENT METHOD",
+        "ITEM QTY",
+        "PRODUCTS",
+        "SUBTOTAL",
+        "DISCOUNT",
+        "DELIVERY",
+        "TOTAL",
+      ],
+      ...data.salesRows.map(
+        (row) => [
+          row.orderNumber,
+          new Date(
+            row.date,
+          ).toLocaleString(
+            "en-IN",
+          ),
+          row.type,
+          row.customerName,
+          row.phone ?? "",
+          row.paymentMethod ??
+            "",
+          row.itemQuantity,
+          row.products,
+          row.subtotal,
+          row.discountAmount,
+          row.deliveryCharge,
+          row.totalAmount,
+        ],
+      ),
+    ];
+
+    const csv =
+      "\uFEFF" +
+      rows
+        .map((row) =>
+          row
+            .map(csvCell)
+            .join(","),
+        )
+        .join("\r\n");
+
+    const blob =
+      new Blob(
+        [csv],
+        {
+          type:
+            "text/csv;charset=utf-8;",
+        },
+      );
+
+    const url =
+      URL.createObjectURL(
+        blob,
+      );
+
+    const link =
+      document.createElement(
+        "a",
+      );
+
+    const stamp =
+      new Date()
+        .toISOString()
+        .slice(0, 10);
+
+    link.href = url;
+    link.download =
+      `AS-Fashions-Sales-Report-${data.range.days}D-${stamp}.csv`;
+
+    document.body.appendChild(
+      link,
+    );
+
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(
+      url,
+    );
+  }
+
   useEffect(() => {
     loadReports();
   }, [days]);
@@ -383,15 +579,31 @@ export default function ReportsPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={
-              loadReports
-            }
-            className="rounded-xl border border-black/5 bg-white px-4 py-2.5 text-xs font-black shadow-sm"
-          >
-            ↻ Refresh
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={
+                downloadSalesReport
+              }
+              disabled={
+                !data ||
+                loading
+              }
+              className="rounded-xl bg-emerald-700 px-4 py-2.5 text-xs font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              ↓ Download Sales Report
+            </button>
+
+            <button
+              type="button"
+              onClick={
+                loadReports
+              }
+              className="rounded-xl border border-black/5 bg-white px-4 py-2.5 text-xs font-black shadow-sm"
+            >
+              ↻ Refresh
+            </button>
+          </div>
         </div>
 
         <div className="mt-5 flex gap-2">
