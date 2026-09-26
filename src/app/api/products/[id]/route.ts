@@ -885,7 +885,7 @@ export async function DELETE(
           },
         });
 
-        await tx.media.updateMany({
+        await tx.productMedia.updateMany({
           where: {
             productId: id,
           },
