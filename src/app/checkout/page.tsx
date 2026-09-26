@@ -295,6 +295,26 @@ export default function CheckoutPage() {
   const [landmark, setLandmark] = useState("");
 
   const [
+    orderLocation,
+    setOrderLocation,
+  ] = useState<{
+    latitude: number;
+    longitude: number;
+    accuracy: number | null;
+    capturedAt: string;
+  } | null>(null);
+
+  const [
+    locationLoading,
+    setLocationLoading,
+  ] = useState(false);
+
+  const [
+    locationError,
+    setLocationError,
+  ] = useState("");
+
+  const [
     savedAddresses,
     setSavedAddresses,
   ] = useState<SavedAddress[]>([]);
@@ -1361,6 +1381,57 @@ export default function CheckoutPage() {
     setCouponError("");
   }
 
+  function captureOrderLocation() {
+    if (
+      !navigator.geolocation
+    ) {
+      setLocationError(
+        "Location is not supported on this device/browser.",
+      );
+      return;
+    }
+
+    setLocationLoading(true);
+    setLocationError("");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setOrderLocation({
+          latitude:
+            position.coords.latitude,
+          longitude:
+            position.coords.longitude,
+          accuracy:
+            Number.isFinite(
+              position.coords.accuracy,
+            )
+              ? position.coords.accuracy
+              : null,
+          capturedAt:
+            new Date().toISOString(),
+        });
+
+        setLocationLoading(false);
+      },
+      (error) => {
+        setOrderLocation(null);
+        setLocationLoading(false);
+
+        setLocationError(
+          error.code ===
+            error.PERMISSION_DENIED
+            ? "Location permission was not allowed. Enable location permission and try again."
+            : "Could not get your current location. Please try again.",
+        );
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 0,
+      },
+    );
+  }
+
   function showCheckoutAlert(
     message: string,
     title = "Checkout Needs Attention",
@@ -1580,6 +1651,19 @@ export default function CheckoutPage() {
 
           addressId:
             activeSavedAddressId,
+          orderLocation:
+            orderLocation
+              ? {
+                  latitude:
+                    orderLocation.latitude,
+                  longitude:
+                    orderLocation.longitude,
+                  accuracy:
+                    orderLocation.accuracy,
+                  capturedAt:
+                    orderLocation.capturedAt,
+                }
+              : null,
           customer: {
             name: name.trim(),
             phone: phone.trim(),
@@ -2473,6 +2557,79 @@ export default function CheckoutPage() {
 
               </>
             )}
+
+            <section className="overflow-hidden rounded-[1.6rem] border border-[#D9C29A] bg-[#FFFDF9] shadow-[0_10px_30px_rgba(0,0,0,0.035)]">
+              <div className="border-b border-black/[0.05] px-5 py-4">
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#6B5435]">
+                  Delivery Location
+                </p>
+
+                <h2 className="mt-1 text-[1.35rem] font-black tracking-[-0.03em]">
+                  Share current location
+                </h2>
+
+                <p className="mt-1 text-[9px] leading-4 text-zinc-500">
+                  Accurate delivery kosam current location share cheyyandi. Browser permission ichinappude location capture avutundi.
+                </p>
+              </div>
+
+              <div className="p-5">
+                {orderLocation ? (
+                  <div className="rounded-[1.2rem] border border-emerald-200 bg-emerald-50 p-4">
+                    <div className="flex items-start gap-3">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-700 text-sm font-black text-white">
+                        ✓
+                      </span>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-black text-emerald-900">
+                          Location captured
+                        </p>
+
+                        <p className="mt-1 text-[8px] leading-4 text-emerald-700">
+                          {orderLocation.latitude.toFixed(6)}, {orderLocation.longitude.toFixed(6)}
+                          {orderLocation.accuracy !== null
+                            ? ` · accuracy ~${Math.round(orderLocation.accuracy)} m`
+                            : ""}
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={captureOrderLocation}
+                          disabled={locationLoading}
+                          className="mt-3 rounded-lg border border-emerald-300 bg-white px-3 py-2 text-[8px] font-black text-emerald-800 disabled:opacity-50"
+                        >
+                          {locationLoading
+                            ? "Updating..."
+                            : "Update Location"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={captureOrderLocation}
+                    disabled={locationLoading}
+                    className="min-h-[52px] w-full rounded-[1.1rem] bg-[#031B14] px-5 text-[10px] font-black uppercase tracking-[0.08em] text-white disabled:opacity-50"
+                  >
+                    {locationLoading
+                      ? "Getting Current Location..."
+                      : "📍 Use Current Location"}
+                  </button>
+                )}
+
+                {locationError && (
+                  <p className="mt-3 rounded-xl bg-red-50 px-3 py-2.5 text-[8px] font-bold leading-4 text-red-700">
+                    {locationError}
+                  </p>
+                )}
+
+                <p className="mt-3 text-[7px] leading-4 text-zinc-400">
+                  Location is saved with this order as a checkout-time snapshot for delivery/order verification. It is not continuous live tracking.
+                </p>
+              </div>
+            </section>
 
             {/* PAYMENT */}
             <section className="overflow-hidden rounded-[1.6rem] border border-black/[0.05] bg-white shadow-[0_10px_30px_rgba(0,0,0,0.035)]">
