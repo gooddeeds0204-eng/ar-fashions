@@ -38,6 +38,21 @@ type Variant = {
   };
 };
 
+type SizeGuide = {
+  id: string;
+  name: string;
+  category?: string | null;
+  sizeType?: string | null;
+  inches?: string | null;
+  ageGuide?: string | null;
+  heightCm?: string | null;
+  chestIn?: string | null;
+  waistIn?: string | null;
+  hipIn?: string | null;
+  garmentLengthIn?: string | null;
+  fitNote?: string | null;
+};
+
 type Product = {
   id: string;
   name: string;
@@ -151,6 +166,8 @@ export default function ProductDetailPage() {
   const [selectedColorId, setSelectedColorId] = useState("");
   const [selectedSizeId, setSelectedSizeId] = useState("");
   const [selectedMedia, setSelectedMedia] = useState(0);
+  const [sizeGuides, setSizeGuides] = useState<SizeGuide[]>([]);
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
 
   const [quantity, setQuantity] = useState(1);
   const [isReseller, setIsReseller] = useState(false);
@@ -316,18 +333,37 @@ export default function ProductDetailPage() {
       try {
         setLoading(true);
 
-        const response = await fetch(
-          `/api/products/${productId}`,
-          {
+        const [
+          response,
+          sizesResponse,
+        ] = await Promise.all([
+          fetch(
+            `/api/products/${productId}`,
+            {
+              cache: "no-store",
+            },
+          ),
+          fetch("/api/sizes", {
             cache: "no-store",
-          },
-        );
+          }),
+        ]);
 
         const data = await response.json();
 
         if (!response.ok) {
           throw new Error(
             data.error ?? "Failed to load product",
+          );
+        }
+
+        if (sizesResponse.ok) {
+          const sizesData =
+            await sizesResponse.json();
+
+          setSizeGuides(
+            Array.isArray(sizesData)
+              ? sizesData
+              : [],
           );
         }
 
@@ -560,6 +596,43 @@ export default function ProductDetailPage() {
 
     return Array.from(map.values());
   }, [product, selectedColorId]);
+
+  const productSizeGuides = useMemo(() => {
+    if (!product) {
+      return [];
+    }
+
+    const sizeIds = new Set(
+      product.variants.map(
+        (variant) => variant.size.id,
+      ),
+    );
+
+    return sizeGuides.filter(
+      (guide) =>
+        sizeIds.has(guide.id) &&
+        [
+          guide.ageGuide,
+          guide.heightCm,
+          guide.chestIn,
+          guide.waistIn,
+          guide.hipIn,
+          guide.garmentLengthIn,
+          guide.fitNote,
+        ].some(Boolean),
+    );
+  }, [product, sizeGuides]);
+
+  const sizeGuideById = useMemo(
+    () =>
+      new Map(
+        sizeGuides.map((guide) => [
+          guide.id,
+          guide,
+        ]),
+      ),
+    [sizeGuides],
+  );
 
   const selectedVariant = useMemo(() => {
     if (!product) return null;
@@ -1549,9 +1622,23 @@ export default function ProductDetailPage() {
 
           {/* SIZE */}
           <div className="mt-4 rounded-[1.35rem] border border-black/[0.06] bg-[#FAF7F0] p-4 sm:p-5">
-            <p className="mb-3 text-sm font-bold">
-              Size
-            </p>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-sm font-bold">
+                Size
+              </p>
+
+              {productSizeGuides.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSizeGuideOpen(true)
+                  }
+                  className="rounded-full border border-[#D9C29A] bg-[#FFFDF9] px-3 py-1.5 text-[10px] font-black text-[#6B5435]"
+                >
+                  Size Guide
+                </button>
+              )}
+            </div>
 
             <div className="flex flex-wrap gap-3">
               {sizes.map((size) => {
@@ -1588,11 +1675,36 @@ export default function ProductDetailPage() {
                       {size.name}
                     </span>
 
-                    {size.inches ? (
-                      <span className="mt-1 block text-[9px] font-semibold opacity-80">
-                        Height {size.inches}
-                      </span>
-                    ) : null}
+                    {(() => {
+                      const guide =
+                        sizeGuideById.get(size.id);
+
+                      if (
+                        guide?.ageGuide ||
+                        guide?.heightCm
+                      ) {
+                        return (
+                          <span className="mt-1 block text-[9px] font-semibold opacity-80">
+                            {guide.ageGuide
+                              ? `Age ${guide.ageGuide}`
+                              : ""}
+                            {guide.ageGuide &&
+                            guide.heightCm
+                              ? " · "
+                              : ""}
+                            {guide.heightCm
+                              ? `${guide.heightCm} cm`
+                              : ""}
+                          </span>
+                        );
+                      }
+
+                      return size.inches ? (
+                        <span className="mt-1 block text-[9px] font-semibold opacity-80">
+                          Height {size.inches}
+                        </span>
+                      ) : null;
+                    })()}
                   </button>
                 );
               })}
@@ -2489,6 +2601,103 @@ export default function ProductDetailPage() {
             </div>
           </div>
         )}
+
+      {sizeGuideOpen && (
+        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-0 sm:items-center sm:p-5">
+          <div className="max-h-[86vh] w-full max-w-4xl overflow-hidden rounded-t-[2rem] bg-[#FFFDF9] shadow-2xl sm:rounded-[2rem]">
+            <div className="flex items-start justify-between gap-4 border-b border-[#E4D7C4] px-5 py-5 sm:px-6">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6B5435]">
+                  Kids Fit Guide
+                </p>
+                <h2 className="mt-1 text-xl font-black text-[#211C18]">
+                  Choose by measurements
+                </h2>
+                <p className="mt-1 max-w-xl text-xs leading-5 text-[#7B7066]">
+                  Age is only a guide. Compare the child&apos;s actual height, chest and waist before choosing a size.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setSizeGuideOpen(false)
+                }
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#E4D7C4] bg-white font-black"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="max-h-[65vh] overflow-auto">
+              <table className="min-w-[760px] w-full text-left text-xs">
+                <thead className="sticky top-0 bg-[#031B14] text-[#FFFDF9]">
+                  <tr>
+                    <th className="px-4 py-3">Size</th>
+                    <th className="px-4 py-3">Age Guide</th>
+                    <th className="px-4 py-3">Height cm</th>
+                    <th className="px-4 py-3">Chest in</th>
+                    <th className="px-4 py-3">Waist in</th>
+                    <th className="px-4 py-3">Hip in</th>
+                    <th className="px-4 py-3">Garment Length</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E4D7C4]">
+                  {productSizeGuides.map(
+                    (guide) => (
+                      <tr key={guide.id}>
+                        <td className="px-4 py-4 font-black">
+                          {guide.name}
+                        </td>
+                        <td className="px-4 py-4">
+                          {guide.ageGuide ?? "—"}
+                        </td>
+                        <td className="px-4 py-4">
+                          {guide.heightCm ?? "—"}
+                        </td>
+                        <td className="px-4 py-4">
+                          {guide.chestIn ?? "—"}
+                        </td>
+                        <td className="px-4 py-4">
+                          {guide.waistIn ?? "—"}
+                        </td>
+                        <td className="px-4 py-4">
+                          {guide.hipIn ?? "—"}
+                        </td>
+                        <td className="px-4 py-4">
+                          {guide.garmentLengthIn ??
+                            "—"}
+                        </td>
+                      </tr>
+                    ),
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {productSizeGuides.some(
+              (guide) => guide.fitNote,
+            ) && (
+              <div className="border-t border-[#E4D7C4] px-5 py-4 text-xs text-[#6B5435] sm:px-6">
+                {productSizeGuides
+                  .filter(
+                    (guide) => guide.fitNote,
+                  )
+                  .slice(0, 2)
+                  .map((guide) => (
+                    <p
+                      key={guide.id}
+                      className="mt-1"
+                    >
+                      <strong>{guide.name}:</strong>{" "}
+                      {guide.fitNote}
+                    </p>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {!isReseller && (
         <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden">
