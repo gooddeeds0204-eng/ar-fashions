@@ -113,8 +113,13 @@ export default function SettingsPage() {
   ] = useState(false);
 
   const [
-    currentDeletePin,
-    setCurrentDeletePin,
+    adminVerifyEmail,
+    setAdminVerifyEmail,
+  ] = useState("");
+
+  const [
+    adminVerifyPassword,
+    setAdminVerifyPassword,
   ] = useState("");
 
   const [
@@ -192,6 +197,27 @@ export default function SettingsPage() {
         setDeletePinConfigured(
           pinData.configured ===
             true,
+        );
+      }
+
+      const sessionResponse =
+        await fetch(
+          "/api/admin/session",
+          {
+            cache: "no-store",
+            credentials:
+              "same-origin",
+          },
+        );
+
+      if (sessionResponse.ok) {
+        const sessionData =
+          await sessionResponse.json();
+
+        setAdminVerifyEmail(
+          sessionData.admin
+            ?.email ??
+            "",
         );
       }
     } catch (error) {
@@ -299,8 +325,10 @@ export default function SettingsPage() {
               JSON.stringify({
                 pin:
                   newDeletePin,
-                currentPin:
-                  currentDeletePin,
+                adminEmail:
+                  adminVerifyEmail.trim(),
+                adminPassword:
+                  adminVerifyPassword,
               }),
           },
         );
@@ -318,7 +346,7 @@ export default function SettingsPage() {
       setDeletePinConfigured(
         true,
       );
-      setCurrentDeletePin("");
+      setAdminVerifyPassword("");
       setNewDeletePin("");
       setMessage(
         data.message ??
@@ -735,34 +763,57 @@ export default function SettingsPage() {
               </p>
             </div>
 
-            {deletePinConfigured && (
+            <div className="mt-4 rounded-2xl border border-red-100 bg-red-50/50 p-4">
+              <p className="text-[11px] font-black uppercase tracking-wider text-red-600">
+                Admin Re-verification Required
+              </p>
+
+              <p className="mt-1 text-[11px] leading-5 text-zinc-500">
+                Delete PIN set/change cheyyadaniki logged-in admin ID/email + password verify avvali.
+              </p>
+
               <label className="mt-4 block text-xs font-black">
-                Current PIN
+                Admin ID / Email
 
                 <input
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={8}
+                  type="email"
+                  autoComplete="username"
                   value={
-                    currentDeletePin
+                    adminVerifyEmail
                   }
                   onChange={(event) =>
-                    setCurrentDeletePin(
-                      event.target.value.replace(
-                        /\D/g,
-                        "",
-                      ),
+                    setAdminVerifyEmail(
+                      event.target.value,
                     )
                   }
-                  placeholder="Enter current PIN"
+                  placeholder="Admin email"
                   className="mt-2 w-full rounded-2xl border p-3"
                 />
               </label>
-            )}
+
+              <label className="mt-4 block text-xs font-black">
+                Admin Password
+
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  value={
+                    adminVerifyPassword
+                  }
+                  onChange={(event) =>
+                    setAdminVerifyPassword(
+                      event.target.value,
+                    )
+                  }
+                  placeholder="Enter admin password"
+                  className="mt-2 w-full rounded-2xl border p-3"
+                />
+              </label>
+            </div>
 
             <label className="mt-4 block text-xs font-black">
               {deletePinConfigured
-                ? "New PIN"
+                ? "New Delete PIN"
                 : "Create Delete PIN"}
 
               <input
