@@ -838,6 +838,31 @@ export default function MyOrdersPage() {
 
                     {/* EXPANDED DETAILS */}
                     <div className="border-t border-[#E4D7C4]">
+                      <div className="flex items-center justify-between gap-3 border-b border-[#E4D7C4] bg-[#FAF7F0] px-4 py-3 sm:px-5">
+                        <div>
+                          <p className="text-[8px] font-black uppercase tracking-[0.16em] text-[#6B5435]">
+                            Invoice
+                          </p>
+                          <p className="mt-0.5 text-[10px] text-zinc-500">
+                            View, print or save as PDF
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            router.push(
+                              `/invoice/${encodeURIComponent(
+                                order.orderNumber,
+                              )}`,
+                            )
+                          }
+                          className="rounded-xl bg-[#031B14] px-4 py-2.5 text-[9px] font-black text-white"
+                        >
+                          Download Invoice
+                        </button>
+                      </div>
+
                       {/* ITEMS */}
                       <section className="p-4 sm:p-5">
                         <div className="mb-4 flex items-center justify-between">
