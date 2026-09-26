@@ -219,6 +219,22 @@ function OrderSuccessContent() {
               View My Order →
             </button>
 
+            {orderNumber && (
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    `/invoice/${encodeURIComponent(
+                      orderNumber,
+                    )}`,
+                  )
+                }
+                className="mt-2.5 min-h-[50px] w-full rounded-[1.15rem] bg-[#031B14] px-5 text-[10px] font-black uppercase tracking-[0.08em] text-white transition active:scale-[0.98]"
+              >
+                Download Invoice
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() =>
