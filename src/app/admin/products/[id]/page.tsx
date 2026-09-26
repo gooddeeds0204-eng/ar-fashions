@@ -116,6 +116,8 @@ export default function EditProductPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingProduct, setDeletingProduct] =
+    useState(false);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -832,6 +834,78 @@ export default function EditProductPage() {
       alert("Failed to replace media");
     } finally {
       setReplacingMediaId(null);
+    }
+  }
+
+  async function deleteProduct() {
+    if (!product) return;
+
+    const pin = window.prompt(
+      `Delete "${product.name}"? Enter your product delete PIN to continue.`,
+    );
+
+    if (pin === null) {
+      return;
+    }
+
+    if (!/^\d{4,8}$/.test(pin.trim())) {
+      alert(
+        "Enter the 4 to 8 digit delete PIN.",
+      );
+      return;
+    }
+
+    try {
+      setDeletingProduct(true);
+      setError("");
+      setSuccess("");
+
+      const response =
+        await fetch(
+          `/api/products/${product.id}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            credentials:
+              "include",
+            body:
+              JSON.stringify({
+                pin: pin.trim(),
+              }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        alert(
+          data.error ??
+            "Failed to delete product.",
+        );
+        return;
+      }
+
+      alert(
+        data.message ??
+          "Product deleted successfully.",
+      );
+
+      window.location.href =
+        "/admin/product-catalog";
+    } catch (error) {
+      console.error(
+        "Product delete failed:",
+        error,
+      );
+      alert(
+        "Failed to delete product.",
+      );
+    } finally {
+      setDeletingProduct(false);
     }
   }
 
@@ -2107,9 +2181,25 @@ export default function EditProductPage() {
               </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  void deleteProduct()
+                }
+                disabled={
+                  deletingProduct ||
+                  saving
+                }
+                className="rounded-xl border border-red-400/30 bg-red-400/10 px-5 py-3 text-sm font-black text-red-300 transition hover:bg-red-500 hover:text-white disabled:opacity-50"
+              >
+                {deletingProduct
+                  ? "Deleting..."
+                  : "🗑 Delete"}
+              </button>
+
               <a
-                href="/admin/products"
+                href="/admin/product-catalog"
                 className="rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-slate-300 hover:bg-white/5"
               >
                 Cancel
@@ -2118,7 +2208,10 @@ export default function EditProductPage() {
               <button
                 type="button"
                 onClick={saveProduct}
-                disabled={saving}
+                disabled={
+                  saving ||
+                  deletingProduct
+                }
                 className="rounded-xl bg-emerald-400 px-7 py-3 text-sm font-black text-slate-950 transition hover:bg-emerald-300 disabled:opacity-50"
               >
                 {saving
