@@ -850,7 +850,7 @@ export default function ProductsPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <div className="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-center">
               <p className="text-xl font-bold">
                 {products.length}
@@ -877,6 +877,16 @@ export default function ProductsPage() {
                 Sizes
               </p>
             </div>
+
+            <a
+              href="/admin/product-catalog"
+              className="flex flex-col items-center justify-center rounded-2xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-center transition hover:bg-emerald-400/20"
+            >
+              <p className="text-xl font-bold text-emerald-300">⌕</p>
+              <p className="text-[10px] font-bold uppercase text-emerald-400">
+                Catalog
+              </p>
+            </a>
           </div>
         </header>
 
@@ -2024,86 +2034,24 @@ export default function ProductsPage() {
           </div>
         </form>
 
-        {/* PRODUCT LIST */}
-        <section className="mt-10 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04]">
-          <div className="border-b border-white/10 px-5 py-5 sm:px-7">
+        <div className="mt-8 rounded-3xl border border-emerald-400/20 bg-emerald-400/[0.05] p-5 sm:flex sm:items-center sm:justify-between sm:gap-5">
+          <div>
             <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
-              Catalog
+              Product Catalog
             </p>
-
-            <h2 className="mt-1 text-xl font-bold">
-              Existing Products ({products.length})
-            </h2>
+            <p className="mt-1 text-sm text-slate-400">
+              Existing products are now managed on a separate searchable catalog page.
+            </p>
           </div>
 
-          {loading ? (
-            <div className="p-8 text-center text-slate-500">
-              Loading products...
-            </div>
-          ) : products.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">
-              No products added yet.
-            </div>
-          ) : (
-            <div className="divide-y divide-white/10">
-              {products.map((product) => (
-                <div
-                  key={product.id}
-                  className="flex flex-col gap-4 px-5 py-5 sm:px-7 md:flex-row md:items-center md:justify-between"
-                >
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-bold">
-                        {product.name}
-                      </h3>
+          <a
+            href="/admin/product-catalog"
+            className="mt-4 inline-flex items-center justify-center rounded-xl bg-emerald-400 px-5 py-3 text-sm font-black text-slate-950 transition hover:bg-emerald-300 sm:mt-0"
+          >
+            Open Product Catalog →
+          </a>
+        </div>
 
-                      <span className="rounded-full bg-emerald-400/10 px-2.5 py-1 text-[10px] font-bold uppercase text-emerald-400">
-                        {product.status}
-                      </span>
-                    </div>
-
-                    <p className="mt-1 text-sm text-emerald-400">
-                      {product.category.name}
-                    </p>
-
-                    <p className="mt-1 text-xs text-slate-500">
-                      {product.sku ?? "No SKU"} ·{" "}
-                      {product._count.variants} variants ·{" "}
-                      {product._count.media} media
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col items-start gap-3 md:items-end">
-                    <div className="text-left md:text-right">
-                      <p className="font-bold">
-                        ₹
-                        {Number(
-                          product.retailPrice,
-                        ).toLocaleString("en-IN")}
-                      </p>
-
-                      {product.resellerPrice !== null && (
-                        <p className="text-sm text-emerald-400">
-                          Reseller ₹
-                          {Number(
-                            product.resellerPrice,
-                          ).toLocaleString("en-IN")}
-                        </p>
-                      )}
-                    </div>
-
-                    <a
-                      href={`/admin/products/${product.id}`}
-                      className="inline-flex items-center justify-center rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-bold text-emerald-400 transition hover:bg-emerald-400 hover:text-slate-950"
-                    >
-                      ✏️ Edit
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
       </div>
     </main>
   );
