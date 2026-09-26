@@ -3,6 +3,8 @@ import { getSalesAccess } from "@/lib/sales-access";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { publicProductMedia } from "@/lib/product-media-color";
+import { ensureProductSoftDeleteStorage } from "@/lib/product-soft-delete-storage";
+import { verifyProductDeletePin } from "@/lib/product-delete-pin";
 
 const PRODUCT_STATUSES = [
   "DRAFT",
@@ -165,12 +167,15 @@ export async function GET(
   },
 ) {
   try {
+    await ensureProductSoftDeleteStorage();
+
     const access = await getSalesAccess();
     const { id } = await context.params;
 
     const product = await prisma.product.findFirst({
       where: {
         id,
+        deletedAt: null,
         ...(access.isAdmin
           ? {}
           : {
@@ -809,7 +814,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   context: {
     params: Promise<{ id: string }>;
   },
@@ -821,10 +826,45 @@ export async function DELETE(
   }
 
   try {
+    await ensureProductSoftDeleteStorage();
+
+    const body = await request.json().catch(() => ({}));
+    const pin = String(body.pin ?? "").trim();
+
+    const pinResult =
+      await verifyProductDeletePin(pin);
+
+    if (!pinResult.configured) {
+      return NextResponse.json(
+        {
+          error:
+            "Product delete PIN is not configured. Set it in Admin Settings first.",
+        },
+        { status: 409 },
+      );
+    }
+
+    if (!pinResult.valid) {
+      return NextResponse.json(
+        {
+          error:
+            "Incorrect delete PIN.",
+        },
+        { status: 403 },
+      );
+    }
+
     const { id } = await context.params;
 
-    const product = await prisma.product.findUnique({
-      where: { id },
+    const product = await prisma.product.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        name: true,
+      },
     });
 
     if (!product) {
@@ -834,27 +874,48 @@ export async function DELETE(
       );
     }
 
-    const archivedProduct =
-      await prisma.product.update({
-        where: { id },
-        data: {
-          status: "INACTIVE",
-          isFeatured: false,
-          isTrending: false,
-          isNewArrival: false,
-        },
-        select: {
-          id: true,
-          name: true,
-          status: true,
-        },
+    const deletedProduct =
+      await prisma.$transaction(async (tx) => {
+        await tx.productVariant.updateMany({
+          where: {
+            productId: id,
+          },
+          data: {
+            isActive: false,
+          },
+        });
+
+        await tx.media.updateMany({
+          where: {
+            productId: id,
+          },
+          data: {
+            isActive: false,
+          },
+        });
+
+        return tx.product.update({
+          where: { id },
+          data: {
+            deletedAt: new Date(),
+            status: "INACTIVE",
+            isFeatured: false,
+            isTrending: false,
+            isNewArrival: false,
+          },
+          select: {
+            id: true,
+            name: true,
+            deletedAt: true,
+          },
+        });
       });
 
     return NextResponse.json({
       success: true,
       message:
-        "Product archived successfully",
-      product: archivedProduct,
+        "Product deleted successfully.",
+      product: deletedProduct,
     });
   } catch (error) {
     console.error("DELETE /api/products/[id] failed:", error);
