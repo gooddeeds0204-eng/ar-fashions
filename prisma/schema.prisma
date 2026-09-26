@@ -99,8 +99,24 @@ model Size {
   updatedAt DateTime          @updatedAt
   variants  ProductVariant[]
   setSizes  ResellerSetSize[]
+  kidsGuide KidsSizeGuide?
 
   @@index([isActive])
+}
+
+model KidsSizeGuide {
+  sizeId          String   @id
+  ageGuide        String?
+  heightCm        String?
+  chestIn         String?
+  waistIn         String?
+  hipIn           String?
+  garmentLengthIn String?
+  fitNote         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  size Size @relation(fields: [sizeId], references: [id], onDelete: Cascade)
 }
 
 model Product {
