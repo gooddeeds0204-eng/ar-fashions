@@ -66,6 +66,8 @@ export default function ProductCatalogPage() {
   const [search, setSearch] = useState("");
   const [genderFilter, setGenderFilter] =
     useState<GenderFilter>("ALL");
+  const [deletingId, setDeletingId] =
+    useState<string | null>(null);
 
   async function loadProducts() {
     setLoading(true);
@@ -100,6 +102,84 @@ export default function ProductCatalogPage() {
     void loadProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function deleteProduct(
+    product: Product,
+  ) {
+    const pin = window.prompt(
+      `Delete "${product.name}"? Enter your product delete PIN to continue.`,
+    );
+
+    if (pin === null) {
+      return;
+    }
+
+    if (!/^\d{4,8}$/.test(pin.trim())) {
+      alert(
+        "Enter the 4 to 8 digit delete PIN.",
+      );
+      return;
+    }
+
+    try {
+      setDeletingId(
+        product.id,
+      );
+
+      const response =
+        await fetch(
+          `/api/products/${product.id}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            credentials:
+              "include",
+            body:
+              JSON.stringify({
+                pin: pin.trim(),
+              }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        alert(
+          data.error ??
+            "Failed to delete product.",
+        );
+        return;
+      }
+
+      setProducts((current) =>
+        current.filter(
+          (item) =>
+            item.id !==
+            product.id,
+        ),
+      );
+
+      alert(
+        data.message ??
+          "Product deleted successfully.",
+      );
+    } catch (error) {
+      console.error(
+        "Product delete failed:",
+        error,
+      );
+
+      alert(
+        "Failed to delete product.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   const filteredProducts = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -345,12 +425,33 @@ export default function ProductCatalogPage() {
                           )}
                         </div>
 
-                        <a
-                          href={`/admin/products/${product.id}`}
-                          className="inline-flex items-center justify-center rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-black text-emerald-400 transition hover:bg-emerald-400 hover:text-slate-950"
-                        >
-                          ✏ Edit
-                        </a>
+                        <div className="flex flex-wrap gap-2">
+                          <a
+                            href={`/admin/products/${product.id}`}
+                            className="inline-flex items-center justify-center rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-black text-emerald-400 transition hover:bg-emerald-400 hover:text-slate-950"
+                          >
+                            ✏ Edit
+                          </a>
+
+                          <button
+                            type="button"
+                            disabled={
+                              deletingId ===
+                              product.id
+                            }
+                            onClick={() =>
+                              void deleteProduct(
+                                product,
+                              )
+                            }
+                            className="inline-flex items-center justify-center rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-2 text-sm font-black text-red-300 transition hover:bg-red-500 hover:text-white disabled:opacity-50"
+                          >
+                            {deletingId ===
+                            product.id
+                              ? "Deleting..."
+                              : "🗑 Delete"}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
