@@ -6,7 +6,8 @@ import { useEffect, useState } from "react";
 
 const menu = [
   { label: "Dashboard", href: "/admin", icon: "▦" },
-  { label: "Products", href: "/admin/products", icon: "◇" },
+  { label: "Product Management", href: "/admin/products", icon: "◇" },
+  { label: "Product Catalog", href: "/admin/product-catalog", icon: "⌕" },
   { label: "Categories", href: "/admin/categories", icon: "▤" },
   { label: "Colors", href: "/admin/colors", icon: "●" },
   { label: "Sizes", href: "/admin/sizes", icon: "□" },
