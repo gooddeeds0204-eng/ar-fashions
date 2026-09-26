@@ -9,7 +9,6 @@ import {
   hasProductDeletePin,
   setProductDeletePin,
   validateProductDeletePin,
-  verifyProductDeletePin,
 } from "@/lib/product-delete-pin";
 
 export async function GET() {
