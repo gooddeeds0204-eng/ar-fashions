@@ -89,6 +89,12 @@ type Order = {
     pincode: string;
     landmark: string | null;
   } | null;
+  location: {
+    latitude: number;
+    longitude: number;
+    accuracy: number | null;
+    capturedAt: string | null;
+  } | null;
   items: OrderItem[];
 };
 
@@ -1299,6 +1305,17 @@ export default function AdminOrdersPage() {
                         View Details
                       </button>
 
+                      {order.location && (
+                        <a
+                          href={`https://www.google.com/maps?q=${order.location.latitude},${order.location.longitude}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-black text-emerald-700"
+                        >
+                          📍 Location
+                        </a>
+                      )}
+
                       <a
                         href={`/invoice/${encodeURIComponent(
                           order.orderNumber,
@@ -1533,6 +1550,49 @@ export default function AdminOrdersPage() {
                   {selectedOrder.address.landmark
                     ? ` · ${selectedOrder.address.landmark}`
                     : ""}
+                </p>
+              </div>
+            )}
+
+            {selectedOrder.location && (
+              <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-emerald-700">
+                  Checkout Location
+                </p>
+
+                <p className="mt-2 text-sm font-black text-emerald-950">
+                  {selectedOrder.location.latitude.toFixed(6)},{" "}
+                  {selectedOrder.location.longitude.toFixed(6)}
+                </p>
+
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-emerald-700">
+                  {selectedOrder.location.accuracy !== null && (
+                    <span>
+                      Accuracy ~{Math.round(selectedOrder.location.accuracy)} m
+                    </span>
+                  )}
+
+                  {selectedOrder.location.capturedAt && (
+                    <span>
+                      Captured{" "}
+                      {new Date(
+                        selectedOrder.location.capturedAt,
+                      ).toLocaleString("en-IN")}
+                    </span>
+                  )}
+                </div>
+
+                <a
+                  href={`https://www.google.com/maps?q=${selectedOrder.location.latitude},${selectedOrder.location.longitude}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex rounded-xl bg-emerald-700 px-4 py-2.5 text-xs font-black text-white"
+                >
+                  Open in Google Maps ↗
+                </a>
+
+                <p className="mt-2 text-[9px] leading-4 text-emerald-700">
+                  Customer checkout time lo permission ichi share chesina location snapshot.
                 </p>
               </div>
             )}
