@@ -2,6 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { uploadAdminProductMedia } from "@/lib/admin-client-upload";
+import {
+  KIDS_SIZE_PRESETS,
+  KIDS_SIZE_REFERENCE_NOTE,
+  getKidsSizePreset,
+  kidsHeightCmToInches,
+} from "@/lib/kids-size-presets";
 
 type Category = {
   id: string;
@@ -141,6 +147,8 @@ export default function ProductsPage() {
   const [newSizeWaistIn, setNewSizeWaistIn] = useState("");
   const [newSizeHipIn, setNewSizeHipIn] = useState("");
   const [newSizeGarmentLengthIn, setNewSizeGarmentLengthIn] = useState("");
+  const [newSizeFitNote, setNewSizeFitNote] = useState("");
+  const [newSizePreset, setNewSizePreset] = useState("");
   const [creatingSize, setCreatingSize] = useState(false);
 
   const [variants, setVariants] = useState<Variant[]>([]);
@@ -428,6 +436,36 @@ export default function ProductsPage() {
     }
   }
 
+  function applyKidsSizePreset(value: string) {
+    setNewSizePreset(value);
+
+    const preset = getKidsSizePreset(value);
+
+    if (!preset) {
+      return;
+    }
+
+    setNewSizeName(preset.sizeLabel);
+    setNewSizeCategory("Kids");
+    setNewSizeType("AGE");
+    setNewSizeInches(
+      kidsHeightCmToInches(
+        preset.heightCm,
+      ),
+    );
+    setNewSizeAgeGuide(preset.ageGuide);
+    setNewSizeHeightCm(preset.heightCm);
+    setNewSizeChestIn(preset.chestIn);
+    setNewSizeWaistIn(preset.waistIn);
+    setNewSizeHipIn(preset.hipIn);
+    setNewSizeGarmentLengthIn(
+      "Product-specific",
+    );
+    setNewSizeFitNote(
+      KIDS_SIZE_REFERENCE_NOTE,
+    );
+  }
+
   async function quickCreateSize() {
     const name = newSizeName.trim();
 
@@ -456,6 +494,7 @@ export default function ProductsPage() {
           waistIn: newSizeWaistIn.trim() || null,
           hipIn: newSizeHipIn.trim() || null,
           garmentLengthIn: newSizeGarmentLengthIn.trim() || null,
+          fitNote: newSizeFitNote.trim() || null,
           isActive: true,
         }),
       });
@@ -479,6 +518,8 @@ export default function ProductsPage() {
       setNewSizeWaistIn("");
       setNewSizeHipIn("");
       setNewSizeGarmentLengthIn("");
+      setNewSizeFitNote("");
+      setNewSizePreset("");
       setShowCreateSize(false);
     } catch (error) {
       console.error("Quick size create failed:", error);
@@ -1755,17 +1796,66 @@ export default function ProductsPage() {
 
                   {newSizeCategory === "Kids" && (
                     <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/50 p-3">
-                      <p className="mb-3 text-xs font-bold text-emerald-300">
-                        Kids Fit Measurements — age is only a guide
-                      </p>
+                      <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                        <div>
+                          <p className="text-xs font-bold text-emerald-300">
+                            Kids Fit Measurements — age is only a guide
+                          </p>
+                          <p className="mt-1 text-[10px] text-slate-500">
+                            Age preset select cheste reference measurements automatic ga fill avutayi. Tarvata supplier/product chart batti edit cheyochu.
+                          </p>
+                        </div>
+
+                        <div className="min-w-[220px]">
+                          <label className="mb-1 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Auto Fill by Age
+                          </label>
+                          <select
+                            value={newSizePreset}
+                            onChange={(event) =>
+                              applyKidsSizePreset(
+                                event.target.value,
+                              )
+                            }
+                            className="w-full rounded-xl border border-emerald-400/20 bg-slate-950 px-4 py-3 text-sm font-bold text-emerald-300 outline-none focus:border-emerald-400"
+                          >
+                            <option value="">
+                              Select age / months...
+                            </option>
+                            {KIDS_SIZE_PRESETS.map(
+                              (preset) => (
+                                <option
+                                  key={preset.value}
+                                  value={preset.value}
+                                >
+                                  {preset.label}
+                                </option>
+                              ),
+                            )}
+                          </select>
+                        </div>
+                      </div>
+
                       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         <input value={newSizeAgeGuide} onChange={(event) => setNewSizeAgeGuide(event.target.value)} placeholder="Age guide e.g. 7-8Y" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
                         <input value={newSizeHeightCm} onChange={(event) => setNewSizeHeightCm(event.target.value)} placeholder="Height cm e.g. 122-128" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
                         <input value={newSizeChestIn} onChange={(event) => setNewSizeChestIn(event.target.value)} placeholder="Chest in e.g. 26-27" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
                         <input value={newSizeWaistIn} onChange={(event) => setNewSizeWaistIn(event.target.value)} placeholder="Waist in e.g. 23-24" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
                         <input value={newSizeHipIn} onChange={(event) => setNewSizeHipIn(event.target.value)} placeholder="Hip in optional" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
-                        <input value={newSizeGarmentLengthIn} onChange={(event) => setNewSizeGarmentLengthIn(event.target.value)} placeholder="Garment length in optional" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
+                        <input value={newSizeGarmentLengthIn} onChange={(event) => setNewSizeGarmentLengthIn(event.target.value)} placeholder="Garment length / product-specific" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
                       </div>
+
+                      <textarea
+                        value={newSizeFitNote}
+                        onChange={(event) =>
+                          setNewSizeFitNote(
+                            event.target.value,
+                          )
+                        }
+                        rows={2}
+                        placeholder="Fit note..."
+                        className="mt-3 w-full resize-none rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                      />
                     </div>
                   )}
 
