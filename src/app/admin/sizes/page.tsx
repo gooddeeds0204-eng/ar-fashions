@@ -8,6 +8,13 @@ type Size = {
   category: string | null;
   sizeType: string | null;
   inches: string | null;
+  ageGuide?: string | null;
+  heightCm?: string | null;
+  chestIn?: string | null;
+  waistIn?: string | null;
+  hipIn?: string | null;
+  garmentLengthIn?: string | null;
+  fitNote?: string | null;
   isActive: boolean;
   sortOrder: number;
   _count?: {
@@ -17,52 +24,28 @@ type Size = {
 
 const emptyForm = {
   name: "",
-  category: "Clothing",
-  sizeType: "",
+  category: "Kids",
+  sizeType: "AGE",
   inches: "",
+  ageGuide: "",
+  heightCm: "",
+  chestIn: "",
+  waistIn: "",
+  hipIn: "",
+  garmentLengthIn: "",
+  fitNote: "",
   sortOrder: "0",
   isActive: true,
-};
-
-const KIDS_STANDARD_HEIGHTS: Record<string, string> = {
-  "1-2Y": "30-36 in",
-  "2-3Y": "36-39 in",
-  "3-4Y": "39-41 in",
-  "4-5Y": "41-43 in",
-  "5-6Y": "43-46 in",
-  "6-7Y": "46-48 in",
-  "7-8Y": "48-50 in",
-  "8-9Y": "50-53 in",
-  "9-10Y": "53-55 in",
-  "10-11Y": "55-57 in",
-  "11-12Y": "57-60 in",
-  "12-13Y": "60-62 in",
-  "13-14Y": "62-65 in",
-  "14-15Y": "65-68 in",
 };
 
 export default function SizesPage() {
   const [sizes, setSizes] = useState<Size[]>([]);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState(emptyForm);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] =
+    useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  const [
-    kidsHeightDrafts,
-    setKidsHeightDrafts,
-  ] = useState<Record<string, string>>({});
-
-  const [
-    kidsHeightSavingId,
-    setKidsHeightSavingId,
-  ] = useState<string | null>(null);
-
-  const [
-    applyingStandardHeights,
-    setApplyingStandardHeights,
-  ] = useState(false);
 
   async function loadSizes() {
     setLoading(true);
@@ -70,45 +53,28 @@ export default function SizesPage() {
     try {
       const response = await fetch("/api/sizes", {
         cache: "no-store",
+        credentials: "include",
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error ?? "Failed to load sizes");
+        throw new Error(
+          data.error ?? "Failed to load sizes",
+        );
       }
 
-      const loadedSizes =
-        Array.isArray(data) ? data : [];
-
-      setSizes(loadedSizes);
-
-      setKidsHeightDrafts(
-        Object.fromEntries(
-          loadedSizes
-            .filter(
-              (size: Size) =>
-                size.category?.toLowerCase() === "kids" &&
-                /Y$/i.test(size.name),
-            )
-            .map(
-              (size: Size) => [
-                size.id,
-                size.inches ?? "",
-              ],
-            ),
-        ),
-      );
+      setSizes(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error(error);
-      alert("Sizes load కాలేదు");
+      alert("Sizes load failed");
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    loadSizes();
+    void loadSizes();
   }, []);
 
   const filteredSizes = useMemo(() => {
@@ -122,6 +88,13 @@ export default function SizesPage() {
         size.category ?? "",
         size.sizeType ?? "",
         size.inches ?? "",
+        size.ageGuide ?? "",
+        size.heightCm ?? "",
+        size.chestIn ?? "",
+        size.waistIn ?? "",
+        size.hipIn ?? "",
+        size.garmentLengthIn ?? "",
+        size.fitNote ?? "",
       ]
         .join(" ")
         .toLowerCase()
@@ -129,17 +102,17 @@ export default function SizesPage() {
     );
   }, [sizes, search]);
 
-  const kidsYearSizes = useMemo(
+  const kidsSizes = useMemo(
     () =>
       sizes
         .filter(
           (size) =>
-            size.category?.toLowerCase() === "kids" &&
-            /Y$/i.test(size.name),
+            size.category?.toLowerCase() === "kids",
         )
         .sort(
           (a, b) =>
-            a.sortOrder - b.sortOrder,
+            a.sortOrder - b.sortOrder ||
+            a.name.localeCompare(b.name),
         ),
     [sizes],
   );
@@ -147,108 +120,6 @@ export default function SizesPage() {
   function resetForm() {
     setForm(emptyForm);
     setEditingId(null);
-  }
-
-  async function saveKidsHeight(
-    size: Size,
-  ) {
-    const value =
-      kidsHeightDrafts[size.id]?.trim() ?? "";
-
-    setKidsHeightSavingId(size.id);
-
-    try {
-      const response = await fetch("/api/sizes", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: size.id,
-          inches: value || null,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(
-          data.error ??
-            "Height range update failed",
-        );
-        return;
-      }
-
-      await loadSizes();
-
-      alert(
-        `${size.name} height updated successfully`,
-      );
-    } catch (error) {
-      console.error(error);
-      alert("Something went wrong");
-    } finally {
-      setKidsHeightSavingId(null);
-    }
-  }
-
-  async function applyStandardKidsHeights() {
-    const confirmed = window.confirm(
-      "Apply AS Fashions standard height chart to all Kids year sizes?",
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    setApplyingStandardHeights(true);
-
-    try {
-      for (const size of kidsYearSizes) {
-        const inches =
-          KIDS_STANDARD_HEIGHTS[size.name];
-
-        if (!inches) {
-          continue;
-        }
-
-        const response = await fetch("/api/sizes", {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            id: size.id,
-            inches,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.error ??
-              `Failed at ${size.name}`,
-          );
-        }
-      }
-
-      await loadSizes();
-
-      alert(
-        "Kids standard height chart applied successfully",
-      );
-    } catch (error) {
-      console.error(error);
-
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Failed to apply standard chart",
-      );
-    } finally {
-      setApplyingStandardHeights(false);
-    }
   }
 
   function startEdit(size: Size) {
@@ -259,6 +130,14 @@ export default function SizesPage() {
       category: size.category ?? "",
       sizeType: size.sizeType ?? "",
       inches: size.inches ?? "",
+      ageGuide: size.ageGuide ?? "",
+      heightCm: size.heightCm ?? "",
+      chestIn: size.chestIn ?? "",
+      waistIn: size.waistIn ?? "",
+      hipIn: size.hipIn ?? "",
+      garmentLengthIn:
+        size.garmentLengthIn ?? "",
+      fitNote: size.fitNote ?? "",
       sortOrder: String(size.sortOrder),
       isActive: size.isActive,
     });
@@ -269,7 +148,9 @@ export default function SizesPage() {
     });
   }
 
-  async function saveSize(event: React.FormEvent) {
+  async function saveSize(
+    event: React.FormEvent,
+  ) {
     event.preventDefault();
 
     if (!form.name.trim()) {
@@ -285,13 +166,35 @@ export default function SizesPage() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
-          ...(editingId ? { id: editingId } : {}),
+          ...(editingId
+            ? { id: editingId }
+            : {}),
           name: form.name.trim(),
-          category: form.category.trim() || null,
-          sizeType: form.sizeType.trim() || null,
-          inches: form.inches.trim() || null,
-          sortOrder: Number(form.sortOrder || 0),
+          category:
+            form.category.trim() || null,
+          sizeType:
+            form.sizeType.trim() || null,
+          inches:
+            form.inches.trim() || null,
+          ageGuide:
+            form.ageGuide.trim() || null,
+          heightCm:
+            form.heightCm.trim() || null,
+          chestIn:
+            form.chestIn.trim() || null,
+          waistIn:
+            form.waistIn.trim() || null,
+          hipIn:
+            form.hipIn.trim() || null,
+          garmentLengthIn:
+            form.garmentLengthIn.trim() || null,
+          fitNote:
+            form.fitNote.trim() || null,
+          sortOrder: Number(
+            form.sortOrder || 0,
+          ),
           isActive: form.isActive,
         }),
       });
@@ -299,7 +202,9 @@ export default function SizesPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.error ?? "Size save failed");
+        alert(
+          data.error ?? "Size save failed",
+        );
         return;
       }
 
@@ -326,6 +231,7 @@ export default function SizesPage() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           id: size.id,
           isActive: !size.isActive,
@@ -335,7 +241,9 @@ export default function SizesPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.error ?? "Update failed");
+        alert(
+          data.error ?? "Update failed",
+        );
         return;
       }
 
@@ -359,6 +267,7 @@ export default function SizesPage() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           id: size.id,
         }),
@@ -367,49 +276,60 @@ export default function SizesPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.error ?? "Delete failed");
+        alert(
+          data.error ?? "Delete failed",
+        );
         return;
       }
 
       await loadSizes();
 
-      alert(data.message ?? "Size deleted");
+      alert(
+        data.message ?? "Size deleted",
+      );
     } catch (error) {
       console.error(error);
       alert("Something went wrong");
     }
   }
 
+  const isKids =
+    form.category.trim().toLowerCase() ===
+    "kids";
+
   return (
     <main className="min-h-screen bg-slate-950 text-white">
-      <div className="mx-auto max-w-7xl px-6 py-10">
-
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <div className="mb-8">
-          <p className="text-sm font-medium uppercase tracking-[0.25em] text-emerald-400">
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-400">
             Catalog Management
           </p>
 
-          <h1 className="mt-2 text-4xl font-bold">
-            Sizes
+          <h1 className="mt-2 text-3xl font-black sm:text-4xl">
+            Sizes & Kids Fit Guide
           </h1>
 
-          <p className="mt-2 text-slate-400">
-            Manage clothing, kids, footwear and custom sizes.
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+            Kids ki age ni reference ga maatrame use cheyyandi.
+            Correct fit kosam height, chest, waist and other body
+            measurements maintain cheyyandi.
           </p>
         </div>
 
         <form
           onSubmit={saveSize}
-          className="mb-8 rounded-2xl border border-white/10 bg-white/[0.05] p-6"
+          className="mb-8 rounded-3xl border border-white/10 bg-white/[0.05] p-5 sm:p-7"
         >
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold">
-                {editingId ? "Edit Size" : "Add New Size"}
+              <h2 className="text-xl font-bold">
+                {editingId
+                  ? "Edit Size"
+                  : "Add New Size"}
               </h2>
 
               <p className="mt-1 text-sm text-slate-400">
-                Create reusable sizes for product variants.
+                Reusable size + optional kids measurement guide.
               </p>
             </div>
 
@@ -417,130 +337,247 @@ export default function SizesPage() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-300 hover:bg-white/10"
+                className="rounded-xl border border-white/10 px-4 py-2 text-sm font-bold text-slate-300"
               >
-                Cancel
+                Cancel Edit
               </button>
             )}
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <Field
+              label="Size Label *"
+              value={form.name}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  name: value,
+                })
+              }
+              placeholder="28 / 15-16Y / XL"
+            />
 
             <div>
-              <label className="mb-2 block text-sm text-slate-300">
-                Size Name
-              </label>
-
-              <input
-                value={form.name}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    name: e.target.value,
-                  })
-                }
-                placeholder="XL / Free Size / 32"
-                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none placeholder:text-slate-500 focus:border-emerald-400"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm text-slate-300">
-                Category
-              </label>
-
-              <input
+              <Label>Category</Label>
+              <select
                 value={form.category}
-                onChange={(e) =>
+                onChange={(event) => {
+                  const category =
+                    event.target.value;
+
                   setForm({
                     ...form,
-                    category: e.target.value,
-                  })
-                }
-                placeholder="Clothing"
-                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none placeholder:text-slate-500 focus:border-emerald-400"
-              />
+                    category,
+                    sizeType:
+                      category === "Kids"
+                        ? "AGE"
+                        : form.sizeType ===
+                            "AGE"
+                          ? "LETTER"
+                          : form.sizeType,
+                  });
+                }}
+                className={inputClass}
+              >
+                <option value="Kids">
+                  Kids
+                </option>
+                <option value="Adult">
+                  Adult
+                </option>
+                <option value="Clothing">
+                  Clothing / Free Size
+                </option>
+              </select>
             </div>
 
             <div>
-              <label className="mb-2 block text-sm text-slate-300">
-                Size Type
-              </label>
-
-              <input
+              <Label>Size Type</Label>
+              <select
                 value={form.sizeType}
-                onChange={(e) =>
+                onChange={(event) =>
                   setForm({
                     ...form,
-                    sizeType: e.target.value,
+                    sizeType:
+                      event.target.value,
                   })
                 }
-                placeholder="Letter / Numeric / Free"
-                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none placeholder:text-slate-500 focus:border-emerald-400"
-              />
+                className={inputClass}
+              >
+                <option value="AGE">
+                  Age
+                </option>
+                <option value="NUMERIC">
+                  Numeric
+                </option>
+                <option value="LETTER">
+                  Letter
+                </option>
+                <option value="GENERAL">
+                  General / Free
+                </option>
+              </select>
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm text-slate-300">
-                Inches / Height Range
-              </label>
+            <Field
+              label="Legacy Height / Inches"
+              value={form.inches}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  inches: value,
+                })
+              }
+              placeholder="Optional"
+            />
 
-              <input
-                value={form.inches}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    inches: e.target.value,
-                  })
-                }
-                placeholder="32-36 in"
-                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none placeholder:text-slate-500 focus:border-emerald-400"
-              />
-
-              <p className="mt-1 text-[10px] text-slate-500">
-                Mainly for Kids sizes
-              </p>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm text-slate-300">
-                Sort Order
-              </label>
-
-              <input
-                type="number"
-                value={form.sortOrder}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    sortOrder: e.target.value,
-                  })
-                }
-                className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-400"
-              />
-            </div>
+            <Field
+              label="Sort Order"
+              value={form.sortOrder}
+              onChange={(value) =>
+                setForm({
+                  ...form,
+                  sortOrder: value,
+                })
+              }
+              placeholder="0"
+              type="number"
+            />
           </div>
+
+          {isKids && (
+            <section className="mt-6 rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.04] p-4 sm:p-5">
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-emerald-400">
+                  Kids Fit Measurements
+                </p>
+
+                <h3 className="mt-1 text-lg font-bold">
+                  Measurement-based sizing
+                </h3>
+
+                <p className="mt-1 text-xs leading-5 text-slate-400">
+                  Age is only a guide. Customer actual body
+                  measurements tho compare chesi size select chestaru.
+                </p>
+              </div>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <Field
+                  label="Age Guide"
+                  value={form.ageGuide}
+                  onChange={(value) =>
+                    setForm({
+                      ...form,
+                      ageGuide: value,
+                    })
+                  }
+                  placeholder="Example: 7-8Y"
+                />
+
+                <Field
+                  label="Child Height (cm)"
+                  value={form.heightCm}
+                  onChange={(value) =>
+                    setForm({
+                      ...form,
+                      heightCm: value,
+                    })
+                  }
+                  placeholder="Example: 122-128"
+                />
+
+                <Field
+                  label="Chest (in)"
+                  value={form.chestIn}
+                  onChange={(value) =>
+                    setForm({
+                      ...form,
+                      chestIn: value,
+                    })
+                  }
+                  placeholder="Example: 26-27"
+                />
+
+                <Field
+                  label="Waist (in)"
+                  value={form.waistIn}
+                  onChange={(value) =>
+                    setForm({
+                      ...form,
+                      waistIn: value,
+                    })
+                  }
+                  placeholder="Example: 23-24"
+                />
+
+                <Field
+                  label="Hip (in)"
+                  value={form.hipIn}
+                  onChange={(value) =>
+                    setForm({
+                      ...form,
+                      hipIn: value,
+                    })
+                  }
+                  placeholder="Optional"
+                />
+
+                <Field
+                  label="Garment Length (in)"
+                  value={
+                    form.garmentLengthIn
+                  }
+                  onChange={(value) =>
+                    setForm({
+                      ...form,
+                      garmentLengthIn:
+                        value,
+                    })
+                  }
+                  placeholder="Optional"
+                />
+              </div>
+
+              <div className="mt-4">
+                <Label>Fit Note</Label>
+                <textarea
+                  value={form.fitNote}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      fitNote:
+                        event.target.value,
+                    })
+                  }
+                  rows={2}
+                  placeholder="Example: Regular fit. For a relaxed fit, choose one size up."
+                  className={`${inputClass} resize-none`}
+                />
+              </div>
+            </section>
+          )}
 
           <label className="mt-5 flex cursor-pointer items-center gap-3 text-sm text-slate-300">
             <input
               type="checkbox"
               checked={form.isActive}
-              onChange={(e) =>
+              onChange={(event) =>
                 setForm({
                   ...form,
-                  isActive: e.target.checked,
+                  isActive:
+                    event.target.checked,
                 })
               }
               className="h-4 w-4 accent-emerald-500"
             />
-
             Active size
           </label>
 
           <button
             type="submit"
             disabled={saving}
-            className="mt-5 rounded-xl bg-emerald-500 px-6 py-3 font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-50"
+            className="mt-5 rounded-xl bg-emerald-400 px-6 py-3 font-black text-slate-950 disabled:opacity-50"
           >
             {saving
               ? "Saving..."
@@ -550,147 +587,138 @@ export default function SizesPage() {
           </button>
         </form>
 
-        <section className="mb-8 overflow-hidden rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.04]">
-          <div className="flex flex-col gap-4 border-b border-white/10 px-6 py-5 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">
-                Kids Size Guide
-              </p>
+        <section className="mb-8 overflow-hidden rounded-3xl border border-emerald-400/20 bg-emerald-400/[0.04]">
+          <div className="border-b border-white/10 p-5 sm:p-6">
+            <p className="text-xs font-black uppercase tracking-widest text-emerald-400">
+              Kids Size Guide
+            </p>
 
-              <h2 className="mt-1 text-xl font-semibold">
-                Kids Years · Height in Inches
-              </h2>
+            <h2 className="mt-1 text-xl font-bold">
+              Age + Body Measurements
+            </h2>
 
-              <p className="mt-1 text-xs leading-5 text-slate-400">
-                Height means child body height, not garment length.
-                You can manually change any range below.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={applyStandardKidsHeights}
-              disabled={
-                applyingStandardHeights ||
-                kidsYearSizes.length === 0
-              }
-              className="rounded-xl bg-emerald-500 px-4 py-3 text-xs font-black text-slate-950 hover:bg-emerald-400 disabled:opacity-50"
-            >
-              {applyingStandardHeights
-                ? "Applying..."
-                : "Apply Standard Chart"}
-            </button>
+            <p className="mt-1 text-xs leading-5 text-slate-400">
+              Age reference maatrame. Height, chest and waist
+              customer ki correct fit choose cheyyadaniki main guide.
+            </p>
           </div>
 
-          {kidsYearSizes.length === 0 ? (
-            <div className="px-6 py-8 text-sm text-slate-400">
-              No Kids year sizes found.
+          {kidsSizes.length === 0 ? (
+            <div className="p-8 text-sm text-slate-500">
+              No Kids sizes found.
             </div>
           ) : (
-            <div className="divide-y divide-white/10">
-              {kidsYearSizes.map((size) => (
-                <div
-                  key={size.id}
-                  className="grid gap-3 px-6 py-4 md:grid-cols-[130px_1fr_120px] md:items-center"
-                >
-                  <div>
-                    <p className="text-lg font-black text-white">
-                      {size.name}
-                    </p>
+            <div className="overflow-x-auto">
+              <table className="min-w-[900px] w-full text-left text-xs">
+                <thead className="bg-slate-900/80 text-[10px] uppercase tracking-wider text-slate-500">
+                  <tr>
+                    <th className="px-5 py-3">
+                      Size
+                    </th>
+                    <th className="px-4 py-3">
+                      Age Guide
+                    </th>
+                    <th className="px-4 py-3">
+                      Height cm
+                    </th>
+                    <th className="px-4 py-3">
+                      Chest in
+                    </th>
+                    <th className="px-4 py-3">
+                      Waist in
+                    </th>
+                    <th className="px-4 py-3">
+                      Hip in
+                    </th>
+                    <th className="px-4 py-3">
+                      Garment Length
+                    </th>
+                    <th className="px-4 py-3">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
 
-                    <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      Kids Age
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-[10px] font-black uppercase tracking-wider text-slate-400">
-                      Child Height
-                    </label>
-
-                    <input
-                      value={
-                        kidsHeightDrafts[size.id] ?? ""
-                      }
-                      onChange={(event) =>
-                        setKidsHeightDrafts(
-                          (current) => ({
-                            ...current,
-                            [size.id]:
-                              event.target.value,
-                          }),
-                        )
-                      }
-                      placeholder={
-                        KIDS_STANDARD_HEIGHTS[
-                          size.name
-                        ] ?? "Example: 30-36 in"
-                      }
-                      className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm font-bold outline-none placeholder:text-slate-600 focus:border-emerald-400"
-                    />
-
-                    {KIDS_STANDARD_HEIGHTS[
-                      size.name
-                    ] ? (
-                      <p className="mt-1 text-[10px] text-slate-500">
-                        Standard:{" "}
-                        {
-                          KIDS_STANDARD_HEIGHTS[
-                            size.name
-                          ]
-                        }
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      saveKidsHeight(size)
-                    }
-                    disabled={
-                      kidsHeightSavingId === size.id
-                    }
-                    className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-xs font-black text-emerald-300 hover:bg-emerald-400/20 disabled:opacity-50"
-                  >
-                    {kidsHeightSavingId === size.id
-                      ? "Saving..."
-                      : "Save Height"}
-                  </button>
-                </div>
-              ))}
+                <tbody className="divide-y divide-white/10">
+                  {kidsSizes.map((size) => (
+                    <tr key={size.id}>
+                      <td className="px-5 py-4">
+                        <div className="font-black text-white">
+                          {size.name}
+                        </div>
+                        <div className="mt-1 text-[10px] text-slate-500">
+                          {size.sizeType ?? "—"}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        {size.ageGuide ?? "—"}
+                      </td>
+                      <td className="px-4 py-4">
+                        {size.heightCm ?? "—"}
+                      </td>
+                      <td className="px-4 py-4">
+                        {size.chestIn ?? "—"}
+                      </td>
+                      <td className="px-4 py-4">
+                        {size.waistIn ?? "—"}
+                      </td>
+                      <td className="px-4 py-4">
+                        {size.hipIn ?? "—"}
+                      </td>
+                      <td className="px-4 py-4">
+                        {size.garmentLengthIn ??
+                          "—"}
+                      </td>
+                      <td className="px-4 py-4">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            startEdit(size)
+                          }
+                          className="rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 font-bold text-emerald-300"
+                        >
+                          Edit Guide
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.05]">
+        <section className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.05]">
+          <div className="border-b border-white/10 p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-bold">
+                  All Sizes
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {sizes.length} total sizes
+                </p>
+              </div>
 
-          <div className="flex flex-col gap-4 border-b border-white/10 px-6 py-5 md:flex-row md:items-center md:justify-between">
-
-            <div>
-              <h2 className="font-semibold">
-                Size Master ({sizes.length})
-              </h2>
-
-              <p className="mt-1 text-xs text-slate-500">
-                Active: {sizes.filter((size) => size.isActive).length}
-              </p>
+              <input
+                value={search}
+                onChange={(event) =>
+                  setSearch(
+                    event.target.value,
+                  )
+                }
+                placeholder="Search size, age, measurements..."
+                className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+              />
             </div>
-
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search sizes..."
-              className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-sm outline-none placeholder:text-slate-500 focus:border-emerald-400 md:w-72"
-            />
           </div>
 
           {loading ? (
-            <div className="p-6 text-slate-400">
+            <div className="p-8 text-center text-slate-500">
               Loading sizes...
             </div>
           ) : filteredSizes.length === 0 ? (
-            <div className="p-6 text-slate-400">
+            <div className="p-8 text-center text-slate-500">
               No sizes found.
             </div>
           ) : (
@@ -698,61 +726,73 @@ export default function SizesPage() {
               {filteredSizes.map((size) => (
                 <div
                   key={size.id}
-                  className="flex flex-col gap-4 px-6 py-5 md:flex-row md:items-center md:justify-between"
+                  className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-11 min-w-11 items-center justify-center rounded-xl bg-emerald-400/10 px-3 font-bold text-emerald-400">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-black">
                         {size.name}
-                      </div>
+                      </p>
 
-                      <div>
-                        <h3 className="font-semibold">
-                          {size.name}
-                          {size.inches
-                            ? ` · ${size.inches}`
-                            : ""}
-                        </h3>
+                      <span className="rounded-full bg-white/5 px-2 py-1 text-[10px] uppercase text-slate-400">
+                        {size.category ??
+                          "General"}
+                      </span>
 
-                        <p className="mt-1 text-xs text-slate-500">
-                          {size.category ?? "No category"} ·{" "}
-                          {size.sizeType ?? "No type"}
-                        </p>
-
-                        <p className="mt-1 text-xs text-slate-500">
-                          Order {size.sortOrder} ·{" "}
-                          {size._count?.variants ?? 0} variants
-                        </p>
-                      </div>
+                      <span
+                        className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase ${
+                          size.isActive
+                            ? "bg-emerald-400/10 text-emerald-400"
+                            : "bg-red-400/10 text-red-300"
+                        }`}
+                      >
+                        {size.isActive
+                          ? "Active"
+                          : "Inactive"}
+                      </span>
                     </div>
+
+                    <p className="mt-2 text-xs text-slate-500">
+                      {size.sizeType ?? "—"} ·{" "}
+                      {size._count?.variants ?? 0} variants
+                      {size.ageGuide
+                        ? ` · Age ${size.ageGuide}`
+                        : ""}
+                      {size.heightCm
+                        ? ` · Height ${size.heightCm} cm`
+                        : ""}
+                    </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
-
+                  <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() => toggleActive(size)}
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${
-                        size.isActive
-                          ? "bg-emerald-400/10 text-emerald-400"
-                          : "bg-red-400/10 text-red-400"
-                      }`}
-                    >
-                      {size.isActive ? "ACTIVE" : "INACTIVE"}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => startEdit(size)}
-                      className="rounded-xl border border-white/10 px-4 py-2 text-sm hover:bg-white/10"
+                      onClick={() =>
+                        startEdit(size)
+                      }
+                      className="rounded-xl border border-white/10 px-4 py-2 text-xs font-bold text-slate-300"
                     >
                       Edit
                     </button>
 
                     <button
                       type="button"
-                      onClick={() => deleteSize(size)}
-                      className="rounded-xl border border-red-400/20 px-4 py-2 text-sm text-red-400 hover:bg-red-400/10"
+                      onClick={() =>
+                        void toggleActive(size)
+                      }
+                      className="rounded-xl border border-white/10 px-4 py-2 text-xs font-bold text-slate-300"
+                    >
+                      {size.isActive
+                        ? "Deactivate"
+                        : "Activate"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void deleteSize(size)
+                      }
+                      className="rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-2 text-xs font-bold text-red-300"
                     >
                       Delete
                     </button>
@@ -761,9 +801,52 @@ export default function SizesPage() {
               ))}
             </div>
           )}
-
         </section>
       </div>
     </main>
+  );
+}
+
+const inputClass =
+  "w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none placeholder:text-slate-600 focus:border-emerald-400";
+
+function Label({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="mb-2 block text-sm font-medium text-slate-300">
+      {children}
+    </label>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  type?: string;
+}) {
+  return (
+    <div>
+      <Label>{label}</Label>
+      <input
+        type={type}
+        value={value}
+        onChange={(event) =>
+          onChange(event.target.value)
+        }
+        placeholder={placeholder}
+        className={inputClass}
+      />
+    </div>
   );
 }
