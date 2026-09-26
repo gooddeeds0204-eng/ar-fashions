@@ -719,6 +719,84 @@ export async function GET(
           item.profit < 0,
       ).length;
 
+    const salesRows =
+      deliveredOrders.map(
+        (order) => ({
+          orderNumber:
+            order.orderNumber,
+
+          date:
+            order.createdAt,
+
+          type:
+            order.type,
+
+          customerName:
+            order.user.name ??
+            "Customer",
+
+          phone:
+            order.user.phone,
+
+          paymentMethod:
+            order.paymentMethod,
+
+          subtotal:
+            round(
+              amount(
+                order.subtotal,
+              ),
+            ),
+
+          discountAmount:
+            round(
+              amount(
+                order.discountAmount,
+              ),
+            ),
+
+          deliveryCharge:
+            round(
+              amount(
+                order.deliveryCharge,
+              ),
+            ),
+
+          totalAmount:
+            round(
+              amount(
+                order.totalAmount,
+              ),
+            ),
+
+          itemQuantity:
+            order.items.reduce(
+              (total, item) =>
+                total +
+                item.quantity,
+              0,
+            ),
+
+          products:
+            order.items
+              .map(
+                (item) =>
+                  `${item.productName} x${item.quantity}${
+                    item.colorName
+                      ? ` (${item.colorName}${
+                          item.sizeName
+                            ? ` / ${item.sizeName}`
+                            : ""
+                        })`
+                      : item.sizeName
+                        ? ` (${item.sizeName})`
+                        : ""
+                  }`,
+              )
+              .join(" | "),
+        }),
+      );
+
     /*
      * Current status breakdown.
      */
@@ -1545,6 +1623,8 @@ export async function GET(
       topProducts,
 
       topCustomers,
+
+      salesRows,
 
       profitAnalytics,
 
