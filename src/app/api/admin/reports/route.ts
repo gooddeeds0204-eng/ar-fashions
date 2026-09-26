@@ -97,6 +97,7 @@ export async function GET(
             },
           },
 
+          address: true,
           items: true,
         },
       });
@@ -795,6 +796,97 @@ export async function GET(
               )
               .join(" | "),
         }),
+      );
+
+    const gstAuditRows =
+      deliveredOrders.flatMap(
+        (order) =>
+          order.items.map(
+            (item) => ({
+              invoiceNumber:
+                `ASF-INV-${order.orderNumber
+                  .replace(/^ASF-/i, "")
+                  .replace(/[^A-Z0-9-]/gi, "")
+                  .toUpperCase()}`,
+
+              invoiceDate:
+                order.createdAt,
+
+              orderNumber:
+                order.orderNumber,
+
+              orderType:
+                order.type,
+
+              customerName:
+                order.user.name ??
+                order.address?.name ??
+                "Customer",
+
+              phone:
+                order.user.phone ??
+                order.address?.phone ??
+                "",
+
+              customerState:
+                order.address?.state ??
+                "",
+
+              pincode:
+                order.address?.pincode ??
+                "",
+
+              productName:
+                item.productName,
+
+              colorName:
+                item.colorName,
+
+              sizeName:
+                item.sizeName,
+
+              quantity:
+                item.quantity,
+
+              unitPrice:
+                round(
+                  amount(
+                    item.unitPrice,
+                  ),
+                ),
+
+              lineAmount:
+                round(
+                  amount(
+                    item.totalPrice,
+                  ),
+                ),
+
+              orderDiscount:
+                round(
+                  amount(
+                    order.discountAmount,
+                  ),
+                ),
+
+              deliveryCharge:
+                round(
+                  amount(
+                    order.deliveryCharge,
+                  ),
+                ),
+
+              orderTotal:
+                round(
+                  amount(
+                    order.totalAmount,
+                  ),
+                ),
+
+              paymentMethod:
+                order.paymentMethod,
+            }),
+          ),
       );
 
     /*
@@ -1625,6 +1717,8 @@ export async function GET(
       topCustomers,
 
       salesRows,
+
+      gstAuditRows,
 
       profitAnalytics,
 
