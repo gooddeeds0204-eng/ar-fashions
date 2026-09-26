@@ -276,9 +276,13 @@ model Order {
   deliveryCharge        Decimal          @default(0) @db.Decimal(10, 2)
   deliveryChargePending Boolean          @default(false)
   totalAmount           Decimal          @db.Decimal(10, 2)
-  couponCode            String?
-  notes                 String?
-  createdAt             DateTime         @default(now())
+  couponCode                    String?
+  notes                         String?
+  deliveryLatitude              Float?
+  deliveryLongitude             Float?
+  deliveryLocationAccuracy      Float?
+  deliveryLocationCapturedAt    DateTime?
+  createdAt                     DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
   address               Address?         @relation(fields: [addressId], references: [id])
   user                  User             @relation(fields: [userId], references: [id])
