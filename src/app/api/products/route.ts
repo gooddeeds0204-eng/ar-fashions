@@ -3,6 +3,7 @@ import { getSalesAccess } from "@/lib/sales-access";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { publicProductMedia } from "@/lib/product-media-color";
+import { ensureProductSoftDeleteStorage } from "@/lib/product-soft-delete-storage";
 
 const PRODUCT_STATUSES = [
   "DRAFT",
@@ -75,13 +76,18 @@ function publicVariant(
 
 export async function GET() {
   try {
+    await ensureProductSoftDeleteStorage();
+
     const access = await getSalesAccess();
 
     const products = await prisma.product.findMany({
       where: access.isAdmin
-        ? undefined
+        ? {
+            deletedAt: null,
+          }
         : {
             status: "ACTIVE",
+            deletedAt: null,
           },
       orderBy: [
         { sortOrder: "asc" },
