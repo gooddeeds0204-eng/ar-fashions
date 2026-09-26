@@ -286,11 +286,16 @@ export async function PUT(
   }
 
   try {
+    await ensureProductSoftDeleteStorage();
+
     const { id } = await context.params;
     const body = await request.json();
 
-    const existingProduct = await prisma.product.findUnique({
-      where: { id },
+    const existingProduct = await prisma.product.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
       include: {
         variants: {
           include: {
