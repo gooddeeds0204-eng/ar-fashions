@@ -77,6 +77,10 @@ const presentationFields = [
   "buttonBorderColor",
   "ctaCategoryId",
   "ctaCategoryName",
+  "desktopFocalX",
+  "desktopFocalY",
+  "mobileFocalX",
+  "mobileFocalY",
 ] as const;
 
 function hasPresentationInput(
