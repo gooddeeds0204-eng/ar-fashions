@@ -114,6 +114,10 @@ type Banner = {
   buttonBorderColor: string;
   ctaCategoryId: string;
   ctaCategoryName: string;
+  desktopFocalX: number;
+  desktopFocalY: number;
+  mobileFocalX: number;
+  mobileFocalY: number;
 
   sortOrder: number;
 };
@@ -2691,6 +2695,10 @@ export default function Home() {
                       loop
                       playsInline
                       className="h-full w-full object-cover sm:hidden"
+                      style={{
+                        objectPosition:
+                          `${activeBanner.mobileFocalX ?? 50}% ${activeBanner.mobileFocalY ?? 50}%`,
+                      }}
                     />
 
                     <video
@@ -2704,19 +2712,31 @@ export default function Home() {
                       loop
                       playsInline
                       className="hidden h-full w-full object-cover sm:block"
+                      style={{
+                        objectPosition:
+                          `${activeBanner.desktopFocalX ?? 50}% ${activeBanner.desktopFocalY ?? 50}%`,
+                      }}
                     />
                   </>
                 ) : activeBanner.imageUrl ||
                   activeBanner.mobileImageUrl ? (
-                  <picture>
-                    {activeBanner.mobileImageUrl ? (
-                      <source
-                        media="(max-width: 639px)"
-                        srcSet={
-                          activeBanner.mobileImageUrl
-                        }
-                      />
-                    ) : null}
+                  <>
+                    <img
+                      src={
+                        activeBanner.mobileImageUrl ||
+                        activeBanner.imageUrl ||
+                        ""
+                      }
+                      alt={
+                        activeBanner.title ||
+                        "AS Fashions"
+                      }
+                      className="h-full w-full object-cover sm:hidden"
+                      style={{
+                        objectPosition:
+                          `${activeBanner.mobileFocalX ?? 50}% ${activeBanner.mobileFocalY ?? 50}%`,
+                      }}
+                    />
 
                     <img
                       src={
@@ -2728,9 +2748,13 @@ export default function Home() {
                         activeBanner.title ||
                         "AS Fashions"
                       }
-                      className="h-full w-full object-cover"
+                      className="hidden h-full w-full object-cover sm:block"
+                      style={{
+                        objectPosition:
+                          `${activeBanner.desktopFocalX ?? 50}% ${activeBanner.desktopFocalY ?? 50}%`,
+                      }}
                     />
-                  </picture>
+                  </>
                 ) : null
               ) : heroSlideMedia ? (
                 heroSlideMedia.type ===
