@@ -2606,7 +2606,7 @@ export default function Home() {
       <section className="bg-[#031B14]">
         <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div
-            className="relative h-[390px] touch-pan-y overflow-hidden bg-[#082219] sm:h-[500px] sm:rounded-b-[2rem]"
+            className="relative h-[430px] touch-pan-y overflow-hidden bg-[#082219] sm:h-[500px] sm:rounded-b-[2rem]"
             onTouchStart={(event) => {
               setHeroTouchStartX(
                 event.touches[0]?.clientX ??
