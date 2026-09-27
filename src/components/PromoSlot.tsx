@@ -44,6 +44,10 @@ type Promo = {
     | "RIGHT";
 
   overlayOpacity: number;
+  desktopFocalX: number;
+  desktopFocalY: number;
+  mobileFocalX: number;
+  mobileFocalY: number;
 };
 
 type Props = {
@@ -231,6 +235,10 @@ export default function PromoSlot({
                   loop
                   playsInline
                   className="absolute inset-0 h-full w-full object-cover sm:hidden"
+                  style={{
+                    objectPosition:
+                      `${promo.mobileFocalX ?? 50}% ${promo.mobileFocalY ?? 50}%`,
+                  }}
                 />
               )}
 
@@ -244,6 +252,10 @@ export default function PromoSlot({
                   className={`absolute inset-0 h-full w-full object-cover ${
                     mobileVideo ? "hidden sm:block" : ""
                   }`}
+                  style={{
+                    objectPosition:
+                      `${promo.desktopFocalX ?? 50}% ${promo.desktopFocalY ?? 50}%`,
+                  }}
                 />
               )}
             </>
@@ -254,6 +266,10 @@ export default function PromoSlot({
                   src={mobileImage}
                   alt={promo.title ?? "AS Edit"}
                   className="absolute inset-0 h-full w-full object-cover sm:hidden"
+                  style={{
+                    objectPosition:
+                      `${promo.mobileFocalX ?? 50}% ${promo.mobileFocalY ?? 50}%`,
+                  }}
                 />
               )}
 
@@ -264,6 +280,10 @@ export default function PromoSlot({
                   className={`absolute inset-0 h-full w-full object-cover ${
                     mobileImage ? "hidden sm:block" : ""
                   }`}
+                  style={{
+                    objectPosition:
+                      `${promo.desktopFocalX ?? 50}% ${promo.desktopFocalY ?? 50}%`,
+                  }}
                 />
               )}
             </>
@@ -343,105 +363,88 @@ export default function PromoSlot({
         }}
       >
         {promo.contentType ===
-          "IMAGE" && (
-          <>
-            {promo.imageUrl && (
+          "IMAGE" &&
+          (promo.imageUrl ||
+            promo.mobileImageUrl) && (
+            <>
               <img
                 src={
-                  promo.imageUrl
-                }
-                alt={
-                  promo.title ??
-                  "AS Fashions promotion"
-                }
-                className={`absolute inset-0 h-full w-full object-cover ${
-                  promo.mobileImageUrl
-                    ? "hidden sm:block"
-                    : ""
-                }`}
-              />
-            )}
-
-            {promo.mobileImageUrl && (
-              <img
-                src={
-                  promo.mobileImageUrl
+                  promo.mobileImageUrl ||
+                  promo.imageUrl ||
+                  ""
                 }
                 alt={
                   promo.title ??
                   "AS Fashions promotion"
                 }
                 className="absolute inset-0 h-full w-full object-cover sm:hidden"
+                style={{
+                  objectPosition:
+                    `${promo.mobileFocalX ?? 50}% ${promo.mobileFocalY ?? 50}%`,
+                }}
               />
-            )}
 
-            {!promo.imageUrl &&
-              promo.mobileImageUrl && (
-                <img
-                  src={
-                    promo.mobileImageUrl
-                  }
-                  alt={
-                    promo.title ??
-                    "AS Fashions promotion"
-                  }
-                  className="absolute inset-0 hidden h-full w-full object-cover sm:block"
-                />
-              )}
-          </>
-        )}
+              <img
+                src={
+                  promo.imageUrl ||
+                  promo.mobileImageUrl ||
+                  ""
+                }
+                alt={
+                  promo.title ??
+                  "AS Fashions promotion"
+                }
+                className="absolute inset-0 hidden h-full w-full object-cover sm:block"
+                style={{
+                  objectPosition:
+                    `${promo.desktopFocalX ?? 50}% ${promo.desktopFocalY ?? 50}%`,
+                }}
+              />
+            </>
+          )}
 
         {promo.contentType ===
-          "VIDEO" && (
-          <>
-            {promo.videoUrl && (
-              <video
-                key={`${promo.id}-desktop`}
-                src={
-                  promo.videoUrl
-                }
-                muted
-                autoPlay
-                loop
-                playsInline
-                className={`absolute inset-0 h-full w-full object-cover ${
-                  promo.mobileVideoUrl
-                    ? "hidden sm:block"
-                    : ""
-                }`}
-              />
-            )}
-
-            {promo.mobileVideoUrl && (
+          "VIDEO" &&
+          (promo.videoUrl ||
+            promo.mobileVideoUrl) && (
+            <>
               <video
                 key={`${promo.id}-mobile`}
                 src={
-                  promo.mobileVideoUrl
+                  promo.mobileVideoUrl ||
+                  promo.videoUrl ||
+                  ""
                 }
                 muted
                 autoPlay
                 loop
                 playsInline
                 className="absolute inset-0 h-full w-full object-cover sm:hidden"
+                style={{
+                  objectPosition:
+                    `${promo.mobileFocalX ?? 50}% ${promo.mobileFocalY ?? 50}%`,
+                }}
               />
-            )}
 
-            {!promo.videoUrl &&
-              promo.mobileVideoUrl && (
-                <video
-                  key={`${promo.id}-mobile-fallback`}
-                  src={
-                    promo.mobileVideoUrl
-                  }
-                  muted
-                  autoPlay
-                  loop
-                  playsInline
-                  className="absolute inset-0 hidden h-full w-full object-cover sm:block"
-                />
-              )}
-          </>
-        )}
+              <video
+                key={`${promo.id}-desktop`}
+                src={
+                  promo.videoUrl ||
+                  promo.mobileVideoUrl ||
+                  ""
+                }
+                muted
+                autoPlay
+                loop
+                playsInline
+                className="absolute inset-0 hidden h-full w-full object-cover sm:block"
+                style={{
+                  objectPosition:
+                    `${promo.desktopFocalX ?? 50}% ${promo.desktopFocalY ?? 50}%`,
+                }}
+              />
+            </>
+          )}
 
         <div
           className="absolute inset-0 bg-black"
