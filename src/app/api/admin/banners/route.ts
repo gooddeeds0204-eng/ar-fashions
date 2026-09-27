@@ -81,6 +81,10 @@ const presentationFields = [
   "desktopFocalY",
   "mobileFocalX",
   "mobileFocalY",
+  "desktopRatio",
+  "mobileRatio",
+  "desktopZoom",
+  "mobileZoom",
 ] as const;
 
 function hasPresentationInput(
