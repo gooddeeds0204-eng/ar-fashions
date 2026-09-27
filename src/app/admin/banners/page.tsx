@@ -12,7 +12,10 @@ import {
 } from "@/lib/admin-client-upload";
 import {
   BANNER_FONT_OPTIONS,
+  DESKTOP_BANNER_RATIO_OPTIONS,
+  MOBILE_BANNER_RATIO_OPTIONS,
   bannerFontFamily,
+  bannerRatioCssValue,
   type BannerFont,
 } from "@/lib/banner-presentation";
 
@@ -84,6 +87,10 @@ type Banner = {
   desktopFocalY: number;
   mobileFocalX: number;
   mobileFocalY: number;
+  desktopRatio: string;
+  mobileRatio: string;
+  desktopZoom: number;
+  mobileZoom: number;
 
   isActive: boolean;
   sortOrder: number;
@@ -131,6 +138,10 @@ type FormState = {
   desktopFocalY: string;
   mobileFocalX: string;
   mobileFocalY: string;
+  desktopRatio: string;
+  mobileRatio: string;
+  desktopZoom: string;
+  mobileZoom: string;
 
   sortOrder: string;
   startsAt: string;
@@ -222,6 +233,10 @@ const emptyForm: FormState = {
   desktopFocalY: "50",
   mobileFocalX: "50",
   mobileFocalY: "50",
+  desktopRatio: "12:5",
+  mobileRatio: "9:10",
+  desktopZoom: "100",
+  mobileZoom: "100",
 
   sortOrder: "0",
   startsAt: "",
@@ -713,6 +728,26 @@ export default function AdminBannersPage() {
             50,
         ),
 
+      desktopRatio:
+        banner.desktopRatio ??
+        "12:5",
+
+      mobileRatio:
+        banner.mobileRatio ??
+        "9:10",
+
+      desktopZoom:
+        String(
+          banner.desktopZoom ??
+            100,
+        ),
+
+      mobileZoom:
+        String(
+          banner.mobileZoom ??
+            100,
+        ),
+
       sortOrder:
         String(
           banner.sortOrder,
@@ -1044,6 +1079,27 @@ export default function AdminBannersPage() {
 
   const previewObjectPosition =
     `${Number.isFinite(previewFocalX) ? previewFocalX : 50}% ${Number.isFinite(previewFocalY) ? previewFocalY : 50}%`;
+
+  const previewRatio =
+    previewDevice === "MOBILE"
+      ? form.mobileRatio
+      : form.desktopRatio;
+
+  const previewZoom =
+    previewDevice === "MOBILE"
+      ? Number(form.mobileZoom)
+      : Number(form.desktopZoom);
+
+  const previewScale =
+    Number.isFinite(previewZoom)
+      ? Math.min(
+          2,
+          Math.max(
+            1,
+            previewZoom / 100,
+          ),
+        )
+      : 1;
 
   function setFocalPoint(
     device: "DESKTOP" | "MOBILE",
@@ -1410,6 +1466,313 @@ export default function AdminBannersPage() {
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {form.contentType !==
+            "GRAPHIC" &&
+            form.placement ===
+              "HOME_HERO" && (
+            <div className="mt-6 rounded-[1.6rem] border border-[#D9C29A] bg-[#FFF8EC] p-4 sm:p-5">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#7C3A45]">
+                  Hero Size & Zoom
+                </p>
+
+                <h3 className="mt-1 text-base font-black text-zinc-900">
+                  Ratio select + zoom in / zoom out
+                </h3>
+
+                <p className="mt-1 text-xs leading-5 text-zinc-500">
+                  Mobile and desktop hero ki separate ratio and zoom save avtayi. 100% base fit; zoom penchithe subject closer ga vastundi.
+                </p>
+              </div>
+
+              <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                <div className="rounded-2xl border border-[#E4D7C4] bg-white p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-black text-zinc-800">
+                      Desktop / Laptop
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setForm(
+                          (current) => ({
+                            ...current,
+                            desktopRatio:
+                              "12:5",
+                            desktopZoom:
+                              "100",
+                          }),
+                        )
+                      }
+                      className="text-[9px] font-black text-[#7C3A45]"
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  <label className="mt-4 block text-[10px] font-bold text-zinc-500">
+                    Banner Ratio
+
+                    <select
+                      value={
+                        form.desktopRatio
+                      }
+                      onChange={(e) =>
+                        setForm(
+                          (current) => ({
+                            ...current,
+                            desktopRatio:
+                              e.target.value,
+                          }),
+                        )
+                      }
+                      className="mt-2 w-full rounded-xl border border-[#E4D7C4] bg-white px-3 py-3 text-xs font-black text-zinc-900"
+                    >
+                      {DESKTOP_BANNER_RATIO_OPTIONS.map(
+                        (ratio) => (
+                          <option
+                            key={ratio}
+                            value={ratio}
+                          >
+                            {ratio === "12:5"
+                              ? "12:5 — 1920 × 800 (Recommended)"
+                              : ratio === "16:7"
+                                ? "16:7 — Wide"
+                                : ratio === "8:3"
+                                  ? "8:3 — Extra Wide"
+                                  : "21:9 — Cinematic"}
+                          </option>
+                        ),
+                      )}
+                    </select>
+                  </label>
+
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-zinc-500">
+                      <span>Zoom</span>
+                      <span>
+                        {form.desktopZoom}%
+                      </span>
+                    </div>
+
+                    <div className="mt-2 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm(
+                            (current) => ({
+                              ...current,
+                              desktopZoom:
+                                String(
+                                  Math.max(
+                                    100,
+                                    Number(
+                                      current.desktopZoom,
+                                    ) -
+                                      10,
+                                  ),
+                                ),
+                            }),
+                          )
+                        }
+                        className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#E4D7C4] bg-[#FAF7F0] text-lg font-black"
+                      >
+                        −
+                      </button>
+
+                      <input
+                        type="range"
+                        min="100"
+                        max="200"
+                        step="5"
+                        value={
+                          form.desktopZoom
+                        }
+                        onChange={(e) =>
+                          setForm(
+                            (current) => ({
+                              ...current,
+                              desktopZoom:
+                                e.target.value,
+                            }),
+                          )
+                        }
+                        className="w-full accent-[#031B14]"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm(
+                            (current) => ({
+                              ...current,
+                              desktopZoom:
+                                String(
+                                  Math.min(
+                                    200,
+                                    Number(
+                                      current.desktopZoom,
+                                    ) +
+                                      10,
+                                  ),
+                                ),
+                            }),
+                          )
+                        }
+                        className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#E4D7C4] bg-[#FAF7F0] text-lg font-black"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-[#E4D7C4] bg-white p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-black text-zinc-800">
+                      Mobile
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setForm(
+                          (current) => ({
+                            ...current,
+                            mobileRatio:
+                              "9:10",
+                            mobileZoom:
+                              "100",
+                          }),
+                        )
+                      }
+                      className="text-[9px] font-black text-[#7C3A45]"
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  <label className="mt-4 block text-[10px] font-bold text-zinc-500">
+                    Banner Ratio
+
+                    <select
+                      value={
+                        form.mobileRatio
+                      }
+                      onChange={(e) =>
+                        setForm(
+                          (current) => ({
+                            ...current,
+                            mobileRatio:
+                              e.target.value,
+                          }),
+                        )
+                      }
+                      className="mt-2 w-full rounded-xl border border-[#E4D7C4] bg-white px-3 py-3 text-xs font-black text-zinc-900"
+                    >
+                      {MOBILE_BANNER_RATIO_OPTIONS.map(
+                        (ratio) => (
+                          <option
+                            key={ratio}
+                            value={ratio}
+                          >
+                            {ratio === "9:10"
+                              ? "9:10 — 1080 × 1200 (Recommended)"
+                              : ratio === "4:5"
+                                ? "4:5 — 1080 × 1350"
+                                : ratio === "3:4"
+                                  ? "3:4 — 1080 × 1440"
+                                  : "1:1 — Square"}
+                          </option>
+                        ),
+                      )}
+                    </select>
+                  </label>
+
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-zinc-500">
+                      <span>Zoom</span>
+                      <span>
+                        {form.mobileZoom}%
+                      </span>
+                    </div>
+
+                    <div className="mt-2 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm(
+                            (current) => ({
+                              ...current,
+                              mobileZoom:
+                                String(
+                                  Math.max(
+                                    100,
+                                    Number(
+                                      current.mobileZoom,
+                                    ) -
+                                      10,
+                                  ),
+                                ),
+                            }),
+                          )
+                        }
+                        className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#E4D7C4] bg-[#FAF7F0] text-lg font-black"
+                      >
+                        −
+                      </button>
+
+                      <input
+                        type="range"
+                        min="100"
+                        max="200"
+                        step="5"
+                        value={
+                          form.mobileZoom
+                        }
+                        onChange={(e) =>
+                          setForm(
+                            (current) => ({
+                              ...current,
+                              mobileZoom:
+                                e.target.value,
+                            }),
+                          )
+                        }
+                        className="w-full accent-[#031B14]"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm(
+                            (current) => ({
+                              ...current,
+                              mobileZoom:
+                                String(
+                                  Math.min(
+                                    200,
+                                    Number(
+                                      current.mobileZoom,
+                                    ) +
+                                      10,
+                                  ),
+                                ),
+                            }),
+                          )
+                        }
+                        className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#E4D7C4] bg-[#FAF7F0] text-lg font-black"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -2135,12 +2498,16 @@ export default function AdminBannersPage() {
               className={`relative mt-4 overflow-hidden rounded-3xl ${
                 previewDevice ===
                 "MOBILE"
-                  ? "mx-auto aspect-[9/10] max-w-sm"
-                  : "aspect-[16/6] w-full"
+                  ? "mx-auto w-full max-w-sm"
+                  : "w-full"
               }`}
               style={{
                 background:
                   previewBackground,
+                aspectRatio:
+                  bannerRatioCssValue(
+                    previewRatio,
+                  ),
               }}
             >
               {form.contentType ===
@@ -2154,6 +2521,10 @@ export default function AdminBannersPage() {
                     className="absolute inset-0 h-full w-full object-cover"
                     style={{
                       objectPosition:
+                        previewObjectPosition,
+                      transform:
+                        `scale(${previewScale})`,
+                      transformOrigin:
                         previewObjectPosition,
                     }}
                   />
@@ -2173,6 +2544,10 @@ export default function AdminBannersPage() {
                     className="absolute inset-0 h-full w-full object-cover"
                     style={{
                       objectPosition:
+                        previewObjectPosition,
+                      transform:
+                        `scale(${previewScale})`,
+                      transformOrigin:
                         previewObjectPosition,
                     }}
                   />
