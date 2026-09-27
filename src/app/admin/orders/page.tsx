@@ -1293,6 +1293,32 @@ export default function AdminOrdersPage() {
                         )}{" "}
                         items
                       </p>
+
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        {order.location ? (
+                          <>
+                            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[9px] font-black text-emerald-700">
+                              📍 Checkout Location Shared
+                            </span>
+
+                            <span className="text-[9px] font-semibold text-zinc-500">
+                              {order.location.latitude.toFixed(5)},{" "}
+                              {order.location.longitude.toFixed(5)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[9px] font-bold text-zinc-500">
+                            Location not shared
+                          </span>
+                        )}
+
+                        {order.address && (
+                          <span className="text-[9px] font-semibold text-zinc-400">
+                            {order.address.city}, {order.address.state} ·{" "}
+                            {order.address.pincode}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex flex-wrap gap-2">
