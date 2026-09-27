@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from "react";
 import { ensureUserSession } from "@/lib/user-session-init";
 import { useRouter } from "next/navigation";
 import PromoSlot from "@/components/PromoSlot";
@@ -9,6 +14,7 @@ import StorefrontDrawer from "@/components/StorefrontDrawer";
 import CampaignOfferSection from "@/components/CampaignOfferSection";
 import {
   bannerFontFamily,
+  bannerRatioCssValue,
   type BannerFont,
 } from "@/lib/banner-presentation";
 
@@ -118,6 +124,10 @@ type Banner = {
   desktopFocalY: number;
   mobileFocalX: number;
   mobileFocalY: number;
+  desktopRatio: string;
+  mobileRatio: string;
+  desktopZoom: number;
+  mobileZoom: number;
 
   sortOrder: number;
 };
@@ -2606,7 +2616,21 @@ export default function Home() {
       <section className="bg-[#031B14]">
         <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div
-            className="relative h-[430px] touch-pan-y overflow-hidden bg-[#082219] sm:h-[500px] sm:rounded-b-[2rem]"
+            className="ar-hero-frame relative touch-pan-y overflow-hidden bg-[#082219] sm:rounded-b-[2rem]"
+            style={
+              {
+                "--ar-hero-mobile-ratio":
+                  bannerRatioCssValue(
+                    activeBanner?.mobileRatio ??
+                      "9:10",
+                  ),
+                "--ar-hero-desktop-ratio":
+                  bannerRatioCssValue(
+                    activeBanner?.desktopRatio ??
+                      "12:5",
+                  ),
+              } as CSSProperties
+            }
             onTouchStart={(event) => {
               setHeroTouchStartX(
                 event.touches[0]?.clientX ??
@@ -2698,6 +2722,18 @@ export default function Home() {
                       style={{
                         objectPosition:
                           `${activeBanner.mobileFocalX ?? 50}% ${activeBanner.mobileFocalY ?? 50}%`,
+                        transform:
+                          `scale(${Math.min(
+                            2,
+                            Math.max(
+                              1,
+                              (activeBanner.mobileZoom ??
+                                100) /
+                                100,
+                            ),
+                          )})`,
+                        transformOrigin:
+                          `${activeBanner.mobileFocalX ?? 50}% ${activeBanner.mobileFocalY ?? 50}%`,
                       }}
                     />
 
@@ -2714,6 +2750,18 @@ export default function Home() {
                       className="hidden h-full w-full object-cover sm:block"
                       style={{
                         objectPosition:
+                          `${activeBanner.desktopFocalX ?? 50}% ${activeBanner.desktopFocalY ?? 50}%`,
+                        transform:
+                          `scale(${Math.min(
+                            2,
+                            Math.max(
+                              1,
+                              (activeBanner.desktopZoom ??
+                                100) /
+                                100,
+                            ),
+                          )})`,
+                        transformOrigin:
                           `${activeBanner.desktopFocalX ?? 50}% ${activeBanner.desktopFocalY ?? 50}%`,
                       }}
                     />
@@ -2735,6 +2783,18 @@ export default function Home() {
                       style={{
                         objectPosition:
                           `${activeBanner.mobileFocalX ?? 50}% ${activeBanner.mobileFocalY ?? 50}%`,
+                        transform:
+                          `scale(${Math.min(
+                            2,
+                            Math.max(
+                              1,
+                              (activeBanner.mobileZoom ??
+                                100) /
+                                100,
+                            ),
+                          )})`,
+                        transformOrigin:
+                          `${activeBanner.mobileFocalX ?? 50}% ${activeBanner.mobileFocalY ?? 50}%`,
                       }}
                     />
 
@@ -2751,6 +2811,18 @@ export default function Home() {
                       className="hidden h-full w-full object-cover sm:block"
                       style={{
                         objectPosition:
+                          `${activeBanner.desktopFocalX ?? 50}% ${activeBanner.desktopFocalY ?? 50}%`,
+                        transform:
+                          `scale(${Math.min(
+                            2,
+                            Math.max(
+                              1,
+                              (activeBanner.desktopZoom ??
+                                100) /
+                                100,
+                            ),
+                          )})`,
+                        transformOrigin:
                           `${activeBanner.desktopFocalX ?? 50}% ${activeBanner.desktopFocalY ?? 50}%`,
                       }}
                     />
