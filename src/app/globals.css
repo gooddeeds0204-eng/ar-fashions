@@ -199,3 +199,21 @@ body {
   background: var(--ar-emerald);
   color: var(--ar-ivory);
 }
+
+
+/* Responsive storefront hero frame.
+   Banner Manager controls these ratios independently for mobile/desktop. */
+.ar-hero-frame {
+  width: 100%;
+  aspect-ratio: var(--ar-hero-mobile-ratio, 9 / 10);
+  min-height: 390px;
+  max-height: 560px;
+}
+
+@media (min-width: 640px) {
+  .ar-hero-frame {
+    aspect-ratio: var(--ar-hero-desktop-ratio, 12 / 5);
+    min-height: 430px;
+    max-height: 560px;
+  }
+}
