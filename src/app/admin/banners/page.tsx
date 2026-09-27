@@ -2135,7 +2135,7 @@ export default function AdminBannersPage() {
               className={`relative mt-4 overflow-hidden rounded-3xl ${
                 previewDevice ===
                 "MOBILE"
-                  ? "mx-auto aspect-[4/5] max-w-sm"
+                  ? "mx-auto aspect-[9/10] max-w-sm"
                   : "aspect-[16/6] w-full"
               }`}
               style={{
