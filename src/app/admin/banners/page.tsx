@@ -80,6 +80,10 @@ type Banner = {
   buttonBorderColor: string;
   ctaCategoryId: string;
   ctaCategoryName: string;
+  desktopFocalX: number;
+  desktopFocalY: number;
+  mobileFocalX: number;
+  mobileFocalY: number;
 
   isActive: boolean;
   sortOrder: number;
@@ -123,6 +127,10 @@ type FormState = {
   buttonBorderColor: string;
   ctaCategoryId: string;
   ctaCategoryName: string;
+  desktopFocalX: string;
+  desktopFocalY: string;
+  mobileFocalX: string;
+  mobileFocalY: string;
 
   sortOrder: string;
   startsAt: string;
@@ -210,6 +218,10 @@ const emptyForm: FormState = {
   buttonBorderColor: "#FFF8EC",
   ctaCategoryId: "",
   ctaCategoryName: "",
+  desktopFocalX: "50",
+  desktopFocalY: "50",
+  mobileFocalX: "50",
+  mobileFocalY: "50",
 
   sortOrder: "0",
   startsAt: "",
@@ -677,6 +689,30 @@ export default function AdminBannersPage() {
         banner.ctaCategoryName ??
         "",
 
+      desktopFocalX:
+        String(
+          banner.desktopFocalX ??
+            50,
+        ),
+
+      desktopFocalY:
+        String(
+          banner.desktopFocalY ??
+            50,
+        ),
+
+      mobileFocalX:
+        String(
+          banner.mobileFocalX ??
+            50,
+        ),
+
+      mobileFocalY:
+        String(
+          banner.mobileFocalY ??
+            50,
+        ),
+
       sortOrder:
         String(
           banner.sortOrder,
@@ -995,6 +1031,42 @@ export default function AdminBannersPage() {
           "RIGHT"
         ? "items-end text-right"
         : "items-start text-left";
+
+  const previewFocalX =
+    previewDevice === "MOBILE"
+      ? Number(form.mobileFocalX)
+      : Number(form.desktopFocalX);
+
+  const previewFocalY =
+    previewDevice === "MOBILE"
+      ? Number(form.mobileFocalY)
+      : Number(form.desktopFocalY);
+
+  const previewObjectPosition =
+    `${Number.isFinite(previewFocalX) ? previewFocalX : 50}% ${Number.isFinite(previewFocalY) ? previewFocalY : 50}%`;
+
+  function setFocalPoint(
+    device: "DESKTOP" | "MOBILE",
+    x: number,
+    y: number,
+  ) {
+    setForm((current) => ({
+      ...current,
+      ...(device === "MOBILE"
+        ? {
+            mobileFocalX:
+              String(x),
+            mobileFocalY:
+              String(y),
+          }
+        : {
+            desktopFocalX:
+              String(x),
+            desktopFocalY:
+              String(y),
+          }),
+    }));
+  }
 
   return (
     <main className="min-h-screen bg-[#FAF7F0] text-zinc-900">
@@ -1338,6 +1410,199 @@ export default function AdminBannersPage() {
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {form.contentType !==
+            "GRAPHIC" && (
+            <div className="mt-6 rounded-[1.6rem] border border-emerald-200 bg-emerald-50/50 p-4 sm:p-5">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-700">
+                    Banner Recenter
+                  </p>
+
+                  <h3 className="mt-1 text-base font-black text-zinc-900">
+                    Adjust image / video crop position
+                  </h3>
+
+                  <p className="mt-1 text-xs leading-5 text-zinc-500">
+                    Mobile and desktop ki separate ga subject ni left/right/up/down move cheyyachu. Original media crop avvakunda focal point maatrame change avutundi.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFocalPoint(
+                      "DESKTOP",
+                      50,
+                      50,
+                    );
+                    setFocalPoint(
+                      "MOBILE",
+                      50,
+                      50,
+                    );
+                  }}
+                  className="w-fit rounded-xl border border-emerald-200 bg-white px-3 py-2 text-[10px] font-black text-emerald-700"
+                >
+                  Reset Both to Center
+                </button>
+              </div>
+
+              <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                {(
+                  [
+                    [
+                      "DESKTOP",
+                      "Desktop / Laptop",
+                      form.desktopFocalX,
+                      form.desktopFocalY,
+                    ],
+                    [
+                      "MOBILE",
+                      "Mobile",
+                      form.mobileFocalX,
+                      form.mobileFocalY,
+                    ],
+                  ] as const
+                ).map(
+                  ([
+                    device,
+                    label,
+                    xValue,
+                    yValue,
+                  ]) => (
+                    <div
+                      key={device}
+                      className="rounded-2xl border border-white bg-white p-4 shadow-sm"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-black text-zinc-800">
+                          {label}
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFocalPoint(
+                              device,
+                              50,
+                              50,
+                            )
+                          }
+                          className="text-[9px] font-black text-emerald-700"
+                        >
+                          Center
+                        </button>
+                      </div>
+
+                      <label className="mt-4 block text-[10px] font-bold text-zinc-500">
+                        Horizontal — {xValue}%
+                        <span className="ml-1 font-normal text-zinc-400">
+                          (Left ↔ Right)
+                        </span>
+
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="1"
+                          value={xValue}
+                          onChange={(e) =>
+                            setForm(
+                              (current) => ({
+                                ...current,
+                                ...(device ===
+                                "MOBILE"
+                                  ? {
+                                      mobileFocalX:
+                                        e.target.value,
+                                    }
+                                  : {
+                                      desktopFocalX:
+                                        e.target.value,
+                                    }),
+                              }),
+                            )
+                          }
+                          className="mt-3 w-full accent-emerald-700"
+                        />
+                      </label>
+
+                      <label className="mt-4 block text-[10px] font-bold text-zinc-500">
+                        Vertical — {yValue}%
+                        <span className="ml-1 font-normal text-zinc-400">
+                          (Top ↕ Bottom)
+                        </span>
+
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="1"
+                          value={yValue}
+                          onChange={(e) =>
+                            setForm(
+                              (current) => ({
+                                ...current,
+                                ...(device ===
+                                "MOBILE"
+                                  ? {
+                                      mobileFocalY:
+                                        e.target.value,
+                                    }
+                                  : {
+                                      desktopFocalY:
+                                        e.target.value,
+                                    }),
+                              }),
+                            )
+                          }
+                          className="mt-3 w-full accent-emerald-700"
+                        />
+                      </label>
+
+                      <div className="mt-4 grid grid-cols-3 gap-2">
+                        {[
+                          ["↖", 20, 20],
+                          ["↑", 50, 20],
+                          ["↗", 80, 20],
+                          ["←", 20, 50],
+                          ["●", 50, 50],
+                          ["→", 80, 50],
+                          ["↙", 20, 80],
+                          ["↓", 50, 80],
+                          ["↘", 80, 80],
+                        ].map(
+                          ([
+                            icon,
+                            x,
+                            y,
+                          ]) => (
+                            <button
+                              key={`${device}-${x}-${y}`}
+                              type="button"
+                              onClick={() =>
+                                setFocalPoint(
+                                  device,
+                                  Number(x),
+                                  Number(y),
+                                )
+                              }
+                              className="rounded-lg border border-zinc-100 bg-zinc-50 py-2 text-xs font-black text-zinc-700 hover:border-emerald-300 hover:bg-emerald-50"
+                              aria-label={`${label} position ${x} ${y}`}
+                            >
+                              {icon}
+                            </button>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  ),
+                )}
+              </div>
             </div>
           )}
 
@@ -1887,6 +2152,10 @@ export default function AdminBannersPage() {
                     }
                     alt="Promo preview"
                     className="absolute inset-0 h-full w-full object-cover"
+                    style={{
+                      objectPosition:
+                        previewObjectPosition,
+                    }}
                   />
                 )}
 
@@ -1902,6 +2171,10 @@ export default function AdminBannersPage() {
                     loop
                     playsInline
                     className="absolute inset-0 h-full w-full object-cover"
+                    style={{
+                      objectPosition:
+                        previewObjectPosition,
+                    }}
                   />
                 )}
 
