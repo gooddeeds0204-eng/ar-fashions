@@ -30,9 +30,6 @@ export const metadata: Metadata = {
   creator: "AS Fashions",
   publisher: "AS Fashions",
   category: "shopping",
-  alternates: {
-    canonical: "/",
-  },
   keywords: [
     "AS Fashions",
     "AS Fashions Online",
