@@ -9,6 +9,20 @@ export const BANNER_FONT_OPTIONS = [
 export type BannerFont =
   (typeof BANNER_FONT_OPTIONS)[number];
 
+export const DESKTOP_BANNER_RATIO_OPTIONS = [
+  "12:5",
+  "16:7",
+  "8:3",
+  "21:9",
+] as const;
+
+export const MOBILE_BANNER_RATIO_OPTIONS = [
+  "9:10",
+  "4:5",
+  "3:4",
+  "1:1",
+] as const;
+
 export type BannerPresentation = {
   eyebrowText: string;
   eyebrowFont: BannerFont;
@@ -27,6 +41,10 @@ export type BannerPresentation = {
   desktopFocalY: number;
   mobileFocalX: number;
   mobileFocalY: number;
+  desktopRatio: string;
+  mobileRatio: string;
+  desktopZoom: number;
+  mobileZoom: number;
 };
 
 export const DEFAULT_BANNER_PRESENTATION:
@@ -58,6 +76,10 @@ export const DEFAULT_BANNER_PRESENTATION:
     desktopFocalY: 50,
     mobileFocalX: 50,
     mobileFocalY: 50,
+    desktopRatio: "12:5",
+    mobileRatio: "9:10",
+    desktopZoom: 100,
+    mobileZoom: 100,
   };
 
 export function bannerPresentationKey(
@@ -89,6 +111,56 @@ function color(
   )
     ? raw.toUpperCase()
     : fallback;
+}
+
+function bannerRatio(
+  value: unknown,
+  allowed: readonly string[],
+  fallback: string,
+) {
+  const raw =
+    clean(value, 20);
+
+  return allowed.includes(raw)
+    ? raw
+    : fallback;
+}
+
+function zoom(
+  value: unknown,
+  fallback: number,
+) {
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    return fallback;
+  }
+
+  return Math.min(
+    200,
+    Math.max(
+      100,
+      Math.round(number),
+    ),
+  );
+}
+
+export function bannerRatioCssValue(
+  value: string,
+) {
+  const [width, height] =
+    value.split(":").map(Number);
+
+  if (
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    width <= 0 ||
+    height <= 0
+  ) {
+    return "1 / 1";
+  }
+
+  return `${width} / ${height}`;
 }
 
 function focalPoint(
@@ -226,6 +298,28 @@ export function normalizeBannerPresentation(
       focalPoint(
         source.mobileFocalY,
         DEFAULT_BANNER_PRESENTATION.mobileFocalY,
+      ),
+    desktopRatio:
+      bannerRatio(
+        source.desktopRatio,
+        DESKTOP_BANNER_RATIO_OPTIONS,
+        DEFAULT_BANNER_PRESENTATION.desktopRatio,
+      ),
+    mobileRatio:
+      bannerRatio(
+        source.mobileRatio,
+        MOBILE_BANNER_RATIO_OPTIONS,
+        DEFAULT_BANNER_PRESENTATION.mobileRatio,
+      ),
+    desktopZoom:
+      zoom(
+        source.desktopZoom,
+        DEFAULT_BANNER_PRESENTATION.desktopZoom,
+      ),
+    mobileZoom:
+      zoom(
+        source.mobileZoom,
+        DEFAULT_BANNER_PRESENTATION.mobileZoom,
       ),
   };
 }
