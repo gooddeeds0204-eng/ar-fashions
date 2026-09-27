@@ -1440,9 +1440,12 @@ export default function ProductDetailPage() {
                 <img
                   src={media.url}
                   alt={
-                    media.altText ??
-                    product.name
+                    media.altText?.trim() ||
+                    `${product.name} - ${product.category.name} | AS Fashions`
                   }
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -1475,7 +1478,12 @@ export default function ProductDetailPage() {
                     ) : (
                       <img
                         src={item.url}
-                        alt=""
+                        alt={
+                          item.altText?.trim() ||
+                          `${product.name} product image ${index + 1} | AS Fashions`
+                        }
+                        loading="lazy"
+                        decoding="async"
                         className="aspect-square w-full object-cover"
                       />
                     )}
