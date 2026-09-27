@@ -36,7 +36,10 @@ export default function robots(): MetadataRoute.Robots {
         "/reseller-status",
       ],
     },
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: [
+      `${baseUrl}/sitemap.xml`,
+      `${baseUrl}/product-images-sitemap.xml`,
+    ],
     host: baseUrl,
   };
 }
