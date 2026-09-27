@@ -15,22 +15,29 @@ const geistMono = Geist_Mono({
 
 const productionUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : "https://ar-fashions.vercel.app");
+  "https://www.asfashionsonline.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(productionUrl),
   title: {
-    default: "AS Fashions | Fashion Retail & Wholesale",
-    template: "%s | AS Fashions",
+    default:
+      "AS Fashions Online | Retail & Wholesale Fashion",
+    template: "%s | AS Fashions Online",
   },
   description:
-    "Shop curated fashion from AS Fashions for retail customers and approved resellers.",
+    "Shop AS Fashions Online for curated women, men and kids fashion, retail shopping and reseller wholesale collections.",
   applicationName: "AS Fashions",
+  creator: "AS Fashions",
+  publisher: "AS Fashions",
   category: "shopping",
+  alternates: {
+    canonical: "/",
+  },
   keywords: [
     "AS Fashions",
+    "AS Fashions Online",
+    "as fashions online",
+    "asfashionsonline",
     "fashion",
     "clothing",
     "women fashion",
@@ -43,16 +50,17 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "AS Fashions",
-    title: "AS Fashions | Fashion Retail & Wholesale",
+    title:
+      "AS Fashions Online | Retail & Wholesale Fashion",
     description:
-      "Curated fashion for retail shoppers and approved resellers.",
+      "Shop curated women, men and kids fashion from AS Fashions Online for retail and reseller customers.",
     url: "/",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AS Fashions",
+    title: "AS Fashions Online",
     description:
-      "Curated fashion for retail shoppers and approved resellers.",
+      "Retail and wholesale fashion from AS Fashions Online.",
   },
   robots: {
     index: true,
@@ -71,6 +79,34 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  "@id": `${productionUrl}/#organization`,
+                  name: "AS Fashions",
+                  alternateName: "AS Fashions Online",
+                  url: productionUrl,
+                },
+                {
+                  "@type": "WebSite",
+                  "@id": `${productionUrl}/#website`,
+                  url: productionUrl,
+                  name: "AS Fashions",
+                  alternateName: "AS Fashions Online",
+                  publisher: {
+                    "@id": `${productionUrl}/#organization`,
+                  },
+                  inLanguage: "en-IN",
+                },
+              ],
+            }),
+          }}
+        />
         {children}
       </body>
     </html>
