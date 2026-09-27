@@ -23,6 +23,10 @@ export type BannerPresentation = {
   buttonBorderColor: string;
   ctaCategoryId: string;
   ctaCategoryName: string;
+  desktopFocalX: number;
+  desktopFocalY: number;
+  mobileFocalX: number;
+  mobileFocalY: number;
 };
 
 export const DEFAULT_BANNER_PRESENTATION:
@@ -50,6 +54,10 @@ export const DEFAULT_BANNER_PRESENTATION:
       "#FFF8EC",
     ctaCategoryId: "",
     ctaCategoryName: "",
+    desktopFocalX: 50,
+    desktopFocalY: 50,
+    mobileFocalX: 50,
+    mobileFocalY: 50,
   };
 
 export function bannerPresentationKey(
@@ -81,6 +89,25 @@ function color(
   )
     ? raw.toUpperCase()
     : fallback;
+}
+
+function focalPoint(
+  value: unknown,
+  fallback: number,
+) {
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    return fallback;
+  }
+
+  return Math.min(
+    100,
+    Math.max(
+      0,
+      Math.round(number),
+    ),
+  );
 }
 
 function font(
@@ -179,6 +206,26 @@ export function normalizeBannerPresentation(
       clean(
         source.ctaCategoryName,
         120,
+      ),
+    desktopFocalX:
+      focalPoint(
+        source.desktopFocalX,
+        DEFAULT_BANNER_PRESENTATION.desktopFocalX,
+      ),
+    desktopFocalY:
+      focalPoint(
+        source.desktopFocalY,
+        DEFAULT_BANNER_PRESENTATION.desktopFocalY,
+      ),
+    mobileFocalX:
+      focalPoint(
+        source.mobileFocalX,
+        DEFAULT_BANNER_PRESENTATION.mobileFocalX,
+      ),
+    mobileFocalY:
+      focalPoint(
+        source.mobileFocalY,
+        DEFAULT_BANNER_PRESENTATION.mobileFocalY,
       ),
   };
 }
