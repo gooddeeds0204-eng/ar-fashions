@@ -74,6 +74,13 @@ type Product = {
   };
   variants: Variant[];
   media: Media[];
+  kidsSizeMeasurements?: Array<{
+    productId: string;
+    sizeId: string;
+    chestIn?: string | null;
+    waistIn?: string | null;
+    garmentLengthIn?: string | null;
+  }>;
 };
 
 type ProductReview = {
@@ -129,6 +136,60 @@ function sizeLabel(
   return inches
     ? `${name} · Height ${inches}`
     : name;
+}
+
+function inchesToCmDisplay(
+  value?: string | null,
+) {
+  const raw =
+    String(value ?? "").trim();
+
+  if (!raw) {
+    return null;
+  }
+
+  const matches =
+    raw.match(/\d+(?:\.\d+)?/g);
+
+  if (!matches?.length) {
+    return null;
+  }
+
+  const converted =
+    matches.map((part) => {
+      const cm =
+        Number(part) * 2.54;
+
+      const rounded =
+        Math.round(cm * 10) /
+        10;
+
+      return Number.isInteger(
+        rounded,
+      )
+        ? String(rounded)
+        : rounded.toFixed(1);
+    });
+
+  return converted.join("–");
+}
+
+function measurementBothUnits(
+  value?: string | null,
+) {
+  const raw =
+    String(value ?? "").trim();
+
+  if (!raw) {
+    return "—";
+  }
+
+  const cm =
+    inchesToCmDisplay(raw);
+
+  return cm
+    ? `${raw.replace(/\s*in(?:ches)?\s*$/i, "")} in · ${cm} cm`
+    : raw;
 }
 
 function getCart(): CartItem[] {
@@ -602,25 +663,100 @@ export default function ProductDetailPage() {
       return [];
     }
 
-    const sizeIds = new Set(
-      product.variants.map(
-        (variant) => variant.size.id,
-      ),
-    );
+    const measurementMap =
+      new Map(
+        (
+          product.kidsSizeMeasurements ??
+          []
+        ).map(
+          (measurement) => [
+            measurement.sizeId,
+            measurement,
+          ],
+        ),
+      );
 
-    return sizeGuides.filter(
-      (guide) =>
-        sizeIds.has(guide.id) &&
+    const uniqueProductSizes =
+      Array.from(
+        new Map(
+          product.variants.map(
+            (variant) => [
+              variant.size.id,
+              variant.size,
+            ],
+          ),
+        ).values(),
+      );
+
+    return uniqueProductSizes
+      .map((size) => {
+        const globalGuide =
+          sizeGuides.find(
+            (guide) =>
+              guide.id ===
+              size.id,
+          );
+
+        const productMeasurement =
+          measurementMap.get(
+            size.id,
+          );
+
+        return {
+          id: size.id,
+          name: size.name,
+          category:
+            globalGuide?.category ??
+            null,
+          sizeType:
+            globalGuide?.sizeType ??
+            null,
+          inches:
+            globalGuide?.inches ??
+            size.inches ??
+            null,
+          ageGuide:
+            globalGuide?.ageGuide ??
+            null,
+          heightCm:
+            globalGuide?.heightCm ??
+            null,
+          chestIn:
+            productMeasurement
+              ?.chestIn ||
+            globalGuide?.chestIn ||
+            null,
+          waistIn:
+            productMeasurement
+              ?.waistIn ||
+            globalGuide?.waistIn ||
+            null,
+          hipIn:
+            globalGuide?.hipIn ??
+            null,
+          garmentLengthIn:
+            productMeasurement
+              ?.garmentLengthIn ||
+            globalGuide
+              ?.garmentLengthIn ||
+            null,
+          fitNote:
+            globalGuide?.fitNote ??
+            null,
+        } satisfies SizeGuide;
+      })
+      .filter((guide) =>
         [
           guide.ageGuide,
           guide.heightCm,
+          guide.inches,
           guide.chestIn,
           guide.waistIn,
           guide.hipIn,
           guide.garmentLengthIn,
           guide.fitNote,
         ].some(Boolean),
-    );
+      );
   }, [product, sizeGuides]);
 
   const sizeGuideById = useMemo(
@@ -2622,7 +2758,7 @@ export default function ProductDetailPage() {
                   Choose by measurements
                 </h2>
                 <p className="mt-1 max-w-xl text-xs leading-5 text-[#7B7066]">
-                  Age is only a guide. Compare the child&apos;s actual height, chest and waist before choosing a size.
+                  Age is only a guide. Product measurements are shown in both inches and centimetres so you can compare before choosing a size.
                 </p>
               </div>
 
@@ -2643,10 +2779,10 @@ export default function ProductDetailPage() {
                   <tr>
                     <th className="px-4 py-3">Size</th>
                     <th className="px-4 py-3">Age Guide</th>
-                    <th className="px-4 py-3">Height cm</th>
-                    <th className="px-4 py-3">Chest in</th>
-                    <th className="px-4 py-3">Waist in</th>
-                    <th className="px-4 py-3">Hip in</th>
+                    <th className="px-4 py-3">Height</th>
+                    <th className="px-4 py-3">Chest</th>
+                    <th className="px-4 py-3">Waist</th>
+                    <th className="px-4 py-3">Hip</th>
                     <th className="px-4 py-3">Garment Length</th>
                   </tr>
                 </thead>
@@ -2661,26 +2797,41 @@ export default function ProductDetailPage() {
                           {guide.ageGuide ?? "—"}
                         </td>
                         <td className="px-4 py-4">
-                          {guide.heightCm ?? "—"}
+                          {guide.heightCm
+                            ? `${guide.heightCm} cm`
+                            : guide.inches
+                              ? guide.inches
+                              : "—"}
+                        </td>
+                        <td className="px-4 py-4 font-semibold">
+                          {measurementBothUnits(
+                            guide.chestIn,
+                          )}
+                        </td>
+                        <td className="px-4 py-4 font-semibold">
+                          {measurementBothUnits(
+                            guide.waistIn,
+                          )}
                         </td>
                         <td className="px-4 py-4">
-                          {guide.chestIn ?? "—"}
+                          {measurementBothUnits(
+                            guide.hipIn,
+                          )}
                         </td>
-                        <td className="px-4 py-4">
-                          {guide.waistIn ?? "—"}
-                        </td>
-                        <td className="px-4 py-4">
-                          {guide.hipIn ?? "—"}
-                        </td>
-                        <td className="px-4 py-4">
-                          {guide.garmentLengthIn ??
-                            "—"}
+                        <td className="px-4 py-4 font-semibold">
+                          {measurementBothUnits(
+                            guide.garmentLengthIn,
+                          )}
                         </td>
                       </tr>
                     ),
                   )}
                 </tbody>
               </table>
+
+              <div className="border-t border-[#E4D7C4] bg-[#FAF7F0] px-5 py-3 text-[10px] font-semibold leading-5 text-[#7B7066] sm:px-6">
+                Product measurements entered in inches are automatically converted using 1 inch = 2.54 cm.
+              </div>
             </div>
 
             {productSizeGuides.some(
