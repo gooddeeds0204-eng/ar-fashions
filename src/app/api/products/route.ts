@@ -4,6 +4,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { publicProductMedia } from "@/lib/product-media-color";
 import { ensureProductSoftDeleteStorage } from "@/lib/product-soft-delete-storage";
+import {
+  ensureProductKidsSizeMeasurementStorage,
+  getProductKidsSizeMeasurements,
+} from "@/lib/product-kids-size-measurements";
 
 const PRODUCT_STATUSES = [
   "DRAFT",
@@ -315,6 +319,13 @@ async function generateVariantSku(
   return sku;
 }
 
+type ProductKidsSizeMeasurementInput = {
+  sizeId: string;
+  chestIn?: string | null;
+  waistIn?: string | null;
+  garmentLengthIn?: string | null;
+};
+
 type ProductVariantInput = {
   colorId: string;
   sizeId: string;
@@ -333,6 +344,8 @@ export async function POST(request: Request) {
   }
 
   try {
+    await ensureProductKidsSizeMeasurementStorage();
+
     const body = await request.json();
 
     const name = String(body.name ?? "").trim();
@@ -444,6 +457,85 @@ export async function POST(request: Request) {
         })
       : [];
 
+    const kidsSizeMeasurements:
+      ProductKidsSizeMeasurementInput[] =
+      Array.isArray(
+        body.kidsSizeMeasurements,
+      )
+        ? body.kidsSizeMeasurements.map(
+            (
+              measurement: unknown,
+            ) => {
+              const item =
+                measurement as Record<
+                  string,
+                  unknown
+                >;
+
+              return {
+                sizeId: String(
+                  item.sizeId ?? "",
+                ).trim(),
+                chestIn:
+                  item.chestIn == null
+                    ? null
+                    : String(
+                        item.chestIn,
+                      ).trim(),
+                waistIn:
+                  item.waistIn == null
+                    ? null
+                    : String(
+                        item.waistIn,
+                      ).trim(),
+                garmentLengthIn:
+                  item.garmentLengthIn ==
+                  null
+                    ? null
+                    : String(
+                        item.garmentLengthIn,
+                      ).trim(),
+              };
+            },
+          )
+        : [];
+
+    const measurementSizeIds =
+      new Set<string>();
+
+    for (
+      const measurement of
+      kidsSizeMeasurements
+    ) {
+      if (!measurement.sizeId) {
+        return NextResponse.json(
+          {
+            error:
+              "Every kids measurement row must have a sizeId",
+          },
+          { status: 400 },
+        );
+      }
+
+      if (
+        measurementSizeIds.has(
+          measurement.sizeId,
+        )
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Duplicate kids size measurement found",
+          },
+          { status: 400 },
+        );
+      }
+
+      measurementSizeIds.add(
+        measurement.sizeId,
+      );
+    }
+
     const combinationSet = new Set<string>();
 
     for (const variant of variants) {
@@ -518,7 +610,16 @@ export async function POST(request: Request) {
       ...new Set(variants.map((variant) => variant.colorId)),
     ];
     const sizeIds = [
-      ...new Set(variants.map((variant) => variant.sizeId)),
+      ...new Set([
+        ...variants.map(
+          (variant) =>
+            variant.sizeId,
+        ),
+        ...kidsSizeMeasurements.map(
+          (measurement) =>
+            measurement.sizeId,
+        ),
+      ]),
     ];
 
     const [colors, sizes] = await Promise.all([
@@ -554,6 +655,25 @@ export async function POST(request: Request) {
     const sizeMap = new Map(
       sizes.map((size) => [size.id, size.name]),
     );
+
+    for (
+      const measurement of
+      kidsSizeMeasurements
+    ) {
+      if (
+        !sizeMap.has(
+          measurement.sizeId,
+        )
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              `Invalid or inactive kids measurement size: ${measurement.sizeId}`,
+          },
+          { status: 400 },
+        );
+      }
+    }
 
     for (const variant of variants) {
       if (!colorMap.has(variant.colorId)) {
@@ -664,6 +784,57 @@ export async function POST(request: Request) {
         });
       }
 
+      if (
+        kidsSizeMeasurements.length >
+        0
+      ) {
+        for (
+          const measurement of
+          kidsSizeMeasurements
+        ) {
+          const hasAnyValue =
+            Boolean(
+              measurement.chestIn ||
+                measurement.waistIn ||
+                measurement.garmentLengthIn,
+            );
+
+          if (!hasAnyValue) {
+            continue;
+          }
+
+          await tx.$executeRawUnsafe(
+            `
+              INSERT INTO "ProductKidsSizeMeasurement"
+                (
+                  "productId",
+                  "sizeId",
+                  "chestIn",
+                  "waistIn",
+                  "garmentLengthIn",
+                  "updatedAt"
+                )
+              VALUES
+                ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+              ON CONFLICT ("productId", "sizeId")
+              DO UPDATE SET
+                "chestIn" = EXCLUDED."chestIn",
+                "waistIn" = EXCLUDED."waistIn",
+                "garmentLengthIn" = EXCLUDED."garmentLengthIn",
+                "updatedAt" = CURRENT_TIMESTAMP
+            `,
+            createdProduct.id,
+            measurement.sizeId,
+            measurement.chestIn ||
+              null,
+            measurement.waistIn ||
+              null,
+            measurement.garmentLengthIn ||
+              null,
+          );
+        }
+      }
+
       return tx.product.findUnique({
         where: {
           id: createdProduct.id,
@@ -689,7 +860,23 @@ export async function POST(request: Request) {
       });
     });
 
-    return NextResponse.json(product, { status: 201 });
+    const savedKidsSizeMeasurements =
+      product?.id
+        ? await getProductKidsSizeMeasurements(
+            product.id,
+          )
+        : [];
+
+    return NextResponse.json(
+      product
+        ? {
+            ...product,
+            kidsSizeMeasurements:
+              savedKidsSizeMeasurements,
+          }
+        : product,
+      { status: 201 },
+    );
   } catch (error) {
     console.error("POST /api/products failed:", error);
 
