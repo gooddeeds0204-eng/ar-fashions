@@ -1352,87 +1352,6 @@ export default function ProductsPage() {
                 </div>
               </div>
 
-              {isKidsProduct && (
-                <div className="md:col-span-2 rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.06] p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-400">
-                    Kids Size Selection
-                  </p>
-
-                  <p className="mt-1 text-xs text-slate-400">
-                    Kids category select chesaru. Sizes ni Years, Centimeters or Inches reference lo choose cheyyandi. Same size record select avtundi; display maatrame convenient ga marutundi.
-                  </p>
-
-                  <div className="mt-3 grid grid-cols-3 gap-2">
-                    {[
-                      {
-                        value:
-                          "YEARS" as const,
-                        title:
-                          "Years",
-                        note:
-                          "Age",
-                      },
-                      {
-                        value:
-                          "CM" as const,
-                        title:
-                          "Centimeters",
-                        note:
-                          "Height cm",
-                      },
-                      {
-                        value:
-                          "INCHES" as const,
-                        title:
-                          "Inches",
-                        note:
-                          "Height in",
-                      },
-                    ].map(
-                      (option) => {
-                        const selected =
-                          kidsSizeDisplayMode ===
-                          option.value;
-
-                        return (
-                          <button
-                            key={
-                              option.value
-                            }
-                            type="button"
-                            onClick={() =>
-                              setKidsSizeDisplayMode(
-                                option.value,
-                              )
-                            }
-                            className={`rounded-xl border px-3 py-3 text-center transition ${
-                              selected
-                                ? "border-emerald-400 bg-emerald-400 text-slate-950"
-                                : "border-white/10 bg-slate-950 text-slate-300 hover:border-white/20"
-                            }`}
-                          >
-                            <span className="block text-xs font-black">
-                              {
-                                option.title
-                              }
-                            </span>
-                            <span className={`mt-0.5 block text-[9px] ${
-                              selected
-                                ? "text-slate-800"
-                                : "text-slate-500"
-                            }`}>
-                              {
-                                option.note
-                              }
-                            </span>
-                          </button>
-                        );
-                      },
-                    )}
-                  </div>
-                </div>
-              )}
-
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-300">
                   Product SKU
@@ -1926,7 +1845,7 @@ export default function ProductsPage() {
                     <div className="mt-3 flex flex-wrap gap-2">
                       {[
                         ["YEARS", "Years"],
-                        ["CM", "Centimeters"],
+                        ["CM", "Centimetres"],
                         ["INCHES", "Inches"],
                       ].map(
                         ([
