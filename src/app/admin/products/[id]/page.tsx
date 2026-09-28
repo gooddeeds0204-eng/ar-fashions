@@ -81,6 +81,13 @@ type Product = {
     isActive: boolean;
   }>;
   media: Media[];
+  kidsSizeMeasurements?: Array<{
+    productId: string;
+    sizeId: string;
+    chestIn?: string | null;
+    waistIn?: string | null;
+    garmentLengthIn?: string | null;
+  }>;
 };
 
 export default function EditProductPage() {
@@ -113,6 +120,20 @@ export default function EditProductPage() {
   ] = useState("");
 
   const [variants, setVariants] = useState<Variant[]>([]);
+
+  const [
+    kidsProductMeasurements,
+    setKidsProductMeasurements,
+  ] = useState<
+    Record<
+      string,
+      {
+        chestIn: string;
+        waistIn: string;
+        garmentLengthIn: string;
+      }
+    >
+  >({});
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -169,6 +190,37 @@ export default function EditProductPage() {
         await sizesResponse.json();
 
       setProduct(productData);
+
+      setKidsProductMeasurements(
+        Object.fromEntries(
+          (
+            productData.kidsSizeMeasurements ??
+            []
+          ).map(
+            (
+              measurement: {
+                sizeId: string;
+                chestIn?: string | null;
+                waistIn?: string | null;
+                garmentLengthIn?: string | null;
+              },
+            ) => [
+              measurement.sizeId,
+              {
+                chestIn:
+                  measurement.chestIn ??
+                  "",
+                waistIn:
+                  measurement.waistIn ??
+                  "",
+                garmentLengthIn:
+                  measurement.garmentLengthIn ??
+                  "",
+              },
+            ],
+          ),
+        ),
+      );
 
       const rawCategories = Array.isArray(categoriesData)
         ? categoriesData
@@ -350,6 +402,83 @@ export default function EditProductPage() {
       size.name.toLowerCase().includes(query),
     );
   }, [sizes, sizeSearch]);
+
+  const selectedKidsSizeIds =
+    useMemo(() => {
+      if (
+        product?.gender !==
+        "KIDS"
+      ) {
+        return [];
+      }
+
+      const selected =
+        new Set<string>();
+
+      for (
+        const colorId of
+        selectedColors
+      ) {
+        for (
+          const sizeId of
+          colorSizeSelections[
+            colorId
+          ] ?? []
+        ) {
+          selected.add(
+            sizeId,
+          );
+        }
+      }
+
+      return sizes
+        .filter(
+          (size) =>
+            size.category ===
+              "Kids" &&
+            selected.has(
+              size.id,
+            ),
+        )
+        .map((size) =>
+          size.id,
+        );
+    }, [
+      colorSizeSelections,
+      product?.gender,
+      selectedColors,
+      sizes,
+    ]);
+
+  function updateKidsProductMeasurement(
+    sizeId: string,
+    field:
+      | "chestIn"
+      | "waistIn"
+      | "garmentLengthIn",
+    value: string,
+  ) {
+    setKidsProductMeasurements(
+      (current) => ({
+        ...current,
+        [sizeId]: {
+          chestIn:
+            current[sizeId]
+              ?.chestIn ??
+            "",
+          waistIn:
+            current[sizeId]
+              ?.waistIn ??
+            "",
+          garmentLengthIn:
+            current[sizeId]
+              ?.garmentLengthIn ??
+            "",
+          [field]: value,
+        },
+      }),
+    );
+  }
 
   function rebuildVariants(
     colorIds: string[],
@@ -941,6 +1070,27 @@ export default function EditProductPage() {
             isFeatured: product.isFeatured,
             isTrending: product.isTrending,
             isNewArrival: product.isNewArrival,
+            kidsSizeMeasurements:
+              selectedKidsSizeIds.map(
+                (sizeId) => ({
+                  sizeId,
+                  chestIn:
+                    kidsProductMeasurements[
+                      sizeId
+                    ]?.chestIn ??
+                    "",
+                  waistIn:
+                    kidsProductMeasurements[
+                      sizeId
+                    ]?.waistIn ??
+                    "",
+                  garmentLengthIn:
+                    kidsProductMeasurements[
+                      sizeId
+                    ]?.garmentLengthIn ??
+                    "",
+                }),
+              ),
             variants,
           }),
         },
@@ -1585,6 +1735,130 @@ export default function EditProductPage() {
             </div>
           )}
         </section>
+
+        {product.gender ===
+          "KIDS" &&
+          selectedKidsSizeIds.length >
+            0 && (
+          <section className="mb-6 rounded-3xl border border-emerald-400/20 bg-emerald-400/[0.04] p-5 sm:p-7">
+            <div className="mb-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
+                Kids Product Size Measurements
+              </p>
+
+              <h2 className="mt-1 text-xl font-bold">
+                Chest, Waist & Length by age size
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Ee measurements ee product ki maatrame. Prathi age size ki inches lo manual ga update cheyyachu.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {selectedKidsSizeIds.map(
+                (sizeId) => {
+                  const size =
+                    sizes.find(
+                      (item) =>
+                        item.id ===
+                        sizeId,
+                    );
+
+                  const values =
+                    kidsProductMeasurements[
+                      sizeId
+                    ] ?? {
+                      chestIn: "",
+                      waistIn: "",
+                      garmentLengthIn:
+                        "",
+                    };
+
+                  return (
+                    <div
+                      key={sizeId}
+                      className="grid gap-3 rounded-2xl border border-white/10 bg-slate-950/70 p-4 sm:grid-cols-[130px_repeat(3,minmax(0,1fr))] sm:items-end"
+                    >
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                          Age / Size
+                        </p>
+                        <p className="mt-2 text-base font-black text-emerald-300">
+                          {size?.name ??
+                            sizeId}
+                        </p>
+                      </div>
+
+                      <label>
+                        <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                          Chest (in)
+                        </span>
+                        <input
+                          value={
+                            values.chestIn
+                          }
+                          onChange={(event) =>
+                            updateKidsProductMeasurement(
+                              sizeId,
+                              "chestIn",
+                              event.target.value,
+                            )
+                          }
+                          inputMode="decimal"
+                          placeholder="e.g. 22"
+                          className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-3 text-sm outline-none focus:border-emerald-400"
+                        />
+                      </label>
+
+                      <label>
+                        <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                          Waist (in)
+                        </span>
+                        <input
+                          value={
+                            values.waistIn
+                          }
+                          onChange={(event) =>
+                            updateKidsProductMeasurement(
+                              sizeId,
+                              "waistIn",
+                              event.target.value,
+                            )
+                          }
+                          inputMode="decimal"
+                          placeholder="e.g. 20"
+                          className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-3 text-sm outline-none focus:border-emerald-400"
+                        />
+                      </label>
+
+                      <label>
+                        <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                          Length (in)
+                        </span>
+                        <input
+                          value={
+                            values.garmentLengthIn
+                          }
+                          onChange={(event) =>
+                            updateKidsProductMeasurement(
+                              sizeId,
+                              "garmentLengthIn",
+                              event.target.value,
+                            )
+                          }
+                          inputMode="decimal"
+                          placeholder="e.g. 28"
+                          className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-3 text-sm outline-none focus:border-emerald-400"
+                        />
+                      </label>
+                    </div>
+                  );
+                },
+              )}
+            </div>
+          </section>
+        )}
 
         {/* VARIANTS */}
         <section className="mb-6 rounded-3xl border border-emerald-400/20 bg-emerald-400/[0.03] p-5 sm:p-7">
