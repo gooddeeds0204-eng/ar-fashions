@@ -2544,7 +2544,10 @@ export default function EditProductPage() {
                 : current,
             );
 
-            setAdjustingMedia(null);
+            setAdjustingMedia({
+              ...adjustingMedia,
+              ...updatedMedia,
+            });
           }}
         />
       ) : null}
