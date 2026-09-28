@@ -92,60 +92,6 @@ type Product = {
   };
 };
 
-function convertMeasurement(
-  value: string,
-  factor: number,
-) {
-  const clean = value.trim();
-
-  if (!clean) {
-    return "";
-  }
-
-  const numbers =
-    clean.match(/\d+(?:\.\d+)?/g);
-
-  if (!numbers?.length) {
-    return "";
-  }
-
-  const converted =
-    numbers.map((part) => {
-      const result =
-        Number(part) * factor;
-
-      const rounded =
-        Math.round(result * 10) /
-        10;
-
-      return Number.isInteger(
-        rounded,
-      )
-        ? String(rounded)
-        : rounded.toFixed(1);
-    });
-
-  return converted.join("-");
-}
-
-function inchesToCm(
-  value: string,
-) {
-  return convertMeasurement(
-    value,
-    2.54,
-  );
-}
-
-function cmToInches(
-  value: string,
-) {
-  return convertMeasurement(
-    value,
-    1 / 2.54,
-  );
-}
-
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -204,13 +150,9 @@ export default function ProductsPage() {
   const [newSizeAgeGuide, setNewSizeAgeGuide] = useState("");
   const [newSizeHeightCm, setNewSizeHeightCm] = useState("");
   const [newSizeChestIn, setNewSizeChestIn] = useState("");
-  const [newSizeChestCm, setNewSizeChestCm] = useState("");
   const [newSizeWaistIn, setNewSizeWaistIn] = useState("");
-  const [newSizeWaistCm, setNewSizeWaistCm] = useState("");
   const [newSizeHipIn, setNewSizeHipIn] = useState("");
-  const [newSizeHipCm, setNewSizeHipCm] = useState("");
   const [newSizeGarmentLengthIn, setNewSizeGarmentLengthIn] = useState("");
-  const [newSizeGarmentLengthCm, setNewSizeGarmentLengthCm] = useState("");
   const [newSizeFitNote, setNewSizeFitNote] = useState("");
   const [newSizePreset, setNewSizePreset] = useState("");
   const [creatingSize, setCreatingSize] = useState(false);
@@ -218,6 +160,20 @@ export default function ProductsPage() {
     selectingAllKidsSizes,
     setSelectingAllKidsSizes,
   ] = useState(false);
+
+  const [
+    kidsProductMeasurements,
+    setKidsProductMeasurements,
+  ] = useState<
+    Record<
+      string,
+      {
+        chestIn: string;
+        waistIn: string;
+        garmentLengthIn: string;
+      }
+    >
+  >({});
 
   const [variants, setVariants] = useState<Variant[]>([]);
   const [media, setMedia] = useState<ProductMedia[]>([]);
@@ -524,25 +480,9 @@ export default function ProductsPage() {
     setNewSizeAgeGuide(preset.ageGuide);
     setNewSizeHeightCm(preset.heightCm);
     setNewSizeChestIn(preset.chestIn);
-    setNewSizeChestCm(
-      inchesToCm(
-        preset.chestIn,
-      ),
-    );
     setNewSizeWaistIn(preset.waistIn);
-    setNewSizeWaistCm(
-      inchesToCm(
-        preset.waistIn,
-      ),
-    );
     setNewSizeHipIn(preset.hipIn);
-    setNewSizeHipCm(
-      inchesToCm(
-        preset.hipIn,
-      ),
-    );
     setNewSizeGarmentLengthIn("");
-    setNewSizeGarmentLengthCm("");
     setNewSizeFitNote(
       KIDS_SIZE_REFERENCE_NOTE,
     );
@@ -597,13 +537,9 @@ export default function ProductsPage() {
       setNewSizeAgeGuide("");
       setNewSizeHeightCm("");
       setNewSizeChestIn("");
-      setNewSizeChestCm("");
       setNewSizeWaistIn("");
-      setNewSizeWaistCm("");
       setNewSizeHipIn("");
-      setNewSizeHipCm("");
       setNewSizeGarmentLengthIn("");
-      setNewSizeGarmentLengthCm("");
       setNewSizeFitNote("");
       setNewSizePreset("");
       setShowCreateSize(false);
@@ -706,6 +642,77 @@ export default function ProductsPage() {
     applicableSizes,
     sizeSearch,
   ]);
+
+  const selectedKidsSizeIds =
+    useMemo(() => {
+      if (!isKidsProduct) {
+        return [];
+      }
+
+      const selected =
+        new Set<string>();
+
+      for (
+        const colorId of
+        selectedColors
+      ) {
+        for (
+          const sizeId of
+          colorSizeSelections[
+            colorId
+          ] ?? []
+        ) {
+          selected.add(
+            sizeId,
+          );
+        }
+      }
+
+      return applicableSizes
+        .filter((size) =>
+          selected.has(
+            size.id,
+          ),
+        )
+        .map((size) =>
+          size.id,
+        );
+    }, [
+      applicableSizes,
+      colorSizeSelections,
+      isKidsProduct,
+      selectedColors,
+    ]);
+
+  function updateKidsProductMeasurement(
+    sizeId: string,
+    field:
+      | "chestIn"
+      | "waistIn"
+      | "garmentLengthIn",
+    value: string,
+  ) {
+    setKidsProductMeasurements(
+      (current) => ({
+        ...current,
+        [sizeId]: {
+          chestIn:
+            current[sizeId]
+              ?.chestIn ??
+            "",
+          waistIn:
+            current[sizeId]
+              ?.waistIn ??
+            "",
+          garmentLengthIn:
+            current[sizeId]
+              ?.garmentLengthIn ??
+            "",
+          [field]: value,
+        },
+      }),
+    );
+  }
 
   function toggleColor(colorId: string) {
     setSelectedColors((current) => {
@@ -1205,6 +1212,9 @@ export default function ProductsPage() {
     setKidsSizeDisplayMode(
       "YEARS",
     );
+    setKidsProductMeasurements(
+      {},
+    );
     setShowCreateColor(false);
     setShowCreateSize(false);
     setSelectedColors([]);
@@ -1407,6 +1417,28 @@ export default function ProductsPage() {
           isFeatured,
           isTrending,
           isNewArrival,
+
+          kidsSizeMeasurements:
+            selectedKidsSizeIds.map(
+              (sizeId) => ({
+                sizeId,
+                chestIn:
+                  kidsProductMeasurements[
+                    sizeId
+                  ]?.chestIn ??
+                  "",
+                waistIn:
+                  kidsProductMeasurements[
+                    sizeId
+                  ]?.waistIn ??
+                  "",
+                garmentLengthIn:
+                  kidsProductMeasurements[
+                    sizeId
+                  ]?.garmentLengthIn ??
+                  "",
+              }),
+            ),
 
           variants: variants.map((variant) => ({
             colorId: variant.colorId,
@@ -2338,133 +2370,70 @@ export default function ProductsPage() {
                         </label>
                       </div>
 
-                      <div className="mt-3 rounded-xl border border-emerald-400/15 bg-emerald-400/[0.04] p-3">
-                        <div className="mb-3">
-                          <p className="text-[10px] font-black uppercase tracking-wider text-emerald-300">
-                            Actual Product Measurements
-                          </p>
-                          <p className="mt-1 text-[10px] leading-4 text-slate-500">
-                            Mee deggara unna dress ni measure chesi Inches leda Centimetres lo enter cheyyandi. Oka unit enter cheste vere unit automatic ga calculate avtundi; tarvata manual ga edit kuda cheyochu.
-                          </p>
-                        </div>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <label className="block">
+                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Chest (inches)
+                          </span>
+                          <input
+                            value={newSizeChestIn}
+                            onChange={(event) =>
+                              setNewSizeChestIn(
+                                event.target.value,
+                              )
+                            }
+                            placeholder="Reference e.g. 26-27"
+                            className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                          />
+                        </label>
 
-                        <div className="grid gap-3 lg:grid-cols-2">
-                          {[
-                            {
-                              label: "Chest",
-                              inValue: newSizeChestIn,
-                              cmValue: newSizeChestCm,
-                              setIn: setNewSizeChestIn,
-                              setCm: setNewSizeChestCm,
-                              exampleIn: "e.g. 26-27",
-                              exampleCm: "e.g. 66-69",
-                            },
-                            {
-                              label: "Waist",
-                              inValue: newSizeWaistIn,
-                              cmValue: newSizeWaistCm,
-                              setIn: setNewSizeWaistIn,
-                              setCm: setNewSizeWaistCm,
-                              exampleIn: "e.g. 23-24",
-                              exampleCm: "e.g. 58-61",
-                            },
-                            {
-                              label: "Hip",
-                              inValue: newSizeHipIn,
-                              cmValue: newSizeHipCm,
-                              setIn: setNewSizeHipIn,
-                              setCm: setNewSizeHipCm,
-                              exampleIn: "Optional",
-                              exampleCm: "Optional",
-                            },
-                            {
-                              label: "Garment Length",
-                              inValue:
-                                newSizeGarmentLengthIn,
-                              cmValue:
-                                newSizeGarmentLengthCm,
-                              setIn:
-                                setNewSizeGarmentLengthIn,
-                              setCm:
-                                setNewSizeGarmentLengthCm,
-                              exampleIn:
-                                "e.g. 30",
-                              exampleCm:
-                                "e.g. 76.2",
-                            },
-                          ].map(
-                            (measurement) => (
-                              <div
-                                key={
-                                  measurement.label
-                                }
-                                className="rounded-xl border border-white/10 bg-slate-950/70 p-3"
-                              >
-                                <p className="text-[10px] font-black uppercase tracking-wider text-slate-300">
-                                  {
-                                    measurement.label
-                                  }
-                                </p>
+                        <label className="block">
+                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Waist (inches)
+                          </span>
+                          <input
+                            value={newSizeWaistIn}
+                            onChange={(event) =>
+                              setNewSizeWaistIn(
+                                event.target.value,
+                              )
+                            }
+                            placeholder="Reference e.g. 23-24"
+                            className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                          />
+                        </label>
 
-                                <div className="mt-2 grid grid-cols-2 gap-2">
-                                  <label>
-                                    <span className="mb-1 block text-[9px] font-bold uppercase text-slate-500">
-                                      Inches
-                                    </span>
-                                    <input
-                                      value={
-                                        measurement.inValue
-                                      }
-                                      onChange={(event) => {
-                                        const value =
-                                          event.target.value;
-                                        measurement.setIn(
-                                          value,
-                                        );
-                                        measurement.setCm(
-                                          inchesToCm(
-                                            value,
-                                          ),
-                                        );
-                                      }}
-                                      placeholder={
-                                        measurement.exampleIn
-                                      }
-                                      className="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2.5 text-sm outline-none focus:border-emerald-400"
-                                    />
-                                  </label>
+                        <label className="block">
+                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Hip (inches)
+                          </span>
+                          <input
+                            value={newSizeHipIn}
+                            onChange={(event) =>
+                              setNewSizeHipIn(
+                                event.target.value,
+                              )
+                            }
+                            placeholder="Optional"
+                            className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                          />
+                        </label>
 
-                                  <label>
-                                    <span className="mb-1 block text-[9px] font-bold uppercase text-slate-500">
-                                      Centimetres
-                                    </span>
-                                    <input
-                                      value={
-                                        measurement.cmValue
-                                      }
-                                      onChange={(event) => {
-                                        const value =
-                                          event.target.value;
-                                        measurement.setCm(
-                                          value,
-                                        );
-                                        measurement.setIn(
-                                          cmToInches(
-                                            value,
-                                          ),
-                                        );
-                                      }}
-                                      placeholder={
-                                        measurement.exampleCm
-                                      }
-                                      className="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2.5 text-sm outline-none focus:border-emerald-400"
-                                    />
-                                  </label>
-                                </div>
-                              </div>
-                            ),
-                          )}
-                        </div>
+                        <label className="block sm:col-span-2 lg:col-span-3">
+                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Garment Length (inches)
+                          </span>
+                          <input
+                            value={newSizeGarmentLengthIn}
+                            onChange={(event) =>
+                              setNewSizeGarmentLengthIn(
+                                event.target.value,
+                              )
+                            }
+                            placeholder="Optional reference"
+                            className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                          />
+                        </label>
                       </div>
 
                       <textarea
@@ -2644,6 +2613,129 @@ export default function ProductsPage() {
               </div>
             )}
           </section>
+
+          {isKidsProduct &&
+            selectedKidsSizeIds.length >
+              0 && (
+            <section className="mb-6 rounded-3xl border border-emerald-400/20 bg-emerald-400/[0.04] p-5 sm:p-7">
+              <div className="mb-5">
+                <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
+                  Kids Product Size Measurements
+                </p>
+
+                <h2 className="mt-1 text-xl font-bold">
+                  Enter actual measurements for each age size
+                </h2>
+
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  Ee product lo 1-2Y, 2-3Y, 3-4Y ila prathi selected size ki actual Chest, Waist, Length separate ga inches lo enter cheyyandi. Ee values ee product ki maatrame save avutayi.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {selectedKidsSizeIds.map(
+                  (sizeId) => {
+                    const size =
+                      sizes.find(
+                        (item) =>
+                          item.id ===
+                          sizeId,
+                      );
+
+                    const values =
+                      kidsProductMeasurements[
+                        sizeId
+                      ] ?? {
+                        chestIn: "",
+                        waistIn: "",
+                        garmentLengthIn:
+                          "",
+                      };
+
+                    return (
+                      <div
+                        key={sizeId}
+                        className="grid gap-3 rounded-2xl border border-white/10 bg-slate-950/70 p-4 sm:grid-cols-[130px_repeat(3,minmax(0,1fr))] sm:items-end"
+                      >
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                            Age / Size
+                          </p>
+                          <p className="mt-2 text-base font-black text-emerald-300">
+                            {size?.name ??
+                              sizeId}
+                          </p>
+                        </div>
+
+                        <label className="block">
+                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Chest (in)
+                          </span>
+                          <input
+                            value={
+                              values.chestIn
+                            }
+                            onChange={(event) =>
+                              updateKidsProductMeasurement(
+                                sizeId,
+                                "chestIn",
+                                event.target.value,
+                              )
+                            }
+                            placeholder="e.g. 22"
+                            inputMode="decimal"
+                            className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-3 text-sm outline-none focus:border-emerald-400"
+                          />
+                        </label>
+
+                        <label className="block">
+                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Waist (in)
+                          </span>
+                          <input
+                            value={
+                              values.waistIn
+                            }
+                            onChange={(event) =>
+                              updateKidsProductMeasurement(
+                                sizeId,
+                                "waistIn",
+                                event.target.value,
+                              )
+                            }
+                            placeholder="e.g. 20"
+                            inputMode="decimal"
+                            className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-3 text-sm outline-none focus:border-emerald-400"
+                          />
+                        </label>
+
+                        <label className="block">
+                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Length (in)
+                          </span>
+                          <input
+                            value={
+                              values.garmentLengthIn
+                            }
+                            onChange={(event) =>
+                              updateKidsProductMeasurement(
+                                sizeId,
+                                "garmentLengthIn",
+                                event.target.value,
+                              )
+                            }
+                            placeholder="e.g. 28"
+                            inputMode="decimal"
+                            className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-3 text-sm outline-none focus:border-emerald-400"
+                          />
+                        </label>
+                      </div>
+                    );
+                  },
+                )}
+              </div>
+            </section>
+          )}
 
           {/* VARIANT MATRIX */}
           <section className="mb-6 rounded-3xl border border-emerald-400/20 bg-emerald-400/[0.03] p-5 sm:p-7">
