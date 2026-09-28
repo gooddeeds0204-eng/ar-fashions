@@ -92,6 +92,60 @@ type Product = {
   };
 };
 
+function convertMeasurement(
+  value: string,
+  factor: number,
+) {
+  const clean = value.trim();
+
+  if (!clean) {
+    return "";
+  }
+
+  const numbers =
+    clean.match(/\d+(?:\.\d+)?/g);
+
+  if (!numbers?.length) {
+    return "";
+  }
+
+  const converted =
+    numbers.map((part) => {
+      const result =
+        Number(part) * factor;
+
+      const rounded =
+        Math.round(result * 10) /
+        10;
+
+      return Number.isInteger(
+        rounded,
+      )
+        ? String(rounded)
+        : rounded.toFixed(1);
+    });
+
+  return converted.join("-");
+}
+
+function inchesToCm(
+  value: string,
+) {
+  return convertMeasurement(
+    value,
+    2.54,
+  );
+}
+
+function cmToInches(
+  value: string,
+) {
+  return convertMeasurement(
+    value,
+    1 / 2.54,
+  );
+}
+
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -150,9 +204,13 @@ export default function ProductsPage() {
   const [newSizeAgeGuide, setNewSizeAgeGuide] = useState("");
   const [newSizeHeightCm, setNewSizeHeightCm] = useState("");
   const [newSizeChestIn, setNewSizeChestIn] = useState("");
+  const [newSizeChestCm, setNewSizeChestCm] = useState("");
   const [newSizeWaistIn, setNewSizeWaistIn] = useState("");
+  const [newSizeWaistCm, setNewSizeWaistCm] = useState("");
   const [newSizeHipIn, setNewSizeHipIn] = useState("");
+  const [newSizeHipCm, setNewSizeHipCm] = useState("");
   const [newSizeGarmentLengthIn, setNewSizeGarmentLengthIn] = useState("");
+  const [newSizeGarmentLengthCm, setNewSizeGarmentLengthCm] = useState("");
   const [newSizeFitNote, setNewSizeFitNote] = useState("");
   const [newSizePreset, setNewSizePreset] = useState("");
   const [creatingSize, setCreatingSize] = useState(false);
@@ -466,11 +524,25 @@ export default function ProductsPage() {
     setNewSizeAgeGuide(preset.ageGuide);
     setNewSizeHeightCm(preset.heightCm);
     setNewSizeChestIn(preset.chestIn);
-    setNewSizeWaistIn(preset.waistIn);
-    setNewSizeHipIn(preset.hipIn);
-    setNewSizeGarmentLengthIn(
-      "Product-specific",
+    setNewSizeChestCm(
+      inchesToCm(
+        preset.chestIn,
+      ),
     );
+    setNewSizeWaistIn(preset.waistIn);
+    setNewSizeWaistCm(
+      inchesToCm(
+        preset.waistIn,
+      ),
+    );
+    setNewSizeHipIn(preset.hipIn);
+    setNewSizeHipCm(
+      inchesToCm(
+        preset.hipIn,
+      ),
+    );
+    setNewSizeGarmentLengthIn("");
+    setNewSizeGarmentLengthCm("");
     setNewSizeFitNote(
       KIDS_SIZE_REFERENCE_NOTE,
     );
@@ -525,9 +597,13 @@ export default function ProductsPage() {
       setNewSizeAgeGuide("");
       setNewSizeHeightCm("");
       setNewSizeChestIn("");
+      setNewSizeChestCm("");
       setNewSizeWaistIn("");
+      setNewSizeWaistCm("");
       setNewSizeHipIn("");
+      setNewSizeHipCm("");
       setNewSizeGarmentLengthIn("");
+      setNewSizeGarmentLengthCm("");
       setNewSizeFitNote("");
       setNewSizePreset("");
       setShowCreateSize(false);
@@ -2228,7 +2304,7 @@ export default function ProductsPage() {
                         </div>
                       </div>
 
-                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="grid gap-3 sm:grid-cols-2">
                         <label className="block">
                           <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
                             Age Guide
@@ -2260,70 +2336,135 @@ export default function ProductsPage() {
                             className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
                           />
                         </label>
+                      </div>
 
-                        <label className="block">
-                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
-                            Chest (inches)
-                          </span>
-                          <input
-                            value={newSizeChestIn}
-                            onChange={(event) =>
-                              setNewSizeChestIn(
-                                event.target.value,
-                              )
-                            }
-                            placeholder="e.g. 26-27"
-                            className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
-                          />
-                        </label>
+                      <div className="mt-3 rounded-xl border border-emerald-400/15 bg-emerald-400/[0.04] p-3">
+                        <div className="mb-3">
+                          <p className="text-[10px] font-black uppercase tracking-wider text-emerald-300">
+                            Actual Product Measurements
+                          </p>
+                          <p className="mt-1 text-[10px] leading-4 text-slate-500">
+                            Mee deggara unna dress ni measure chesi Inches leda Centimetres lo enter cheyyandi. Oka unit enter cheste vere unit automatic ga calculate avtundi; tarvata manual ga edit kuda cheyochu.
+                          </p>
+                        </div>
 
-                        <label className="block">
-                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
-                            Waist (inches)
-                          </span>
-                          <input
-                            value={newSizeWaistIn}
-                            onChange={(event) =>
-                              setNewSizeWaistIn(
-                                event.target.value,
-                              )
-                            }
-                            placeholder="e.g. 23-24"
-                            className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
-                          />
-                        </label>
+                        <div className="grid gap-3 lg:grid-cols-2">
+                          {[
+                            {
+                              label: "Chest",
+                              inValue: newSizeChestIn,
+                              cmValue: newSizeChestCm,
+                              setIn: setNewSizeChestIn,
+                              setCm: setNewSizeChestCm,
+                              exampleIn: "e.g. 26-27",
+                              exampleCm: "e.g. 66-69",
+                            },
+                            {
+                              label: "Waist",
+                              inValue: newSizeWaistIn,
+                              cmValue: newSizeWaistCm,
+                              setIn: setNewSizeWaistIn,
+                              setCm: setNewSizeWaistCm,
+                              exampleIn: "e.g. 23-24",
+                              exampleCm: "e.g. 58-61",
+                            },
+                            {
+                              label: "Hip",
+                              inValue: newSizeHipIn,
+                              cmValue: newSizeHipCm,
+                              setIn: setNewSizeHipIn,
+                              setCm: setNewSizeHipCm,
+                              exampleIn: "Optional",
+                              exampleCm: "Optional",
+                            },
+                            {
+                              label: "Garment Length",
+                              inValue:
+                                newSizeGarmentLengthIn,
+                              cmValue:
+                                newSizeGarmentLengthCm,
+                              setIn:
+                                setNewSizeGarmentLengthIn,
+                              setCm:
+                                setNewSizeGarmentLengthCm,
+                              exampleIn:
+                                "e.g. 30",
+                              exampleCm:
+                                "e.g. 76.2",
+                            },
+                          ].map(
+                            (measurement) => (
+                              <div
+                                key={
+                                  measurement.label
+                                }
+                                className="rounded-xl border border-white/10 bg-slate-950/70 p-3"
+                              >
+                                <p className="text-[10px] font-black uppercase tracking-wider text-slate-300">
+                                  {
+                                    measurement.label
+                                  }
+                                </p>
 
-                        <label className="block">
-                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
-                            Hip (inches)
-                          </span>
-                          <input
-                            value={newSizeHipIn}
-                            onChange={(event) =>
-                              setNewSizeHipIn(
-                                event.target.value,
-                              )
-                            }
-                            placeholder="Optional"
-                            className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
-                          />
-                        </label>
+                                <div className="mt-2 grid grid-cols-2 gap-2">
+                                  <label>
+                                    <span className="mb-1 block text-[9px] font-bold uppercase text-slate-500">
+                                      Inches
+                                    </span>
+                                    <input
+                                      value={
+                                        measurement.inValue
+                                      }
+                                      onChange={(event) => {
+                                        const value =
+                                          event.target.value;
+                                        measurement.setIn(
+                                          value,
+                                        );
+                                        measurement.setCm(
+                                          inchesToCm(
+                                            value,
+                                          ),
+                                        );
+                                      }}
+                                      placeholder={
+                                        measurement.exampleIn
+                                      }
+                                      className="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2.5 text-sm outline-none focus:border-emerald-400"
+                                    />
+                                  </label>
 
-                        <label className="block">
-                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
-                            Garment Length (inches)
-                          </span>
-                          <input
-                            value={newSizeGarmentLengthIn}
-                            onChange={(event) =>
-                              setNewSizeGarmentLengthIn(
-                                event.target.value,
-                              )
-                            }
-                            placeholder="Product-specific / optional"
-                            className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
-                          />
-                        </label>
+                                  <label>
+                                    <span className="mb-1 block text-[9px] font-bold uppercase text-slate-500">
+                                      Centimetres
+                                    </span>
+                                    <input
+                                      value={
+                                        measurement.cmValue
+                                      }
+                                      onChange={(event) => {
+                                        const value =
+                                          event.target.value;
+                                        measurement.setCm(
+                                          value,
+                                        );
+                                        measurement.setIn(
+                                          cmToInches(
+                                            value,
+                                          ),
+                                        );
+                                      }}
+                                      placeholder={
+                                        measurement.exampleCm
+                                      }
+                                      className="w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2.5 text-sm outline-none focus:border-emerald-400"
+                                    />
+                                  </label>
+                                </div>
+                              </div>
+                            ),
+                          )}
+                        </div>
                       </div>
 
                       <textarea
