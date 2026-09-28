@@ -100,6 +100,7 @@ model Size {
   variants  ProductVariant[]
   setSizes  ResellerSetSize[]
   kidsGuide KidsSizeGuide?
+  productKidsMeasurements ProductKidsSizeMeasurement[]
 
   @@index([isActive])
 }
@@ -117,6 +118,23 @@ model KidsSizeGuide {
   updatedAt       DateTime @updatedAt
 
   size Size @relation(fields: [sizeId], references: [id], onDelete: Cascade)
+}
+
+model ProductKidsSizeMeasurement {
+  productId       String
+  sizeId          String
+  chestIn         String?
+  waistIn         String?
+  garmentLengthIn String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size    Size    @relation(fields: [sizeId], references: [id], onDelete: Cascade)
+
+  @@id([productId, sizeId])
+  @@index([productId])
+  @@index([sizeId])
 }
 
 model Product {
@@ -151,6 +169,7 @@ model Product {
   reviews           Review[]
   wishlistItems     WishlistItem[]
   offerCampaigns    OfferCampaign[]
+  kidsSizeMeasurements ProductKidsSizeMeasurement[]
 
   @@index([categoryId])
   @@index([status])
