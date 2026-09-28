@@ -127,6 +127,12 @@ export default function ProductsPage() {
     setColorSizeSelections,
   ] = useState<Record<string, string[]>>({});
   const [sizeSearch, setSizeSearch] = useState("");
+  const [
+    kidsSizeDisplayMode,
+    setKidsSizeDisplayMode,
+  ] = useState<
+    "YEARS" | "CM" | "INCHES"
+  >("YEARS");
   const [colorSearch, setColorSearch] = useState("");
   const [expandedColorFamily, setExpandedColorFamily] = useState<string | null>(null);
 
@@ -548,6 +554,31 @@ export default function ProductsPage() {
     setNewSizeType(isKids ? "AGE" : "LETTER");
   }, [categories, categoryId, gender]);
 
+  const isKidsProduct = useMemo(() => {
+    const selectedCategory =
+      categories.find(
+        (category) =>
+          category.id ===
+          categoryId,
+      );
+
+    const categoryName =
+      selectedCategory?.name.toLowerCase() ??
+      "";
+
+    return (
+      gender === "KIDS" ||
+      categoryName.includes("kids") ||
+      categoryName.includes("girls") ||
+      categoryName.includes("boys") ||
+      categoryName.includes("baby")
+    );
+  }, [
+    categories,
+    categoryId,
+    gender,
+  ]);
+
   const applicableSizes = useMemo(() => {
     const selectedCategory = categories.find(
       (category) => category.id === categoryId,
@@ -567,16 +598,34 @@ export default function ProductsPage() {
   }, [categories, categoryId, sizes]);
 
   const filteredSizes = useMemo(() => {
-    const query = sizeSearch.trim().toLowerCase();
+    const query =
+      sizeSearch
+        .trim()
+        .toLowerCase();
 
     if (!query) {
       return applicableSizes;
     }
 
-    return applicableSizes.filter((size) =>
-      size.name.toLowerCase().includes(query),
+    return applicableSizes.filter(
+      (size) =>
+        [
+          size.name,
+          size.ageGuide ?? "",
+          size.heightCm ?? "",
+          size.inches ?? "",
+          size.chestIn ?? "",
+          size.waistIn ?? "",
+          size.hipIn ?? "",
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(query),
     );
-  }, [applicableSizes, sizeSearch]);
+  }, [
+    applicableSizes,
+    sizeSearch,
+  ]);
 
   function toggleColor(colorId: string) {
     setSelectedColors((current) => {
@@ -776,8 +825,79 @@ export default function ProductsPage() {
     return colors.find((color) => color.id === id)?.name ?? id;
   }
 
+  function getSizeDisplayLabel(
+    size: Size,
+  ) {
+    if (!isKidsProduct) {
+      return size.name;
+    }
+
+    if (
+      kidsSizeDisplayMode ===
+      "CM"
+    ) {
+      return size.heightCm
+        ? `${size.heightCm} cm`
+        : size.name;
+    }
+
+    if (
+      kidsSizeDisplayMode ===
+      "INCHES"
+    ) {
+      return size.inches
+        ? `${size.inches} in`
+        : size.name;
+    }
+
+    return (
+      size.ageGuide ||
+      size.name
+    );
+  }
+
+  function getSizeDisplayMeta(
+    size: Size,
+  ) {
+    if (!isKidsProduct) {
+      return "";
+    }
+
+    if (
+      kidsSizeDisplayMode ===
+      "CM"
+    ) {
+      return (
+        size.ageGuide ||
+        size.name
+      );
+    }
+
+    if (
+      kidsSizeDisplayMode ===
+      "INCHES"
+    ) {
+      return (
+        size.ageGuide ||
+        size.name
+      );
+    }
+
+    return size.heightCm
+      ? `${size.heightCm} cm`
+      : "";
+  }
+
   function getSizeName(id: string) {
-    return sizes.find((size) => size.id === id)?.name ?? id;
+    const size =
+      sizes.find(
+        (item) =>
+          item.id === id,
+      );
+
+    return size
+      ? getSizeDisplayLabel(size)
+      : id;
   }
 
   function resetForm() {
@@ -792,6 +912,9 @@ export default function ProductsPage() {
     setResellerMOQ("");
     setColorSearch("");
     setSizeSearch("");
+    setKidsSizeDisplayMode(
+      "YEARS",
+    );
     setShowCreateColor(false);
     setShowCreateSize(false);
     setSelectedColors([]);
@@ -1228,6 +1351,87 @@ export default function ProductsPage() {
                   })}
                 </div>
               </div>
+
+              {isKidsProduct && (
+                <div className="md:col-span-2 rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.06] p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-400">
+                    Kids Size Selection
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-400">
+                    Kids category select chesaru. Sizes ni Years, Centimeters or Inches reference lo choose cheyyandi. Same size record select avtundi; display maatrame convenient ga marutundi.
+                  </p>
+
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {[
+                      {
+                        value:
+                          "YEARS" as const,
+                        title:
+                          "Years",
+                        note:
+                          "Age",
+                      },
+                      {
+                        value:
+                          "CM" as const,
+                        title:
+                          "Centimeters",
+                        note:
+                          "Height cm",
+                      },
+                      {
+                        value:
+                          "INCHES" as const,
+                        title:
+                          "Inches",
+                        note:
+                          "Height in",
+                      },
+                    ].map(
+                      (option) => {
+                        const selected =
+                          kidsSizeDisplayMode ===
+                          option.value;
+
+                        return (
+                          <button
+                            key={
+                              option.value
+                            }
+                            type="button"
+                            onClick={() =>
+                              setKidsSizeDisplayMode(
+                                option.value,
+                              )
+                            }
+                            className={`rounded-xl border px-3 py-3 text-center transition ${
+                              selected
+                                ? "border-emerald-400 bg-emerald-400 text-slate-950"
+                                : "border-white/10 bg-slate-950 text-slate-300 hover:border-white/20"
+                            }`}
+                          >
+                            <span className="block text-xs font-black">
+                              {
+                                option.title
+                              }
+                            </span>
+                            <span className={`mt-0.5 block text-[9px] ${
+                              selected
+                                ? "text-slate-800"
+                                : "text-slate-500"
+                            }`}>
+                              {
+                                option.note
+                              }
+                            </span>
+                          </button>
+                        );
+                      },
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-300">
@@ -1717,6 +1921,42 @@ export default function ProductsPage() {
                   <p className="mt-1 text-sm text-slate-500">
                     Prathi colour ki actual ga available unna sizes maatrame select cheyyandi.
                   </p>
+
+                  {isKidsProduct && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {[
+                        ["YEARS", "Years"],
+                        ["CM", "Centimeters"],
+                        ["INCHES", "Inches"],
+                      ].map(
+                        ([
+                          value,
+                          label,
+                        ]) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() =>
+                              setKidsSizeDisplayMode(
+                                value as
+                                  | "YEARS"
+                                  | "CM"
+                                  | "INCHES",
+                              )
+                            }
+                            className={`rounded-full border px-3 py-1.5 text-[10px] font-black ${
+                              kidsSizeDisplayMode ===
+                              value
+                                ? "border-emerald-400 bg-emerald-400 text-slate-950"
+                                : "border-white/10 bg-slate-900 text-slate-400"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ),
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-2 sm:flex-row">
@@ -2076,9 +2316,29 @@ export default function ProductsPage() {
                                       : "border-white/10 bg-slate-950 text-slate-300 hover:border-white/20"
                                   }`}
                                 >
-                                  {
-                                    size.name
-                                  }
+                                  <span className="block">
+                                    {
+                                      getSizeDisplayLabel(
+                                        size,
+                                      )
+                                    }
+                                  </span>
+
+                                  {getSizeDisplayMeta(
+                                    size,
+                                  ) ? (
+                                    <span className={`mt-0.5 block text-[9px] font-semibold ${
+                                      selected
+                                        ? "text-slate-800"
+                                        : "text-slate-500"
+                                    }`}>
+                                      {
+                                        getSizeDisplayMeta(
+                                          size,
+                                        )
+                                      }
+                                    </span>
+                                  ) : null}
                                 </button>
                               );
                             },
