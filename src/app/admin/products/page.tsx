@@ -156,6 +156,10 @@ export default function ProductsPage() {
   const [newSizeFitNote, setNewSizeFitNote] = useState("");
   const [newSizePreset, setNewSizePreset] = useState("");
   const [creatingSize, setCreatingSize] = useState(false);
+  const [
+    selectingAllKidsSizes,
+    setSelectingAllKidsSizes,
+  ] = useState(false);
 
   const [variants, setVariants] = useState<Variant[]>([]);
   const [media, setMedia] = useState<ProductMedia[]>([]);
@@ -712,6 +716,216 @@ export default function ProductsPage() {
         };
       },
     );
+  }
+
+  const STANDARD_KIDS_SIZE_NAMES = [
+    "0-3M",
+    "3-6M",
+    "6-9M",
+    "9-12M",
+    "1-2Y",
+    "2-3Y",
+    "3-4Y",
+    "4-5Y",
+    "5-6Y",
+    "6-7Y",
+    "7-8Y",
+    "8-9Y",
+    "9-10Y",
+    "10-11Y",
+    "11-12Y",
+    "12-13Y",
+    "13-14Y",
+    "14-15Y",
+    "15-16Y",
+    "16-17Y",
+  ] as const;
+
+  async function selectAllKidsSizesForAllColours() {
+    if (
+      selectedColors.length ===
+      0
+    ) {
+      alert(
+        "First select at least one colour.",
+      );
+      return;
+    }
+
+    setSelectingAllKidsSizes(
+      true,
+    );
+
+    try {
+      let workingSizes =
+        [...sizes];
+
+      for (
+        let index = 0;
+        index <
+        STANDARD_KIDS_SIZE_NAMES.length;
+        index += 1
+      ) {
+        const sizeName =
+          STANDARD_KIDS_SIZE_NAMES[
+            index
+          ];
+
+        const existing =
+          workingSizes.find(
+            (size) =>
+              size.category ===
+                "Kids" &&
+              size.name ===
+                sizeName,
+          );
+
+        if (existing) {
+          continue;
+        }
+
+        const preset =
+          getKidsSizePreset(
+            sizeName,
+          );
+
+        const response =
+          await fetch(
+            "/api/sizes",
+            {
+              method:
+                "POST",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+              credentials:
+                "include",
+              body:
+                JSON.stringify({
+                  name:
+                    sizeName,
+                  category:
+                    "Kids",
+                  sizeType:
+                    "AGE",
+                  inches:
+                    preset
+                      ? kidsHeightCmToInches(
+                          preset.heightCm,
+                        )
+                      : sizeName ===
+                          "1-2Y"
+                        ? "30-36 in"
+                        : null,
+                  ageGuide:
+                    preset?.ageGuide ??
+                    sizeName,
+                  heightCm:
+                    preset?.heightCm ??
+                    null,
+                  chestIn:
+                    preset?.chestIn ??
+                    null,
+                  waistIn:
+                    preset?.waistIn ??
+                    null,
+                  hipIn:
+                    preset?.hipIn ??
+                    null,
+                  garmentLengthIn:
+                    null,
+                  fitNote:
+                    KIDS_SIZE_REFERENCE_NOTE,
+                  sortOrder:
+                    50 +
+                    index,
+                  isActive:
+                    true,
+                }),
+            },
+          );
+
+        const data =
+          await response.json();
+
+        if (
+          !response.ok
+        ) {
+          throw new Error(
+            data.error ??
+              `Failed to create ${sizeName}`,
+          );
+        }
+
+        workingSizes = [
+          ...workingSizes,
+          data as Size,
+        ];
+      }
+
+      const allKidsSizeIds =
+        STANDARD_KIDS_SIZE_NAMES
+          .map(
+            (name) =>
+              workingSizes.find(
+                (size) =>
+                  size.category ===
+                    "Kids" &&
+                  size.name ===
+                    name,
+              )?.id,
+          )
+          .filter(
+            (
+              id,
+            ): id is string =>
+              Boolean(id),
+          );
+
+      setSizes(
+        workingSizes,
+      );
+
+      setColorSizeSelections(
+        (current) => {
+          const next = {
+            ...current,
+          };
+
+          for (
+            const colorId of
+            selectedColors
+          ) {
+            next[colorId] =
+              allKidsSizeIds;
+          }
+
+          return next;
+        },
+      );
+
+      setSizeSearch("");
+
+      alert(
+        `All kids sizes selected for ${selectedColors.length} colour(s): 0-3M to 16-17Y.`,
+      );
+    } catch (error) {
+      console.error(
+        "Select all kids sizes failed:",
+        error,
+      );
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to select all kids sizes.",
+      );
+    } finally {
+      setSelectingAllKidsSizes(
+        false,
+      );
+    }
   }
 
   function selectAllSizesForColor(
@@ -1842,39 +2056,58 @@ export default function ProductsPage() {
                   </p>
 
                   {isKidsProduct && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {[
-                        ["YEARS", "Years"],
-                        ["CM", "Centimetres"],
-                        ["INCHES", "Inches"],
-                      ].map(
-                        ([
-                          value,
-                          label,
-                        ]) => (
-                          <button
-                            key={value}
-                            type="button"
-                            onClick={() =>
-                              setKidsSizeDisplayMode(
-                                value as
-                                  | "YEARS"
-                                  | "CM"
-                                  | "INCHES",
-                              )
-                            }
-                            className={`rounded-full border px-3 py-1.5 text-[10px] font-black ${
-                              kidsSizeDisplayMode ===
-                              value
-                                ? "border-emerald-400 bg-emerald-400 text-slate-950"
-                                : "border-white/10 bg-slate-900 text-slate-400"
-                            }`}
-                          >
-                            {label}
-                          </button>
-                        ),
-                      )}
-                    </div>
+                    <>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {[
+                          ["YEARS", "Years"],
+                          ["CM", "Centimetres"],
+                          ["INCHES", "Inches"],
+                        ].map(
+                          ([
+                            value,
+                            label,
+                          ]) => (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() =>
+                                setKidsSizeDisplayMode(
+                                  value as
+                                    | "YEARS"
+                                    | "CM"
+                                    | "INCHES",
+                                )
+                              }
+                              className={`rounded-full border px-3 py-1.5 text-[10px] font-black ${
+                                kidsSizeDisplayMode ===
+                                value
+                                  ? "border-emerald-400 bg-emerald-400 text-slate-950"
+                                  : "border-white/10 bg-slate-900 text-slate-400"
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          ),
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void selectAllKidsSizesForAllColours()
+                        }
+                        disabled={
+                          selectingAllKidsSizes ||
+                          selectedColors.length ===
+                            0
+                        }
+                        className="mt-3 rounded-xl border border-emerald-400/40 bg-emerald-400/15 px-4 py-2.5 text-xs font-black text-emerald-300 transition hover:bg-emerald-400 hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {selectingAllKidsSizes
+                          ? "Preparing all kids sizes..."
+                          : "✓ Select All Kids Sizes (0-3M → 16-17Y) for All Colours"}
+                      </button>
+                    </>
                   )}
                 </div>
 
@@ -2192,7 +2425,7 @@ export default function ProductsPage() {
                               }
                               className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-xs font-bold text-emerald-400"
                             >
-                              All
+                              All Sizes
                             </button>
 
                             <button
