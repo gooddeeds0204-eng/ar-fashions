@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { uploadAdminProductMedia } from "@/lib/admin-client-upload";
 import ProductMediaUploadComposer from "@/components/admin/ProductMediaUploadComposer";
+import ExistingProductImageAdjuster from "@/components/admin/ExistingProductImageAdjuster";
 
 type Category = {
   id: string;
@@ -94,6 +95,7 @@ export default function EditProductPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [mediaActionId, setMediaActionId] = useState<string | null>(null);
   const [replacingMediaId, setReplacingMediaId] = useState<string | null>(null);
+  const [adjustingMedia, setAdjustingMedia] = useState<Media | null>(null);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [colors, setColors] = useState<Color[]>([]);
@@ -2310,6 +2312,22 @@ export default function EditProductPage() {
                       </button>
                     </div>
 
+                    {item.type === "IMAGE" ? (
+                      <button
+                        type="button"
+                        disabled={
+                          mediaActionId === item.id ||
+                          replacingMediaId === item.id
+                        }
+                        onClick={() =>
+                          setAdjustingMedia(item)
+                        }
+                        className="mt-2 w-full rounded-lg border border-emerald-400/25 bg-emerald-400/10 py-2 text-xs font-bold text-emerald-300 transition hover:bg-emerald-400/15 disabled:opacity-40"
+                      >
+                        ✂ Adjust Image
+                      </button>
+                    ) : null}
+
                     <label
                       className={`mt-2 block cursor-pointer rounded-lg border border-blue-400/20 bg-blue-400/5 py-2 text-center text-xs font-bold text-blue-400 ${
                         replacingMediaId === item.id
@@ -2496,6 +2514,40 @@ export default function EditProductPage() {
           </div>
         </div>
       </div>
+
+      {adjustingMedia &&
+      adjustingMedia.type === "IMAGE" ? (
+        <ExistingProductImageAdjuster
+          mediaId={adjustingMedia.id}
+          imageUrl={adjustingMedia.url}
+          productName={product.name}
+          onCancel={() =>
+            setAdjustingMedia(null)
+          }
+          onSaved={(updatedMedia) => {
+            setProduct((current) =>
+              current
+                ? {
+                    ...current,
+                    media:
+                      current.media.map(
+                        (mediaItem) =>
+                          mediaItem.id ===
+                          updatedMedia.id
+                            ? {
+                                ...mediaItem,
+                                ...updatedMedia,
+                              }
+                            : mediaItem,
+                      ),
+                  }
+                : current,
+            );
+
+            setAdjustingMedia(null);
+          }}
+        />
+      ) : null}
     </main>
   );
 }
