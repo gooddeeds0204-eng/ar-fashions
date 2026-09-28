@@ -1837,12 +1837,101 @@ export default function ProductsPage() {
                       </div>
 
                       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        <input value={newSizeAgeGuide} onChange={(event) => setNewSizeAgeGuide(event.target.value)} placeholder="Age guide e.g. 7-8Y" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
-                        <input value={newSizeHeightCm} onChange={(event) => setNewSizeHeightCm(event.target.value)} placeholder="Height cm e.g. 122-128" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
-                        <input value={newSizeChestIn} onChange={(event) => setNewSizeChestIn(event.target.value)} placeholder="Chest in e.g. 26-27" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
-                        <input value={newSizeWaistIn} onChange={(event) => setNewSizeWaistIn(event.target.value)} placeholder="Waist in e.g. 23-24" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
-                        <input value={newSizeHipIn} onChange={(event) => setNewSizeHipIn(event.target.value)} placeholder="Hip in optional" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
-                        <input value={newSizeGarmentLengthIn} onChange={(event) => setNewSizeGarmentLengthIn(event.target.value)} placeholder="Garment length / product-specific" className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400" />
+                        <label className="block">
+                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Age Guide
+                          </span>
+                          <input
+                            value={newSizeAgeGuide}
+                            onChange={(event) =>
+                              setNewSizeAgeGuide(
+                                event.target.value,
+                              )
+                            }
+                            placeholder="e.g. 7-8Y"
+                            className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                          />
+                        </label>
+
+                        <label className="block">
+                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Child Height (cm)
+                          </span>
+                          <input
+                            value={newSizeHeightCm}
+                            onChange={(event) =>
+                              setNewSizeHeightCm(
+                                event.target.value,
+                              )
+                            }
+                            placeholder="e.g. 122-128"
+                            className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                          />
+                        </label>
+
+                        <label className="block">
+                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Chest (inches)
+                          </span>
+                          <input
+                            value={newSizeChestIn}
+                            onChange={(event) =>
+                              setNewSizeChestIn(
+                                event.target.value,
+                              )
+                            }
+                            placeholder="e.g. 26-27"
+                            className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                          />
+                        </label>
+
+                        <label className="block">
+                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Waist (inches)
+                          </span>
+                          <input
+                            value={newSizeWaistIn}
+                            onChange={(event) =>
+                              setNewSizeWaistIn(
+                                event.target.value,
+                              )
+                            }
+                            placeholder="e.g. 23-24"
+                            className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                          />
+                        </label>
+
+                        <label className="block">
+                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Hip (inches)
+                          </span>
+                          <input
+                            value={newSizeHipIn}
+                            onChange={(event) =>
+                              setNewSizeHipIn(
+                                event.target.value,
+                              )
+                            }
+                            placeholder="Optional"
+                            className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                          />
+                        </label>
+
+                        <label className="block">
+                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            Garment Length (inches)
+                          </span>
+                          <input
+                            value={newSizeGarmentLengthIn}
+                            onChange={(event) =>
+                              setNewSizeGarmentLengthIn(
+                                event.target.value,
+                              )
+                            }
+                            placeholder="Product-specific / optional"
+                            className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400"
+                          />
+                        </label>
                       </div>
 
                       <textarea
