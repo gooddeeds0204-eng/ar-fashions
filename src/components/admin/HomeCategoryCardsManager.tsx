@@ -22,7 +22,12 @@ type HomeCategoryCard = {
   sortOrder: number;
 };
 
-export default function HomeCategoryCardsManager() {
+export default function HomeCategoryCardsManager({
+  onCategoryChanged,
+}: {
+  onCategoryChanged?: () =>
+    void | Promise<void>;
+}) {
   const [
     categories,
     setCategories,
@@ -521,7 +526,30 @@ export default function HomeCategoryCardsManager() {
         setNewMainName("");
         setNewMainImageUrl("");
         setNewMainSortOrder("");
-        await load();
+
+        setCategories(
+          (current) => [
+            ...current,
+            {
+              id:
+                category.id,
+              name:
+                category.name ??
+                name,
+              imageUrl:
+                category.imageUrl ??
+                newMainImageUrl ||
+                null,
+              children: [],
+            },
+          ],
+        );
+
+        if (
+          onCategoryChanged
+        ) {
+          await onCategoryChanged();
+        }
       } else {
         await load();
         setMessage(
