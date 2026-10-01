@@ -104,13 +104,11 @@ function normalizeCards(
     });
   }
 
-  return cards
-    .slice(0, 60)
-    .sort(
-      (a, b) =>
-        a.sortOrder -
-        b.sortOrder,
-    );
+  return cards.sort(
+    (a, b) =>
+      a.sortOrder -
+      b.sortOrder,
+  );
 }
 
 async function fallbackCards() {
