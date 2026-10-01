@@ -18,6 +18,7 @@ type HomeCategoryCard = {
   id: string;
   label: string;
   categoryId: string;
+  navigationCategoryIds: string[];
   imageUrl: string | null;
   isActive: boolean;
   sortOrder: number;
@@ -81,10 +82,29 @@ function normalizeCards(
     const sortOrder =
       Number(item.sortOrder);
 
+    const navigationCategoryIds =
+      Array.isArray(
+        item.navigationCategoryIds,
+      )
+        ? Array.from(
+            new Set(
+              item.navigationCategoryIds
+                .map((value) =>
+                  cleanText(
+                    value,
+                    100,
+                  ),
+                )
+                .filter(Boolean),
+            ),
+          )
+        : [];
+
     cards.push({
       id,
       label,
       categoryId,
+      navigationCategoryIds,
       imageUrl:
         cleanText(
           item.imageUrl,
@@ -167,6 +187,8 @@ async function fallbackCards() {
           label: name,
           categoryId:
             match.id,
+          navigationCategoryIds:
+            [],
           imageUrl:
             match.imageUrl,
           isActive: true,
@@ -275,9 +297,11 @@ export async function PATCH(
     const categoryIds =
       Array.from(
         new Set(
-          cards.map(
-            (card) =>
+          cards.flatMap(
+            (card) => [
               card.categoryId,
+              ...card.navigationCategoryIds,
+            ],
           ),
         ),
       );
