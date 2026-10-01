@@ -76,6 +76,7 @@ type HomeCategoryCardConfig = {
   id: string;
   label: string;
   categoryId: string;
+  navigationCategoryIds?: string[];
   imageUrl: string | null;
   isActive: boolean;
   sortOrder: number;
@@ -2174,21 +2175,42 @@ export default function Home() {
                     `child-${card.categoryId}`,
               );
 
-            if (!linked) {
-              return [
-                {
-                  key:
-                    `home-card-${card.id}`,
-                  name:
-                    card.label,
-                  imageUrl:
-                    card.imageUrl,
-                  ids: [
-                    card.categoryId,
-                  ],
-                },
-              ];
-            }
+            const configuredNavigationIds =
+              Array.isArray(
+                card.navigationCategoryIds,
+              ) &&
+              card.navigationCategoryIds
+                .length > 0
+                ? card.navigationCategoryIds
+                : linked
+                  ? linked.ids
+                  : [
+                      card.categoryId,
+                    ];
+
+            const navigationIds =
+              Array.from(
+                new Set(
+                  configuredNavigationIds.flatMap(
+                    (id) => {
+                      const selected =
+                        allItems.find(
+                          (item) =>
+                            item.key ===
+                              `main-${id}` ||
+                            item.key ===
+                              `child-${id}`,
+                        );
+
+                      return (
+                        selected?.ids ?? [
+                          id,
+                        ]
+                      );
+                    },
+                  ),
+                ),
+              );
 
             return [
               {
@@ -2198,9 +2220,10 @@ export default function Home() {
                   card.label,
                 imageUrl:
                   card.imageUrl ??
-                  linked.imageUrl,
+                  linked?.imageUrl ??
+                  null,
                 ids:
-                  linked.ids,
+                  navigationIds,
               },
             ];
           },
