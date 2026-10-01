@@ -72,6 +72,15 @@ type StoreCategory = {
   children: StoreCategoryChild[];
 };
 
+type HomeCategoryCardConfig = {
+  id: string;
+  label: string;
+  categoryId: string;
+  imageUrl: string | null;
+  isActive: boolean;
+  sortOrder: number;
+};
+
 type Banner = {
   id: string;
   title: string | null;
@@ -1276,6 +1285,13 @@ export default function Home() {
   >({});
 
   const [
+    homeCategoryCards,
+    setHomeCategoryCards,
+  ] = useState<
+    HomeCategoryCardConfig[]
+  >([]);
+
+  const [
     expandedMenuCategory,
     setExpandedMenuCategory,
   ] = useState<string | null>(null);
@@ -1372,6 +1388,14 @@ export default function Home() {
               "object"
               ? data.homeCategoryImages
               : {},
+          );
+
+          setHomeCategoryCards(
+            Array.isArray(
+              data.homeCategoryCards,
+            )
+              ? data.homeCategoryCards
+              : [],
           );
         }
       } catch (error) {
@@ -2084,15 +2108,6 @@ export default function Home() {
       ids: string[];
     };
 
-    const fixedNames = [
-      "Women",
-      "Men",
-      "Kids",
-      "Kurtis",
-      "Jeans",
-      "Girls Dresses",
-    ];
-
     const allItems: HomeCategoryItem[] =
       [];
 
@@ -2132,76 +2147,119 @@ export default function Home() {
       },
     );
 
-    const items:
-      Array<
-        HomeCategoryItem | null
-      > =
-      fixedNames.map(
-        (name) => {
-          const wanted =
-            name
-              .trim()
-              .toLowerCase();
+    if (
+      homeCategoryCards.length >
+      0
+    ) {
+      return homeCategoryCards
+        .filter(
+          (card) =>
+            card.isActive !==
+            false,
+        )
+        .slice()
+        .sort(
+          (a, b) =>
+            a.sortOrder -
+            b.sortOrder,
+        )
+        .flatMap(
+          (card) => {
+            const linked =
+              allItems.find(
+                (item) =>
+                  item.key ===
+                    `main-${card.categoryId}` ||
+                  item.key ===
+                    `child-${card.categoryId}`,
+              );
 
-          const matches =
-            allItems.filter(
-              (item) =>
-                item.name
-                  .trim()
-                  .toLowerCase() ===
-                wanted,
-            );
+            if (!linked) {
+              return [];
+            }
 
-          if (
-            matches.length === 0
-          ) {
-            return null;
-          }
+            return [
+              {
+                key:
+                  `home-card-${card.id}`,
+                name:
+                  card.label,
+                imageUrl:
+                  card.imageUrl ??
+                  linked.imageUrl,
+                ids:
+                  linked.ids,
+              },
+            ];
+          },
+        );
+    }
 
-          const ids =
-            Array.from(
-              new Set(
-                matches.flatMap(
-                  (item) =>
-                    item.ids,
-                ),
+    const fixedNames = [
+      "Women",
+      "Men",
+      "Kids",
+      "Kurtis",
+      "Jeans",
+      "Girls Dresses",
+    ];
+
+    return fixedNames.flatMap(
+      (name) => {
+        const wanted =
+          name
+            .trim()
+            .toLowerCase();
+
+        const matches =
+          allItems.filter(
+            (item) =>
+              item.name
+                .trim()
+                .toLowerCase() ===
+              wanted,
+          );
+
+        if (
+          matches.length === 0
+        ) {
+          return [];
+        }
+
+        const ids =
+          Array.from(
+            new Set(
+              matches.flatMap(
+                (item) =>
+                  item.ids,
               ),
-            );
+            ),
+          );
 
-          const dedicatedImage =
-            homeCategoryImages[
-              wanted
-            ] ?? null;
-
-          const fallbackImage =
-            matches.find(
-              (item) =>
-                Boolean(
-                  item.imageUrl,
-                ),
-            )?.imageUrl ??
-            null;
-
-          return {
+        return [
+          {
             key:
               `home-${wanted}`,
             name,
             imageUrl:
-              dedicatedImage ??
-              fallbackImage,
+              homeCategoryImages[
+                wanted
+              ] ??
+              matches.find(
+                (item) =>
+                  Boolean(
+                    item.imageUrl,
+                  ),
+              )?.imageUrl ??
+              null,
             ids,
-          };
-        },
-      );
-
-    return items.filter(
-      (
-        item,
-      ): item is HomeCategoryItem =>
-        item !== null,
+          },
+        ];
+      },
     );
   }, [
     menuCategories,
+    homeCategoryCards,
     homeCategoryImages,
   ]);
 
