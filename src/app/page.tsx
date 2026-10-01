@@ -2175,7 +2175,19 @@ export default function Home() {
               );
 
             if (!linked) {
-              return [];
+              return [
+                {
+                  key:
+                    `home-card-${card.id}`,
+                  name:
+                    card.label,
+                  imageUrl:
+                    card.imageUrl,
+                  ids: [
+                    card.categoryId,
+                  ],
+                },
+              ];
             }
 
             return [
