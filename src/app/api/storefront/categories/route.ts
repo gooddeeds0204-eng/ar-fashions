@@ -8,6 +8,7 @@ type PublicHomeCategoryCard = {
   id: string;
   label: string;
   categoryId: string;
+  navigationCategoryIds: string[];
   imageUrl: string | null;
   isActive: boolean;
   sortOrder: number;
@@ -71,6 +72,25 @@ function normalizeHomeCards(
               `home-card-${index + 1}`,
             label,
             categoryId,
+            navigationCategoryIds:
+              Array.isArray(
+                item.navigationCategoryIds,
+              )
+                ? Array.from(
+                    new Set(
+                      item.navigationCategoryIds
+                        .map((value) =>
+                          String(
+                            value ??
+                              "",
+                          ).trim(),
+                        )
+                        .filter(
+                          Boolean,
+                        ),
+                    ),
+                  )
+                : [],
             imageUrl:
               String(
                 item.imageUrl ??
@@ -305,6 +325,8 @@ export async function GET() {
                 label: name,
                 categoryId:
                   match.id,
+                navigationCategoryIds:
+                  [],
                 imageUrl:
                   homeCategoryImages[
                     wanted
