@@ -537,8 +537,8 @@ export default function HomeCategoryCardsManager({
                 category.name ??
                 name,
               imageUrl:
-                category.imageUrl ??
-                newMainImageUrl ||
+                (category.imageUrl ??
+                  newMainImageUrl) ||
                 null,
               children: [],
             },
