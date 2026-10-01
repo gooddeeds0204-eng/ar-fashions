@@ -53,6 +53,31 @@ export default function HomeCategoryCardsManager() {
   );
 
   const [
+    newMainName,
+    setNewMainName,
+  ] = useState("");
+
+  const [
+    newMainImageUrl,
+    setNewMainImageUrl,
+  ] = useState("");
+
+  const [
+    newMainSortOrder,
+    setNewMainSortOrder,
+  ] = useState("");
+
+  const [
+    creatingMain,
+    setCreatingMain,
+  ] = useState(false);
+
+  const [
+    uploadingNewMain,
+    setUploadingNewMain,
+  ] = useState(false);
+
+  const [
     newLabel,
     setNewLabel,
   ] = useState("");
@@ -291,6 +316,229 @@ export default function HomeCategoryCardsManager() {
     }
   }
 
+  async function uploadNewMainImage(
+    file: File,
+  ) {
+    setUploadingNewMain(true);
+    setMessage("");
+
+    try {
+      const formData =
+        new FormData();
+
+      formData.append(
+        "file",
+        file,
+      );
+
+      const response =
+        await fetch(
+          "/api/upload",
+          {
+            method: "POST",
+            credentials:
+              "same-origin",
+            body: formData,
+          },
+        );
+
+      if (
+        response.status ===
+        401
+      ) {
+        window.location.href =
+          "/admin/login";
+        return;
+      }
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Image upload failed.",
+        );
+      }
+
+      setNewMainImageUrl(
+        data.url ?? "",
+      );
+
+      setMessage(
+        "Main category image ready. Create Main Category click cheyyandi.",
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Image upload failed.",
+      );
+    } finally {
+      setUploadingNewMain(false);
+    }
+  }
+
+  async function createMainCategory() {
+    const name =
+      newMainName.trim();
+
+    if (!name) {
+      setMessage(
+        "Main category name enter cheyyandi.",
+      );
+      return;
+    }
+
+    const existingMain =
+      categories.find(
+        (category) =>
+          category.name
+            .trim()
+            .toLowerCase() ===
+          name.toLowerCase(),
+      );
+
+    if (existingMain) {
+      setMessage(
+        `"${name}" already catalog lo undi. Kinda Existing Category section nundi homepage ki add cheyyandi.`,
+      );
+      return;
+    }
+
+    const maxOrder =
+      cards.reduce(
+        (
+          highest,
+          card,
+        ) =>
+          Math.max(
+            highest,
+            Number(
+              card.sortOrder,
+            ) || 0,
+          ),
+        -1,
+      );
+
+    const requestedOrder =
+      newMainSortOrder.trim() ===
+      ""
+        ? maxOrder + 1
+        : Number(
+            newMainSortOrder,
+          );
+
+    if (
+      !Number.isFinite(
+        requestedOrder,
+      )
+    ) {
+      setMessage(
+        "Display order number correct ga enter cheyyandi.",
+      );
+      return;
+    }
+
+    setCreatingMain(true);
+    setMessage("");
+
+    try {
+      const response =
+        await fetch(
+          "/api/categories",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            credentials:
+              "same-origin",
+            body:
+              JSON.stringify({
+                name,
+                parentId: null,
+                imageUrl:
+                  newMainImageUrl ||
+                  null,
+                sortOrder:
+                  Math.trunc(
+                    requestedOrder,
+                  ),
+                isActive: true,
+              }),
+          },
+        );
+
+      if (
+        response.status ===
+        401
+      ) {
+        window.location.href =
+          "/admin/login";
+        return;
+      }
+
+      const category =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          category.error ??
+            "Failed to create main category.",
+        );
+      }
+
+      const card: HomeCategoryCard = {
+        id:
+          `home-card-${category.id}`,
+        label: name,
+        categoryId:
+          category.id,
+        imageUrl:
+          newMainImageUrl ||
+          category.imageUrl ||
+          null,
+        isActive: true,
+        sortOrder:
+          Math.trunc(
+            requestedOrder,
+          ),
+      };
+
+      const saved =
+        await persist(
+          [
+            ...cards,
+            card,
+          ],
+          card.id,
+          `${name} main category created and added to homepage.`,
+        );
+
+      if (saved) {
+        setNewMainName("");
+        setNewMainImageUrl("");
+        setNewMainSortOrder("");
+        await load();
+      } else {
+        await load();
+        setMessage(
+          `${name} catalog main category create ayyindi. Homepage card save fail ayyindi; Existing Category section nundi malli add cheyyachu.`,
+        );
+      }
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to create main category.",
+      );
+    } finally {
+      setCreatingMain(false);
+    }
+  }
+
   async function addCard() {
     const label =
       newLabel.trim();
@@ -525,13 +773,142 @@ export default function HomeCategoryCardsManager() {
         </h2>
 
         <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-400">
-          Ippudu 6 cards ki limit ledu. Enni homepage category cards aina create cheyyachu, image change cheyyachu, active/inactive cheyyachu, order manage cheyyachu.
+          Main categories unlimited ga create cheyyachu. Existing categories ni kuda homepage ki add cheyyachu; image, active/inactive and display order anni ikkade manage cheyyachu.
         </p>
       </div>
 
+      <div className="border-b border-white/10 bg-black/20 p-4 sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-400">
+              + Create New Main Category
+            </p>
+
+            <p className="mt-1 text-[10px] leading-4 text-slate-500">
+              Women, Men, Kids tho limit ledu. Ikkada create chesina category catalog lo main category ga save ayi homepage card ga kuda automatic ga add avutundi.
+            </p>
+          </div>
+
+          <span className="rounded-full border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-3 py-1 text-[9px] font-black uppercase tracking-wider text-[#D4AF37]">
+            Unlimited Main Categories
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-3 lg:grid-cols-[1.2fr_.55fr_1fr_auto]">
+          <input
+            value={
+              newMainName
+            }
+            onChange={(event) =>
+              setNewMainName(
+                event.target.value,
+              )
+            }
+            placeholder="Main category name e.g. Sarees"
+            className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none placeholder:text-slate-600 focus:border-emerald-400"
+          />
+
+          <input
+            type="number"
+            value={
+              newMainSortOrder
+            }
+            onChange={(event) =>
+              setNewMainSortOrder(
+                event.target.value,
+              )
+            }
+            placeholder="Order"
+            className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none placeholder:text-slate-600 focus:border-emerald-400"
+          />
+
+          <label className="flex cursor-pointer items-center justify-center rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 px-4 py-3 text-xs font-black uppercase tracking-wide text-[#D4AF37]">
+            {uploadingNewMain
+              ? "Uploading..."
+              : newMainImageUrl
+                ? "✓ Image Selected"
+                : "Upload Category Image"}
+
+            <input
+              type="file"
+              accept="image/*"
+              disabled={
+                uploadingNewMain ||
+                creatingMain
+              }
+              className="hidden"
+              onChange={async (
+                event,
+              ) => {
+                const file =
+                  event.target
+                    .files?.[0];
+
+                if (file) {
+                  await uploadNewMainImage(
+                    file,
+                  );
+                }
+
+                event.target.value =
+                  "";
+              }}
+            />
+          </label>
+
+          <button
+            type="button"
+            onClick={() =>
+              void createMainCategory()
+            }
+            disabled={
+              creatingMain ||
+              uploadingNewMain
+            }
+            className="rounded-xl bg-emerald-400 px-5 py-3 text-xs font-black uppercase tracking-wide text-slate-950 disabled:opacity-40"
+          >
+            {creatingMain
+              ? "Creating..."
+              : "Create Main Category"}
+          </button>
+        </div>
+
+        {newMainImageUrl ? (
+          <div className="mt-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+            <div className="h-16 w-14 overflow-hidden rounded-t-[999px] rounded-b-lg border border-[#D4AF37]/30 bg-slate-900">
+              <img
+                src={
+                  newMainImageUrl
+                }
+                alt="New main category preview"
+                className="h-full w-full object-cover"
+              />
+            </div>
+
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold text-slate-300">
+                Category image ready
+              </p>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setNewMainImageUrl(
+                    "",
+                  )
+                }
+                className="mt-1 text-[9px] font-bold text-red-300"
+              >
+                Remove image
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
       <div className="border-b border-white/10 bg-black/15 p-4 sm:p-6">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-400">
-          + Create Home Category
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-[#D4AF37]">
+          + Add Existing Category To Home
         </p>
 
         <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_1.4fr_auto]">
