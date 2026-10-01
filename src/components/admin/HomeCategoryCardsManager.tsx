@@ -17,6 +17,7 @@ type HomeCategoryCard = {
   id: string;
   label: string;
   categoryId: string;
+  navigationCategoryIds?: string[];
   imageUrl: string | null;
   isActive: boolean;
   sortOrder: number;
@@ -134,6 +135,110 @@ export default function HomeCategoryCardsManager({
 
       return items;
     }, [categories]);
+
+  function defaultNavigationCategoryIds(
+    card: HomeCategoryCard,
+  ) {
+    const main =
+      categories.find(
+        (category) =>
+          category.id ===
+          card.categoryId,
+      );
+
+    if (main) {
+      return [
+        main.id,
+        ...(main.children ?? []).map(
+          (child) =>
+            child.id,
+        ),
+      ];
+    }
+
+    for (
+      const category of
+      categories
+    ) {
+      const child =
+        (
+          category.children ??
+          []
+        ).find(
+          (item) =>
+            item.id ===
+            card.categoryId,
+        );
+
+      if (child) {
+        return [
+          child.id,
+        ];
+      }
+    }
+
+    return card.categoryId
+      ? [
+          card.categoryId,
+        ]
+      : [];
+  }
+
+  function selectedNavigationCategoryIds(
+    card: HomeCategoryCard,
+  ) {
+    return Array.isArray(
+      card.navigationCategoryIds,
+    ) &&
+      card.navigationCategoryIds
+        .length > 0
+      ? card.navigationCategoryIds
+      : defaultNavigationCategoryIds(
+          card,
+        );
+  }
+
+  function toggleNavigationCategory(
+    card: HomeCategoryCard,
+    categoryId: string,
+  ) {
+    const current =
+      selectedNavigationCategoryIds(
+        card,
+      );
+
+    const selected =
+      current.includes(
+        categoryId,
+      );
+
+    if (
+      selected &&
+      current.length <= 1
+    ) {
+      setMessage(
+        "Navigation ki at least one category/subcategory select chesi unchali.",
+      );
+      return;
+    }
+
+    patchCard(
+      card.id,
+      {
+        navigationCategoryIds:
+          selected
+            ? current.filter(
+                (id) =>
+                  id !==
+                  categoryId,
+              )
+            : [
+                ...current,
+                categoryId,
+              ],
+      },
+    );
+  }
 
   async function load() {
     setLoading(true);
@@ -501,6 +606,8 @@ export default function HomeCategoryCardsManager({
         label: name,
         categoryId:
           category.id,
+        navigationCategoryIds:
+          [],
         imageUrl:
           newMainImageUrl ||
           category.imageUrl ||
@@ -617,6 +724,8 @@ export default function HomeCategoryCardsManager({
         label,
         categoryId:
           newCategoryId,
+        navigationCategoryIds:
+          [],
         imageUrl:
           linked?.imageUrl ??
           null,
@@ -1107,6 +1216,8 @@ export default function HomeCategoryCardsManager({
                           {
                             categoryId:
                               event.target.value,
+                            navigationCategoryIds:
+                              [],
                           },
                         )
                       }
@@ -1132,6 +1243,108 @@ export default function HomeCategoryCardsManager({
                       )}
                     </select>
                   </label>
+
+                  <details className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                    <summary className="cursor-pointer px-3 py-3 text-[10px] font-black uppercase tracking-wider text-emerald-300">
+                      Navigation Selection · {
+                        selectedNavigationCategoryIds(
+                          card,
+                        ).length
+                      } selected
+                    </summary>
+
+                    <div className="border-t border-white/10 p-3">
+                      <p className="mb-3 text-[9px] leading-4 text-slate-500">
+                        Customer ee card ni tap chesinappudu open/filter avvalsina categories or subcategories select cheyyandi. Main category select chesthe aa main category current subcategories kuda include avutayi.
+                      </p>
+
+                      <div className="max-h-60 space-y-3 overflow-y-auto pr-1">
+                        {categories.map(
+                          (main) => (
+                            <div
+                              key={
+                                main.id
+                              }
+                              className="rounded-lg border border-white/5 bg-white/[0.025] p-2.5"
+                            >
+                              <label className="flex cursor-pointer items-center gap-2 text-[10px] font-bold text-slate-200">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedNavigationCategoryIds(
+                                    card,
+                                  ).includes(
+                                    main.id,
+                                  )}
+                                  onChange={() =>
+                                    toggleNavigationCategory(
+                                      card,
+                                      main.id,
+                                    )
+                                  }
+                                  className="h-4 w-4 accent-emerald-400"
+                                />
+
+                                <span>
+                                  {
+                                    main.name
+                                  }{" "}
+                                  <span className="font-medium text-[#D4AF37]">
+                                    (Main)
+                                  </span>
+                                </span>
+                              </label>
+
+                              {(main.children ??
+                                []).length >
+                              0 ? (
+                                <div className="mt-2 space-y-1.5 border-l border-white/10 pl-4">
+                                  {(main.children ??
+                                    []).map(
+                                    (
+                                      child,
+                                    ) => (
+                                      <label
+                                        key={
+                                          child.id
+                                        }
+                                        className="flex cursor-pointer items-center gap-2 text-[10px] text-slate-400"
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={selectedNavigationCategoryIds(
+                                            card,
+                                          ).includes(
+                                            child.id,
+                                          )}
+                                          onChange={() =>
+                                            toggleNavigationCategory(
+                                              card,
+                                              child.id,
+                                            )
+                                          }
+                                          className="h-3.5 w-3.5 accent-emerald-400"
+                                        />
+
+                                        <span>
+                                          {
+                                            child.name
+                                          }
+                                        </span>
+                                      </label>
+                                    ),
+                                  )}
+                                </div>
+                              ) : null}
+                            </div>
+                          ),
+                        )}
+                      </div>
+
+                      <p className="mt-3 text-[9px] font-semibold text-emerald-300">
+                        Selection change chesaka below Save button click cheyyandi.
+                      </p>
+                    </div>
+                  </details>
 
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <label>
