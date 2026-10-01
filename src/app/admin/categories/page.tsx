@@ -900,7 +900,11 @@ export default function CategoriesPage() {
           </div>
         )}
 
-        <HomeCategoryCardsManager />
+        <HomeCategoryCardsManager
+          onCategoryChanged={
+            loadCategories
+          }
+        />
 
         <form
           onSubmit={
