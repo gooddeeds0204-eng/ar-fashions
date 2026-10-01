@@ -120,6 +120,42 @@ export async function POST(request: Request) {
       }
     }
 
+    const imageUrl =
+      String(
+        body.imageUrl ?? "",
+      ).trim() || null;
+
+    let sortOrder = 0;
+
+    if (
+      body.sortOrder !==
+      undefined
+    ) {
+      const parsedSortOrder =
+        Number(
+          body.sortOrder,
+        );
+
+      if (
+        !Number.isFinite(
+          parsedSortOrder,
+        )
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Invalid sort order",
+          },
+          { status: 400 },
+        );
+      }
+
+      sortOrder =
+        Math.trunc(
+          parsedSortOrder,
+        );
+    }
+
     const slugBase =
       name
         .toLowerCase()
@@ -135,7 +171,11 @@ export async function POST(request: Request) {
         name,
         slug,
         parentId,
-        isActive: true,
+        imageUrl,
+        sortOrder,
+        isActive:
+          body.isActive !==
+          false,
       },
     });
 
