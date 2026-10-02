@@ -27,6 +27,34 @@ type Category =
     children: CategoryItem[];
   };
 
+const CORE_MAIN_CATEGORY_NAMES =
+  new Set([
+    "women",
+    "men",
+    "girl kids",
+    "boy kids",
+  ]);
+
+function normalizeCategoryName(
+  value: string,
+) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function isCoreMainCategory(
+  value: string,
+) {
+  return CORE_MAIN_CATEGORY_NAMES.has(
+    normalizeCategoryName(
+      value,
+    ),
+  );
+}
+
 export default function CategoriesPage() {
   const [
     categories,
@@ -42,6 +70,21 @@ export default function CategoriesPage() {
     parentId,
     setParentId,
   ] = useState("");
+
+  const [
+    createImageUrl,
+    setCreateImageUrl,
+  ] = useState("");
+
+  const [
+    createSortOrder,
+    setCreateSortOrder,
+  ] = useState("0");
+
+  const [
+    uploadingCreateImage,
+    setUploadingCreateImage,
+  ] = useState(false);
 
   const [
     loading,
@@ -157,7 +200,30 @@ export default function CategoriesPage() {
 
     if (!name.trim()) {
       setMessage(
-        "Category name is required.",
+        "Subcategory name is required.",
+      );
+      return;
+    }
+
+    if (!parentId) {
+      setMessage(
+        "Main category select cheyyandi.",
+      );
+      return;
+    }
+
+    const sortOrder =
+      Number(
+        createSortOrder,
+      );
+
+    if (
+      !Number.isFinite(
+        sortOrder,
+      )
+    ) {
+      setMessage(
+        "Order must be a number.",
       );
       return;
     }
@@ -183,9 +249,14 @@ export default function CategoriesPage() {
             body:
               JSON.stringify({
                 name,
-                parentId:
-                  parentId ||
+                parentId,
+                imageUrl:
+                  createImageUrl ||
                   null,
+                sortOrder:
+                  Math.trunc(
+                    sortOrder,
+                  ),
               }),
           },
         );
@@ -210,10 +281,11 @@ export default function CategoriesPage() {
       }
 
       setName("");
-      setParentId("");
+      setCreateImageUrl("");
+      setCreateSortOrder("0");
 
       setMessage(
-        "Category created successfully.",
+        "Subcategory created successfully.",
       );
 
       await loadCategories();
@@ -225,6 +297,69 @@ export default function CategoriesPage() {
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function uploadCreateImage(
+    file: File,
+  ) {
+    setUploadingCreateImage(true);
+    setMessage("");
+
+    try {
+      const formData =
+        new FormData();
+
+      formData.append(
+        "file",
+        file,
+      );
+
+      const response =
+        await fetch(
+          "/api/upload",
+          {
+            method: "POST",
+            credentials:
+              "same-origin",
+            body: formData,
+          },
+        );
+
+      if (
+        response.status ===
+        401
+      ) {
+        window.location.href =
+          "/admin/login";
+        return;
+      }
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Image upload failed",
+        );
+      }
+
+      setCreateImageUrl(
+        data.url ?? "",
+      );
+
+      setMessage(
+        "Subcategory image ready.",
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Image upload failed",
+      );
+    } finally {
+      setUploadingCreateImage(false);
     }
   }
 
@@ -661,7 +796,10 @@ export default function CategoriesPage() {
                 .filter(
                   (main) =>
                     main.id !==
-                    category.id,
+                      category.id &&
+                    isCoreMainCategory(
+                      main.name,
+                    ),
                 )
                 .map(
                   (main) => (
@@ -877,6 +1015,22 @@ export default function CategoriesPage() {
     );
   }
 
+  const coreCategories =
+    categories.filter(
+      (category) =>
+        isCoreMainCategory(
+          category.name,
+        ),
+    );
+
+  const legacyCategories =
+    categories.filter(
+      (category) =>
+        !isCoreMainCategory(
+          category.name,
+        ),
+    );
+
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
@@ -912,11 +1066,23 @@ export default function CategoriesPage() {
           }
           className="mb-8 rounded-2xl border border-white/10 bg-white/[0.05] p-5 sm:p-6"
         >
-          <h2 className="text-lg font-semibold">
-            Add Category
-          </h2>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">
+                Add Subcategory
+              </h2>
 
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                First Women / Men / Girl Kids / Boy Kids select chesi, aa main category kindha subcategory add cheyyandi.
+              </p>
+            </div>
+
+            <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-300">
+              Main + Sub Separate
+            </span>
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-[1.2fr_1fr_.45fr_1fr_auto]">
             <input
               value={name}
               onChange={(
@@ -927,7 +1093,7 @@ export default function CategoriesPage() {
                     .value,
                 )
               }
-              placeholder="Category / Subcategory name"
+              placeholder="Subcategory name e.g. Sarees"
               className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none placeholder:text-slate-500 focus:border-emerald-400"
             />
 
@@ -946,10 +1112,10 @@ export default function CategoriesPage() {
               className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none focus:border-emerald-400"
             >
               <option value="">
-                No parent — Main Category
+                Select Main Category
               </option>
 
-              {categories
+              {coreCategories
                 .filter(
                   (category) =>
                     category.isActive,
@@ -972,6 +1138,57 @@ export default function CategoriesPage() {
                 )}
             </select>
 
+            <input
+              type="number"
+              value={
+                createSortOrder
+              }
+              onChange={(
+                event,
+              ) =>
+                setCreateSortOrder(
+                  event.target
+                    .value,
+                )
+              }
+              placeholder="Order"
+              className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 outline-none placeholder:text-slate-500 focus:border-emerald-400"
+            />
+
+            <label className="flex cursor-pointer items-center justify-center rounded-xl border border-[#D4AF37]/25 bg-[#D4AF37]/10 px-4 py-3 text-center text-xs font-bold uppercase tracking-wide text-[#D4AF37]">
+              {uploadingCreateImage
+                ? "Uploading..."
+                : createImageUrl
+                  ? "✓ Image Ready"
+                  : "Upload Image"}
+
+              <input
+                type="file"
+                accept="image/*"
+                disabled={
+                  uploadingCreateImage ||
+                  saving
+                }
+                className="hidden"
+                onChange={async (
+                  event,
+                ) => {
+                  const file =
+                    event.target
+                      .files?.[0];
+
+                  if (file) {
+                    await uploadCreateImage(
+                      file,
+                    );
+                  }
+
+                  event.target.value =
+                    "";
+                }}
+              />
+            </label>
+
             <button
               type="submit"
               disabled={saving}
@@ -979,19 +1196,51 @@ export default function CategoriesPage() {
             >
               {saving
                 ? "Creating..."
-                : "Add Category"}
+                : "Add Subcategory"}
             </button>
           </div>
+
+          {createImageUrl ? (
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 p-3">
+              <div className="h-16 w-16 overflow-hidden rounded-full border border-[#D4AF37]/30 bg-slate-900">
+                <img
+                  src={
+                    createImageUrl
+                  }
+                  alt="Subcategory preview"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-slate-300">
+                  Subcategory image selected
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCreateImageUrl(
+                      "",
+                    )
+                  }
+                  className="mt-1 text-[10px] font-bold text-red-300"
+                >
+                  Remove image
+                </button>
+              </div>
+            </div>
+          ) : null}
         </form>
 
         <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.05]">
           <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
             <h2 className="font-semibold">
-              All Categories
+              Main Categories & Subcategories
             </h2>
 
             <span className="text-xs text-slate-500">
-              {categories.length} main
+              {coreCategories.length} core main
             </span>
           </div>
 
@@ -999,14 +1248,14 @@ export default function CategoriesPage() {
             <div className="p-6 text-slate-400">
               Loading categories...
             </div>
-          ) : categories.length ===
+          ) : coreCategories.length ===
             0 ? (
             <div className="p-6 text-slate-400">
-              No categories found.
+              Core categories are being prepared. Refresh once if needed.
             </div>
           ) : (
             <div className="divide-y divide-white/10">
-              {categories.map(
+              {coreCategories.map(
                 (category) => (
                   <div
                     key={
@@ -1130,6 +1379,62 @@ export default function CategoriesPage() {
             </div>
           )}
         </section>
+
+        {legacyCategories.length >
+        0 ? (
+          <details className="mt-5 rounded-2xl border border-amber-400/15 bg-amber-400/[0.03]">
+            <summary className="cursor-pointer px-5 py-4 text-sm font-semibold text-amber-200 sm:px-6">
+              Legacy / Unassigned Main Categories ({legacyCategories.length})
+            </summary>
+
+            <div className="border-t border-white/10 px-5 py-4 sm:px-6">
+              <p className="mb-4 text-xs leading-5 text-slate-500">
+                Old Kids or other previous main categories data-safe ga ikkada preserve ayyayi. Storefront main categories మాత్రం Women, Men, Girl Kids, Boy Kids.
+              </p>
+
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {legacyCategories.map(
+                  (category) => (
+                    <div
+                      key={
+                        category.id
+                      }
+                      className="rounded-xl border border-white/10 bg-slate-900/60 p-4"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-slate-200">
+                            {
+                              category.name
+                            }
+                          </p>
+
+                          <p className="mt-1 text-[10px] text-slate-500">
+                            {category.children?.length ??
+                              0}{" "}
+                            subcategories
+                          </p>
+                        </div>
+
+                        <span
+                          className={
+                            category.isActive
+                              ? "rounded-full bg-amber-400/10 px-2 py-1 text-[9px] text-amber-300"
+                              : "rounded-full bg-slate-400/10 px-2 py-1 text-[9px] text-slate-400"
+                          }
+                        >
+                          {category.isActive
+                            ? "Legacy Active"
+                            : "Inactive"}
+                        </span>
+                      </div>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+          </details>
+        ) : null}
       </div>
     </main>
   );
