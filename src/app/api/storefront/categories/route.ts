@@ -4,6 +4,13 @@ import { prisma } from "@/lib/prisma";
 const HOME_CARDS_KEY =
   "home_category_cards_v1";
 
+const CORE_HOME_CATEGORY_NAMES = [
+  "Women",
+  "Men",
+  "Girl Kids",
+  "Boy Kids",
+];
+
 type PublicHomeCategoryCard = {
   id: string;
   label: string;
@@ -129,6 +136,13 @@ export async function GET() {
 
           OR: [
             {
+              name: {
+                in:
+                  CORE_HOME_CATEGORY_NAMES,
+              },
+            },
+
+            {
               products: {
                 some: {
                   status: "ACTIVE",
@@ -166,12 +180,6 @@ export async function GET() {
           children: {
             where: {
               isActive: true,
-
-              products: {
-                some: {
-                  status: "ACTIVE",
-                },
-              },
             },
 
             orderBy: [
@@ -190,12 +198,7 @@ export async function GET() {
       });
 
     const homeCategoryNames = [
-      "Women",
-      "Men",
-      "Kids",
-      "Kurtis",
-      "Jeans",
-      "Girls Dresses",
+      ...CORE_HOME_CATEGORY_NAMES,
     ];
 
     const [
