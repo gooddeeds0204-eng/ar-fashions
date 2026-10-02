@@ -467,20 +467,43 @@ export default function CategoriesPage() {
   async function saveEdit(
     category: CategoryItem,
   ) {
+    const isCoreMain =
+      !category.parentId &&
+      isCoreMainCategory(
+        category.name,
+      );
+
     const cleanName =
-      editName.trim();
+      isCoreMain
+        ? category.name
+        : editName.trim();
 
     if (!cleanName) {
       setMessage(
-        "Category name is required.",
+        "Subcategory title is required.",
+      );
+      return;
+    }
+
+    if (
+      !isCoreMain &&
+      !editParentId
+    ) {
+      setMessage(
+        "Subcategory ki main category select cheyyandi.",
       );
       return;
     }
 
     const sortOrder =
-      Number(
-        editSortOrder,
-      );
+      isCoreMain
+        ? Number(
+            category.sortOrder ??
+              0,
+          )
+        : Number(
+            editSortOrder,
+          );
 
     if (
       !Number.isFinite(
@@ -523,8 +546,9 @@ export default function CategoriesPage() {
                   cleanName,
 
                 parentId:
-                  editParentId ||
-                  null,
+                  isCoreMain
+                    ? null
+                    : editParentId,
 
                 sortOrder,
 
@@ -557,7 +581,9 @@ export default function CategoriesPage() {
       cancelEdit();
 
       setMessage(
-        "Category updated successfully.",
+        isCoreMain
+          ? "Main category image saved successfully."
+          : "Subcategory title, image and order saved successfully.",
       );
 
       await loadCategories();
@@ -744,16 +770,27 @@ export default function CategoriesPage() {
           ?.length,
       );
 
+    const isCoreMain =
+      !category.parentId &&
+      isCoreMainCategory(
+        category.name,
+      );
+
     return (
       <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-400/[0.04] p-4">
         <div className="grid gap-3 md:grid-cols-3">
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-400">
-              Name
+              {isCoreMain
+                ? "Main Category Name"
+                : "Subcategory Title"}
             </label>
 
             <input
               value={editName}
+              disabled={
+                isCoreMain
+              }
               onChange={(
                 event,
               ) =>
@@ -776,7 +813,8 @@ export default function CategoriesPage() {
                 editParentId
               }
               disabled={
-                hasChildren
+                hasChildren ||
+                isCoreMain
               }
               onChange={(
                 event,
@@ -789,7 +827,9 @@ export default function CategoriesPage() {
               className="w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="">
-                No parent — Main Category
+                {isCoreMain
+                  ? "Fixed Main Category"
+                  : "Select Main Category"}
               </option>
 
               {categories
@@ -836,6 +876,9 @@ export default function CategoriesPage() {
               value={
                 editSortOrder
               }
+              disabled={
+                isCoreMain
+              }
               onChange={(
                 event,
               ) =>
@@ -848,6 +891,16 @@ export default function CategoriesPage() {
             />
           </div>
         </div>
+
+        {!isCoreMain ? (
+          <p className="mt-3 text-[11px] leading-5 text-emerald-300">
+            Manual changes permanent ga save avutayi. Title, image, parent main category and order next refresh lo kuda same ga untayi.
+          </p>
+        ) : (
+          <p className="mt-3 text-[11px] leading-5 text-slate-500">
+            Main category title/order fixed. Image maatrame change cheyyachu.
+          </p>
+        )}
 
         <div className="mt-4 rounded-xl border border-[#D4AF37]/15 bg-black/20 p-4">
           <p className="text-xs font-semibold text-[#D4AF37]">
@@ -939,7 +992,9 @@ export default function CategoriesPage() {
             {busyId ===
             category.id
               ? "Saving..."
-              : "Save changes"}
+              : isCoreMain
+                ? "Save Image"
+                : "Save Subcategory Changes"}
           </button>
 
           <button
