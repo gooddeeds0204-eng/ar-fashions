@@ -28,6 +28,74 @@ const CORE_MAIN_CATEGORIES = [
   },
 ] as const;
 
+const SUBCATEGORY_BLUEPRINT: Record<
+  "women" | "men" | "girl-kids" | "boy-kids",
+  Array<{
+    name: string;
+    aliases?: string[];
+  }>
+> = {
+  women: [
+    { name: "Kurta Sets", aliases: ["Kurti Sets", "Kurtis Sets", "Kurta Set", "Kurti Set"] },
+    { name: "Kurtas & Tunics", aliases: ["Kurtis", "Kurti", "Kurtas", "Tunics"] },
+    { name: "Skirts, Palazzos & Jeggings", aliases: ["Palazzo", "Palazzos", "Palazzo Set", "Plazo Set", "Skirts", "Jeggings"] },
+    { name: "Leggings", aliases: ["Legging"] },
+    { name: "Salwar Suits", aliases: ["Salwar Suit", "Salwar"] },
+    { name: "Dupattas", aliases: ["Dupatta"] },
+    { name: "Western Wear", aliases: ["Western"] },
+    { name: "T-Shirts, Sweatshirts & Shrugs", aliases: ["T-Shirts", "T Shirts", "TShirts", "Sweatshirts", "Shrugs"] },
+    { name: "Jeans" },
+    { name: "Shirts" },
+    { name: "Shorts & 3/4ths", aliases: ["Shorts", "3/4ths", "Shorts 3/4ths"] },
+    { name: "Nightwear", aliases: ["Night Wear"] },
+    { name: "Ethnic & Party Wear", aliases: ["Ethnic Wear", "Party Wear", "Ethnic Party Wear"] },
+    { name: "Frocks & Dresses", aliases: ["Dresses", "Frocks", "Frock Dresses"] },
+    { name: "Sarees", aliases: ["Saree"] },
+    { name: "Night & Lounge Wear", aliases: ["Lounge Wear", "Night Lounge Wear"] },
+  ],
+  men: [
+    { name: "Men's Shirts", aliases: ["Men Shirts", "Mens Shirts", "Shirts"] },
+    { name: "Men's Jeans", aliases: ["Men Jeans", "Mens Jeans", "Jeans"] },
+    { name: "Trousers & Pants", aliases: ["Trousers", "Pants", "Trousers Pants"] },
+    { name: "Men's T-Shirts", aliases: ["Men T-Shirts", "Mens T-Shirts", "T-Shirts", "T Shirts", "TShirts"] },
+    { name: "Tracksuits", aliases: ["Track Suits", "Tracksuit"] },
+    { name: "Shorts", aliases: ["Short"] },
+    { name: "Night Suits", aliases: ["Night Suit", "Nightwear"] },
+    { name: "Suits & Blazers", aliases: ["Suits", "Blazers", "Suits Blazers"] },
+    { name: "Ethnic Wear", aliases: ["Ethnic"] },
+    { name: "Undergarments", aliases: ["Under Garments", "Innerwear"] },
+  ],
+  "girl-kids": [
+    { name: "Girls' 3-Piece Sets / Punjabi Dresses", aliases: ["Girls 3 Piece Sets", "3 Piece Sets", "Punjabi Dresses", "Girls Punjabi Dresses"] },
+    { name: "Girls' Dresses & Frocks", aliases: ["Girls Dresses", "Dresses", "Frocks", "Girls Dresses Frocks"] },
+    { name: "Girls' T-Shirts", aliases: ["Girls T-Shirts", "Girls T Shirts", "T-Shirts", "T Shirts", "TShirts"] },
+    { name: "Girls' Tracksuits", aliases: ["Girls Tracksuits", "Tracksuits", "Track Suits"] },
+    { name: "Girls' Shorts & 3/4ths", aliases: ["Girls Shorts", "Shorts", "3/4ths", "Shorts 3/4ths"] },
+    { name: "Girls' Night Suits", aliases: ["Girls Night Suits", "Night Suits", "Night Suit"] },
+    { name: "Palazzos & Jeggings", aliases: ["Palazzos", "Palazzo", "Jeggings"] },
+    { name: "Kurtis & Kurtas", aliases: ["Kurtis", "Kurtas", "Kurtis Kurtas"] },
+    { name: "Tops" },
+    { name: "Jeans" },
+    { name: "Pants" },
+    { name: "Leggings" },
+    { name: "Western Wear & Jackets", aliases: ["Western Wear", "Jackets", "Western Wear Jackets"] },
+    { name: "Ethnic Wear", aliases: ["Ghagra", "Lehenga", "Lehengas"] },
+    { name: "Party Wear Frocks", aliases: ["Party Wear", "Party Frocks", "Party Wear Frocks"] },
+  ],
+  "boy-kids": [
+    { name: "Boys' Shirts", aliases: ["Boys Shirts", "Boy Shirts", "Shirts"] },
+    { name: "Boys' Jeans", aliases: ["Boys Jeans", "Boy Jeans", "Jeans"] },
+    { name: "Boys' Pants & Trousers", aliases: ["Boys Pants", "Boys Trousers", "Pants", "Trousers"] },
+    { name: "Boys' T-Shirts", aliases: ["Boys T-Shirts", "Boys T Shirts", "T-Shirts", "T Shirts", "TShirts"] },
+    { name: "Boys' Tracksuits", aliases: ["Boys Tracksuits", "Tracksuits", "Track Suits"] },
+    { name: "Boys' Shorts & 3/4ths", aliases: ["Boys Shorts", "Shorts", "3/4ths", "Shorts 3/4ths"] },
+    { name: "Boys' Night Suits", aliases: ["Boys Night Suits", "Night Suits", "Night Suit"] },
+    { name: "Boys' Ethnic Wear", aliases: ["Boys Ethnic Wear", "Ethnic Wear", "Sherwani", "Jodhpuri"] },
+    { name: "Boys' Western Wear", aliases: ["Boys Western Wear", "Western Wear"] },
+    { name: "Boys' Suits & Blazers", aliases: ["Boys Suits", "Boys Blazers", "Suits", "Blazers", "Suits Blazers"] },
+  ],
+};
+
 type StoredCard = {
   id?: string;
   label?: string;
@@ -161,6 +229,125 @@ function kidsTarget(
   }
 
   return null;
+}
+
+async function ensureSubcategories(
+  main: {
+    key: "women" | "men" | "girl-kids" | "boy-kids";
+    id: string;
+    name: string;
+  },
+) {
+  const existingChildren =
+    await prisma.category.findMany({
+      where: {
+        parentId: main.id,
+      },
+      orderBy: [
+        { sortOrder: "asc" },
+        { name: "asc" },
+      ],
+    });
+
+  const usedIds =
+    new Set<string>();
+
+  const ids: string[] = [];
+
+  for (
+    let index = 0;
+    index <
+    SUBCATEGORY_BLUEPRINT[
+      main.key
+    ].length;
+    index += 1
+  ) {
+    const desired =
+      SUBCATEGORY_BLUEPRINT[
+        main.key
+      ][index];
+
+    const wanted =
+      new Set(
+        [
+          desired.name,
+          ...(desired.aliases ?? []),
+        ].map(
+          normalizeName,
+        ),
+      );
+
+    let existing =
+      existingChildren.find(
+        (child) =>
+          !usedIds.has(
+            child.id,
+          ) &&
+          wanted.has(
+            normalizeName(
+              child.name,
+            ),
+          ),
+      ) ?? null;
+
+    if (existing) {
+      existing =
+        await prisma.category.update({
+          where: {
+            id:
+              existing.id,
+          },
+          data: {
+            name:
+              desired.name,
+            sortOrder:
+              index,
+            isActive:
+              true,
+          },
+        });
+
+      usedIds.add(
+        existing.id,
+      );
+
+      ids.push(
+        existing.id,
+      );
+
+      continue;
+    }
+
+    const created =
+      await prisma.category.create({
+        data: {
+          name:
+            desired.name,
+          slug:
+            `${slugBase(
+              desired.name,
+            )}-${slugBase(
+              main.name,
+            )}-${Date.now()}-${index}`,
+          parentId:
+            main.id,
+          sortOrder:
+            index,
+          isActive:
+            true,
+        },
+      });
+
+    usedIds.add(
+      created.id,
+    );
+
+    ids.push(
+      created.id,
+    );
+  }
+
+  return ids;
 }
 
 export async function POST() {
@@ -563,6 +750,34 @@ export async function POST() {
           "boy-kids",
       )!;
 
+    const [
+      womenSubcategoryIds,
+      menSubcategoryIds,
+      girlSubcategoryIds,
+      boySubcategoryIds,
+    ] = await Promise.all([
+      ensureSubcategories({
+        key: "women",
+        id: women.id,
+        name: women.name,
+      }),
+      ensureSubcategories({
+        key: "men",
+        id: men.id,
+        name: men.name,
+      }),
+      ensureSubcategories({
+        key: "girl-kids",
+        id: girlKids.id,
+        name: girlKids.name,
+      }),
+      ensureSubcategories({
+        key: "boy-kids",
+        id: boyKids.id,
+        name: boyKids.name,
+      }),
+    ]);
+
     const existingImageFor = (
       aliases: string[],
       fallback:
@@ -583,9 +798,7 @@ export async function POST() {
         categoryId:
           women.id,
         navigationCategoryIds:
-          [
-            women.id,
-          ],
+          womenSubcategoryIds,
         imageUrl:
           existingImageFor(
             ["Women"],
@@ -603,9 +816,7 @@ export async function POST() {
         categoryId:
           men.id,
         navigationCategoryIds:
-          [
-            men.id,
-          ],
+          menSubcategoryIds,
         imageUrl:
           existingImageFor(
             ["Men"],
@@ -623,9 +834,7 @@ export async function POST() {
         categoryId:
           girlKids.id,
         navigationCategoryIds:
-          [
-            girlKids.id,
-          ],
+          girlSubcategoryIds,
         imageUrl:
           existingImageFor(
             [
@@ -647,9 +856,7 @@ export async function POST() {
         categoryId:
           boyKids.id,
         navigationCategoryIds:
-          [
-            boyKids.id,
-          ],
+          boySubcategoryIds,
         imageUrl:
           existingImageFor(
             [
