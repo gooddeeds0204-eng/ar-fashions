@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 const HOME_CARDS_KEY =
   "home_category_cards_v1";
 
+const SUBCATEGORY_SEED_KEY =
+  "core_subcategories_seed_v2";
+
 const CORE_MAIN_CATEGORIES = [
   {
     key: "women",
@@ -37,7 +40,7 @@ const SUBCATEGORY_BLUEPRINT: Record<
 > = {
   women: [
     { name: "Kurta Sets", aliases: ["Kurti Sets", "Kurtis Sets", "Kurta Set", "Kurti Set"] },
-    { name: "Kurtas & Tunics", aliases: ["Kurtis", "Kurti", "Kurtas", "Tunics"] },
+    { name: "Kurtis & Tunics", aliases: ["Kurtas & Tunics", "Kurtis", "Kurti", "Kurtas", "Tunics"] },
     { name: "Skirts, Palazzos & Jeggings", aliases: ["Palazzo", "Palazzos", "Palazzo Set", "Plazo Set", "Skirts", "Jeggings"] },
     { name: "Leggings", aliases: ["Legging"] },
     { name: "Salwar Suits", aliases: ["Salwar Suit", "Salwar"] },
@@ -362,6 +365,7 @@ export async function POST() {
     const [
       existingMains,
       homeCardsRow,
+      subcategorySeedRow,
     ] = await Promise.all([
       prisma.category.findMany({
         where: {
@@ -401,6 +405,12 @@ export async function POST() {
         where: {
           key:
             HOME_CARDS_KEY,
+        },
+      }),
+      prisma.siteSetting.findUnique({
+        where: {
+          key:
+            SUBCATEGORY_SEED_KEY,
         },
       }),
     ]);
@@ -750,32 +760,96 @@ export async function POST() {
           "boy-kids",
       )!;
 
+    if (!subcategorySeedRow) {
+      await Promise.all([
+        ensureSubcategories({
+          key: "women",
+          id: women.id,
+          name: women.name,
+        }),
+        ensureSubcategories({
+          key: "men",
+          id: men.id,
+          name: men.name,
+        }),
+        ensureSubcategories({
+          key: "girl-kids",
+          id: girlKids.id,
+          name: girlKids.name,
+        }),
+        ensureSubcategories({
+          key: "boy-kids",
+          id: boyKids.id,
+          name: boyKids.name,
+        }),
+      ]);
+
+      await prisma.siteSetting.upsert({
+        where: {
+          key:
+            SUBCATEGORY_SEED_KEY,
+        },
+        update: {
+          value:
+            new Date().toISOString(),
+        },
+        create: {
+          key:
+            SUBCATEGORY_SEED_KEY,
+          value:
+            new Date().toISOString(),
+        },
+      });
+    }
+
+    async function activeChildIds(
+      parentId: string,
+    ) {
+      const children =
+        await prisma.category.findMany({
+          where: {
+            parentId,
+            isActive:
+              true,
+          },
+          orderBy: [
+            {
+              sortOrder:
+                "asc",
+            },
+            {
+              name: "asc",
+            },
+          ],
+          select: {
+            id: true,
+          },
+        });
+
+      return children.map(
+        (child) =>
+          child.id,
+      );
+    }
+
     const [
       womenSubcategoryIds,
       menSubcategoryIds,
       girlSubcategoryIds,
       boySubcategoryIds,
     ] = await Promise.all([
-      ensureSubcategories({
-        key: "women",
-        id: women.id,
-        name: women.name,
-      }),
-      ensureSubcategories({
-        key: "men",
-        id: men.id,
-        name: men.name,
-      }),
-      ensureSubcategories({
-        key: "girl-kids",
-        id: girlKids.id,
-        name: girlKids.name,
-      }),
-      ensureSubcategories({
-        key: "boy-kids",
-        id: boyKids.id,
-        name: boyKids.name,
-      }),
+      activeChildIds(
+        women.id,
+      ),
+      activeChildIds(
+        men.id,
+      ),
+      activeChildIds(
+        girlKids.id,
+      ),
+      activeChildIds(
+        boyKids.id,
+      ),
     ]);
 
     const existingImageFor = (
