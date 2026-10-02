@@ -1308,6 +1308,16 @@ export default function Home() {
   ] = useState<string | null>(null);
 
   const [
+    activeHomeMainKey,
+    setActiveHomeMainKey,
+  ] = useState<
+    | "women"
+    | "men"
+    | "girl-kids"
+    | "boy-kids"
+  >("women");
+
+  const [
     selectedBenefit,
     setSelectedBenefit,
   ] = useState<BenefitKey | null>(
@@ -2101,58 +2111,38 @@ export default function Home() {
     (product) => product.isNewArrival,
   );
 
-  const homeCategoryItems = useMemo(() => {
-    type HomeCategoryItem = {
+  const homeCategoryExperience = useMemo(() => {
+    type HomeSubcategoryItem = {
       key: string;
       name: string;
       imageUrl: string | null;
       ids: string[];
     };
 
-    const allItems: HomeCategoryItem[] =
-      [];
+    type HomeMainItem = {
+      key:
+        | "women"
+        | "men"
+        | "girl-kids"
+        | "boy-kids";
+      name: string;
+      imageUrl: string | null;
+      ids: string[];
+      subcategories:
+        HomeSubcategoryItem[];
+    };
 
-    menuCategories.forEach(
-      (main) => {
-        allItems.push({
-          key:
-            `main-${main.id}`,
-          name:
-            main.name,
-          imageUrl:
-            main.imageUrl,
-          ids: [
-            main.id,
-            ...main.children.map(
-              (child) =>
-                child.id,
-            ),
-          ],
-        });
+    const normalizeName = (
+      value: string,
+    ) =>
+      value
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
 
-        main.children.forEach(
-          (child) => {
-            allItems.push({
-              key:
-                `child-${child.id}`,
-              name:
-                child.name,
-              imageUrl:
-                child.imageUrl,
-              ids: [
-                child.id,
-              ],
-            });
-          },
-        );
-      },
-    );
-
-    if (
-      homeCategoryCards.length >
-      0
-    ) {
-      return homeCategoryCards
+    const activeCards =
+      homeCategoryCards
         .filter(
           (card) =>
             card.isActive !==
@@ -2163,139 +2153,552 @@ export default function Home() {
           (a, b) =>
             a.sortOrder -
             b.sortOrder,
-        )
-        .flatMap(
-          (card) => {
-            const linked =
-              allItems.find(
+        );
+
+    const findMain = (
+      aliases: string[],
+    ) =>
+      menuCategories.find(
+        (main) =>
+          aliases.includes(
+            normalizeName(
+              main.name,
+            ),
+          ),
+      ) ?? null;
+
+    const findCard = (
+      aliases: string[],
+    ) =>
+      activeCards.find(
+        (card) =>
+          aliases.includes(
+            normalizeName(
+              card.label,
+            ),
+          ),
+      ) ?? null;
+
+    const resolveNavigationIds = (
+      card:
+        | HomeCategoryCardConfig
+        | null,
+      fallbackIds: string[],
+    ) => {
+      const configured =
+        card &&
+        Array.isArray(
+          card.navigationCategoryIds,
+        ) &&
+        card.navigationCategoryIds
+          .length > 0
+          ? card.navigationCategoryIds
+          : fallbackIds;
+
+      const expanded =
+        configured.flatMap(
+          (id) => {
+            const main =
+              menuCategories.find(
                 (item) =>
-                  item.key ===
-                    `main-${card.categoryId}` ||
-                  item.key ===
-                    `child-${card.categoryId}`,
+                  item.id === id,
               );
 
-            const configuredNavigationIds =
-              Array.isArray(
-                card.navigationCategoryIds,
-              ) &&
-              card.navigationCategoryIds
-                .length > 0
-                ? card.navigationCategoryIds
-                : linked
-                  ? linked.ids
-                  : [
-                      card.categoryId,
-                    ];
-
-            const navigationIds =
-              Array.from(
-                new Set(
-                  configuredNavigationIds.flatMap(
-                    (id) => {
-                      const selected =
-                        allItems.find(
-                          (item) =>
-                            item.key ===
-                              `main-${id}` ||
-                            item.key ===
-                              `child-${id}`,
-                        );
-
-                      return (
-                        selected?.ids ?? [
-                          id,
-                        ]
-                      );
-                    },
-                  ),
+            if (main) {
+              return [
+                main.id,
+                ...main.children.map(
+                  (child) =>
+                    child.id,
                 ),
-              );
+              ];
+            }
 
             return [
-              {
-                key:
-                  `home-card-${card.id}`,
-                name:
-                  card.label,
-                imageUrl:
-                  card.imageUrl ??
-                  linked?.imageUrl ??
-                  null,
-                ids:
-                  navigationIds,
-              },
+              id,
             ];
           },
         );
+
+      return Array.from(
+        new Set(expanded),
+      );
+    };
+
+    const childLookup =
+      new Map<
+        string,
+        {
+          child:
+            StoreCategoryChild;
+          parent:
+            StoreCategory;
+        }
+      >();
+
+    for (
+      const main of
+      menuCategories
+    ) {
+      for (
+        const child of
+        main.children
+      ) {
+        childLookup.set(
+          child.id,
+          {
+            child,
+            parent: main,
+          },
+        );
+      }
     }
 
-    const fixedNames = [
-      "Women",
-      "Men",
-      "Kids",
-      "Kurtis",
-      "Jeans",
-      "Girls Dresses",
-    ];
+    const makeSubcategories = (
+      ids: string[],
+      fallbackMain:
+        | StoreCategory
+        | null,
+    ) => {
+      const items:
+        HomeSubcategoryItem[] =
+        [];
 
-    return fixedNames.flatMap(
-      (name) => {
-        const wanted =
-          name
-            .trim()
-            .toLowerCase();
+      const seen =
+        new Set<string>();
 
-        const matches =
-          allItems.filter(
+      for (
+        const id of ids
+      ) {
+        const main =
+          menuCategories.find(
             (item) =>
-              item.name
-                .trim()
-                .toLowerCase() ===
-              wanted,
+              item.id === id,
+          );
+
+        if (main) {
+          for (
+            const child of
+            main.children
+          ) {
+            if (
+              seen.has(
+                child.id,
+              )
+            ) {
+              continue;
+            }
+
+            seen.add(
+              child.id,
+            );
+
+            items.push({
+              key:
+                `sub-${child.id}`,
+              name:
+                child.name,
+              imageUrl:
+                child.imageUrl,
+              ids: [
+                child.id,
+              ],
+            });
+          }
+
+          continue;
+        }
+
+        const match =
+          childLookup.get(
+            id,
           );
 
         if (
-          matches.length === 0
+          !match ||
+          seen.has(id)
         ) {
-          return [];
+          continue;
         }
 
-        const ids =
-          Array.from(
-            new Set(
-              matches.flatMap(
-                (item) =>
-                  item.ids,
+        seen.add(id);
+
+        items.push({
+          key:
+            `sub-${id}`,
+          name:
+            match.child.name,
+          imageUrl:
+            match.child
+              .imageUrl,
+          ids: [
+            id,
+          ],
+        });
+      }
+
+      if (
+        items.length ===
+          0 &&
+        fallbackMain
+      ) {
+        return fallbackMain.children.map(
+          (child) => ({
+            key:
+              `sub-${child.id}`,
+            name:
+              child.name,
+            imageUrl:
+              child.imageUrl,
+            ids: [
+              child.id,
+            ],
+          }),
+        );
+      }
+
+      return items;
+    };
+
+    const womenMain =
+      findMain([
+        "women",
+        "woman",
+        "womens",
+        "ladies",
+      ]);
+
+    const menMain =
+      findMain([
+        "men",
+        "man",
+        "mens",
+      ]);
+
+    const kidsMain =
+      findMain([
+        "kids",
+        "kid",
+        "children",
+      ]);
+
+    const girlMain =
+      findMain([
+        "girl kids",
+        "girls kids",
+        "girl kid",
+        "girls kid",
+        "girls",
+      ]);
+
+    const boyMain =
+      findMain([
+        "boy kids",
+        "boys kids",
+        "boy kid",
+        "boys kid",
+        "boys",
+      ]);
+
+    const womenCard =
+      findCard([
+        "women",
+        "woman",
+        "womens",
+      ]);
+
+    const menCard =
+      findCard([
+        "men",
+        "man",
+        "mens",
+      ]);
+
+    const girlCard =
+      findCard([
+        "girl kids",
+        "girls kids",
+        "girl kid",
+        "girls kid",
+        "girls",
+      ]);
+
+    const boyCard =
+      findCard([
+        "boy kids",
+        "boys kids",
+        "boy kid",
+        "boys kid",
+        "boys",
+      ]);
+
+    const girlKeywords = [
+      "girl",
+      "girls",
+      "frock",
+      "dress",
+      "gown",
+      "lehenga",
+      "ghagra",
+      "skirt",
+      "top set",
+      "palazzo",
+      "party dress",
+    ];
+
+    const boyKeywords = [
+      "boy",
+      "boys",
+      "shirt",
+      "t shirt",
+      "tshirt",
+      "kurta",
+      "sherwani",
+      "jodhpuri",
+      "blazer",
+      "suit",
+      "short",
+      "trouser",
+      "pant",
+      "jean",
+      "waistcoat",
+    ];
+
+    const matchesKeywords = (
+      value: string,
+      keywords: string[],
+    ) => {
+      const clean =
+        normalizeName(
+          value,
+        );
+
+      return keywords.some(
+        (keyword) =>
+          clean.includes(
+            keyword,
+          ),
+      );
+    };
+
+    const girlFallbackChildren =
+      girlMain
+        ? girlMain.children
+        : (
+            kidsMain
+              ?.children ??
+            []
+          ).filter(
+            (child) =>
+              matchesKeywords(
+                child.name,
+                girlKeywords,
               ),
-            ),
           );
 
-        return [
-          {
-            key:
-              `home-${wanted}`,
-            name,
-            imageUrl:
-              homeCategoryImages[
-                wanted
-              ] ??
-              matches.find(
-                (item) =>
-                  Boolean(
-                    item.imageUrl,
-                  ),
-              )?.imageUrl ??
-              null,
-            ids,
-          },
-        ];
-      },
-    );
+    const boyFallbackChildren =
+      boyMain
+        ? boyMain.children
+        : (
+            kidsMain
+              ?.children ??
+            []
+          ).filter(
+            (child) =>
+              matchesKeywords(
+                child.name,
+                boyKeywords,
+              ),
+          );
+
+    const makeMainItem = ({
+      key,
+      name,
+      main,
+      card,
+      fallbackChildren,
+      fallbackImage,
+    }: {
+      key:
+        | "women"
+        | "men"
+        | "girl-kids"
+        | "boy-kids";
+      name: string;
+      main:
+        | StoreCategory
+        | null;
+      card:
+        | HomeCategoryCardConfig
+        | null;
+      fallbackChildren?:
+        StoreCategoryChild[];
+      fallbackImage?:
+        string | null;
+    }): HomeMainItem => {
+      const fallbackIds =
+        main
+          ? [
+              main.id,
+              ...main.children.map(
+                (child) =>
+                  child.id,
+              ),
+            ]
+          : (
+              fallbackChildren ??
+              []
+            ).map(
+              (child) =>
+                child.id,
+            );
+
+      const ids =
+        resolveNavigationIds(
+          card,
+          fallbackIds,
+        );
+
+      let subcategories =
+        makeSubcategories(
+          ids,
+          main,
+        );
+
+      if (
+        !main &&
+        subcategories.length ===
+          0 &&
+        fallbackChildren
+      ) {
+        subcategories =
+          fallbackChildren.map(
+            (child) => ({
+              key:
+                `sub-${child.id}`,
+              name:
+                child.name,
+              imageUrl:
+                child.imageUrl,
+              ids: [
+                child.id,
+              ],
+            }),
+          );
+      }
+
+      const configuredCardImage =
+        card?.imageUrl ??
+        null;
+
+      return {
+        key,
+        name,
+        imageUrl:
+          configuredCardImage ??
+          main?.imageUrl ??
+          fallbackImage ??
+          subcategories.find(
+            (item) =>
+              Boolean(
+                item.imageUrl,
+              ),
+          )?.imageUrl ??
+          null,
+        ids,
+        subcategories,
+      };
+    };
+
+    const girlImageFallback =
+      activeCards.find(
+        (card) =>
+          normalizeName(
+            card.label,
+          ).includes(
+            "girl",
+          ),
+      )?.imageUrl ??
+      kidsMain?.imageUrl ??
+      null;
+
+    const boyImageFallback =
+      activeCards.find(
+        (card) =>
+          normalizeName(
+            card.label,
+          ).includes(
+            "boy",
+          ),
+      )?.imageUrl ??
+      kidsMain?.imageUrl ??
+      null;
+
+    const items:
+      HomeMainItem[] = [
+        makeMainItem({
+          key: "women",
+          name: "Women",
+          main:
+            womenMain,
+          card:
+            womenCard,
+        }),
+
+        makeMainItem({
+          key: "men",
+          name: "Men",
+          main:
+            menMain,
+          card:
+            menCard,
+        }),
+
+        makeMainItem({
+          key:
+            "girl-kids",
+          name:
+            "Girl Kids",
+          main:
+            girlMain,
+          card:
+            girlCard,
+          fallbackChildren:
+            girlFallbackChildren,
+          fallbackImage:
+            girlImageFallback,
+        }),
+
+        makeMainItem({
+          key:
+            "boy-kids",
+          name:
+            "Boy Kids",
+          main:
+            boyMain,
+          card:
+            boyCard,
+          fallbackChildren:
+            boyFallbackChildren,
+          fallbackImage:
+            boyImageFallback,
+        }),
+      ];
+
+    return {
+      mainItems: items,
+      activeItem:
+        items.find(
+          (item) =>
+            item.key ===
+            activeHomeMainKey,
+        ) ??
+        items[0],
+    };
   }, [
     menuCategories,
     homeCategoryCards,
-    homeCategoryImages,
+    activeHomeMainKey,
   ]);
 
   const defaultHomeSections:
@@ -3210,59 +3613,231 @@ export default function Home() {
 
       <CampaignOfferSection />
 
-      {/* ARCH CATEGORY RAIL */}
+      {/* MAIN CATEGORY + SUBCATEGORY EXPERIENCE */}
       <section
         id="shop-categories"
         className="border-b border-[#E8DED0] bg-[#FFF8EE]"
       >
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-6 sm:gap-4">
-            {homeCategoryItems.map((item) => {
-              const active =
-                selectedMenuCategoryName === item.name;
+        <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <div>
+              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#7C3A45]">
+                Shop by category
+              </p>
 
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() =>
-                    applyMenuCategory(
-                      item.ids,
-                      item.name,
-                    )
-                  }
-                  className="group min-w-0 text-center"
-                >
-                  <div
-                    className={`relative mx-auto aspect-[4/5] w-full overflow-hidden rounded-t-[999px] rounded-b-[0.75rem] border bg-[#EADBC7] ${
-                      active
-                        ? "border-[#7C3A45]"
-                        : "border-[#E1D3C0]"
-                    }`}
-                  >
-                    {item.imageUrl ? (
-                      <img
-                        src={item.imageUrl}
-                        alt={item.name}
-                        loading="lazy"
-                        decoding="async"
-                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#E9D9C4,#CDBB9F)]">
-                        <span className="font-serif text-3xl text-[#6D5431]">
-                          AS
-                        </span>
-                      </div>
-                    )}
-                  </div>
+              <h2 className="mt-1 font-serif text-[1.75rem] leading-none text-[#211C18] sm:text-[2.1rem]">
+                Find your style
+              </h2>
+            </div>
 
-                  <p className="mt-2 truncate text-[8px] font-black uppercase tracking-[0.08em] text-[#211C18] sm:text-[9px]">
-                    {item.name}
+            <button
+              type="button"
+              onClick={
+                clearMenuCategory
+              }
+              className="text-[8px] font-black uppercase tracking-[0.12em] text-[#7B7066]"
+            >
+              View all
+            </button>
+          </div>
+
+          <div className="lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-6">
+            <div>
+              <p className="mb-2 text-[9px] font-black uppercase tracking-[0.16em] text-[#6B625A]">
+                Main Categories
+              </p>
+
+              <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-4 sm:px-0 lg:grid-cols-2 lg:gap-3">
+                {homeCategoryExperience.mainItems.map(
+                  (item) => {
+                    const active =
+                      item.key ===
+                      homeCategoryExperience
+                        .activeItem
+                        .key;
+
+                    return (
+                      <button
+                        key={
+                          item.key
+                        }
+                        type="button"
+                        onClick={() => {
+                          setActiveHomeMainKey(
+                            item.key,
+                          );
+
+                          if (
+                            item.ids
+                              .length >
+                            0
+                          ) {
+                            applyMenuCategory(
+                              item.ids,
+                              item.name,
+                            );
+                          }
+                        }}
+                        className="group w-[92px] shrink-0 text-center sm:w-auto"
+                      >
+                        <div
+                          className={`relative mx-auto aspect-[4/5] w-full overflow-hidden rounded-t-[999px] rounded-b-[0.8rem] border bg-[#EADBC7] transition duration-200 ${
+                            active
+                              ? "border-[#7C3A45] shadow-[0_8px_24px_rgba(124,58,69,0.16)]"
+                              : "border-[#E1D3C0]"
+                          }`}
+                        >
+                          {item.imageUrl ? (
+                            <img
+                              src={
+                                item.imageUrl
+                              }
+                              alt={
+                                item.name
+                              }
+                              loading="lazy"
+                              decoding="async"
+                              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#E9D9C4,#CDBB9F)]">
+                              <span className="font-serif text-2xl text-[#6D5431]">
+                                AS
+                              </span>
+                            </div>
+                          )}
+
+                          {active ? (
+                            <span className="absolute inset-x-2 bottom-2 rounded-full bg-[#7C3A45] px-2 py-1 text-[6px] font-black uppercase tracking-[0.12em] text-white">
+                              Selected
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <p
+                          className={`mt-2 truncate text-[8px] font-black uppercase tracking-[0.08em] sm:text-[9px] ${
+                            active
+                              ? "text-[#7C3A45]"
+                              : "text-[#211C18]"
+                          }`}
+                        >
+                          {
+                            item.name
+                          }
+                        </p>
+                      </button>
+                    );
+                  },
+                )}
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-[1.25rem] border border-[#E5D8C7] bg-[#FFFDF9] p-3.5 shadow-[0_10px_30px_rgba(71,53,37,0.05)] sm:p-4 lg:mt-0">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[8px] font-black uppercase tracking-[0.18em] text-[#7C3A45]">
+                    {
+                      homeCategoryExperience
+                        .activeItem
+                        .name
+                    }
                   </p>
-                </button>
-              );
-            })}
+
+                  <h3 className="mt-1 text-[15px] font-black text-[#211C18]">
+                    Explore subcategories
+                  </h3>
+                </div>
+
+                {homeCategoryExperience
+                  .activeItem.ids
+                  .length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      applyMenuCategory(
+                        homeCategoryExperience
+                          .activeItem
+                          .ids,
+                        homeCategoryExperience
+                          .activeItem
+                          .name,
+                      )
+                    }
+                    className="rounded-full border border-[#7C3A45]/15 bg-[#7C3A45]/[0.06] px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.1em] text-[#7C3A45]"
+                  >
+                    Shop all
+                  </button>
+                ) : null}
+              </div>
+
+              {homeCategoryExperience
+                .activeItem
+                .subcategories
+                .length > 0 ? (
+                <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-6">
+                  {homeCategoryExperience
+                    .activeItem
+                    .subcategories
+                    .slice(
+                      0,
+                      18,
+                    )
+                    .map(
+                      (
+                        subcategory,
+                      ) => (
+                        <button
+                          key={
+                            subcategory.key
+                          }
+                          type="button"
+                          onClick={() =>
+                            applyMenuCategory(
+                              subcategory.ids,
+                              subcategory.name,
+                            )
+                          }
+                          className="group min-w-0 text-center"
+                        >
+                          <div className="mx-auto aspect-square w-full overflow-hidden rounded-full border border-[#E1D3C0] bg-[#F1E6D8]">
+                            {subcategory.imageUrl ? (
+                              <img
+                                src={
+                                  subcategory.imageUrl
+                                }
+                                alt={
+                                  subcategory.name
+                                }
+                                loading="lazy"
+                                decoding="async"
+                                className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#F2E7D9,#D8C5AE)]">
+                                <span className="font-serif text-lg text-[#6D5431]">
+                                  AS
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          <p className="mt-1.5 line-clamp-2 min-h-6 text-[7px] font-black uppercase leading-3 tracking-[0.05em] text-[#3A322C] sm:text-[8px]">
+                            {
+                              subcategory.name
+                            }
+                          </p>
+                        </button>
+                      ),
+                    )}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-[#D8C8B5] bg-[#FBF5ED] px-4 py-8 text-center">
+                  <p className="text-[10px] font-bold text-[#6B625A]">
+                    Ee main category ki subcategories assign chesaka ikkada automatic ga kanipistayi.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
