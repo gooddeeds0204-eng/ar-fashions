@@ -11,6 +11,14 @@ type OrderItem = {
   unitPrice: number;
   totalPrice: number;
   inventoryRestored: boolean;
+  sku: string | null;
+  rackLocation: {
+    warehouse: string | null;
+    rack: string | null;
+    shelf: string | null;
+    bin: string | null;
+    note: string | null;
+  } | null;
 };
 
 type BulkDeliveryService = {
@@ -1318,6 +1326,36 @@ export default function AdminOrdersPage() {
                             {order.address.pincode}
                           </span>
                         )}
+
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[9px] font-black ${
+                            order.items.every(
+                              (item) =>
+                                Boolean(
+                                  item.rackLocation
+                                    ?.rack,
+                                ),
+                            )
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-amber-50 text-amber-700"
+                          }`}
+                        >
+                          {order.items.every(
+                            (item) =>
+                              Boolean(
+                                item.rackLocation
+                                  ?.rack,
+                              ),
+                          )
+                            ? "✓ Pick locations ready"
+                            : `⚠ Rack pending ${
+                                order.items.filter(
+                                  (item) =>
+                                    !item.rackLocation
+                                      ?.rack,
+                                ).length
+                              }`}
+                        </span>
                       </div>
                     </div>
 
@@ -2114,6 +2152,121 @@ export default function AdminOrdersPage() {
               </section>
               )}
 
+            <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">
+                    Warehouse Pick List
+                  </p>
+
+                  <h3 className="mt-1 font-black text-zinc-950">
+                    SKU → Rack Location
+                  </h3>
+
+                  <p className="mt-1 text-[10px] leading-5 text-zinc-500">
+                    Order confirm ayina ventane staff ee list chusi exact rack nundi product pick cheyyachu.
+                  </p>
+                </div>
+
+                <span
+                  className={`rounded-full px-3 py-1.5 text-[9px] font-black ${
+                    selectedOrder.items.every(
+                      (item) =>
+                        Boolean(
+                          item.rackLocation
+                            ?.rack,
+                        ),
+                    )
+                      ? "bg-emerald-600 text-white"
+                      : "bg-amber-100 text-amber-800"
+                  }`}
+                >
+                  {selectedOrder.items.every(
+                    (item) =>
+                      Boolean(
+                        item.rackLocation
+                          ?.rack,
+                      ),
+                  )
+                    ? "READY TO PICK"
+                    : "RACK SETUP PENDING"}
+                </span>
+              </div>
+
+              <div className="mt-3 grid gap-2">
+                {selectedOrder.items.map(
+                  (item) => (
+                    <div
+                      key={`pick-${item.id}`}
+                      className="grid gap-2 rounded-xl border border-emerald-100 bg-white p-3 sm:grid-cols-[1.2fr_1fr_auto] sm:items-center"
+                    >
+                      <div>
+                        <p className="font-mono text-[11px] font-black text-emerald-800">
+                          {item.sku ||
+                            "SKU not available"}
+                        </p>
+
+                        <p className="mt-1 text-[10px] font-semibold text-zinc-500">
+                          {item.productName} ·{" "}
+                          {item.colorName ||
+                            "-"}{" "}
+                          ·{" "}
+                          {item.sizeName ||
+                            "-"}
+                        </p>
+                      </div>
+
+                      <div>
+                        {item.rackLocation
+                          ?.rack ? (
+                          <>
+                            <p className="font-mono text-xs font-black text-zinc-950">
+                              {[
+                                item.rackLocation
+                                  .warehouse,
+                                item.rackLocation
+                                  .rack,
+                                item.rackLocation
+                                  .shelf,
+                                item.rackLocation
+                                  .bin,
+                              ]
+                                .filter(
+                                  Boolean,
+                                )
+                                .join(
+                                  " → ",
+                                )}
+                            </p>
+
+                            {item.rackLocation
+                              .note ? (
+                              <p className="mt-1 text-[9px] font-semibold text-zinc-400">
+                                {
+                                  item.rackLocation
+                                    .note
+                                }
+                              </p>
+                            ) : null}
+                          </>
+                        ) : (
+                          <p className="text-[10px] font-black text-amber-700">
+                            Rack not assigned
+                          </p>
+                        )}
+                      </div>
+
+                      <span className="justify-self-start rounded-full bg-zinc-100 px-2.5 py-1 text-[9px] font-black text-zinc-700 sm:justify-self-end">
+                        Qty {
+                          item.quantity
+                        }
+                      </span>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+
             <div className="mt-6">
               <h3 className="font-black">
                 Products
@@ -2137,6 +2290,41 @@ export default function AdminOrdersPage() {
                       </p>
 
                       <div className="mt-2 flex flex-wrap items-center gap-2">
+                        {item.sku ? (
+                          <span className="rounded-full bg-emerald-50 px-2 py-1 font-mono text-[9px] font-black text-emerald-700">
+                            {item.sku}
+                          </span>
+                        ) : null}
+
+                        {item.rackLocation
+                          ?.rack ? (
+                          <span className="rounded-full bg-blue-50 px-2 py-1 font-mono text-[9px] font-black text-blue-700">
+                            📦 {
+                              [
+                                item.rackLocation
+                                  .warehouse,
+                                item.rackLocation
+                                  .rack,
+                                item.rackLocation
+                                  .shelf,
+                                item.rackLocation
+                                  .bin,
+                              ]
+                                .filter(
+                                  Boolean,
+                                )
+                                .join(
+                                  " → ",
+                                )
+                            }
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-amber-50 px-2 py-1 text-[9px] font-black text-amber-700">
+                            Rack not set
+                          </span>
+                        )}
+
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="text-[11px] font-semibold text-zinc-400">
                           {money(item.unitPrice)} / piece
                         </span>
@@ -2150,6 +2338,7 @@ export default function AdminOrdersPage() {
                             Stock Active
                           </span>
                         )}
+                      </div>
                       </div>
                     </div>
 
