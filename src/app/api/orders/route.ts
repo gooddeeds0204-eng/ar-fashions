@@ -175,7 +175,25 @@ export async function GET(request: Request) {
       include: {
         user: true,
         address: true,
-        items: true,
+        items: {
+          include: {
+            variant: {
+              select: {
+                sku: true,
+                storageWarehouse:
+                  true,
+                storageRack:
+                  true,
+                storageShelf:
+                  true,
+                storageBin:
+                  true,
+                storageNote:
+                  true,
+              },
+            },
+          },
+        },
         payment: true,
       },
     });
@@ -243,6 +261,29 @@ export async function GET(request: Request) {
         unitPrice: Number(item.unitPrice),
         totalPrice: Number(item.totalPrice),
         inventoryRestored: item.inventoryRestored,
+        sku:
+          item.variant?.sku ??
+          null,
+        rackLocation:
+          item.variant
+            ? {
+                warehouse:
+                  item.variant
+                    .storageWarehouse,
+                rack:
+                  item.variant
+                    .storageRack,
+                shelf:
+                  item.variant
+                    .storageShelf,
+                bin:
+                  item.variant
+                    .storageBin,
+                note:
+                  item.variant
+                    .storageNote,
+              }
+            : null,
       })),
 
       payment: order.payment
