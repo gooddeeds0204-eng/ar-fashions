@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { ensureVariantRackStorage } from "@/lib/variant-rack-storage";
 
 function cleanString(value: unknown) {
   return String(value ?? "").trim();
@@ -50,6 +51,8 @@ export async function GET(request: Request) {
   }
 
   try {
+    await ensureVariantRackStorage();
+
     const { searchParams } = new URL(request.url);
 
     const search = cleanString(searchParams.get("search"));
@@ -888,6 +891,8 @@ export async function PATCH(request: Request) {
   }
 
   try {
+    await ensureVariantRackStorage();
+
     const body =
       await request.json();
 
