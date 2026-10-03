@@ -186,6 +186,11 @@ model ProductVariant {
   sku                  String?               @unique
   stock                Int                   @default(0)
   reservedStock        Int                   @default(0)
+  storageWarehouse     String?
+  storageRack          String?
+  storageShelf         String?
+  storageBin           String?
+  storageNote          String?
   costPrice            Decimal?              @db.Decimal(10, 2)
   retailPrice          Decimal?              @db.Decimal(10, 2)
   resellerPrice        Decimal?              @db.Decimal(10, 2)
@@ -211,6 +216,7 @@ model ProductVariant {
   @@index([productId])
   @@index([colorId])
   @@index([sizeId])
+  @@index([storageWarehouse, storageRack])
   @@index([preferredSupplierId])
 }
 
