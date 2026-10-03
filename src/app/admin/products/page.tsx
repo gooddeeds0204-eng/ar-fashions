@@ -8,6 +8,15 @@ import {
   getKidsSizePreset,
   kidsHeightCmToInches,
 } from "@/lib/kids-size-presets";
+import {
+  SKU_PRODUCT_TYPES,
+  buildProductSku,
+  buildVariantSku,
+  formatDesignNumber,
+  getMainSkuCode,
+  normalizeSkuText,
+  type MainSkuCode,
+} from "@/lib/sku-system";
 
 type Category = {
   id: string;
@@ -104,6 +113,14 @@ export default function ProductsPage() {
     "WOMEN" | "MEN" | "KIDS" | "UNISEX"
   >("UNISEX");
   const [sku, setSku] = useState("");
+  const [
+    skuProductTypeCode,
+    setSkuProductTypeCode,
+  ] = useState("");
+  const [
+    designNumber,
+    setDesignNumber,
+  ] = useState("");
   const [fabric, setFabric] = useState("");
   const [description, setDescription] = useState("");
 
@@ -271,6 +288,178 @@ export default function ProductsPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const selectedCategory =
+    useMemo(
+      () =>
+        categories.find(
+          (category) =>
+            category.id ===
+            categoryId,
+        ) ?? null,
+      [
+        categories,
+        categoryId,
+      ],
+    );
+
+  const selectedMainCategoryName =
+    useMemo(() => {
+      if (!selectedCategory) {
+        return "";
+      }
+
+      return selectedCategory.name
+        .split("→")[0]
+        ?.trim() ?? "";
+    }, [
+      selectedCategory,
+    ]);
+
+  const selectedMainSkuCode:
+    MainSkuCode | null =
+    useMemo(
+      () =>
+        getMainSkuCode(
+          selectedMainCategoryName,
+        ),
+      [
+        selectedMainCategoryName,
+      ],
+    );
+
+  const skuProductTypeOptions =
+    selectedMainSkuCode
+      ? SKU_PRODUCT_TYPES[
+          selectedMainSkuCode
+        ]
+      : [];
+
+  const nextDesignNumber =
+    useMemo(() => {
+      if (
+        !selectedMainSkuCode ||
+        !skuProductTypeCode
+      ) {
+        return "001";
+      }
+
+      const prefix =
+        `${selectedMainSkuCode}-${skuProductTypeCode}-`;
+
+      let max = 0;
+
+      for (
+        const product of
+        products
+      ) {
+        const productSku =
+          product.sku ??
+          "";
+
+        if (
+          !productSku.startsWith(
+            prefix,
+          )
+        ) {
+          continue;
+        }
+
+        const match =
+          productSku
+            .slice(
+              prefix.length,
+            )
+            .match(
+              /^(\d+)/,
+            );
+
+        if (match) {
+          max = Math.max(
+            max,
+            Number(
+              match[1],
+            ) || 0,
+          );
+        }
+      }
+
+      return String(
+        max + 1,
+      ).padStart(
+        3,
+        "0",
+      );
+    }, [
+      products,
+      selectedMainSkuCode,
+      skuProductTypeCode,
+    ]);
+
+  useEffect(() => {
+    if (
+      !selectedMainSkuCode ||
+      !skuProductTypeCode ||
+      !designNumber
+    ) {
+      setSku("");
+      return;
+    }
+
+    setSku(
+      buildProductSku(
+        selectedMainSkuCode,
+        skuProductTypeCode,
+        designNumber,
+      ),
+    );
+  }, [
+    selectedMainSkuCode,
+    skuProductTypeCode,
+    designNumber,
+  ]);
+
+  function handleCategoryChange(
+    nextCategoryId: string,
+  ) {
+    setCategoryId(
+      nextCategoryId,
+    );
+
+    const nextCategory =
+      categories.find(
+        (item) =>
+          item.id ===
+          nextCategoryId,
+      );
+
+    const mainName =
+      nextCategory?.name
+        .split("→")[0]
+        ?.trim() ?? "";
+
+    const mainCode =
+      getMainSkuCode(
+        mainName,
+      );
+
+    setSkuProductTypeCode("");
+    setDesignNumber("");
+    setSku("");
+
+    if (mainCode === "WM") {
+      setGender("WOMEN");
+    } else if (
+      mainCode === "MN"
+    ) {
+      setGender("MEN");
+    } else if (
+      mainCode === "GK" ||
+      mainCode === "BK"
+    ) {
+      setGender("KIDS");
+    }
+  }
 
   function getApplicableSizeIds(categoryName: string) {
     const name = categoryName.toLowerCase();
@@ -1122,6 +1311,17 @@ export default function ProductsPage() {
     return colors.find((color) => color.id === id)?.name ?? id;
   }
 
+  function getRawSizeName(
+    id: string,
+  ) {
+    return (
+      sizes.find(
+        (size) =>
+          size.id === id,
+      )?.name ?? id
+    );
+  }
+
   function getSizeDisplayLabel(
     size: Size,
   ) {
@@ -1201,6 +1401,8 @@ export default function ProductsPage() {
     setName("");
     setCategoryId("");
     setSku("");
+    setSkuProductTypeCode("");
+    setDesignNumber("");
     setFabric("");
     setDescription("");
     setMrp("");
@@ -1321,6 +1523,38 @@ export default function ProductsPage() {
       return;
     }
 
+    if (!selectedMainSkuCode) {
+      alert(
+        "Select a category under Women, Men, Girl Kids or Boy Kids.",
+      );
+      return;
+    }
+
+    if (!skuProductTypeCode) {
+      alert(
+        "Select SKU product type.",
+      );
+      return;
+    }
+
+    if (
+      !formatDesignNumber(
+        designNumber,
+      )
+    ) {
+      alert(
+        "Enter design number.",
+      );
+      return;
+    }
+
+    if (!sku) {
+      alert(
+        "Unable to generate product SKU.",
+      );
+      return;
+    }
+
     if (
       (salesMode === "RETAIL" || salesMode === "BOTH") &&
       !retailPrice
@@ -1397,6 +1631,11 @@ export default function ProductsPage() {
           categoryId,
           gender,
           sku,
+          skuProductTypeCode,
+          designNumber:
+            formatDesignNumber(
+              designNumber,
+            ),
           fabric,
           description,
           mrp,
@@ -1615,7 +1854,9 @@ export default function ProductsPage() {
                 <select
                   value={categoryId}
                   onChange={(event) =>
-                    setCategoryId(event.target.value)
+                    handleCategoryChange(
+                      event.target.value,
+                    )
                   }
                   className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3.5 outline-none transition focus:border-emerald-400"
                 >
@@ -1674,29 +1915,150 @@ export default function ProductsPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">
-                  Product SKU
-                </label>
-
-                <div className="flex items-center justify-between rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.06] px-4 py-3.5">
+              <div className="md:col-span-2 rounded-3xl border border-emerald-400/20 bg-emerald-400/[0.045] p-4 sm:p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-bold text-emerald-300">
-                      Auto Generated
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-400">
+                      AS FASHIONS Universal SKU
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      SKU will be assigned automatically after saving
+
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      Website, Amazon, Flipkart, Meesho and godown stock ki same SKU system.
                     </p>
                   </div>
 
-                  <span className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 font-mono text-sm font-bold text-white">
-                    AR-{{
-                      WOMEN: "W",
-                      MEN: "M",
-                      KIDS: "K",
-                      UNISEX: "U",
-                    }[gender]}-XXX
+                  <span className="rounded-full border border-emerald-400/20 bg-slate-950 px-3 py-1.5 font-mono text-[10px] font-black text-emerald-300">
+                    MAIN-TYPE-DESIGN-COLOR-SIZE
                   </span>
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-[.65fr_1.35fr_.85fr]">
+                  <div>
+                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-500">
+                      Main Code
+                    </label>
+
+                    <div className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 font-mono text-sm font-black text-white">
+                      {selectedMainSkuCode ??
+                        "—"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-500">
+                      Product Type *
+                    </label>
+
+                    <select
+                      value={
+                        skuProductTypeCode
+                      }
+                      onChange={(event) => {
+                        setSkuProductTypeCode(
+                          event.target.value,
+                        );
+
+                        if (
+                          !designNumber
+                        ) {
+                          setDesignNumber(
+                            nextDesignNumber,
+                          );
+                        }
+                      }}
+                      disabled={
+                        !selectedMainSkuCode
+                      }
+                      className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm outline-none focus:border-emerald-400 disabled:opacity-50"
+                    >
+                      <option value="">
+                        Select Product Type
+                      </option>
+
+                      {skuProductTypeOptions.map(
+                        (option) => (
+                          <option
+                            key={
+                              option.code
+                            }
+                            value={
+                              option.code
+                            }
+                          >
+                            {
+                              option.label
+                            }{" "}
+                            — {
+                              option.code
+                            }
+                          </option>
+                        ),
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-500">
+                      Design No. *
+                    </label>
+
+                    <div className="flex gap-2">
+                      <input
+                        value={
+                          designNumber
+                        }
+                        onChange={(event) =>
+                          setDesignNumber(
+                            event.target.value
+                              .replace(
+                                /\D+/g,
+                                "",
+                              )
+                              .slice(
+                                0,
+                                6,
+                              ),
+                          )
+                        }
+                        inputMode="numeric"
+                        placeholder="014"
+                        className="min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-950 px-4 py-3 font-mono text-sm font-black outline-none focus:border-emerald-400"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setDesignNumber(
+                            nextDesignNumber,
+                          )
+                        }
+                        disabled={
+                          !selectedMainSkuCode ||
+                          !skuProductTypeCode
+                        }
+                        className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3 text-[9px] font-black uppercase text-emerald-300 disabled:opacity-40"
+                      >
+                        Next {
+                          nextDesignNumber
+                        }
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-emerald-400/20 bg-slate-950/80 p-4">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">
+                    Product Family SKU
+                  </p>
+
+                  <p className="mt-2 break-all font-mono text-lg font-black tracking-wide text-emerald-300">
+                    {sku ||
+                      "Select category + product type + design number"}
+                  </p>
+
+                  <p className="mt-2 text-[10px] leading-5 text-slate-500">
+                    Same design lo colours/sizes maarina product family code maaradu. Variant SKU ki colour + size automatic ga append avutayi.
+                  </p>
                 </div>
               </div>
 
@@ -2881,8 +3243,18 @@ export default function ProductsPage() {
                         </td>
 
                         <td className="px-4 py-3">
-                          <span className="inline-flex min-w-[150px] items-center rounded-xl border border-emerald-400/20 bg-emerald-400/[0.06] px-3 py-2 font-mono text-xs font-bold text-emerald-300">
-                            Auto Generated
+                          <span className="inline-flex min-w-[190px] items-center rounded-xl border border-emerald-400/20 bg-emerald-400/[0.06] px-3 py-2 font-mono text-[11px] font-bold text-emerald-300">
+                            {sku
+                              ? buildVariantSku(
+                                  sku,
+                                  getColorName(
+                                    variant.colorId,
+                                  ),
+                                  getRawSizeName(
+                                    variant.sizeId,
+                                  ),
+                                )
+                              : "Complete SKU setup"}
                           </span>
                         </td>
                       </tr>
