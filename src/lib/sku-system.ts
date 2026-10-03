@@ -111,6 +111,107 @@ export function getMainSkuCode(
   );
 }
 
+export function suggestProductTypeCode(
+  mainCode: MainSkuCode,
+  categoryName: string,
+) {
+  const name =
+    normalizeSkuText(
+      categoryName
+        .split("→")
+        .pop() ?? categoryName,
+    );
+
+  const rules: Record<
+    MainSkuCode,
+    Array<[
+      string[],
+      string,
+    ]>
+  > = {
+    WM: [
+      [["kurta sets", "kurti sets"], "KST"],
+      [["kurtis tunics", "kurtas tunics", "kurtis", "tunics"], "KRT"],
+      [["skirts palazzos jeggings", "palazzos jeggings"], "SPJ"],
+      [["leggings"], "LEG"],
+      [["salwar suits"], "SAL"],
+      [["dupattas"], "DUP"],
+      [["western wear"], "WST"],
+      [["t shirts sweatshirts shrugs"], "TSS"],
+      [["jeans"], "JNS"],
+      [["shirts"], "SHT"],
+      [["shorts 3 4ths"], "SHR"],
+      [["night lounge wear"], "NLW"],
+      [["nightwear"], "NGT"],
+      [["ethnic party wear"], "ETH"],
+      [["frocks dresses"], "DRS"],
+      [["sarees"], "SAR"],
+    ],
+    MN: [
+      [["men s shirts", "mens shirts", "shirts"], "SHT"],
+      [["men s jeans", "mens jeans", "jeans"], "JNS"],
+      [["trousers pants"], "TRS"],
+      [["men s t shirts", "mens t shirts", "t shirts"], "TSH"],
+      [["tracksuits"], "TRK"],
+      [["shorts"], "SHR"],
+      [["night suits"], "NGT"],
+      [["suits blazers"], "BLZ"],
+      [["ethnic wear"], "ETH"],
+      [["undergarments"], "UND"],
+    ],
+    GK: [
+      [["girls 3 piece sets punjabi dresses", "punjabi dresses"], "PNJ"],
+      [["girls dresses frocks", "dresses frocks"], "FRK"],
+      [["girls t shirts", "t shirts"], "TSH"],
+      [["girls tracksuits", "tracksuits"], "TRK"],
+      [["girls shorts 3 4ths", "shorts 3 4ths"], "SHR"],
+      [["girls night suits", "night suits"], "NGT"],
+      [["palazzos jeggings"], "PLZ"],
+      [["kurtis kurtas"], "KRT"],
+      [["tops"], "TOP"],
+      [["jeans"], "JNS"],
+      [["pants"], "PNT"],
+      [["leggings"], "LEG"],
+      [["western wear jackets"], "JKT"],
+      [["party wear frocks"], "PWF"],
+      [["ethnic wear"], "ETH"],
+    ],
+    BK: [
+      [["boys shirts"], "SHT"],
+      [["boys jeans"], "JNS"],
+      [["boys pants trousers"], "PNT"],
+      [["boys t shirts"], "TSH"],
+      [["boys tracksuits"], "TRK"],
+      [["boys shorts 3 4ths"], "SHR"],
+      [["boys night suits"], "NGT"],
+      [["boys ethnic wear"], "ETH"],
+      [["boys western wear"], "WST"],
+      [["boys suits blazers"], "BLZ"],
+    ],
+  };
+
+  for (
+    const [
+      aliases,
+      code,
+    ] of rules[mainCode]
+  ) {
+    if (
+      aliases.some(
+        (alias) =>
+          name === alias ||
+          name.includes(
+            alias,
+          ),
+      )
+    ) {
+      return code;
+    }
+  }
+
+  return "";
+}
+
 export function normalizeProductTypeCode(
   value: unknown,
 ) {
