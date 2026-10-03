@@ -14,7 +14,6 @@ import {
   buildVariantSku,
   formatDesignNumber,
   getMainSkuCode,
-  normalizeSkuText,
   type MainSkuCode,
 } from "@/lib/sku-system";
 
@@ -395,6 +394,21 @@ export default function ProductsPage() {
       selectedMainSkuCode,
       skuProductTypeCode,
     ]);
+
+  useEffect(() => {
+    if (
+      skuProductTypeCode &&
+      !designNumber
+    ) {
+      setDesignNumber(
+        nextDesignNumber,
+      );
+    }
+  }, [
+    skuProductTypeCode,
+    nextDesignNumber,
+    designNumber,
+  ]);
 
   useEffect(() => {
     if (
@@ -1957,14 +1971,9 @@ export default function ProductsPage() {
                         setSkuProductTypeCode(
                           event.target.value,
                         );
-
-                        if (
-                          !designNumber
-                        ) {
-                          setDesignNumber(
-                            nextDesignNumber,
-                          );
-                        }
+                        setDesignNumber(
+                          "",
+                        );
                       }}
                       disabled={
                         !selectedMainSkuCode
