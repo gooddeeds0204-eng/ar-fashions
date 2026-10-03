@@ -9,6 +9,9 @@ import {
   ensureProductKidsSizeMeasurementStorage,
   getProductKidsSizeMeasurements,
 } from "@/lib/product-kids-size-measurements";
+import {
+  buildVariantSku,
+} from "@/lib/sku-system";
 
 const PRODUCT_STATUSES = [
   "DRAFT",
@@ -57,66 +60,6 @@ function requiredNumber(value: unknown) {
     : null;
 }
 
-function getSkuToken(value: string, fallback: string) {
-  const cleaned = String(value ?? "")
-    .trim()
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, "");
-
-  return cleaned.slice(0, 4) || fallback;
-}
-
-function getColorSkuCode(colorName: string) {
-  const known: Record<string, string> = {
-    BLACK: "BLK",
-    WHITE: "WHT",
-    BLUE: "BLU",
-    RED: "RED",
-    GREEN: "GRN",
-    YELLOW: "YLW",
-    PINK: "PNK",
-    PURPLE: "PUR",
-    ORANGE: "ORG",
-    BROWN: "BRN",
-    GREY: "GRY",
-    GRAY: "GRY",
-    NAVY: "NVY",
-    MAROON: "MRN",
-    BEIGE: "BEG",
-    CREAM: "CRM",
-  };
-
-  const normalized = String(colorName ?? "")
-    .trim()
-    .toUpperCase();
-
-  return known[normalized] ?? getSkuToken(normalized, "COL");
-}
-
-function getSizeSkuCode(sizeName: string) {
-  const normalized = String(sizeName ?? "")
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, "");
-
-  const known: Record<string, string> = {
-    XS: "XS",
-    S: "S",
-    M: "M",
-    L: "L",
-    XL: "XL",
-    XXL: "XXL",
-    XXXL: "3XL",
-    "2XL": "2XL",
-    "3XL": "3XL",
-    "4XL": "4XL",
-    FREE: "FS",
-    FREESIZE: "FS",
-  };
-
-  return known[normalized] ?? getSkuToken(normalized, "SZ");
-}
-
 function publicVariant(
   variant: Record<string, any>,
   canSeeResellerPricing: boolean,
@@ -144,21 +87,29 @@ async function uniqueVariantSku(
   colorName: string,
   sizeName: string,
 ) {
-  const baseSku = `${productSku}-${getColorSkuCode(
-    colorName,
-  )}-${getSizeSkuCode(sizeName)}`;
+  const sku =
+    buildVariantSku(
+      productSku,
+      colorName,
+      sizeName,
+    );
 
-  let sku = baseSku;
-  let suffix = 2;
+  if (!sku) {
+    throw new Error(
+      "Unable to generate variant SKU.",
+    );
+  }
 
-  while (
+  const existing =
     await tx.productVariant.findUnique({
       where: { sku },
       select: { id: true },
-    })
-  ) {
-    sku = `${baseSku}-${suffix}`;
-    suffix += 1;
+    });
+
+  if (existing) {
+    throw new Error(
+      `Variant SKU already exists: ${sku}`,
+    );
   }
 
   return sku;
