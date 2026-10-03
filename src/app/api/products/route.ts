@@ -8,6 +8,13 @@ import {
   ensureProductKidsSizeMeasurementStorage,
   getProductKidsSizeMeasurements,
 } from "@/lib/product-kids-size-measurements";
+import {
+  buildProductSku,
+  buildVariantSku,
+  getMainSkuCode,
+  normalizeProductTypeCode,
+  formatDesignNumber,
+} from "@/lib/sku-system";
 
 const PRODUCT_STATUSES = [
   "DRAFT",
@@ -204,57 +211,6 @@ function getSkuToken(value: string, fallback: string) {
   return cleaned.slice(0, 4) || fallback;
 }
 
-function getColorSkuCode(colorName: string) {
-  const known: Record<string, string> = {
-    BLACK: "BLK",
-    WHITE: "WHT",
-    BLUE: "BLU",
-    RED: "RED",
-    GREEN: "GRN",
-    YELLOW: "YLW",
-    PINK: "PNK",
-    PURPLE: "PUR",
-    ORANGE: "ORG",
-    BROWN: "BRN",
-    GREY: "GRY",
-    GRAY: "GRY",
-    NAVY: "NVY",
-    MAROON: "MRN",
-    BEIGE: "BEG",
-    CREAM: "CRM",
-  };
-
-  const normalized = String(colorName ?? "")
-    .trim()
-    .toUpperCase();
-
-  return known[normalized] ?? getSkuToken(normalized, "COL");
-}
-
-function getSizeSkuCode(sizeName: string) {
-  const normalized = String(sizeName ?? "")
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, "");
-
-  const known: Record<string, string> = {
-    XS: "XS",
-    S: "S",
-    M: "M",
-    L: "L",
-    XL: "XL",
-    XXL: "XXL",
-    XXXL: "3XL",
-    "2XL": "2XL",
-    "3XL": "3XL",
-    "4XL": "4XL",
-    FREE: "FS",
-    FREESIZE: "FS",
-  };
-
-  return known[normalized] ?? getSkuToken(normalized, "SZ");
-}
-
 async function generateProductSku(
   tx: any,
   gender: string,
@@ -297,22 +253,29 @@ async function generateVariantSku(
   sizeName: string,
   reservedSkus: Set<string>,
 ) {
-  const baseSku = `${productSku}-${getColorSkuCode(
-    colorName,
-  )}-${getSizeSkuCode(sizeName)}`;
+  const sku =
+    buildVariantSku(
+      productSku,
+      colorName,
+      sizeName,
+    );
 
-  let sku = baseSku;
-  let suffix = 2;
+  if (!sku) {
+    throw new Error(
+      "Unable to generate variant SKU.",
+    );
+  }
 
-  while (
+  if (
     reservedSkus.has(sku) ||
     (await tx.productVariant.findUnique({
       where: { sku },
       select: { id: true },
     }))
   ) {
-    sku = `${baseSku}-${suffix}`;
-    suffix += 1;
+    throw new Error(
+      `Variant SKU already exists: ${sku}`,
+    );
   }
 
   reservedSkus.add(sku);
@@ -371,6 +334,17 @@ export async function POST(request: Request) {
 
     const category = await prisma.category.findUnique({
       where: { id: categoryId },
+      select: {
+        id: true,
+        name: true,
+        parentId: true,
+        parent: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
     if (!category) {
@@ -379,6 +353,80 @@ export async function POST(request: Request) {
         { status: 404 },
       );
     }
+
+    const skuProductTypeCode =
+      normalizeProductTypeCode(
+        body.skuProductTypeCode,
+      );
+
+    const designNumber =
+      formatDesignNumber(
+        body.designNumber,
+      );
+
+    const mainCategoryName =
+      category.parent?.name ??
+      category.name;
+
+    const mainSkuCode =
+      getMainSkuCode(
+        mainCategoryName,
+      );
+
+    const usesUnifiedSku =
+      Boolean(
+        skuProductTypeCode ||
+        designNumber,
+      );
+
+    if (
+      usesUnifiedSku &&
+      !mainSkuCode
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Select a category under Women, Men, Girl Kids or Boy Kids for AS FASHIONS SKU.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (
+      usesUnifiedSku &&
+      !skuProductTypeCode
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "SKU product type is required.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (
+      usesUnifiedSku &&
+      !designNumber
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Design number is required.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const unifiedProductSku =
+      usesUnifiedSku &&
+      mainSkuCode
+        ? buildProductSku(
+            mainSkuCode,
+            skuProductTypeCode,
+            designNumber,
+          )
+        : "";
 
     const retailPrice = requiredNumber(body.retailPrice);
 
@@ -704,7 +752,13 @@ export async function POST(request: Request) {
     const slug = `${slugBase}-${Date.now()}`;
 
     const product = await prisma.$transaction(async (tx) => {
-      const requestedSku = String(body.sku ?? "").trim();
+      const requestedSku =
+        unifiedProductSku ||
+        String(
+          body.sku ?? "",
+        )
+          .trim()
+          .toUpperCase();
 
       if (requestedSku) {
         const skuOwner = await tx.product.findUnique({
@@ -890,7 +944,14 @@ export async function POST(request: Request) {
         error: message,
       },
       {
-        status: message === "Product SKU already exists." ? 409 : 500,
+        status:
+          message ===
+            "Product SKU already exists." ||
+          message.startsWith(
+            "Variant SKU already exists:",
+          )
+            ? 409
+            : 500,
       },
     );
   }
