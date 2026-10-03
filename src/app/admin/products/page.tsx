@@ -14,6 +14,7 @@ import {
   buildVariantSku,
   formatDesignNumber,
   getMainSkuCode,
+  suggestProductTypeCode,
   type MainSkuCode,
 } from "@/lib/sku-system";
 
@@ -457,7 +458,14 @@ export default function ProductsPage() {
         mainName,
       );
 
-    setSkuProductTypeCode("");
+    setSkuProductTypeCode(
+      mainCode && nextCategory
+        ? suggestProductTypeCode(
+            mainCode,
+            nextCategory.name,
+          )
+        : "",
+    );
     setDesignNumber("");
     setSku("");
 
