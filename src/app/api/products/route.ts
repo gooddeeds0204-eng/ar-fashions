@@ -9,6 +9,7 @@ import {
   getProductKidsSizeMeasurements,
 } from "@/lib/product-kids-size-measurements";
 import {
+  SKU_PRODUCT_TYPES,
   buildProductSku,
   buildVariantSku,
   getMainSkuCode,
@@ -404,6 +405,26 @@ export async function POST(request: Request) {
         {
           error:
             "Design number is required.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (
+      usesUnifiedSku &&
+      mainSkuCode &&
+      !SKU_PRODUCT_TYPES[
+        mainSkuCode
+      ].some(
+        (option) =>
+          option.code ===
+          skuProductTypeCode,
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid SKU product type for the selected main category.",
         },
         { status: 400 },
       );
