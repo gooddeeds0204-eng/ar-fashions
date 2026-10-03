@@ -141,7 +141,12 @@ export function formatDesignNumber(
 export function getColorSkuCode(
   colorName: string,
 ) {
-  const known: Record<
+  const normalized =
+    String(colorName ?? "")
+      .trim()
+      .toUpperCase();
+
+  const exact: Record<
     string,
     string
   > = {
@@ -165,13 +170,46 @@ export function getColorSkuCode(
     PEACH: "PEA",
   };
 
-  const normalized =
-    String(colorName ?? "")
-      .trim()
-      .toUpperCase();
+  if (exact[normalized]) {
+    return exact[normalized];
+  }
 
-  if (known[normalized]) {
-    return known[normalized];
+  const wordRules: Array<
+    [string, string]
+  > = [
+    ["MAROON", "MRN"],
+    ["NAVY", "NVY"],
+    ["MINT", "MNT"],
+    ["PEACH", "PEA"],
+    ["BEIGE", "BEG"],
+    ["PURPLE", "PUR"],
+    ["ORANGE", "ORG"],
+    ["YELLOW", "YLW"],
+    ["PINK", "PNK"],
+    ["GREEN", "GRN"],
+    ["BLUE", "BLU"],
+    ["RED", "RED"],
+    ["BLACK", "BLK"],
+    ["WHITE", "WHT"],
+    ["GREY", "GRY"],
+    ["GRAY", "GRY"],
+    ["CREAM", "CRM"],
+    ["BROWN", "BRN"],
+  ];
+
+  for (
+    const [
+      word,
+      code,
+    ] of wordRules
+  ) {
+    if (
+      normalized.includes(
+        word,
+      )
+    ) {
+      return code;
+    }
   }
 
   const token =
@@ -195,7 +233,7 @@ export function getSizeSkuCode(
 
   const ageYears =
     normalized.match(
-      /^(\d{1,2})-(\d{1,2})Y$/,
+      /^(\d{1,2})-(\d{1,2})(?:Y|YR|YRS|YEAR|YEARS)$/,
     );
 
   if (ageYears) {
@@ -204,7 +242,7 @@ export function getSizeSkuCode(
 
   const ageMonths =
     normalized.match(
-      /^(\d{1,2})-(\d{1,2})M$/,
+      /^(\d{1,2})-(\d{1,2})(?:M|MO|MOS|MONTH|MONTHS)$/,
     );
 
   if (ageMonths) {
