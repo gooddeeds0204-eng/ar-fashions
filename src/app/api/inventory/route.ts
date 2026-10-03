@@ -172,6 +172,30 @@ export async function GET(request: Request) {
                     },
                   },
                 },
+                {
+                  storageWarehouse: {
+                    contains: search,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  storageRack: {
+                    contains: search,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  storageShelf: {
+                    contains: search,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  storageBin: {
+                    contains: search,
+                    mode: "insensitive",
+                  },
+                },
               ],
             }
           : {}),
@@ -553,6 +577,16 @@ export async function GET(request: Request) {
         color: variant.color,
         size: variant.size,
         sku: variant.sku,
+        storageWarehouse:
+          variant.storageWarehouse,
+        storageRack:
+          variant.storageRack,
+        storageShelf:
+          variant.storageShelf,
+        storageBin:
+          variant.storageBin,
+        storageNote:
+          variant.storageNote,
         stock: variant.stock,
         reservedStock: variant.reservedStock,
         availableStock:
@@ -861,6 +895,134 @@ export async function PATCH(request: Request) {
       cleanString(
         body.variantId,
       );
+
+    const action =
+      cleanString(
+        body.action,
+      );
+
+    if (
+      action ===
+      "SAVE_LOCATION"
+    ) {
+      if (!variantId) {
+        return NextResponse.json(
+          {
+            error:
+              "Variant ID is required.",
+          },
+          { status: 400 },
+        );
+      }
+
+      const storageWarehouse =
+        cleanString(
+          body.storageWarehouse,
+        );
+
+      const storageRack =
+        cleanString(
+          body.storageRack,
+        );
+
+      const storageShelf =
+        cleanString(
+          body.storageShelf,
+        );
+
+      const storageBin =
+        cleanString(
+          body.storageBin,
+        );
+
+      const storageNote =
+        cleanString(
+          body.storageNote,
+        );
+
+      if (!storageRack) {
+        return NextResponse.json(
+          {
+            error:
+              "Rack code is required.",
+          },
+          { status: 400 },
+        );
+      }
+
+      const updated =
+        await prisma.productVariant.update({
+          where: {
+            id: variantId,
+          },
+          data: {
+            storageWarehouse:
+              storageWarehouse ||
+              null,
+            storageRack:
+              storageRack ||
+              null,
+            storageShelf:
+              storageShelf ||
+              null,
+            storageBin:
+              storageBin ||
+              null,
+            storageNote:
+              storageNote ||
+              null,
+          },
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+              },
+            },
+            color: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            size: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        });
+
+      return NextResponse.json({
+        success: true,
+        message:
+          "Rack location saved.",
+        variant: {
+          id:
+            updated.id,
+          sku:
+            updated.sku,
+          product:
+            updated.product,
+          color:
+            updated.color,
+          size:
+            updated.size,
+          storageWarehouse:
+            updated.storageWarehouse,
+          storageRack:
+            updated.storageRack,
+          storageShelf:
+            updated.storageShelf,
+          storageBin:
+            updated.storageBin,
+          storageNote:
+            updated.storageNote,
+        },
+      });
+    }
 
     const adjustment =
       toInt(
