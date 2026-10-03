@@ -202,15 +202,6 @@ function getGenderSkuCode(gender: string) {
   }
 }
 
-function getSkuToken(value: string, fallback: string) {
-  const cleaned = String(value ?? "")
-    .trim()
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, "");
-
-  return cleaned.slice(0, 4) || fallback;
-}
-
 async function generateProductSku(
   tx: any,
   gender: string,
