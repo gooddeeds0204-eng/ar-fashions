@@ -26,6 +26,11 @@ type InventoryVariant = {
     inches: string | null;
   };
   sku: string | null;
+  storageWarehouse: string | null;
+  storageRack: string | null;
+  storageShelf: string | null;
+  storageBin: string | null;
+  storageNote: string | null;
   stock: number;
   reservedStock: number;
   availableStock: number;
@@ -156,6 +161,44 @@ export default function InventoryPage() {
 
   const [selected, setSelected] =
     useState<InventoryVariant | null>(null);
+
+  const [
+    rackSelected,
+    setRackSelected,
+  ] =
+    useState<InventoryVariant | null>(
+      null,
+    );
+
+  const [
+    storageWarehouse,
+    setStorageWarehouse,
+  ] = useState("");
+
+  const [
+    storageRack,
+    setStorageRack,
+  ] = useState("");
+
+  const [
+    storageShelf,
+    setStorageShelf,
+  ] = useState("");
+
+  const [
+    storageBin,
+    setStorageBin,
+  ] = useState("");
+
+  const [
+    storageNote,
+    setStorageNote,
+  ] = useState("");
+
+  const [
+    savingRack,
+    setSavingRack,
+  ] = useState(false);
 
   const [adjustment, setAdjustment] = useState("1");
   const [reason, setReason] = useState("MANUAL_ADJUSTMENT");
@@ -360,6 +403,118 @@ export default function InventoryPage() {
     );
 
     setMessage("");
+  }
+
+  function openRackSetup(
+    item: InventoryVariant,
+  ) {
+    setRackSelected(
+      item,
+    );
+    setStorageWarehouse(
+      item.storageWarehouse ??
+        "",
+    );
+    setStorageRack(
+      item.storageRack ??
+        "",
+    );
+    setStorageShelf(
+      item.storageShelf ??
+        "",
+    );
+    setStorageBin(
+      item.storageBin ??
+        "",
+    );
+    setStorageNote(
+      item.storageNote ??
+        "",
+    );
+    setMessage("");
+  }
+
+  function closeRackSetup() {
+    setRackSelected(null);
+    setStorageWarehouse("");
+    setStorageRack("");
+    setStorageShelf("");
+    setStorageBin("");
+    setStorageNote("");
+  }
+
+  async function saveRackLocation() {
+    if (!rackSelected) {
+      return;
+    }
+
+    if (!storageRack.trim()) {
+      setMessage(
+        "Rack code enter cheyyandi.",
+      );
+      return;
+    }
+
+    try {
+      setSavingRack(true);
+      setMessage("");
+
+      const response =
+        await fetch(
+          "/api/inventory",
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body:
+              JSON.stringify({
+                action:
+                  "SAVE_LOCATION",
+                variantId:
+                  rackSelected.id,
+                storageWarehouse:
+                  storageWarehouse.trim(),
+                storageRack:
+                  storageRack.trim(),
+                storageShelf:
+                  storageShelf.trim(),
+                storageBin:
+                  storageBin.trim(),
+                storageNote:
+                  storageNote.trim(),
+              }),
+          },
+        );
+
+      const result =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+            "Failed to save rack location.",
+        );
+      }
+
+      setMessage(
+        `Rack location saved for ${rackSelected.sku || rackSelected.product.name}.`,
+      );
+
+      closeRackSetup();
+      await loadInventory(
+        true,
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to save rack location.",
+      );
+    } finally {
+      setSavingRack(false);
+    }
   }
 
   async function saveAutomationSettings() {
@@ -670,7 +825,7 @@ export default function InventoryPage() {
               onChange={(event) =>
                 setSearch(event.target.value)
               }
-              placeholder="Search product, SKU, color or size..."
+              placeholder="Search product, SKU, color, size, godown or rack..."
               className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold outline-none transition focus:border-emerald-400 focus:bg-white"
             />
 
@@ -717,7 +872,7 @@ export default function InventoryPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1020px]">
+              <table className="w-full min-w-[1180px]">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50 text-left">
                     <th className="px-5 py-4 text-[10px] font-black uppercase tracking-wider text-slate-500">
@@ -738,6 +893,10 @@ export default function InventoryPage() {
 
                     <th className="px-5 py-4 text-[10px] font-black uppercase tracking-wider text-slate-500">
                       Available
+                    </th>
+
+                    <th className="px-5 py-4 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                      Rack Location
                     </th>
 
                     <th className="px-5 py-4 text-[10px] font-black uppercase tracking-wider text-slate-500">
@@ -826,6 +985,33 @@ export default function InventoryPage() {
                       </td>
 
                       <td className="px-5 py-5">
+                        {item.storageRack ? (
+                          <div>
+                            <p className="text-sm font-black text-slate-900">
+                              {
+                                item.storageRack
+                              }
+                              {item.storageShelf
+                                ? ` · ${item.storageShelf}`
+                                : ""}
+                              {item.storageBin
+                                ? ` · ${item.storageBin}`
+                                : ""}
+                            </p>
+
+                            <p className="mt-1 text-[10px] font-semibold text-slate-400">
+                              {item.storageWarehouse ||
+                                "Godown not set"}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-xs font-bold text-amber-600">
+                            Not assigned
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="px-5 py-5">
                         <span
                           className={`rounded-full px-3 py-1 text-[10px] font-black uppercase ${stockClass(
                             item,
@@ -863,37 +1049,53 @@ export default function InventoryPage() {
                       </td>
 
                       <td className="px-5 py-5 text-right">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (
-                              item.recommendedReorderQty >
-                              0
-                            ) {
-                              openRestock(
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openRackSetup(
                                 item,
-                              );
-                            } else {
-                              setSelected(
-                                item,
-                              );
-
-                              setAdjustment(
-                                "1",
-                              );
-
-                              setReason(
-                                "MANUAL_ADJUSTMENT",
-                              );
+                              )
                             }
-                          }}
-                          className="rounded-xl bg-slate-950 px-4 py-2 text-xs font-black text-white hover:bg-slate-800"
-                        >
-                          {item.recommendedReorderQty >
-                          0
-                            ? "Restock"
-                            : "Adjust Stock"}
-                        </button>
+                            className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[10px] font-black uppercase text-emerald-700 hover:bg-emerald-100"
+                          >
+                            {item.storageRack
+                              ? "Edit Rack"
+                              : "Set Rack"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (
+                                item.recommendedReorderQty >
+                                0
+                              ) {
+                                openRestock(
+                                  item,
+                                );
+                              } else {
+                                setSelected(
+                                  item,
+                                );
+
+                                setAdjustment(
+                                  "1",
+                                );
+
+                                setReason(
+                                  "MANUAL_ADJUSTMENT",
+                                );
+                              }
+                            }}
+                            className="rounded-xl bg-slate-950 px-3 py-2 text-[10px] font-black uppercase text-white hover:bg-slate-800"
+                          >
+                            {item.recommendedReorderQty >
+                            0
+                              ? "Restock"
+                              : "Stock"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -902,6 +1104,205 @@ export default function InventoryPage() {
             </div>
           )}
         </div>
+
+        {rackSelected && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/55 p-4">
+            <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-600">
+                    SKU Rack Setup
+                  </p>
+
+                  <h2 className="mt-1 text-xl font-black text-slate-950">
+                    {
+                      rackSelected.product
+                        .name
+                    }
+                  </h2>
+
+                  <p className="mt-1 break-all font-mono text-xs font-bold text-emerald-700">
+                    {rackSelected.sku ||
+                      rackSelected.product
+                        .sku ||
+                      "No SKU"}
+                  </p>
+
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    {
+                      rackSelected.color
+                        .name
+                    }{" "}
+                    ·{" "}
+                    {
+                      rackSelected.size
+                        .name
+                    }
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={
+                    closeRackSetup
+                  }
+                  className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-black text-slate-600"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                <p className="text-[10px] font-black uppercase tracking-wider text-emerald-700">
+                  Pick Location
+                </p>
+
+                <p className="mt-1 text-xs leading-5 text-slate-600">
+                  Order padina ventane staff ki ee exact Godown → Rack → Shelf → Bin location kanipistundi.
+                </p>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <label className="block">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                    Godown / Warehouse
+                  </span>
+
+                  <input
+                    value={
+                      storageWarehouse
+                    }
+                    onChange={(event) =>
+                      setStorageWarehouse(
+                        event.target
+                          .value,
+                      )
+                    }
+                    placeholder="e.g. Amazon-FK Godown"
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-bold outline-none focus:border-emerald-400 focus:bg-white"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                    Rack Code *
+                  </span>
+
+                  <input
+                    value={
+                      storageRack
+                    }
+                    onChange={(event) =>
+                      setStorageRack(
+                        event.target
+                          .value.toUpperCase(),
+                      )
+                    }
+                    placeholder="e.g. R03"
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 font-mono text-sm font-black uppercase outline-none focus:border-emerald-400 focus:bg-white"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                    Shelf
+                  </span>
+
+                  <input
+                    value={
+                      storageShelf
+                    }
+                    onChange={(event) =>
+                      setStorageShelf(
+                        event.target
+                          .value.toUpperCase(),
+                      )
+                    }
+                    placeholder="e.g. S2"
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 font-mono text-sm font-black uppercase outline-none focus:border-emerald-400 focus:bg-white"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                    Bin / Box
+                  </span>
+
+                  <input
+                    value={
+                      storageBin
+                    }
+                    onChange={(event) =>
+                      setStorageBin(
+                        event.target
+                          .value.toUpperCase(),
+                      )
+                    }
+                    placeholder="e.g. B04"
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 font-mono text-sm font-black uppercase outline-none focus:border-emerald-400 focus:bg-white"
+                  />
+                </label>
+              </div>
+
+              <label className="mt-3 block">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                  Location Note
+                </span>
+
+                <input
+                  value={
+                    storageNote
+                  }
+                  onChange={(event) =>
+                    setStorageNote(
+                      event.target
+                        .value,
+                    )
+                  }
+                  placeholder="Optional: top row / left side / carton 2"
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold outline-none focus:border-emerald-400 focus:bg-white"
+                />
+              </label>
+
+              <div className="mt-5 rounded-2xl bg-slate-950 p-4 text-white">
+                <p className="text-[9px] font-black uppercase tracking-wider text-slate-500">
+                  Location Preview
+                </p>
+
+                <p className="mt-2 font-mono text-sm font-black text-emerald-300">
+                  {[
+                    storageWarehouse,
+                    storageRack,
+                    storageShelf,
+                    storageBin,
+                  ]
+                    .filter(
+                      Boolean,
+                    )
+                    .join(
+                      " → ",
+                    ) ||
+                    "Enter rack location"}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={
+                  saveRackLocation
+                }
+                disabled={
+                  savingRack
+                }
+                className="mt-5 w-full rounded-2xl bg-emerald-600 px-4 py-4 text-sm font-black text-white hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {savingRack
+                  ? "Saving Location..."
+                  : "Save Rack Location"}
+              </button>
+            </div>
+          </div>
+        )}
 
         {selected && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
