@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { ensureVariantRackStorage } from "@/lib/variant-rack-storage";
 import {
   buildSmartStockAllocation,
   getSmartStockPackSize,
@@ -142,6 +143,7 @@ export async function GET(request: Request) {
 
   try {
     await ensureOrderLocationStorage();
+    await ensureVariantRackStorage();
 
     const { searchParams } = new URL(request.url);
 
