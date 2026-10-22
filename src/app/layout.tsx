@@ -30,6 +30,11 @@ export const metadata: Metadata = {
   creator: "AS Fashions",
   publisher: "AS Fashions",
   category: "shopping",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
   keywords: [
     "AS Fashions",
     "AS Fashions Online",
