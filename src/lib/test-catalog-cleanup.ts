@@ -3,7 +3,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 
 const CLEANUP_MARKER =
-  "catalog_test_cleanup_2026_10_22_v1";
+  "catalog_test_cleanup_2026_10_22_v2";
 
 const TEST_ONLY_PRODUCT_NAMES = [
   "STEP 11 Final Variant SKU Test",
