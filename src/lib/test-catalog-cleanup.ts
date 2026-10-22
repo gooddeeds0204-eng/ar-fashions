@@ -7,6 +7,9 @@ const CLEANUP_MARKER =
 
 const TEST_ONLY_PRODUCT_NAMES = [
   "STEP 11 Final Variant SKU Test",
+  "Icy Aurora Tulle Dress",
+  "Baggy Jeans",
+  "Premium Rayon Kurti",
 ] as const;
 
 let cleanupPromise: Promise<void> | null =
