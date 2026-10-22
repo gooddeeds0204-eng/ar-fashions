@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { publicProductMedia } from "@/lib/product-media-color";
 import { ensureProductSoftDeleteStorage } from "@/lib/product-soft-delete-storage";
+import { ensureTestCatalogCleanup } from "@/lib/test-catalog-cleanup";
 import {
   ensureProductKidsSizeMeasurementStorage,
   getProductKidsSizeMeasurements,
@@ -89,6 +90,7 @@ function publicVariant(
 export async function GET() {
   try {
     await ensureProductSoftDeleteStorage();
+    await ensureTestCatalogCleanup();
 
     const access = await getSalesAccess();
 
