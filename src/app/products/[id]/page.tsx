@@ -825,6 +825,20 @@ export default function ProductDetailPage() {
     [sizeGuides],
   );
 
+  const selectedProductSizeGuide =
+    useMemo(
+      () =>
+        productSizeGuides.find(
+          (guide) =>
+            guide.id ===
+            selectedSizeId,
+        ) ?? null,
+      [
+        productSizeGuides,
+        selectedSizeId,
+      ],
+    );
+
   const selectedVariant = useMemo(() => {
     if (!product) return null;
 
@@ -1834,7 +1848,7 @@ export default function ProductDetailPage() {
                   }
                   className="rounded-full border border-[#D9C29A] bg-[#FFFDF9] px-3 py-1.5 text-[10px] font-black text-[#6B5435]"
                 >
-                  Size Guide
+                  Fit & Size Guide
                 </button>
               )}
             </div>
@@ -1908,6 +1922,53 @@ export default function ProductDetailPage() {
                 );
               })}
             </div>
+
+            {selectedProductSizeGuide ? (
+              <div className="mt-3 rounded-xl border border-[#E4D7C4] bg-[#FFFDF9] p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#7C3A45]">
+                    Selected Size Measurements
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSizeGuideOpen(true)
+                    }
+                    className="text-[9px] font-black text-[#031B14] underline decoration-[#D4AF37] underline-offset-4"
+                  >
+                    View all
+                  </button>
+                </div>
+
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {GARMENT_MEASUREMENT_FIELDS
+                    .map((field) => [
+                      field,
+                      selectedProductSizeGuide[
+                        field.key as keyof SizeGuide
+                      ] as string | null | undefined,
+                    ] as const)
+                    .filter(([, value]) =>
+                      Boolean(value),
+                    )
+                    .slice(0, 4)
+                    .map(([field, value]) => (
+                      <span
+                        key={field.key}
+                        className="rounded-full bg-[#F4EBDD] px-2.5 py-1.5 text-[9px] font-bold text-[#6B5435]"
+                      >
+                        {field.shortLabel}:{" "}
+                        <strong className="text-[#211C18]">
+                          {measurementBothUnits(
+                            value,
+                          )}
+                        </strong>
+                      </span>
+                    ))}
+                </div>
+              </div>
+            ) : null}
           </div>
 
           {/* STOCK */}
