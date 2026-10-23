@@ -17,6 +17,8 @@ import {
 } from "@/lib/garment-measurements";
 import {
   SKU_PRODUCT_TYPES,
+  KIDS_SKU_AGE_OPTIONS,
+  getKidsAgeSkuCode,
   buildProductSku,
   buildVariantSku,
   formatDesignNumber,
@@ -195,6 +197,7 @@ export default function ProductsPage() {
     >
   >({});
 
+  const [kidsAgeBySizeId, setKidsAgeBySizeId] = useState<Record<string, string>>({});
   const [variants, setVariants] = useState<Variant[]>([]);
   const [media, setMedia] = useState<ProductMedia[]>([]);
   const [
@@ -1440,6 +1443,7 @@ export default function ProductsPage() {
     setKidsProductMeasurements(
       {},
     );
+    setKidsAgeBySizeId({});
     setShowCreateColor(false);
     setShowCreateSize(false);
     setSelectedColors([]);
@@ -1620,6 +1624,14 @@ export default function ProductsPage() {
       return;
     }
 
+    if (isKidsProduct && variants.some((variant) => {
+      const size = sizes.find((item) => item.id === variant.sizeId);
+      return !getKidsAgeSkuCode(kidsAgeBySizeId[variant.sizeId], size?.ageGuide, size?.name);
+    })) {
+      alert("Select age (Years/Months) for every kids garment size before saving.");
+      return;
+    }
+
     if (
       variants.length === 0
     ) {
@@ -1684,6 +1696,11 @@ export default function ProductsPage() {
             selectedKidsSizeIds.map(
               (sizeId) => ({
                 sizeId,
+                ...(isKidsProduct ? { ageGuide: getKidsAgeSkuCode(
+                  kidsAgeBySizeId[sizeId],
+                  sizes.find((size) => size.id === sizeId)?.ageGuide,
+                  sizes.find((size) => size.id === sizeId)?.name,
+                ) } : {}),
                 ...mergeGarmentMeasurements(
                   kidsProductMeasurements[
                     sizeId
@@ -1941,7 +1958,7 @@ export default function ProductsPage() {
                   </div>
 
                   <span className="rounded-full border border-emerald-400/20 bg-slate-950 px-3 py-1.5 font-mono text-[10px] font-black text-emerald-300">
-                    MAIN-TYPE-DESIGN-COLOR-SIZE
+                    MAIN-TYPE-DESIGN-COLOR-{isKidsProduct ? "AGE" : "SIZE"}
                   </span>
                 </div>
 
@@ -2065,7 +2082,7 @@ export default function ProductsPage() {
                   </p>
 
                   <p className="mt-2 text-[10px] leading-5 text-slate-500">
-                    Same design lo colours/sizes maarina product family code maaradu. Variant SKU ki colour + size automatic ga append avutayi.
+                    Same design lo colours/sizes maarina family code maaradu. Kids variant SKU ki colour + Years/Months age; adult SKU ki colour + size add avutayi.
                   </p>
                 </div>
               </div>
@@ -2996,7 +3013,7 @@ export default function ProductsPage() {
                 <h2 className="mt-1 text-xl font-bold">
                   {gender === "WOMEN"
                     ? "Women — exact measurements by size"
-                    : "Girl Kids — exact measurements by age/size"}
+                    : "Kids — exact measurements by age/size"}
                 </h2>
 
                 <p className="mt-1 text-sm leading-6 text-slate-500">
@@ -3044,6 +3061,30 @@ export default function ProductsPage() {
                             inches
                           </span>
                         </div>
+
+                        {isKidsProduct && (
+                          <label className="mb-4 block max-w-sm">
+                            <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-emerald-300">Age for SKU (required)</span>
+                            <select
+                              value={getKidsAgeSkuCode(
+                                kidsAgeBySizeId[sizeId],
+                                size?.ageGuide,
+                                size?.name,
+                              )}
+                              onChange={(event) => setKidsAgeBySizeId((current) => ({
+                                ...current,
+                                [sizeId]: event.target.value,
+                              }))}
+                              className="w-full rounded-xl border border-emerald-400/30 bg-slate-900 px-3 py-3 text-sm text-white"
+                            >
+                              <option value="">Select age range</option>
+                              {KIDS_SKU_AGE_OPTIONS.map((age) => (
+                                <option key={age} value={age}>{age}</option>
+                              ))}
+                            </select>
+                            <span className="mt-1 block text-[10px] text-slate-500">Product-specific age; garment size stays unchanged.</span>
+                          </label>
+                        )}
 
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                           {GARMENT_MEASUREMENT_FIELDS.map(
@@ -3240,17 +3281,24 @@ export default function ProductsPage() {
 
                         <td className="px-4 py-3">
                           <span className="inline-flex min-w-[190px] items-center rounded-xl border border-emerald-400/20 bg-emerald-400/[0.06] px-3 py-2 font-mono text-[11px] font-bold text-emerald-300">
-                            {sku
-                              ? buildVariantSku(
-                                  sku,
-                                  getColorName(
-                                    variant.colorId,
-                                  ),
-                                  getRawSizeName(
-                                    variant.sizeId,
-                                  ),
-                                )
-                              : "Complete SKU setup"}
+                            {sku ? (() => {
+                              const size = sizes.find((item) => item.id === variant.sizeId);
+                              const age = isKidsProduct ? getKidsAgeSkuCode(
+                                kidsAgeBySizeId[variant.sizeId], size?.ageGuide, size?.name,
+                              ) : undefined;
+                              if (isKidsProduct && !age) return "Select age for SKU";
+                              const sameAgeCount = isKidsProduct ? variants.filter((item) => {
+                                if (item.colorId !== variant.colorId) return false;
+                                const comparedSize = sizes.find((s) => s.id === item.sizeId);
+                                return getKidsAgeSkuCode(
+                                  kidsAgeBySizeId[item.sizeId], comparedSize?.ageGuide, comparedSize?.name,
+                                ) === age;
+                              }).length : 0;
+                              return buildVariantSku(
+                                sku, getColorName(variant.colorId), getRawSizeName(variant.sizeId),
+                                age, sameAgeCount > 1,
+                              );
+                            })() : "Complete SKU setup"}
                           </span>
                         </td>
                       </tr>
