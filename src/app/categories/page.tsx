@@ -7,7 +7,6 @@ import {
 } from "react";
 import {
   useRouter,
-  useSearchParams,
 } from "next/navigation";
 import BrandLogo from "@/components/BrandLogo";
 
@@ -82,13 +81,16 @@ export default function CategoriesPage() {
   const router =
     useRouter();
 
-  const searchParams =
-    useSearchParams();
-
-  const requestedTab =
-    searchParams.get(
-      "tab",
-    );
+  const [
+    requestedTab,
+    setRequestedTab,
+  ] = useState<
+    | "women"
+    | "men"
+    | "girl-kids"
+    | "boy-kids"
+    | null
+  >(null);
 
   const [
     categories,
@@ -105,19 +107,37 @@ export default function CategoriesPage() {
     | "men"
     | "girl-kids"
     | "boy-kids"
-  >(
-    requestedTab ===
-      "men" ||
-      requestedTab ===
-        "girl-kids" ||
-      requestedTab ===
-        "boy-kids"
-      ? requestedTab
-      : "women",
-  );
+  >("women");
 
   const [loading, setLoading] =
     useState(true);
+
+  useEffect(() => {
+    if (
+      typeof window === "undefined"
+    ) {
+      return;
+    }
+
+    const tab =
+      new URLSearchParams(
+        window.location.search,
+      ).get("tab");
+
+    if (
+      tab === "women" ||
+      tab === "men" ||
+      tab === "girl-kids" ||
+      tab === "boy-kids"
+    ) {
+      setRequestedTab(
+        tab,
+      );
+      setActiveTab(
+        tab,
+      );
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled =
