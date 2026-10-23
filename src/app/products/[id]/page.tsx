@@ -9,6 +9,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ensureUserSession } from "@/lib/user-session-init";
 import BrandLogo from "@/components/BrandLogo";
+import {
+  GARMENT_MEASUREMENT_FIELDS,
+  type GarmentMeasurementField,
+} from "@/lib/garment-measurements";
 
 type Media = {
   id: string;
@@ -49,7 +53,14 @@ type SizeGuide = {
   chestIn?: string | null;
   waistIn?: string | null;
   hipIn?: string | null;
+  shoulderIn?: string | null;
+  armholeIn?: string | null;
+  sleeveLengthIn?: string | null;
+  topLengthIn?: string | null;
   garmentLengthIn?: string | null;
+  bottomWaistMinIn?: string | null;
+  bottomWaistMaxIn?: string | null;
+  bottomLengthIn?: string | null;
   fitNote?: string | null;
 };
 
@@ -79,7 +90,15 @@ type Product = {
     sizeId: string;
     chestIn?: string | null;
     waistIn?: string | null;
+    hipIn?: string | null;
+    shoulderIn?: string | null;
+    armholeIn?: string | null;
+    sleeveLengthIn?: string | null;
+    topLengthIn?: string | null;
     garmentLengthIn?: string | null;
+    bottomWaistMinIn?: string | null;
+    bottomWaistMaxIn?: string | null;
+    bottomLengthIn?: string | null;
   }>;
 };
 
@@ -732,7 +751,37 @@ export default function ProductDetailPage() {
             globalGuide?.waistIn ||
             null,
           hipIn:
-            globalGuide?.hipIn ??
+            productMeasurement
+              ?.hipIn ||
+            globalGuide?.hipIn ||
+            null,
+          shoulderIn:
+            productMeasurement
+              ?.shoulderIn ||
+            null,
+          armholeIn:
+            productMeasurement
+              ?.armholeIn ||
+            null,
+          sleeveLengthIn:
+            productMeasurement
+              ?.sleeveLengthIn ||
+            null,
+          topLengthIn:
+            productMeasurement
+              ?.topLengthIn ||
+            null,
+          bottomWaistMinIn:
+            productMeasurement
+              ?.bottomWaistMinIn ||
+            null,
+          bottomWaistMaxIn:
+            productMeasurement
+              ?.bottomWaistMaxIn ||
+            null,
+          bottomLengthIn:
+            productMeasurement
+              ?.bottomLengthIn ||
             null,
           garmentLengthIn:
             productMeasurement
@@ -753,7 +802,14 @@ export default function ProductDetailPage() {
           guide.chestIn,
           guide.waistIn,
           guide.hipIn,
+          guide.shoulderIn,
+          guide.armholeIn,
+          guide.sleeveLengthIn,
+          guide.topLengthIn,
           guide.garmentLengthIn,
+          guide.bottomWaistMinIn,
+          guide.bottomWaistMaxIn,
+          guide.bottomLengthIn,
           guide.fitNote,
         ].some(Boolean),
       );
@@ -2752,13 +2808,17 @@ export default function ProductDetailPage() {
             <div className="flex items-start justify-between gap-4 border-b border-[#E4D7C4] px-5 py-5 sm:px-6">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6B5435]">
-                  Kids Fit Guide
+                  {product.gender === "WOMEN"
+                    ? "Women Fit Guide"
+                    : "Girl Kids Fit Guide"}
                 </p>
                 <h2 className="mt-1 text-xl font-black text-[#211C18]">
                   Choose by measurements
                 </h2>
                 <p className="mt-1 max-w-xl text-xs leading-5 text-[#7B7066]">
-                  Age is only a guide. Product measurements are shown in both inches and centimetres so you can compare before choosing a size.
+                  {product.gender === "WOMEN"
+                    ? "Choose using exact garment measurements. All available fields are shown in both inches and centimetres."
+                    : "Age is only a guide. Choose using actual garment measurements shown in both inches and centimetres."}
                 </p>
               </div>
 
@@ -2773,64 +2833,116 @@ export default function ProductDetailPage() {
               </button>
             </div>
 
-            <div className="max-h-[65vh] overflow-auto">
-              <table className="min-w-[760px] w-full text-left text-xs">
-                <thead className="sticky top-0 bg-[#031B14] text-[#FFFDF9]">
-                  <tr>
-                    <th className="px-4 py-3">Size</th>
-                    <th className="px-4 py-3">Age Guide</th>
-                    <th className="px-4 py-3">Height</th>
-                    <th className="px-4 py-3">Chest</th>
-                    <th className="px-4 py-3">Waist</th>
-                    <th className="px-4 py-3">Hip</th>
-                    <th className="px-4 py-3">Garment Length</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E4D7C4]">
-                  {productSizeGuides.map(
-                    (guide) => (
-                      <tr key={guide.id}>
-                        <td className="px-4 py-4 font-black">
-                          {guide.name}
-                        </td>
-                        <td className="px-4 py-4">
-                          {guide.ageGuide ?? "—"}
-                        </td>
-                        <td className="px-4 py-4">
-                          {guide.heightCm
-                            ? `${guide.heightCm} cm`
-                            : guide.inches
-                              ? guide.inches
-                              : "—"}
-                        </td>
-                        <td className="px-4 py-4 font-semibold">
-                          {measurementBothUnits(
-                            guide.chestIn,
-                          )}
-                        </td>
-                        <td className="px-4 py-4 font-semibold">
-                          {measurementBothUnits(
-                            guide.waistIn,
-                          )}
-                        </td>
-                        <td className="px-4 py-4">
-                          {measurementBothUnits(
-                            guide.hipIn,
-                          )}
-                        </td>
-                        <td className="px-4 py-4 font-semibold">
-                          {measurementBothUnits(
-                            guide.garmentLengthIn,
-                          )}
-                        </td>
-                      </tr>
-                    ),
-                  )}
-                </tbody>
-              </table>
+            <div className="max-h-[65vh] overflow-auto bg-[#FAF7F0] p-4 sm:p-5">
+              <div className="mb-4 rounded-2xl border border-[#E4D7C4] bg-white p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#7C3A45]">
+                  How to measure
+                </p>
+                <p className="mt-1 text-xs leading-5 text-[#6B5435]">
+                  Chest, Waist and Hip are shown as full garment circumference. Compare with a well-fitting garment at home. Measurements entered in inches are automatically shown in centimetres too.
+                </p>
+              </div>
 
-              <div className="border-t border-[#E4D7C4] bg-[#FAF7F0] px-5 py-3 text-[10px] font-semibold leading-5 text-[#7B7066] sm:px-6">
-                Product measurements entered in inches are automatically converted using 1 inch = 2.54 cm.
+              <div className="space-y-4">
+                {productSizeGuides.map((guide) => {
+                  const measurementEntries =
+                    GARMENT_MEASUREMENT_FIELDS
+                      .map((field) => [
+                        field,
+                        guide[
+                          field.key as keyof SizeGuide
+                        ] as string | null | undefined,
+                      ] as const)
+                      .filter(([, value]) =>
+                        Boolean(value),
+                      );
+
+                  const topEntries =
+                    measurementEntries.filter(
+                      ([field]) =>
+                        field.group === "TOP",
+                    );
+                  const bottomEntries =
+                    measurementEntries.filter(
+                      ([field]) =>
+                        field.group === "BOTTOM",
+                    );
+                  const generalEntries =
+                    measurementEntries.filter(
+                      ([field]) =>
+                        field.group === "GENERAL",
+                    );
+
+                  const renderGroup = (
+                    title: string,
+                    entries: typeof measurementEntries,
+                  ) =>
+                    entries.length > 0 ? (
+                      <div>
+                        <p className="mb-2 text-[9px] font-black uppercase tracking-[0.18em] text-[#7C3A45]">
+                          {title}
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                          {entries.map(
+                            ([field, value]) => (
+                              <div
+                                key={field.key}
+                                className="rounded-xl border border-[#E4D7C4] bg-[#FFFDF9] p-3"
+                              >
+                                <p className="text-[9px] font-bold uppercase tracking-wide text-[#9A8D80]">
+                                  {field.shortLabel}
+                                </p>
+                                <p className="mt-1 text-sm font-black text-[#211C18]">
+                                  {measurementBothUnits(
+                                    value,
+                                  )}
+                                </p>
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      </div>
+                    ) : null;
+
+                  return (
+                    <div
+                      key={guide.id}
+                      className="rounded-2xl border border-[#E4D7C4] bg-white p-4 shadow-sm"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#EFE6D8] pb-3">
+                        <div>
+                          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#9A8D80]">
+                            {product.gender === "WOMEN"
+                              ? "Women Size"
+                              : "Age / Size"}
+                          </p>
+                          <p className="mt-1 text-xl font-black text-[#031B14]">
+                            {guide.name}
+                          </p>
+                        </div>
+
+                        <div className="text-right text-[10px] font-semibold text-[#6B5435]">
+                          {guide.ageGuide ? (
+                            <p>Age: {guide.ageGuide}</p>
+                          ) : null}
+                          {guide.heightCm ? (
+                            <p>Height: {guide.heightCm} cm</p>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="mt-4 space-y-4">
+                        {renderGroup("Top / Upper", topEntries)}
+                        {renderGroup("General Fit", generalEntries)}
+                        {renderGroup("Bottom / Lehenga / Pant", bottomEntries)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-3 text-[10px] font-semibold leading-5 text-[#7B7066]">
+                1 inch = 2.54 cm. For best fit, compare these garment measurements with a similar garment that already fits well.
               </div>
             </div>
 
