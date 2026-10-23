@@ -8,6 +8,7 @@ import {
   type GarmentMeasurementValues,
 } from "@/lib/garment-measurements";
 import { uploadAdminProductMedia } from "@/lib/admin-client-upload";
+import { KIDS_SKU_AGE_OPTIONS, getKidsAgeSkuCode } from "@/lib/sku-system";
 import ProductMediaUploadComposer from "@/components/admin/ProductMediaUploadComposer";
 import ExistingProductImageAdjuster from "@/components/admin/ExistingProductImageAdjuster";
 
@@ -27,6 +28,7 @@ type Size = {
   id: string;
   name: string;
   category?: string | null;
+  ageGuide?: string | null;
 };
 
 type Variant = {
@@ -91,6 +93,7 @@ type Product = {
   kidsSizeMeasurements?: Array<{
     productId: string;
     sizeId: string;
+    ageGuide?: string | null;
     chestIn?: string | null;
     waistIn?: string | null;
     garmentLengthIn?: string | null;
@@ -139,6 +142,7 @@ export default function EditProductPage() {
     >
   >({});
 
+  const [kidsAgeBySizeId, setKidsAgeBySizeId] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingProduct, setDeletingProduct] =
@@ -194,6 +198,12 @@ export default function EditProductPage() {
         await sizesResponse.json();
 
       setProduct(productData);
+
+      setKidsAgeBySizeId(Object.fromEntries(
+        (productData.kidsSizeMeasurements ?? []).filter(
+          (row: { ageGuide?: string | null }) => Boolean(row.ageGuide),
+        ).map((row: { sizeId: string; ageGuide: string }) => [row.sizeId, row.ageGuide]),
+      ));
 
       setKidsProductMeasurements(
         Object.fromEntries(
@@ -1094,6 +1104,11 @@ export default function EditProductPage() {
               selectedKidsSizeIds.map(
                 (sizeId) => ({
                   sizeId,
+                  ...(product.gender === "KIDS" ? { ageGuide: getKidsAgeSkuCode(
+                    kidsAgeBySizeId[sizeId],
+                    sizes.find((size) => size.id === sizeId)?.ageGuide,
+                    sizes.find((size) => size.id === sizeId)?.name,
+                  ) } : {}),
                   ...mergeGarmentMeasurements(
                     kidsProductMeasurements[
                       sizeId
@@ -1757,7 +1772,7 @@ export default function EditProductPage() {
               <h2 className="mt-1 text-xl font-bold">
                 {product.gender === "WOMEN"
                   ? "Women — exact measurements by size"
-                  : "Girl Kids — exact measurements by age/size"}
+                  : "Kids — exact measurements by age/size"}
               </h2>
               <p className="mt-1 text-sm leading-6 text-slate-500">
                 Actual garment measurements inches lo update cheyyandi. Chest/Waist full circumference ga enter cheyyandi. Empty fields customer ki hide avutayi.
@@ -1798,6 +1813,26 @@ export default function EditProductPage() {
                         inches
                       </span>
                     </div>
+
+                    {product.gender === "KIDS" && (
+                      <label className="mb-4 block max-w-sm">
+                        <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-emerald-300">Age for new variant SKU</span>
+                        <select
+                          value={getKidsAgeSkuCode(kidsAgeBySizeId[sizeId], size?.ageGuide, size?.name)}
+                          onChange={(event) => setKidsAgeBySizeId((current) => ({
+                            ...current,
+                            [sizeId]: event.target.value,
+                          }))}
+                          className="w-full rounded-xl border border-emerald-400/30 bg-slate-900 px-3 py-3 text-sm text-white"
+                        >
+                          <option value="">Select age range</option>
+                          {KIDS_SKU_AGE_OPTIONS.map((age) => (
+                            <option key={age} value={age}>{age}</option>
+                          ))}
+                        </select>
+                        <span className="mt-1 block text-[10px] text-slate-500">Existing SKU codes stay unchanged. Only newly added variants use this age.</span>
+                      </label>
+                    )}
 
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                       {GARMENT_MEASUREMENT_FIELDS.map((field) => (
