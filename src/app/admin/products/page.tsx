@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { uploadAdminProductMedia } from "@/lib/admin-client-upload";
+import ExistingProductImageAdjuster from "@/components/admin/ExistingProductImageAdjuster";
 import {
   KIDS_SIZE_PRESETS,
   KIDS_SIZE_REFERENCE_NOTE,
@@ -196,6 +197,12 @@ export default function ProductsPage() {
 
   const [variants, setVariants] = useState<Variant[]>([]);
   const [media, setMedia] = useState<ProductMedia[]>([]);
+  const [
+    adjustingMedia,
+    setAdjustingMedia,
+  ] = useState<ProductMedia | null>(
+    null,
+  );
   const [mediaUrl, setMediaUrl] = useState("");
   const [mediaType, setMediaType] = useState<"IMAGE" | "VIDEO">("IMAGE");
   const [mediaAltText, setMediaAltText] = useState("");
@@ -3492,6 +3499,20 @@ export default function ProductsPage() {
                         #{index + 1}
                       </div>
 
+                      {item.type === "IMAGE" ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAdjustingMedia(
+                              item,
+                            )
+                          }
+                          className="mt-2 w-full rounded-lg border border-emerald-400/25 bg-emerald-400/10 py-2 text-xs font-bold text-emerald-300 transition hover:bg-emerald-400/15"
+                        >
+                          ✂ Adjust Image
+                        </button>
+                      ) : null}
+
                       <button
                         type="button"
                         onClick={() =>
@@ -3627,6 +3648,46 @@ export default function ProductsPage() {
         </div>
 
       </div>
+
+      {adjustingMedia &&
+      adjustingMedia.type === "IMAGE" ? (
+        <ExistingProductImageAdjuster
+          mediaId={null}
+          imageUrl={adjustingMedia.url}
+          productName={
+            name.trim() ||
+            "AS Fashions Product"
+          }
+          onCancel={() =>
+            setAdjustingMedia(null)
+          }
+          onSaved={(updatedMedia) => {
+            setMedia((current) =>
+              current.map(
+                (item) =>
+                  item.id ===
+                  adjustingMedia.id
+                    ? {
+                        ...item,
+                        url:
+                          updatedMedia.url,
+                        thumbnailUrl:
+                          updatedMedia.thumbnailUrl ??
+                          null,
+                        altText:
+                          updatedMedia.altText ??
+                          item.altText,
+                      }
+                    : item,
+              ),
+            );
+
+            setAdjustingMedia(
+              null,
+            );
+          }}
+        />
+      ) : null}
     </main>
   );
 }
