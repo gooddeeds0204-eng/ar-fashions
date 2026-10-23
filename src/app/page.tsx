@@ -3768,31 +3768,67 @@ export default function Home() {
                   </h3>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    router.push(
-                      `/categories?tab=${homeCategoryExperience.activeItem?.key}`,
-                    )
-                  }
-                  className="text-[8px] font-black uppercase tracking-[0.1em] text-[#7C3A45]"
-                >
-                  View all →
-                </button>
+                <div className="flex shrink-0 items-center gap-2">
+                  {homeCategoryExperience.activeItem.subcategories.length > 4 ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        aria-label="Slide subcategories left"
+                        onClick={() => {
+                          const slider = document.getElementById("home-subcategories-slider");
+                          slider?.scrollBy({
+                            left: -Math.max(180, slider.clientWidth * 0.7),
+                            behavior: "smooth",
+                          });
+                        }}
+                        className="grid h-7 w-7 place-items-center rounded-full border border-[#E1D3C0] bg-white/75 text-sm text-[#031B14] transition hover:bg-white active:scale-95"
+                      >
+                        ←
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Slide subcategories right"
+                        onClick={() => {
+                          const slider = document.getElementById("home-subcategories-slider");
+                          slider?.scrollBy({
+                            left: Math.max(180, slider.clientWidth * 0.7),
+                            behavior: "smooth",
+                          });
+                        }}
+                        className="grid h-7 w-7 place-items-center rounded-full border border-[#E1D3C0] bg-white/75 text-sm text-[#031B14] transition hover:bg-white active:scale-95"
+                      >
+                        →
+                      </button>
+                    </div>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(
+                        `/categories?tab=${homeCategoryExperience.activeItem?.key}`,
+                      )
+                    }
+                    className="text-[8px] font-black uppercase tracking-[0.1em] text-[#7C3A45]"
+                  >
+                    View all →
+                  </button>
+                </div>
               </div>
 
               {homeCategoryExperience
                 .activeItem
                 .subcategories
                 .length > 0 ? (
-                <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-6 sm:overflow-visible">
+                <div
+                  id="home-subcategories-slider"
+                  key={activeHomeMainKey}
+                  aria-label={`${homeCategoryExperience.activeItem.name} subcategories`}
+                  tabIndex={0}
+                  className="flex gap-3 overflow-x-auto overscroll-x-contain scroll-smooth snap-x snap-proximity pb-2 [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
+                >
                   {homeCategoryExperience
                     .activeItem
                     .subcategories
-                    .slice(
-                      0,
-                      6,
-                    )
                     .map(
                       (
                         subcategory,
@@ -3808,7 +3844,7 @@ export default function Home() {
                               subcategory.name,
                             )
                           }
-                          className="group w-[82px] shrink-0 text-center sm:w-auto"
+                          className="group w-[82px] shrink-0 snap-start text-center sm:w-[15%]"
                         >
                           <div className="mx-auto aspect-square w-full overflow-hidden rounded-full border border-[#E1D3C0] bg-[#F1E6D8]">
                             {subcategory.imageUrl ? (
