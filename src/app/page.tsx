@@ -1425,6 +1425,53 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      menuCategories.length === 0
+    ) {
+      return;
+    }
+
+    const params =
+      new URLSearchParams(
+        window.location.search,
+      );
+
+    const categoryId =
+      params.get(
+        "categoryId",
+      );
+
+    if (!categoryId) {
+      return;
+    }
+
+    const categoryName =
+      params.get(
+        "categoryName",
+      ) ??
+      "Selected Category";
+
+    setSelectedMenuCategoryIds([
+      categoryId,
+    ]);
+    setSelectedMenuCategoryName(
+      categoryName,
+    );
+    setCategory("ALL");
+
+    window.setTimeout(() => {
+      document
+        .getElementById(
+          "shop-categories",
+        )
+        ?.scrollIntoView({
+          behavior: "smooth",
+        });
+    }, 150);
+  }, [menuCategories]);
+
+  useEffect(() => {
     async function loadSiteSettings() {
       try {
         const response =
@@ -3613,13 +3660,13 @@ export default function Home() {
 
       <CampaignOfferSection />
 
-      {/* MAIN CATEGORY + SUBCATEGORY ROWS */}
+      {/* CLEAN HOME CATEGORY DISCOVERY */}
       <section
         id="shop-categories"
-        className="border-b border-[#E8DED0] bg-[#FFF8EE]"
+        className="border-b border-[#E8DED0] bg-[#FFF9F1]"
       >
-        <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
-          <div className="mb-4 flex items-end justify-between gap-3">
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+          <div className="flex items-end justify-between gap-3">
             <div>
               <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#7C3A45]">
                 Shop by category
@@ -3632,222 +3679,175 @@ export default function Home() {
 
             <button
               type="button"
-              onClick={
-                clearMenuCategory
+              onClick={() =>
+                router.push(
+                  `/categories?tab=${activeHomeMainKey}`,
+                )
               }
               className="shrink-0 text-[8px] font-black uppercase tracking-[0.12em] text-[#7B7066]"
             >
-              View all
+              View all →
             </button>
           </div>
 
-          <div className="space-y-2.5 sm:space-y-3">
+          <div className="mt-5 grid grid-cols-4 gap-2.5 sm:gap-4">
             {homeCategoryExperience.mainItems.map(
               (item) => {
                 const selected =
-                  selectedMenuCategoryName ===
-                  item.name;
+                  item.key ===
+                  activeHomeMainKey;
 
                 return (
-                  <div
-                    key={
-                      item.key
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() =>
+                      setActiveHomeMainKey(
+                        item.key,
+                      )
                     }
-                    className="grid grid-cols-[92px_minmax(0,1fr)] overflow-hidden rounded-[1.05rem] border border-[#E6DACB] bg-[#FFFDF9] shadow-[0_7px_24px_rgba(72,52,36,0.045)] sm:grid-cols-[118px_minmax(0,1fr)]"
+                    className="group min-w-0 text-center"
                   >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveHomeMainKey(
-                          item.key,
-                        );
-
-                        if (
-                          item.ids.length >
-                          0
-                        ) {
-                          applyMenuCategory(
-                            item.ids,
-                            item.name,
-                          );
-                        }
-                      }}
-                      className={`group border-r border-[#E8DED0] p-2 text-center transition-colors sm:p-3 ${
+                    <div
+                      className={`relative mx-auto aspect-[4/5] w-full overflow-hidden rounded-t-[999px] rounded-b-[0.9rem] border bg-[#EADBC7] transition-all duration-200 ${
                         selected
-                          ? "bg-[#F8E9E8]"
-                          : "bg-[#FFF8EE]"
+                          ? "border-[#031B14] ring-2 ring-[#031B14]/10"
+                          : "border-[#E1D3C0]"
                       }`}
                     >
-                      <div
-                        className={`relative mx-auto aspect-[4/5] w-full overflow-hidden rounded-t-[999px] rounded-b-[0.7rem] border bg-[#EADBC7] transition ${
-                          selected
-                            ? "border-[#7C3A45]"
-                            : "border-[#E1D3C0]"
-                        }`}
-                      >
-                        {item.imageUrl ? (
-                          <img
-                            src={
-                              item.imageUrl
-                            }
-                            alt={
-                              item.name
-                            }
-                            loading="lazy"
-                            decoding="async"
-                            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#E9D9C4,#CDBB9F)]">
-                            <span className="font-serif text-xl text-[#6D5431] sm:text-2xl">
-                              AS
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      <p
-                        className={`mt-1.5 truncate text-[8px] font-black uppercase tracking-[0.05em] sm:text-[9px] ${
-                          selected
-                            ? "text-[#7C3A45]"
-                            : "text-[#211C18]"
-                        }`}
-                      >
-                        {
-                          item.name
-                        }
-                      </p>
-                    </button>
-
-                    <div className="relative min-w-0 py-2 sm:py-3">
-                      {item.subcategories
-                        .length > 0 ? (
-                        <>
-                          <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-7 bg-gradient-to-l from-[#FFFDF9] via-[#FFFDF9]/72 to-transparent sm:w-10" />
-
-                          <div className="flex h-full snap-x snap-mandatory items-center gap-2 overflow-x-auto px-2.5 pr-8 [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden sm:gap-3 sm:px-4 sm:pr-12">
-                            {item.subcategories.map(
-                              (
-                                subcategory,
-                              ) => {
-                                const subSelected =
-                                  selectedMenuCategoryName ===
-                                  subcategory.name;
-
-                                return (
-                                  <button
-                                    key={
-                                      subcategory.key
-                                    }
-                                    type="button"
-                                    onClick={() =>
-                                      applyMenuCategory(
-                                        subcategory.ids,
-                                        subcategory.name,
-                                      )
-                                    }
-                                    className="group w-[68px] shrink-0 snap-start text-center sm:w-[86px]"
-                                  >
-                                    <div
-                                      className={`mx-auto aspect-square w-full overflow-hidden rounded-full border bg-[#F1E6D8] transition ${
-                                        subSelected
-                                          ? "border-[#7C3A45] ring-2 ring-[#7C3A45]/10"
-                                          : "border-[#E1D3C0]"
-                                      }`}
-                                    >
-                                      {subcategory.imageUrl ? (
-                                        <img
-                                          src={
-                                            subcategory.imageUrl
-                                          }
-                                          alt={
-                                            subcategory.name
-                                          }
-                                          loading="lazy"
-                                          decoding="async"
-                                          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]"
-                                        />
-                                      ) : (
-                                        <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#F2E7D9,#D8C5AE)]">
-                                          <span className="font-serif text-base text-[#6D5431]">
-                                            AS
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    <p
-                                      className={`mt-1.5 line-clamp-2 min-h-6 text-[6.5px] font-black uppercase leading-3 tracking-[0.035em] sm:text-[7.5px] ${
-                                        subSelected
-                                          ? "text-[#7C3A45]"
-                                          : "text-[#3A322C]"
-                                      }`}
-                                    >
-                                      {
-                                        subcategory.name
-                                      }
-                                    </p>
-                                  </button>
-                                );
-                              },
-                            )}
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                applyMenuCategory(
-                                  item.ids,
-                                  item.name,
-                                )
-                              }
-                              className="mr-1 flex w-[58px] shrink-0 snap-start flex-col items-center justify-center text-center sm:w-[70px]"
-                              aria-label={`Shop all ${item.name}`}
-                            >
-                              <span className="grid h-10 w-10 place-items-center rounded-full border border-[#D9C9B7] bg-white text-base text-[#7C3A45] shadow-sm sm:h-12 sm:w-12">
-                                →
-                              </span>
-
-                              <span className="mt-1.5 text-[6px] font-black uppercase tracking-[0.08em] text-[#7C3A45] sm:text-[7px]">
-                                Shop all
-                              </span>
-                            </button>
-                          </div>
-                        </>
+                      {item.imageUrl ? (
+                        <img
+                          src={
+                            item.imageUrl
+                          }
+                          alt={
+                            item.name
+                          }
+                          loading="lazy"
+                          decoding="async"
+                          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]"
+                        />
                       ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveHomeMainKey(
-                              item.key,
-                            );
-
-                            if (
-                              item.ids.length >
-                              0
-                            ) {
-                              applyMenuCategory(
-                                item.ids,
-                                item.name,
-                              );
-                            }
-                          }}
-                          className="flex h-full min-h-[92px] w-full items-center justify-center px-4 text-center sm:min-h-[118px]"
-                        >
-                          <span className="text-[9px] font-semibold leading-4 text-[#8A7E72]">
-                            Subcategories add chesaka ikkada automatic ga side-by-side kanipistayi.
+                        <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#F2E7D9,#D8C5AE)]">
+                          <span className="font-serif text-xl text-[#6D5431]">
+                            AS
                           </span>
-                        </button>
+                        </div>
                       )}
                     </div>
-                  </div>
+
+                    <p
+                      className={`mt-2 truncate text-[8px] font-black uppercase tracking-[0.045em] sm:text-[10px] ${
+                        selected
+                          ? "text-[#031B14]"
+                          : "text-[#5B5148]"
+                      }`}
+                    >
+                      {item.name}
+                    </p>
+                  </button>
                 );
               },
             )}
           </div>
 
-          <p className="mt-3 text-center text-[7px] font-semibold uppercase tracking-[0.14em] text-[#9A8D80] sm:text-[8px]">
-            Swipe sideways to explore more
-          </p>
+          {homeCategoryExperience.activeItem ? (
+            <div className="mt-7 border-t border-[#E8DED0] pt-5">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[8px] font-black uppercase tracking-[0.18em] text-[#9A8D80]">
+                    Top categories
+                  </p>
+
+                  <h3 className="mt-1 font-serif text-lg text-[#211C18]">
+                    {
+                      homeCategoryExperience
+                        .activeItem
+                        .name
+                    }
+                  </h3>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(
+                      `/categories?tab=${homeCategoryExperience.activeItem?.key}`,
+                    )
+                  }
+                  className="text-[8px] font-black uppercase tracking-[0.1em] text-[#7C3A45]"
+                >
+                  View all →
+                </button>
+              </div>
+
+              {homeCategoryExperience
+                .activeItem
+                .subcategories
+                .length > 0 ? (
+                <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-6 sm:overflow-visible">
+                  {homeCategoryExperience
+                    .activeItem
+                    .subcategories
+                    .slice(
+                      0,
+                      6,
+                    )
+                    .map(
+                      (
+                        subcategory,
+                      ) => (
+                        <button
+                          key={
+                            subcategory.key
+                          }
+                          type="button"
+                          onClick={() =>
+                            applyMenuCategory(
+                              subcategory.ids,
+                              subcategory.name,
+                            )
+                          }
+                          className="group w-[82px] shrink-0 text-center sm:w-auto"
+                        >
+                          <div className="mx-auto aspect-square w-full overflow-hidden rounded-full border border-[#E1D3C0] bg-[#F1E6D8]">
+                            {subcategory.imageUrl ? (
+                              <img
+                                src={
+                                  subcategory.imageUrl
+                                }
+                                alt={
+                                  subcategory.name
+                                }
+                                loading="lazy"
+                                decoding="async"
+                                className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#F2E7D9,#D8C5AE)]">
+                                <span className="font-serif text-lg text-[#6D5431]">
+                                  AS
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          <p className="mt-1.5 line-clamp-2 min-h-6 text-[7px] font-black uppercase leading-3 tracking-[0.03em] text-[#3A322C] sm:text-[8px]">
+                            {
+                              subcategory.name
+                            }
+                          </p>
+                        </button>
+                      ),
+                    )}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-[#DDD0BE] bg-white/60 px-4 py-6 text-center text-[10px] font-semibold text-[#8A7E72]">
+                  Subcategories coming soon.
+                </div>
+              )}
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -4454,11 +4454,9 @@ export default function Home() {
           <button
             type="button"
             onClick={() =>
-              document
-                .getElementById("shop-categories")
-                ?.scrollIntoView({
-                  behavior: "smooth",
-                })
+              router.push(
+                `/categories?tab=${activeHomeMainKey}`,
+              )
             }
             className="flex min-h-[54px] flex-col items-center justify-center gap-1 text-white/72"
           >
