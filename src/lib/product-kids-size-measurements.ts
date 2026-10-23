@@ -7,7 +7,15 @@ export type ProductKidsSizeMeasurement = {
   sizeId: string;
   chestIn: string | null;
   waistIn: string | null;
+  hipIn: string | null;
+  shoulderIn: string | null;
+  armholeIn: string | null;
+  sleeveLengthIn: string | null;
+  topLengthIn: string | null;
   garmentLengthIn: string | null;
+  bottomWaistMinIn: string | null;
+  bottomWaistMaxIn: string | null;
+  bottomLengthIn: string | null;
 };
 
 let setupPromise: Promise<void> | null = null;
@@ -24,7 +32,15 @@ export async function ensureProductKidsSizeMeasurementStorage() {
         "sizeId" TEXT NOT NULL,
         "chestIn" TEXT,
         "waistIn" TEXT,
+        "hipIn" TEXT,
+        "shoulderIn" TEXT,
+        "armholeIn" TEXT,
+        "sleeveLengthIn" TEXT,
+        "topLengthIn" TEXT,
         "garmentLengthIn" TEXT,
+        "bottomWaistMinIn" TEXT,
+        "bottomWaistMaxIn" TEXT,
+        "bottomLengthIn" TEXT,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT "ProductKidsSizeMeasurement_pkey"
@@ -37,6 +53,19 @@ export async function ensureProductKidsSizeMeasurementStorage() {
           ON DELETE CASCADE ON UPDATE CASCADE
       )
     `);
+
+    for (const sql of [
+      'ALTER TABLE "ProductKidsSizeMeasurement" ADD COLUMN IF NOT EXISTS "hipIn" TEXT',
+      'ALTER TABLE "ProductKidsSizeMeasurement" ADD COLUMN IF NOT EXISTS "shoulderIn" TEXT',
+      'ALTER TABLE "ProductKidsSizeMeasurement" ADD COLUMN IF NOT EXISTS "armholeIn" TEXT',
+      'ALTER TABLE "ProductKidsSizeMeasurement" ADD COLUMN IF NOT EXISTS "sleeveLengthIn" TEXT',
+      'ALTER TABLE "ProductKidsSizeMeasurement" ADD COLUMN IF NOT EXISTS "topLengthIn" TEXT',
+      'ALTER TABLE "ProductKidsSizeMeasurement" ADD COLUMN IF NOT EXISTS "bottomWaistMinIn" TEXT',
+      'ALTER TABLE "ProductKidsSizeMeasurement" ADD COLUMN IF NOT EXISTS "bottomWaistMaxIn" TEXT',
+      'ALTER TABLE "ProductKidsSizeMeasurement" ADD COLUMN IF NOT EXISTS "bottomLengthIn" TEXT',
+    ]) {
+      await prisma.$executeRawUnsafe(sql);
+    }
 
     await prisma.$executeRawUnsafe(
       'CREATE INDEX IF NOT EXISTS "ProductKidsSizeMeasurement_productId_idx" ON "ProductKidsSizeMeasurement"("productId")',
@@ -65,7 +94,15 @@ export async function getProductKidsSizeMeasurements(
         "sizeId",
         "chestIn",
         "waistIn",
-        "garmentLengthIn"
+        "hipIn",
+        "shoulderIn",
+        "armholeIn",
+        "sleeveLengthIn",
+        "topLengthIn",
+        "garmentLengthIn",
+        "bottomWaistMinIn",
+        "bottomWaistMaxIn",
+        "bottomLengthIn"
       FROM "ProductKidsSizeMeasurement"
       WHERE "productId" = $1
       ORDER BY "createdAt" ASC
