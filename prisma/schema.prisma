@@ -123,6 +123,7 @@ model KidsSizeGuide {
 model ProductKidsSizeMeasurement {
   productId       String
   sizeId          String
+  ageGuide        String?
   chestIn         String?
   waistIn         String?
   garmentLengthIn String?
