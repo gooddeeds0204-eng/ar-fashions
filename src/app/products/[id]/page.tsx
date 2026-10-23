@@ -11,7 +11,6 @@ import { ensureUserSession } from "@/lib/user-session-init";
 import BrandLogo from "@/components/BrandLogo";
 import {
   GARMENT_MEASUREMENT_FIELDS,
-  type GarmentMeasurementField,
 } from "@/lib/garment-measurements";
 
 type Media = {
