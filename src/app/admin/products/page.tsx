@@ -9,6 +9,13 @@ import {
   kidsHeightCmToInches,
 } from "@/lib/kids-size-presets";
 import {
+  GARMENT_MEASUREMENT_FIELDS,
+  EMPTY_GARMENT_MEASUREMENTS,
+  mergeGarmentMeasurements,
+  type GarmentMeasurementField,
+  type GarmentMeasurementValues,
+} from "@/lib/garment-measurements";
+import {
   SKU_PRODUCT_TYPES,
   buildProductSku,
   buildVariantSku,
@@ -184,11 +191,7 @@ export default function ProductsPage() {
   ] = useState<
     Record<
       string,
-      {
-        chestIn: string;
-        waistIn: string;
-        garmentLengthIn: string;
-      }
+      GarmentMeasurementValues
     >
   >({});
 
@@ -854,9 +857,13 @@ export default function ProductsPage() {
     sizeSearch,
   ]);
 
+  const isDetailedMeasurementProduct =
+    isKidsProduct ||
+    gender === "WOMEN";
+
   const selectedKidsSizeIds =
     useMemo(() => {
-      if (!isKidsProduct) {
+      if (!isDetailedMeasurementProduct) {
         return [];
       }
 
@@ -891,34 +898,22 @@ export default function ProductsPage() {
     }, [
       applicableSizes,
       colorSizeSelections,
-      isKidsProduct,
+      isDetailedMeasurementProduct,
       selectedColors,
     ]);
 
   function updateKidsProductMeasurement(
     sizeId: string,
-    field:
-      | "chestIn"
-      | "waistIn"
-      | "garmentLengthIn",
+    field: GarmentMeasurementField,
     value: string,
   ) {
     setKidsProductMeasurements(
       (current) => ({
         ...current,
         [sizeId]: {
-          chestIn:
-            current[sizeId]
-              ?.chestIn ??
-            "",
-          waistIn:
-            current[sizeId]
-              ?.waistIn ??
-            "",
-          garmentLengthIn:
-            current[sizeId]
-              ?.garmentLengthIn ??
-            "",
+          ...mergeGarmentMeasurements(
+            current[sizeId],
+          ),
           [field]: value,
         },
       }),
@@ -1683,21 +1678,11 @@ export default function ProductsPage() {
             selectedKidsSizeIds.map(
               (sizeId) => ({
                 sizeId,
-                chestIn:
+                ...mergeGarmentMeasurements(
                   kidsProductMeasurements[
                     sizeId
-                  ]?.chestIn ??
-                  "",
-                waistIn:
-                  kidsProductMeasurements[
-                    sizeId
-                  ]?.waistIn ??
-                  "",
-                garmentLengthIn:
-                  kidsProductMeasurements[
-                    sizeId
-                  ]?.garmentLengthIn ??
-                  "",
+                  ],
+                ),
               }),
             ),
 
@@ -2993,25 +2978,27 @@ export default function ProductsPage() {
             )}
           </section>
 
-          {isKidsProduct &&
+          {isDetailedMeasurementProduct &&
             selectedKidsSizeIds.length >
               0 && (
             <section className="mb-6 rounded-3xl border border-emerald-400/20 bg-emerald-400/[0.04] p-5 sm:p-7">
               <div className="mb-5">
                 <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
-                  Kids Product Size Measurements
+                  Detailed Garment Measurements
                 </p>
 
                 <h2 className="mt-1 text-xl font-bold">
-                  Enter actual measurements for each age size
+                  {gender === "WOMEN"
+                    ? "Women — exact measurements by size"
+                    : "Girl Kids — exact measurements by age/size"}
                 </h2>
 
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Ee product lo 1-2Y, 2-3Y, 3-4Y ila prathi selected size ki actual Chest, Waist, Length separate ga inches lo enter cheyyandi. Ee values ee product ki maatrame save avutayi.
+                  Actual garment ni measure chesi inches lo enter cheyyandi. Chest/Waist values full circumference ga maintain cheyyandi. Empty fields customer ki chupinchavu; relevant measurements maatrame visible avutayi.
                 </p>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {selectedKidsSizeIds.map(
                   (sizeId) => {
                     const size =
@@ -3022,92 +3009,78 @@ export default function ProductsPage() {
                       );
 
                     const values =
-                      kidsProductMeasurements[
-                        sizeId
-                      ] ?? {
-                        chestIn: "",
-                        waistIn: "",
-                        garmentLengthIn:
-                          "",
-                      };
+                      mergeGarmentMeasurements(
+                        kidsProductMeasurements[
+                          sizeId
+                        ],
+                      );
 
                     return (
                       <div
                         key={sizeId}
-                        className="grid gap-3 rounded-2xl border border-white/10 bg-slate-950/70 p-4 sm:grid-cols-[130px_repeat(3,minmax(0,1fr))] sm:items-end"
+                        className="rounded-2xl border border-white/10 bg-slate-950/70 p-4"
                       >
-                        <div>
-                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">
-                            Age / Size
-                          </p>
-                          <p className="mt-2 text-base font-black text-emerald-300">
-                            {size?.name ??
-                              sizeId}
-                          </p>
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                              {isKidsProduct
+                                ? "Age / Size"
+                                : "Women Size"}
+                            </p>
+
+                            <p className="mt-1 text-base font-black text-emerald-300">
+                              {size?.name ??
+                                sizeId}
+                            </p>
+                          </div>
+
+                          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[9px] font-bold uppercase text-slate-400">
+                            inches
+                          </span>
                         </div>
 
-                        <label className="block">
-                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
-                            Chest (in)
-                          </span>
-                          <input
-                            value={
-                              values.chestIn
-                            }
-                            onChange={(event) =>
-                              updateKidsProductMeasurement(
-                                sizeId,
-                                "chestIn",
-                                event.target.value,
-                              )
-                            }
-                            placeholder="e.g. 22"
-                            inputMode="decimal"
-                            className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-3 text-sm outline-none focus:border-emerald-400"
-                          />
-                        </label>
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                          {GARMENT_MEASUREMENT_FIELDS.map(
+                            (field) => (
+                              <label
+                                key={
+                                  field.key
+                                }
+                                className="block"
+                              >
+                                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                  {
+                                    field.label
+                                  }
+                                </span>
 
-                        <label className="block">
-                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
-                            Waist (in)
-                          </span>
-                          <input
-                            value={
-                              values.waistIn
-                            }
-                            onChange={(event) =>
-                              updateKidsProductMeasurement(
-                                sizeId,
-                                "waistIn",
-                                event.target.value,
-                              )
-                            }
-                            placeholder="e.g. 20"
-                            inputMode="decimal"
-                            className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-3 text-sm outline-none focus:border-emerald-400"
-                          />
-                        </label>
-
-                        <label className="block">
-                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
-                            Length (in)
-                          </span>
-                          <input
-                            value={
-                              values.garmentLengthIn
-                            }
-                            onChange={(event) =>
-                              updateKidsProductMeasurement(
-                                sizeId,
-                                "garmentLengthIn",
-                                event.target.value,
-                              )
-                            }
-                            placeholder="e.g. 28"
-                            inputMode="decimal"
-                            className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-3 text-sm outline-none focus:border-emerald-400"
-                          />
-                        </label>
+                                <input
+                                  value={
+                                    values[
+                                      field.key
+                                    ]
+                                  }
+                                  onChange={(
+                                    event,
+                                  ) =>
+                                    updateKidsProductMeasurement(
+                                      sizeId,
+                                      field.key,
+                                      event
+                                        .target
+                                        .value,
+                                    )
+                                  }
+                                  placeholder={
+                                    field.placeholder
+                                  }
+                                  inputMode="decimal"
+                                  className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-3 text-sm outline-none focus:border-emerald-400"
+                                />
+                              </label>
+                            ),
+                          )}
+                        </div>
                       </div>
                     );
                   },
