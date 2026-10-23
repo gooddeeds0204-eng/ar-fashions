@@ -402,18 +402,60 @@ export function buildProductSku(
   return `${mainCode}-${typeCode}-${design}`;
 }
 
+export const KIDS_SKU_AGE_OPTIONS = [
+  "0-3M", "3-6M", "6-9M", "9-12M", "12-18M", "18-24M",
+  "1-2Y", "2-3Y", "3-4Y", "4-5Y", "5-6Y", "6-7Y",
+  "7-8Y", "8-9Y", "9-10Y", "10-11Y", "11-12Y",
+  "12-13Y", "13-14Y", "14-15Y", "15-16Y", "16-17Y",
+] as const;
+
+/** Age is an explicit kids SKU dimension, not an inferred garment-size conversion. */
+export function normalizeKidsAgeRange(value: unknown): string {
+  const normalized = String(value ?? "")
+    .trim()
+    .toUpperCase()
+    .replace(/[–—]/g, "-")
+    .replace(/\s+TO\s+/g, "-")
+    .replace(/\s+/g, "");
+
+  const matched = normalized.match(
+    /^(\d{1,2})-(\d{1,2})(Y|YR|YRS|YEAR|YEARS|M|MO|MOS|MONTH|MONTHS)$/,
+  );
+
+  if (!matched || Number(matched[1]) >= Number(matched[2])) {
+    return "";
+  }
+
+  return `${Number(matched[1])}-${Number(matched[2])}${matched[3].startsWith("Y") ? "Y" : "M"}`;
+}
+
+export function getKidsAgeSkuCode(
+  productAgeGuide?: unknown,
+  sizeAgeGuide?: unknown,
+  sizeName?: unknown,
+): string {
+  // A numeric garment size such as 32 is NOT a reliable age.
+  return normalizeKidsAgeRange(productAgeGuide) ||
+    normalizeKidsAgeRange(sizeAgeGuide) ||
+    normalizeKidsAgeRange(sizeName);
+}
+
 export function buildVariantSku(
   productSku: string,
   colorName: string,
   sizeName: string,
+  kidsAge?: string,
+  includeGarmentSize = false,
 ) {
   if (!productSku) {
     return "";
   }
 
-  return `${productSku}-${getColorSkuCode(
-    colorName,
-  )}-${getSizeSkuCode(
-    sizeName,
-  )}`;
+  const suffix = kidsAge !== undefined
+    ? normalizeKidsAgeRange(kidsAge)
+    : getSizeSkuCode(sizeName);
+
+  if (!suffix) return "";
+
+  return `${productSku}-${getColorSkuCode(colorName)}-${suffix}${kidsAge !== undefined && includeGarmentSize ? `-${getSizeSkuCode(sizeName)}` : ""}`;
 }
