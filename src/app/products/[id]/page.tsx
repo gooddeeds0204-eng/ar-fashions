@@ -87,6 +87,7 @@ type Product = {
   kidsSizeMeasurements?: Array<{
     productId: string;
     sizeId: string;
+    ageGuide?: string | null;
     chestIn?: string | null;
     waistIn?: string | null;
     hipIn?: string | null;
@@ -734,7 +735,8 @@ export default function ProductDetailPage() {
             size.inches ??
             null,
           ageGuide:
-            globalGuide?.ageGuide ??
+            productMeasurement?.ageGuide ||
+            globalGuide?.ageGuide ||
             null,
           heightCm:
             globalGuide?.heightCm ??
@@ -2870,7 +2872,7 @@ export default function ProductDetailPage() {
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6B5435]">
                   {product.gender === "WOMEN"
                     ? "Women Fit Guide"
-                    : "Girl Kids Fit Guide"}
+                    : "Kids Fit Guide"}
                 </p>
                 <h2 className="mt-1 text-xl font-black text-[#211C18]">
                   Choose by measurements
