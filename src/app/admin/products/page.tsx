@@ -10,7 +10,6 @@ import {
 } from "@/lib/kids-size-presets";
 import {
   GARMENT_MEASUREMENT_FIELDS,
-  EMPTY_GARMENT_MEASUREMENTS,
   mergeGarmentMeasurements,
   type GarmentMeasurementField,
   type GarmentMeasurementValues,
