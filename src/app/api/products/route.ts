@@ -13,6 +13,7 @@ import {
   SKU_PRODUCT_TYPES,
   buildProductSku,
   buildVariantSku,
+  getKidsAgeSkuCode,
   getMainSkuCode,
   normalizeProductTypeCode,
   formatDesignNumber,
@@ -246,13 +247,9 @@ async function generateVariantSku(
   colorName: string,
   sizeName: string,
   reservedSkus: Set<string>,
+  kidsAge?: string,
 ) {
-  const sku =
-    buildVariantSku(
-      productSku,
-      colorName,
-      sizeName,
-    );
+  let sku = buildVariantSku(productSku, colorName, sizeName, kidsAge);
 
   if (!sku) {
     throw new Error(
@@ -262,14 +259,16 @@ async function generateVariantSku(
 
   if (
     reservedSkus.has(sku) ||
-    (await tx.productVariant.findUnique({
-      where: { sku },
-      select: { id: true },
-    }))
+    (await tx.productVariant.findUnique({ where: { sku }, select: { id: true } }))
   ) {
-    throw new Error(
-      `Variant SKU already exists: ${sku}`,
-    );
+    // Two garment sizes can share an age range: keep SKUs unique without guessing.
+    if (kidsAge !== undefined) {
+      sku = buildVariantSku(productSku, colorName, sizeName, kidsAge, true);
+    }
+    if (!sku || reservedSkus.has(sku) ||
+      (await tx.productVariant.findUnique({ where: { sku }, select: { id: true } }))) {
+      throw new Error(`Variant SKU already exists: ${sku}`);
+    }
   }
 
   reservedSkus.add(sku);
@@ -278,6 +277,7 @@ async function generateVariantSku(
 
 type ProductKidsSizeMeasurementInput = {
   sizeId: string;
+  ageGuide?: string | null;
   chestIn?: string | null;
   waistIn?: string | null;
   hipIn?: string | null;
@@ -546,6 +546,8 @@ export async function POST(request: Request) {
                 sizeId: String(
                   item.sizeId ?? "",
                 ).trim(),
+                ageGuide:
+                  item.ageGuide == null ? null : String(item.ageGuide).trim(),
                 chestIn:
                   item.chestIn == null
                     ? null
@@ -746,6 +748,7 @@ export async function POST(request: Request) {
             select: {
               id: true,
               name: true,
+              kidsGuide: { select: { ageGuide: true } },
             },
           })
         : [],
@@ -757,6 +760,28 @@ export async function POST(request: Request) {
     const sizeMap = new Map(
       sizes.map((size) => [size.id, size.name]),
     );
+    const sizeAgeMap = new Map(
+      sizes.map((size) => [size.id, size.kidsGuide?.ageGuide]),
+    );
+    const productAgeMap = new Map(
+      kidsSizeMeasurements.map((row) => [row.sizeId, row.ageGuide]),
+    );
+    const isKidsSku = mainSkuCode === "GK" || mainSkuCode === "BK";
+
+    if (isKidsSku) {
+      for (const variant of variants) {
+        if (!getKidsAgeSkuCode(
+          productAgeMap.get(variant.sizeId),
+          sizeAgeMap.get(variant.sizeId),
+          sizeMap.get(variant.sizeId),
+        )) {
+          return NextResponse.json(
+            { error: `Select a valid age range (e.g. 8-9Y) for kids size ${sizeMap.get(variant.sizeId) ?? variant.sizeId} before saving.` },
+            { status: 400 },
+          );
+        }
+      }
+    }
 
     for (
       const measurement of
@@ -877,6 +902,11 @@ export async function POST(request: Request) {
               colorName,
               sizeName,
               reservedSkus,
+              isKidsSku ? getKidsAgeSkuCode(
+                productAgeMap.get(variant.sizeId),
+                sizeAgeMap.get(variant.sizeId),
+                sizeName,
+              ) : undefined,
             ),
             stock: Math.floor(Number(variant.stock ?? 0)),
             reservedStock: 0,
@@ -902,7 +932,8 @@ export async function POST(request: Request) {
         ) {
           const hasAnyValue =
             Boolean(
-              measurement.chestIn ||
+              measurement.ageGuide ||
+                measurement.chestIn ||
                 measurement.waistIn ||
                 measurement.hipIn ||
                 measurement.shoulderIn ||
@@ -936,10 +967,11 @@ export async function POST(request: Request) {
                   "bottomWaistMinIn",
                   "bottomWaistMaxIn",
                   "bottomLengthIn",
+                  "ageGuide",
                   "updatedAt"
                 )
               VALUES
-                ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CURRENT_TIMESTAMP)
+                ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP)
               ON CONFLICT ("productId", "sizeId")
               DO UPDATE SET
                 "chestIn" = EXCLUDED."chestIn",
@@ -953,6 +985,7 @@ export async function POST(request: Request) {
                 "bottomWaistMinIn" = EXCLUDED."bottomWaistMinIn",
                 "bottomWaistMaxIn" = EXCLUDED."bottomWaistMaxIn",
                 "bottomLengthIn" = EXCLUDED."bottomLengthIn",
+                "ageGuide" = EXCLUDED."ageGuide",
                 "updatedAt" = CURRENT_TIMESTAMP
             `,
             createdProduct.id,
@@ -968,6 +1001,7 @@ export async function POST(request: Request) {
             measurement.bottomWaistMinIn || null,
             measurement.bottomWaistMaxIn || null,
             measurement.bottomLengthIn || null,
+            measurement.ageGuide || null,
           );
         }
       }
