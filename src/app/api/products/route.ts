@@ -248,8 +248,9 @@ async function generateVariantSku(
   sizeName: string,
   reservedSkus: Set<string>,
   kidsAge?: string,
+  includeGarmentSize = false,
 ) {
-  let sku = buildVariantSku(productSku, colorName, sizeName, kidsAge);
+  let sku = buildVariantSku(productSku, colorName, sizeName, kidsAge, includeGarmentSize);
 
   if (!sku) {
     throw new Error(
@@ -907,6 +908,18 @@ export async function POST(request: Request) {
                 sizeAgeMap.get(variant.sizeId),
                 sizeName,
               ) : undefined,
+              isKidsSku && variants.filter((other) =>
+                other.colorId === variant.colorId &&
+                getKidsAgeSkuCode(
+                  productAgeMap.get(other.sizeId),
+                  sizeAgeMap.get(other.sizeId),
+                  sizeMap.get(other.sizeId),
+                ) === getKidsAgeSkuCode(
+                  productAgeMap.get(variant.sizeId),
+                  sizeAgeMap.get(variant.sizeId),
+                  sizeName,
+                )
+              ).length > 1,
             ),
             stock: Math.floor(Number(variant.stock ?? 0)),
             reservedStock: 0,
