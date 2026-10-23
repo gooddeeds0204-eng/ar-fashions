@@ -11,6 +11,7 @@ import {
 } from "@/lib/product-kids-size-measurements";
 import {
   buildVariantSku,
+  getKidsAgeSkuCode,
 } from "@/lib/sku-system";
 
 const PRODUCT_STATUSES = [
@@ -86,13 +87,9 @@ async function uniqueVariantSku(
   productSku: string,
   colorName: string,
   sizeName: string,
+  kidsAge?: string,
 ) {
-  const sku =
-    buildVariantSku(
-      productSku,
-      colorName,
-      sizeName,
-    );
+  let sku = buildVariantSku(productSku, colorName, sizeName, kidsAge);
 
   if (!sku) {
     throw new Error(
@@ -107,9 +104,12 @@ async function uniqueVariantSku(
     });
 
   if (existing) {
-    throw new Error(
-      `Variant SKU already exists: ${sku}`,
-    );
+    if (kidsAge !== undefined) {
+      sku = buildVariantSku(productSku, colorName, sizeName, kidsAge, true);
+    }
+    if (!sku || (await tx.productVariant.findUnique({ where: { sku }, select: { id: true } }))) {
+      throw new Error(`Variant SKU already exists: ${sku}`);
+    }
   }
 
   return sku;
@@ -229,6 +229,7 @@ export async function GET(
 
 type KidsSizeMeasurementInput = {
   sizeId: string;
+  ageGuide?: string | null;
   chestIn?: string | null;
   waistIn?: string | null;
   hipIn?: string | null;
@@ -453,6 +454,8 @@ export async function PUT(
                 sizeId: String(
                   item.sizeId ?? "",
                 ).trim(),
+                ageGuide:
+                  item.ageGuide == null ? null : String(item.ageGuide).trim(),
                 chestIn:
                   item.chestIn == null
                     ? null
@@ -647,7 +650,7 @@ export async function PUT(
       sizeIds.length
         ? prisma.size.findMany({
             where: { id: { in: sizeIds } },
-            select: { id: true, name: true },
+            select: { id: true, name: true, kidsGuide: { select: { ageGuide: true } } },
           })
         : [],
     ]);
@@ -658,6 +661,14 @@ export async function PUT(
     const sizeMap = new Map(
       sizes.map((size) => [size.id, size.name]),
     );
+    const sizeAgeMap = new Map(
+      sizes.map((size) => [size.id, size.kidsGuide?.ageGuide]),
+    );
+    const ageOverrides = new Map(
+      kidsSizeMeasurements.map((row) => [row.sizeId, row.ageGuide]),
+    );
+    const isKidsSku = existingProduct.gender === "KIDS" ||
+      Boolean(existingProduct.sku?.startsWith("GK-") || existingProduct.sku?.startsWith("BK-"));
 
     for (
       const measurement of
@@ -793,6 +804,14 @@ export async function PUT(
             );
           }
 
+          if (isKidsSku && !getKidsAgeSkuCode(
+            ageOverrides.get(variant.sizeId),
+            sizeAgeMap.get(variant.sizeId),
+            sizeName,
+          )) {
+            throw new Error(`Select a valid kids age for size ${sizeName} before adding a new variant.`);
+          }
+
           await tx.productVariant.create({
             data: {
               productId: id,
@@ -803,6 +822,11 @@ export async function PUT(
                 existingProduct.sku,
                 colorName,
                 sizeName,
+                isKidsSku ? getKidsAgeSkuCode(
+                  ageOverrides.get(variant.sizeId),
+                  sizeAgeMap.get(variant.sizeId),
+                  sizeName,
+                ) : undefined,
               ),
             },
           });
@@ -905,7 +929,8 @@ export async function PUT(
         ) {
           const hasAnyValue =
             Boolean(
-              measurement.chestIn ||
+              measurement.ageGuide ||
+                measurement.chestIn ||
                 measurement.waistIn ||
                 measurement.hipIn ||
                 measurement.shoulderIn ||
@@ -939,10 +964,11 @@ export async function PUT(
                   "bottomWaistMinIn",
                   "bottomWaistMaxIn",
                   "bottomLengthIn",
+                  "ageGuide",
                   "updatedAt"
                 )
               VALUES
-                ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CURRENT_TIMESTAMP)
+                ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP)
               ON CONFLICT ("productId", "sizeId")
               DO UPDATE SET
                 "chestIn" = EXCLUDED."chestIn",
@@ -956,6 +982,7 @@ export async function PUT(
                 "bottomWaistMinIn" = EXCLUDED."bottomWaistMinIn",
                 "bottomWaistMaxIn" = EXCLUDED."bottomWaistMaxIn",
                 "bottomLengthIn" = EXCLUDED."bottomLengthIn",
+                "ageGuide" = EXCLUDED."ageGuide",
                 "updatedAt" = CURRENT_TIMESTAMP
             `,
             id,
@@ -971,6 +998,7 @@ export async function PUT(
             measurement.bottomWaistMinIn || null,
             measurement.bottomWaistMaxIn || null,
             measurement.bottomLengthIn || null,
+            measurement.ageGuide || null,
           );
         }
       }
