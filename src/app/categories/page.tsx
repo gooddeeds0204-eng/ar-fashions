@@ -353,7 +353,7 @@ export default function CategoriesPage() {
         </div>
 
         {loading ? (
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
             {Array.from({
               length: 8,
             }).map(
@@ -362,11 +362,12 @@ export default function CategoriesPage() {
                   key={
                     index
                   }
-                  className="animate-pulse overflow-hidden rounded-2xl border border-[#E4D7C4] bg-white"
+                  className="flex min-h-[76px] animate-pulse items-center gap-2 overflow-hidden rounded-xl border border-[#E4D7C4] bg-white p-2"
                 >
-                  <div className="aspect-[4/5] bg-[#EFE5D8]" />
-                  <div className="p-3">
-                    <div className="h-3 w-2/3 rounded bg-[#EFE5D8]" />
+                  <div className="h-14 w-14 shrink-0 rounded-lg bg-[#EFE5D8]" />
+                  <div className="min-w-0 flex-1">
+                    <div className="h-3 w-4/5 rounded bg-[#EFE5D8]" />
+                    <div className="mt-2 h-2 w-3/5 rounded bg-[#EFE5D8]" />
                   </div>
                 </div>
               ),
@@ -398,7 +399,7 @@ export default function CategoriesPage() {
               </span>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
               {activeCategory.children.map(
                 (
                   subcategory,
@@ -413,9 +414,9 @@ export default function CategoriesPage() {
                         subcategory,
                       )
                     }
-                    className="group overflow-hidden rounded-[1.1rem] border border-[#E4D7C4] bg-white text-left shadow-[0_8px_24px_rgba(72,52,36,0.05)]"
+                    className="group flex min-h-[76px] items-center gap-2 overflow-hidden rounded-xl border border-[#E4D7C4] bg-white p-2 text-left shadow-[0_3px_10px_rgba(72,52,36,0.04)] transition-colors hover:border-[#BDAA95] hover:bg-[#FFFDF9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#031B14]"
                   >
-                    <div className="aspect-[4/5] overflow-hidden bg-[#F1E6D8]">
+                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-[#F1E6D8] sm:h-16 sm:w-16">
                       {subcategory.imageUrl ? (
                         <img
                           src={
@@ -430,23 +431,20 @@ export default function CategoriesPage() {
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(145deg,#F2E7D9,#D8C5AE)]">
-                          <span className="font-serif text-3xl text-[#6D5431]">
+                          <span className="font-serif text-lg text-[#6D5431]">
                             AS
                           </span>
                         </div>
                       )}
                     </div>
 
-                    <div className="p-3">
-                      <p className="line-clamp-2 min-h-8 text-[10px] font-black uppercase leading-4 tracking-[0.03em] text-[#211C18]">
-                        {
-                          subcategory.name
-                        }
+                    <div className="min-w-0 flex-1">
+                      <p className="break-words text-[10px] font-bold uppercase leading-[1.35] tracking-[0.01em] text-[#211C18] sm:text-[11px]">
+                        {subcategory.name}
                       </p>
-
-                      <p className="mt-2 text-[8px] font-black uppercase tracking-[0.1em] text-[#7C3A45]">
-                        Shop now →
-                      </p>
+                      <span className="mt-1 block text-[11px] text-[#7C3A45]" aria-hidden="true">
+                        →
+                      </span>
                     </div>
                   </button>
                 ),
