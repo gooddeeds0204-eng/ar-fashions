@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 export type ProductKidsSizeMeasurement = {
   productId: string;
   sizeId: string;
+  ageGuide: string | null;
   chestIn: string | null;
   waistIn: string | null;
   hipIn: string | null;
@@ -30,6 +31,7 @@ export async function ensureProductKidsSizeMeasurementStorage() {
       CREATE TABLE IF NOT EXISTS "ProductKidsSizeMeasurement" (
         "productId" TEXT NOT NULL,
         "sizeId" TEXT NOT NULL,
+        "ageGuide" TEXT,
         "chestIn" TEXT,
         "waistIn" TEXT,
         "hipIn" TEXT,
@@ -55,6 +57,7 @@ export async function ensureProductKidsSizeMeasurementStorage() {
     `);
 
     for (const sql of [
+      'ALTER TABLE "ProductKidsSizeMeasurement" ADD COLUMN IF NOT EXISTS "ageGuide" TEXT',
       'ALTER TABLE "ProductKidsSizeMeasurement" ADD COLUMN IF NOT EXISTS "hipIn" TEXT',
       'ALTER TABLE "ProductKidsSizeMeasurement" ADD COLUMN IF NOT EXISTS "shoulderIn" TEXT',
       'ALTER TABLE "ProductKidsSizeMeasurement" ADD COLUMN IF NOT EXISTS "armholeIn" TEXT',
@@ -92,6 +95,7 @@ export async function getProductKidsSizeMeasurements(
       SELECT
         "productId",
         "sizeId",
+        "ageGuide",
         "chestIn",
         "waistIn",
         "hipIn",
