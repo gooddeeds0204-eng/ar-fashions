@@ -33,7 +33,7 @@ type UpdatedMedia = {
 };
 
 type Props = {
-  mediaId: string;
+  mediaId?: string | null;
   imageUrl: string;
   productName: string;
   onCancel: () => void;
@@ -712,6 +712,20 @@ export default function ExistingProductImageAdjuster({
           adjustedFile,
           setProgress,
         );
+
+      if (!mediaId) {
+        onSaved({
+          id: `temp-adjusted-${Date.now()}`,
+          type: "IMAGE",
+          url: uploadData.url,
+          thumbnailUrl: null,
+          altText: productName,
+          sortOrder: 0,
+          isActive: true,
+          colorId: null,
+        });
+        return;
+      }
 
       const response =
         await fetch(
