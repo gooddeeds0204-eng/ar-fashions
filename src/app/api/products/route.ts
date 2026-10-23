@@ -280,7 +280,15 @@ type ProductKidsSizeMeasurementInput = {
   sizeId: string;
   chestIn?: string | null;
   waistIn?: string | null;
+  hipIn?: string | null;
+  shoulderIn?: string | null;
+  armholeIn?: string | null;
+  sleeveLengthIn?: string | null;
+  topLengthIn?: string | null;
   garmentLengthIn?: string | null;
+  bottomWaistMinIn?: string | null;
+  bottomWaistMaxIn?: string | null;
+  bottomLengthIn?: string | null;
 };
 
 type ProductVariantInput = {
@@ -550,6 +558,38 @@ export async function POST(request: Request) {
                     : String(
                         item.waistIn,
                       ).trim(),
+                hipIn:
+                  item.hipIn == null
+                    ? null
+                    : String(item.hipIn).trim(),
+                shoulderIn:
+                  item.shoulderIn == null
+                    ? null
+                    : String(item.shoulderIn).trim(),
+                armholeIn:
+                  item.armholeIn == null
+                    ? null
+                    : String(item.armholeIn).trim(),
+                sleeveLengthIn:
+                  item.sleeveLengthIn == null
+                    ? null
+                    : String(item.sleeveLengthIn).trim(),
+                topLengthIn:
+                  item.topLengthIn == null
+                    ? null
+                    : String(item.topLengthIn).trim(),
+                bottomWaistMinIn:
+                  item.bottomWaistMinIn == null
+                    ? null
+                    : String(item.bottomWaistMinIn).trim(),
+                bottomWaistMaxIn:
+                  item.bottomWaistMaxIn == null
+                    ? null
+                    : String(item.bottomWaistMaxIn).trim(),
+                bottomLengthIn:
+                  item.bottomLengthIn == null
+                    ? null
+                    : String(item.bottomLengthIn).trim(),
                 garmentLengthIn:
                   item.garmentLengthIn ==
                   null
@@ -864,7 +904,15 @@ export async function POST(request: Request) {
             Boolean(
               measurement.chestIn ||
                 measurement.waistIn ||
-                measurement.garmentLengthIn,
+                measurement.hipIn ||
+                measurement.shoulderIn ||
+                measurement.armholeIn ||
+                measurement.sleeveLengthIn ||
+                measurement.topLengthIn ||
+                measurement.garmentLengthIn ||
+                measurement.bottomWaistMinIn ||
+                measurement.bottomWaistMaxIn ||
+                measurement.bottomLengthIn,
             );
 
           if (!hasAnyValue) {
@@ -879,26 +927,47 @@ export async function POST(request: Request) {
                   "sizeId",
                   "chestIn",
                   "waistIn",
+                  "hipIn",
+                  "shoulderIn",
+                  "armholeIn",
+                  "sleeveLengthIn",
+                  "topLengthIn",
                   "garmentLengthIn",
+                  "bottomWaistMinIn",
+                  "bottomWaistMaxIn",
+                  "bottomLengthIn",
                   "updatedAt"
                 )
               VALUES
-                ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+                ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CURRENT_TIMESTAMP)
               ON CONFLICT ("productId", "sizeId")
               DO UPDATE SET
                 "chestIn" = EXCLUDED."chestIn",
                 "waistIn" = EXCLUDED."waistIn",
+                "hipIn" = EXCLUDED."hipIn",
+                "shoulderIn" = EXCLUDED."shoulderIn",
+                "armholeIn" = EXCLUDED."armholeIn",
+                "sleeveLengthIn" = EXCLUDED."sleeveLengthIn",
+                "topLengthIn" = EXCLUDED."topLengthIn",
                 "garmentLengthIn" = EXCLUDED."garmentLengthIn",
+                "bottomWaistMinIn" = EXCLUDED."bottomWaistMinIn",
+                "bottomWaistMaxIn" = EXCLUDED."bottomWaistMaxIn",
+                "bottomLengthIn" = EXCLUDED."bottomLengthIn",
                 "updatedAt" = CURRENT_TIMESTAMP
             `,
             createdProduct.id,
             measurement.sizeId,
-            measurement.chestIn ||
-              null,
-            measurement.waistIn ||
-              null,
-            measurement.garmentLengthIn ||
-              null,
+            measurement.chestIn || null,
+            measurement.waistIn || null,
+            measurement.hipIn || null,
+            measurement.shoulderIn || null,
+            measurement.armholeIn || null,
+            measurement.sleeveLengthIn || null,
+            measurement.topLengthIn || null,
+            measurement.garmentLengthIn || null,
+            measurement.bottomWaistMinIn || null,
+            measurement.bottomWaistMaxIn || null,
+            measurement.bottomLengthIn || null,
           );
         }
       }
