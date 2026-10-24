@@ -165,7 +165,7 @@ export default function HomeCategoryCardsManager({
         0
       ) {
         setMessage(
-          `4 main categories ready. ${movedGirl + movedBoy} clear Kids subcategories correct Girl/Boy section ki safely moved.`,
+          `Four main categories are ready. ${movedGirl + movedBoy} kids' subcategories were moved to the correct Girl Kids or Boy Kids group.`,
         );
       }
 
