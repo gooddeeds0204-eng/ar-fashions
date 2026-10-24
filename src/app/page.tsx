@@ -3917,7 +3917,7 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-dashed border-[#DDD0BE] bg-white/60 px-4 py-6 text-center text-[10px] font-semibold text-[#8A7E72]">
-                  Subcategories coming soon.
+                  Explore more collections as they become available.
                 </div>
               )}
             </div>
