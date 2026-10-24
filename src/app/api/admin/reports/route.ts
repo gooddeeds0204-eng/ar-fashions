@@ -1706,7 +1706,7 @@ export async function GET(
         from:
           startDate.toISOString(),
         to:
-          endDate.toISOString(),
+          new Date(endDate.getTime() - 1).toISOString(),
       },
 
       summary: {
