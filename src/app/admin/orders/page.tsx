@@ -286,6 +286,13 @@ export default function AdminOrdersPage() {
   const [selectedOrder, setSelectedOrder] =
     useState<Order | null>(null);
 
+  const [showDeleteAll, setShowDeleteAll] = useState(false);
+  const [deleteAllPassword, setDeleteAllPassword] = useState("");
+  const [deleteAllPhrase, setDeleteAllPhrase] = useState("");
+  const [deleteAllAcknowledged, setDeleteAllAcknowledged] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
+  const [deleteAllError, setDeleteAllError] = useState("");
+
   const [
     freightCharge,
     setFreightCharge,
@@ -916,6 +923,52 @@ export default function AdminOrdersPage() {
     }
   }
 
+  async function deleteAllOrders() {
+    if (
+      deleteAllPhrase.trim() !== "DELETE ALL ORDERS" ||
+      !deleteAllPassword ||
+      !deleteAllAcknowledged ||
+      orders.length === 0
+    ) {
+      setDeleteAllError("Confirm the deletion phrase and enter your admin password.");
+      return;
+    }
+
+    setDeleteAllError("");
+    setDeletingAll(true);
+    try {
+      const response = await fetch("/api/admin/orders/clear", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          confirmation: deleteAllPhrase,
+          password: deleteAllPassword,
+          expectedCount: orders.length,
+          acknowledgePermanentLoss: deleteAllAcknowledged,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to delete orders.");
+      }
+
+      setSelectedOrder(null);
+      setSelectedStatus("ALL");
+      setShowDeleteAll(false);
+      setDeleteAllPassword("");
+      setDeleteAllPhrase("");
+      setDeleteAllAcknowledged(false);
+      await loadOrders();
+      alert(data.message || "Order deletion completed.");
+    } catch (error) {
+      setDeleteAllError(
+        error instanceof Error ? error.message : "Failed to delete orders.",
+      );
+    } finally {
+      setDeletingAll(false);
+    }
+  }
+
   async function loadOrders() {
     try {
       setLoading(true);
@@ -1140,12 +1193,29 @@ export default function AdminOrdersPage() {
               </h1>
             </div>
 
-            <button
-              onClick={loadOrders}
-              className="rounded-xl border border-black/5 bg-white px-4 py-2 text-xs font-semibold shadow-sm"
-            >
-              ↻ Refresh
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={loading || orders.length === 0}
+                onClick={() => {
+                  setDeleteAllError("");
+                  setDeleteAllPhrase("");
+                  setDeleteAllPassword("");
+                  setDeleteAllAcknowledged(false);
+                  setShowDeleteAll(true);
+                }}
+                className="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Delete All Orders
+              </button>
+              <button
+                type="button"
+                onClick={loadOrders}
+                className="rounded-xl border border-black/5 bg-white px-4 py-2 text-xs font-semibold shadow-sm"
+              >
+                ↻ Refresh
+              </button>
+            </div>
           </div>
         </header>
 
@@ -2492,6 +2562,107 @@ export default function AdminOrdersPage() {
                 className="rounded-xl bg-zinc-950 px-5 py-3 text-sm font-bold text-white"
               >
                 Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showDeleteAll && (
+        <div className="fixed inset-0 z-[240] flex items-end justify-center bg-black/70 p-3 backdrop-blur-sm sm:items-center sm:p-6">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="clear-all-orders-title"
+            className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-[1.65rem] border border-red-200 bg-[#FFFDF9] p-5 shadow-2xl sm:p-7"
+          >
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-red-700">
+              Permanent deletion
+            </p>
+            <h2 id="clear-all-orders-title" className="mt-2 font-serif text-2xl font-bold text-[#241F1B]">
+              Delete all {orders.length} orders?
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-[#675A50]">
+              This action permanently removes all existing retail and reseller orders,
+              their items and local payment records from AS FASHIONS. Order invoices,
+              customer order history and associated shipment records will no longer
+              be available on this website. This action cannot be undone.
+            </p>
+            <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+              Before deleting real customer orders, export your required sales, GST,
+              refund and payment records. This action does not reverse payments,
+              cancel courier shipments or restore sold stock automatically.
+            </p>
+            <p className="mt-3 text-xs font-bold text-red-800">
+              Paid or partially paid orders: {
+                orders.filter((order) =>
+                  order.paymentStatus === "PAID" || order.paymentStatus === "PARTIAL"
+                ).length
+              }
+            </p>
+            <label className="mt-5 block text-xs font-semibold text-[#4D4037]" htmlFor="delete-all-phrase">
+              Type DELETE ALL ORDERS
+            </label>
+            <input
+              id="delete-all-phrase"
+              type="text"
+              autoComplete="off"
+              spellCheck={false}
+              value={deleteAllPhrase}
+              disabled={deletingAll}
+              onChange={(event) => setDeleteAllPhrase(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-[#DDCAB5] bg-white px-3.5 py-3 text-sm font-medium outline-none focus:border-red-500"
+              placeholder="DELETE ALL ORDERS"
+            />
+            <label className="mt-4 block text-xs font-semibold text-[#4D4037]" htmlFor="delete-all-password">
+              Admin password
+            </label>
+            <input
+              id="delete-all-password"
+              type="password"
+              autoComplete="current-password"
+              value={deleteAllPassword}
+              disabled={deletingAll}
+              onChange={(event) => setDeleteAllPassword(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-[#DDCAB5] bg-white px-3.5 py-3 text-sm outline-none focus:border-red-500"
+              placeholder="Enter your admin password"
+            />
+            <label className="mt-4 flex cursor-pointer items-start gap-3 text-xs leading-5 text-[#55483D]">
+              <input
+                type="checkbox"
+                checked={deleteAllAcknowledged}
+                disabled={deletingAll}
+                onChange={(event) => setDeleteAllAcknowledged(event.target.checked)}
+                className="mt-1 h-4 w-4 accent-red-700"
+              />
+              I understand that all existing order records will be permanently deleted.
+            </label>
+            {deleteAllError ? (
+              <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-xs text-red-700">
+                {deleteAllError}
+              </p>
+            ) : null}
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                disabled={deletingAll}
+                onClick={() => setShowDeleteAll(false)}
+                className="min-h-12 rounded-xl border border-[#D7C6AD] bg-white px-3 text-xs font-bold text-[#514335] disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={
+                  deletingAll ||
+                  orders.length === 0 ||
+                  !deleteAllAcknowledged ||
+                  !deleteAllPassword ||
+                  deleteAllPhrase.trim() !== "DELETE ALL ORDERS"
+                }
+                onClick={() => void deleteAllOrders()}
+                className="min-h-12 rounded-xl bg-red-700 px-3 text-xs font-bold text-white disabled:cursor-not-allowed disabled:bg-red-200"
+              >
+                {deletingAll ? "Deleting…" : "Delete All Orders"}
               </button>
             </div>
           </div>
