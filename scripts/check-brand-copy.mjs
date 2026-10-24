@@ -18,7 +18,7 @@ const rules = [
   },
   {
     name: "Mixed-language storefront/admin instruction",
-    pattern: /\b(?:cheyyandi|cheyandi|cheyyali|chestaru|chesi|cheste|chesthe|cheyochu|avtayi|avvali|avutayi|undali|matrame|taruvata|tarvata|ikkada|kosam|nunchi|kavali|kanipistayi|aipoy|avtund|ledhu|paina)\b/i,
+    pattern: /\b(?:cheyyandi|cheyandi|cheyyali|chestaru|chesi|cheste|chesthe|cheyochu|avtayi|avvali|avutayi|undali|matrame|taruvata|tarvata|ikkada|kosam|nunchi|kavali|kanipistayi|aipoy|avtund|ledhu|paina|ki|lo|ga|ni|tho|unte|batti|ayyayi|kuda|unna|undi|mundu|inka|chestundi|vastayi|chesaka|avtundi|cheyyachu|avvakunda|kanipistundi|ayyaka|padina)\b/i,
   },
   {
     name: "Unfinished placeholder copy",
