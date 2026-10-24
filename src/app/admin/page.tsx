@@ -173,6 +173,48 @@ export default function AdminDashboard() {
     null,
   );
 
+  const [modeSaving, setModeSaving] = useState<"retail" | "reseller" | null>(null);
+  const [modeFeedback, setModeFeedback] = useState("");
+  const [modeError, setModeError] = useState(false);
+
+  async function updateStoreMode(mode: "retail" | "reseller", status: "OPEN" | "CLOSED") {
+    if (modeSaving || !salesMode) return;
+    setModeSaving(mode);
+    setModeFeedback("");
+    setModeError(false);
+
+    try {
+      const response = await fetch("/api/admin/sales-mode", {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode, status }),
+      });
+
+      const data = await response.json();
+
+      if (response.status === 401) {
+        router.replace("/admin/login");
+        return;
+      }
+
+      if (!response.ok || !data.salesMode) {
+        throw new Error(data.error || "Unable to update store mode.");
+      }
+
+      setSalesMode({
+        retailStatus: data.salesMode.retailStatus,
+        resellerStatus: data.salesMode.resellerStatus,
+      });
+      setModeFeedback(data.message || "Store mode updated.");
+    } catch (error) {
+      setModeError(true);
+      setModeFeedback(error instanceof Error ? error.message : "Unable to update store mode.");
+    } finally {
+      setModeSaving(null);
+    }
+  }
+
   const [
     inventorySummary,
     setInventorySummary,
@@ -938,51 +980,52 @@ export default function AdminDashboard() {
               </p>
 
               <div className="mt-5 space-y-3">
-                <div className="flex items-center justify-between rounded-2xl bg-[#F8F1E7] p-4">
-                  <div>
-                    <div className="text-sm font-medium">Retail Mode</div>
-                    <div className="mt-1 text-xs text-[#9A9188]">
-                      Individual customer shopping
+                {([
+                  { key: "retail" as const, label: "Retail Mode", description: "Individual customer shopping", status: salesMode?.retailStatus },
+                  { key: "reseller" as const, label: "Reseller Mode", description: "Bulk & wholesale orders", status: salesMode?.resellerStatus },
+                ]).map(({ key, label, description, status }) => {
+                  const enabled = status === "OPEN";
+                  return (
+                    <div key={key} className="flex items-center justify-between gap-3 rounded-2xl bg-[#F8F1E7] p-4">
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-[#251F1A]">{label}</div>
+                        <p className="mt-1 text-xs leading-5 text-[#81766B]">{description}</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2.5">
+                        <span className={`text-[10px] font-black tracking-wider ${
+                          enabled ? "text-emerald-700" : "text-red-700"
+                        }`}>
+                          {status ? (enabled ? "ON" : "OFF") : "—"}
+                        </span>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-label={`${label} ${enabled ? "ON" : "OFF"}. Tap to turn ${enabled ? "OFF" : "ON"}.`}
+                          aria-checked={enabled}
+                          disabled={!salesMode || modeSaving !== null}
+                          onClick={() => void updateStoreMode(key, enabled ? "CLOSED" : "OPEN")}
+                          className={`relative h-8 w-14 rounded-full border border-black/10 shadow-inner transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B513E] disabled:cursor-wait disabled:opacity-50 ${
+                            enabled ? "bg-[#0B7654]" : "bg-[#A8A099]"
+                          }`}
+                        >
+                          <span className={`absolute top-[3px] h-6 w-6 rounded-full bg-white shadow-sm transition-transform ${
+                            enabled ? "left-[26px]" : "left-[3px]"
+                          }`} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-[10px] font-semibold ${
-                      salesMode?.retailStatus ===
-                      "CLOSED"
-                        ? "bg-red-50 text-red-600"
-                        : salesMode?.retailStatus ===
-                            "OPEN"
-                          ? "bg-emerald-50 text-emerald-600"
-                          : "bg-slate-100 text-slate-500"
-                    }`}
-                  >
-                    {salesMode?.retailStatus ??
-                      "—"}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between rounded-2xl bg-[#F8F1E7] p-4">
-                  <div>
-                    <div className="text-sm font-medium">Reseller Mode</div>
-                    <div className="mt-1 text-xs text-[#9A9188]">
-                      Bulk & wholesale orders
-                    </div>
-                  </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-[10px] font-semibold ${
-                      salesMode?.resellerStatus ===
-                      "CLOSED"
-                        ? "bg-red-50 text-red-600"
-                        : salesMode?.resellerStatus ===
-                            "OPEN"
-                          ? "bg-emerald-50 text-emerald-600"
-                          : "bg-slate-100 text-slate-500"
-                    }`}
-                  >
-                    {salesMode?.resellerStatus ??
-                      "—"}
-                  </span>
-                </div>
+                  );
+                })}
+                {modeFeedback && (
+                  <p role={modeError ? "alert" : "status"} className={`rounded-xl px-3 py-2 text-xs ${
+                    modeError ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-800"
+                  }`}>
+                    {modeFeedback}
+                  </p>
+                )}
+                <p className="text-[11px] leading-5 text-[#8B8074]">
+                  Changes save immediately and apply to checkout availability.
+                </p>
               </div>
 
               <Link
