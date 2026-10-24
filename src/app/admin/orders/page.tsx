@@ -2164,7 +2164,7 @@ export default function AdminOrdersPage() {
                   </h3>
 
                   <p className="mt-1 text-[10px] leading-5 text-zinc-500">
-                    Order confirm ayina ventane staff ee list chusi exact rack nundi product pick cheyyachu.
+                    Use this list to locate and pick each item from its assigned rack after an order is confirmed.
                   </p>
                 </div>
 
