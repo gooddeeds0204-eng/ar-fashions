@@ -466,6 +466,9 @@ export default function ReportsPage() {
         data.summary
           .deliveredSales,
       ],
+      ["Total Orders (All Statuses)", data.summary.totalOrders],
+      ["Order Register Lines (All Statuses)", data.salesRows.length],
+      ["IMPORTANT", "Only DELIVERED orders are counted as completed sales; other order statuses appear in the register for reconciliation."],
       [
         "Delivered Orders",
         data.summary
@@ -497,20 +500,7 @@ export default function ReportsPage() {
           .deliveryRevenue,
       ],
       [],
-      [
-        "ORDER NUMBER",
-        "DATE",
-        "TYPE",
-        "CUSTOMER",
-        "PHONE",
-        "PAYMENT METHOD",
-        "ITEM QTY",
-        "PRODUCTS",
-        "SUBTOTAL",
-        "DISCOUNT",
-        "DELIVERY",
-        "TOTAL",
-      ],
+      ["ORDER NUMBER", "ORDER DATE", "ORDER TYPE", "ORDER STATUS", "PAYMENT STATUS", "CUSTOMER", "PHONE", "PAYMENT METHOD", "ITEM QTY", "PRODUCTS", "SUBTOTAL", "DISCOUNT", "DELIVERY", "TOTAL", "COUPON", "FREIGHT PENDING"],
       ...data.salesRows.map(
         (row) => [
           row.orderNumber,
@@ -520,6 +510,8 @@ export default function ReportsPage() {
             "en-IN",
           ),
           row.type,
+          row.orderStatus,
+          row.paymentStatus,
           row.customerName,
           row.phone ?? "",
           row.paymentMethod ??
@@ -530,6 +522,8 @@ export default function ReportsPage() {
           row.discountAmount,
           row.deliveryCharge,
           row.totalAmount,
+          row.couponCode ?? "",
+          row.deliveryChargePending ? "YES" : "NO",
         ],
       ),
     ];
@@ -570,7 +564,7 @@ export default function ReportsPage() {
 
     link.href = url;
     link.download =
-      `AS-Fashions-Sales-Report-${data.range.days}D-${stamp}.csv`;
+      `AS-Fashions-Sales-Register-${data.range.days}D-${stamp}.csv`;
 
     document.body.appendChild(
       link,
@@ -637,18 +631,28 @@ export default function ReportsPage() {
       ],
       [
         "Note",
-        "Editable working file. GSTIN, HSN/SAC, taxable value and tax breakup are intentionally left blank for auditor verification/update.",
+        "AUDITOR WORKING REGISTER ONLY. NOT GSTR-1 READY OR A VALIDATED TAX INVOICE. GSTIN, HSN, taxable value and GST amounts have not been captured or calculated.",
       ],
+      ["Period Basis", "Order creation date, NOT verified tax invoice issuance date"],
+      ["Includes", "All order statuses for reconciliation; exclude or adjust cancellations/returns after verifying credit notes and payment history"],
+      ["Duplicated Fields", "Order-level discount, delivery charge and total repeat for each line item; never sum these columns across line items"],
+      ["Tax Mode", "Supplier GST registration type, tax-inclusive/exclusive pricing, state-of-supply treatment, and tax rates require auditor verification"],
+      ["Filing", "Use the current official GST portal/offline utility after GSTIN, HSN, tax values and debit/credit notes are validated"],
+
       [],
       [
         "INVOICE NO",
         "INVOICE DATE",
         "ORDER NO",
         "SALE TYPE",
+        "ORDER STATUS",
+        "PAYMENT STATUS",
+        "LINE ITEM ID",
+        "REVIEW FLAG",
         "CUSTOMER",
         "PHONE",
-        "CUSTOMER GSTIN",
-        "PLACE OF SUPPLY / STATE",
+        "CUSTOMER GSTIN (VERIFY)",
+        "PLACE OF SUPPLY / STATE (VERIFY)",
         "PINCODE",
         "PRODUCT",
         "COLOUR",
@@ -656,9 +660,9 @@ export default function ReportsPage() {
         "QTY",
         "UNIT PRICE",
         "GROSS LINE VALUE",
-        "ORDER DISCOUNT",
-        "DELIVERY CHARGE",
-        "ORDER TOTAL",
+        "ORDER DISCOUNT (ORDER-LEVEL REPEATED)",
+        "DELIVERY CHARGE (ORDER-LEVEL REPEATED)",
+        "ORDER TOTAL (ORDER-LEVEL REPEATED)",
         "PAYMENT METHOD",
         "HSN / SAC",
         "TAXABLE VALUE",
@@ -682,6 +686,10 @@ export default function ReportsPage() {
           ),
           row.orderNumber,
           row.orderType,
+          row.orderStatus,
+          row.paymentStatus,
+          row.lineItemId,
+          "MISSING TAX DATA - REVIEW",
           row.customerName,
           row.phone ?? "",
           "",
@@ -748,7 +756,7 @@ export default function ReportsPage() {
 
     link.href = url;
     link.download =
-      `AS-Fashions-GST-Auditor-Working-${data.range.days}D-${stamp}.csv`;
+      `AS-Fashions-GST-Reconciliation-Working-${data.range.days}D-${stamp}.csv`;
 
     document.body.appendChild(
       link,
