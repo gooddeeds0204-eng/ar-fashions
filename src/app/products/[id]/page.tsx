@@ -136,6 +136,8 @@ type CartItem = {
   quantity: number;
   mode?: "RETAIL" | "RESELLER";
   resellerMOQ?: number;
+  campaignOfferId?: string;
+  campaignReward?: boolean;
   smartStockBalance?: boolean;
   smartPackSize?: number;
 };
