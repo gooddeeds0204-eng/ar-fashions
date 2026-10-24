@@ -12,6 +12,7 @@ import PromoSlot from "@/components/PromoSlot";
 import BrandLogo from "@/components/BrandLogo";
 import StorefrontDrawer from "@/components/StorefrontDrawer";
 import CampaignOfferSection from "@/components/CampaignOfferSection";
+import HomeCustomerReviews from "@/components/HomeCustomerReviews";
 import {
   bannerFontFamily,
   bannerRatioCssValue,
@@ -4098,6 +4099,9 @@ export default function Home() {
         className="pb-6 sm:pb-10"
       />
 
+
+      {/* CUSTOMER REVIEWS & RATINGS — REAL, APPROVED FEEDBACK */}
+      <HomeCustomerReviews />
 
       {/* TRUST STRIP — BOTTOM */}
       <section className="border-b border-[#E6DBCD] bg-[#F8F1E7]">
