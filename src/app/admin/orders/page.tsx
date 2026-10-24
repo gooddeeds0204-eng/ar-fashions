@@ -1656,7 +1656,7 @@ export default function AdminOrdersPage() {
                 </a>
 
                 <p className="mt-2 text-[9px] leading-4 text-emerald-700">
-                  Customer checkout time lo permission ichi share chesina location snapshot.
+                  Location shared by the customer with permission during checkout.
                 </p>
               </div>
             )}
