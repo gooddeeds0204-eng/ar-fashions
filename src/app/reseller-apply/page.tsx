@@ -273,7 +273,7 @@ export default function ResellerApplyPage() {
       ].includes(file.type)
     ) {
       throw new Error(
-        "JPG, PNG లేదా WebP image మాత్రమే upload చేయండి.",
+        "Upload a JPG, PNG or WebP image.",
       );
     }
 
@@ -282,7 +282,7 @@ export default function ResellerApplyPage() {
       5 * 1024 * 1024
     ) {
       throw new Error(
-        "Image 5MB కంటే తక్కువ ఉండాలి.",
+        "Choose an image smaller than 5 MB.",
       );
     }
 
@@ -523,12 +523,12 @@ export default function ResellerApplyPage() {
             }
           } else {
             setError(
-              "Location captured. Address automaticగా detect కాలేదు; address manually edit చేయవచ్చు.",
+              "Location captured. We could not detect the address automatically; please enter or edit it manually.",
             );
           }
         } catch {
           setError(
-            "Location captured. Address automaticగా detect కాలేదు; address manually edit చేయవచ్చు.",
+            "Location captured. We could not detect the address automatically; please enter or edit it manually.",
           );
         }
 
@@ -543,7 +543,7 @@ export default function ResellerApplyPage() {
         );
 
         setError(
-          "Location permission allow చేసి, shop location వద్ద మళ్లీ try చేయండి.",
+          "Allow location access and try again while at your shop.",
         );
       },
 
@@ -852,7 +852,7 @@ export default function ResellerApplyPage() {
                   </p>
 
                   <p className="mt-1 text-[9px] leading-4 text-[#7B7066]">
-                    Current location capture చేస్తే address, city, state, pincode automaticగా fill అవుతాయి.
+                    Use your current location to help fill in your shop address, city, state and PIN code.
                   </p>
                 </div>
 
@@ -936,7 +936,7 @@ export default function ResellerApplyPage() {
               </div>
 
               <p className="mt-1 text-[9px] leading-4 text-[#7B7066]">
-                Visiting card + actual shop photos upload చేయండి.
+                Upload your visiting card and photos of your shop.
               </p>
 
               {/* VISITING CARD */}
@@ -1035,7 +1035,7 @@ export default function ResellerApplyPage() {
                 </div>
 
                 <p className="mt-1 text-[8px] leading-4 text-[#7B7066]">
-                  Shop front, inside view లేదా stock display photos.
+                  Add photos of your storefront, shop interior or stock display.
                 </p>
 
                 {shopPhotoUrls.length >
