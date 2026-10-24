@@ -2587,7 +2587,7 @@ export default function CheckoutPage() {
                 </h2>
 
                 <p className="mt-1 text-[9px] leading-4 text-zinc-500">
-                  Accurate delivery kosam current location share cheyyandi. Browser permission ichinappude location capture avutundi.
+                  Share your current location to help us confirm delivery details. Your location is accessed only with your browser permission.
                 </p>
               </div>
 
