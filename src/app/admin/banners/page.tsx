@@ -1790,7 +1790,7 @@ export default function AdminBannersPage() {
                   </h3>
 
                   <p className="mt-1 text-xs leading-5 text-zinc-500">
-                    Mobile and desktop ki separate ga subject ni left/right/up/down move cheyyachu. Original media crop avvakunda focal point maatrame change avutundi.
+                    Position the subject separately for mobile and desktop using the directional controls. The original media is preserved; only its focal point changes.
                   </p>
                 </div>
 
