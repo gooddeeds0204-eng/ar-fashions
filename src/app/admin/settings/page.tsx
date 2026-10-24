@@ -742,8 +742,7 @@ export default function SettingsPage() {
             </h2>
 
             <p className="mt-2 text-xs leading-5 text-zinc-500">
-              Product delete cheyyadaniki ee PIN compulsory.
-              PIN server-side secure hash ga save avutundi.
+              This PIN is required to delete products. It is stored securely as a hash on the server.
             </p>
 
             <div className="mt-4 rounded-2xl bg-zinc-50 p-4">
