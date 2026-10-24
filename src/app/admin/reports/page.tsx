@@ -426,10 +426,11 @@ export default function ReportsPage() {
           value ?? "",
         );
 
-      return `"${text.replaceAll(
-        '"',
-        '""',
-      )}"`;
+      // Prevent spreadsheet formula execution from user-entered text.
+      const safe = typeof value === "string" && /^[=+@\-\t\r]/.test(text)
+        ? "'" + text
+        : text;
+      return `"${safe.replaceAll('"', '""')}"`;
     };
 
     const rows: Array<
@@ -598,10 +599,11 @@ export default function ReportsPage() {
           value ?? "",
         );
 
-      return `"${text.replaceAll(
-        '"',
-        '""',
-      )}"`;
+      // Prevent spreadsheet formula execution from user-entered text.
+      const safe = typeof value === "string" && /^[=+@\-\t\r]/.test(text)
+        ? "'" + text
+        : text;
+      return `"${safe.replaceAll('"', '""')}"`;
     };
 
     const rows: Array<
