@@ -769,7 +769,7 @@ export default function SettingsPage() {
               </p>
 
               <p className="mt-1 text-[11px] leading-5 text-zinc-500">
-                Delete PIN set/change cheyyadaniki logged-in admin ID/email + password verify avvali.
+                Verify your admin email and password before setting or changing the product deletion PIN.
               </p>
 
               <label className="mt-4 block text-xs font-black">
