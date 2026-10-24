@@ -78,7 +78,8 @@ export async function GET(
         !Number.isFinite(localStart.getTime()) ||
         !Number.isFinite(localEnd.getTime()) ||
         rangeDays < 1 || rangeDays > 366 ||
-        localStart.toISOString().slice(0, 10) !== new Date(Date.parse(from + "T00:00:00Z") - 19800000).toISOString().slice(0, 10)
+        new Date(localStart.getTime() + 19800000).toISOString().slice(0, 10) !== from ||
+        new Date(localEnd.getTime() + 19800000).toISOString().slice(0, 10) !== to
       ) {
         return NextResponse.json({ error: "Select a valid range of up to 366 days." }, { status: 400 });
       }
