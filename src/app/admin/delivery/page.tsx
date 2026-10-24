@@ -65,6 +65,9 @@ export default function DeliveryPage() {
   const [form, setForm] =
     useState<Form>(initial);
 
+  const [activeMode, setActiveMode] =
+    useState<"RETAIL" | "WHOLESALE">("RETAIL");
+
   const [states, setStates] =
     useState("");
 
@@ -344,7 +347,7 @@ export default function DeliveryPage() {
         await fetch(
           "/api/admin/delivery-settings",
           {
-            method: "PUT",
+            method: "PATCH",
             headers: {
               "Content-Type":
                 "application/json",
@@ -352,13 +355,25 @@ export default function DeliveryPage() {
             credentials:
               "same-origin",
             body:
-              JSON.stringify({
-                ...form,
-                allowedStates:
-                  lines(states),
-                allowedPincodes:
-                  lines(pincodes),
-              }),
+              JSON.stringify(
+                activeMode === "RETAIL"
+                  ? {
+                      mode: "RETAIL",
+                      retailDeliveryCharge: form.retailDeliveryCharge,
+                      retailFreeDeliveryThreshold: form.retailFreeDeliveryThreshold,
+                      estimatedMinDays: form.estimatedMinDays,
+                      estimatedMaxDays: form.estimatedMaxDays,
+                      restrictServiceability: form.restrictServiceability,
+                      allowedStates: lines(states),
+                      allowedPincodes: lines(pincodes),
+                    }
+                  : {
+                      mode: "WHOLESALE",
+                      resellerDeliveryMode: form.resellerDeliveryMode,
+                      resellerFlatDeliveryCharge: form.resellerFlatDeliveryCharge,
+                      bulkFreightMessage: form.bulkFreightMessage,
+                    },
+              ),
           },
         );
 
@@ -370,8 +385,6 @@ export default function DeliveryPage() {
           data.error,
         );
       }
-
-      setForm(data.settings);
 
       setMessage(
         data.message,
@@ -408,16 +421,58 @@ export default function DeliveryPage() {
         </h1>
 
         <p className="mt-1 text-sm text-slate-500">
-          Retail courier charges and bulk freight rules.
+          Manage delivery settings independently for Retail and Bulk / Wholesale orders.
         </p>
 
         {message ? (
-          <div className="mt-5 rounded-2xl bg-emerald-50 p-4 text-sm font-bold text-emerald-700">
+          <div role="status" className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-bold text-emerald-700">
             {message}
           </div>
         ) : null}
 
-        <div className="mt-6 grid gap-5 lg:grid-cols-2">
+        <div role="tablist" aria-label="Delivery mode settings" className="mt-6 grid grid-cols-2 gap-3 rounded-[1.5rem] bg-[#EAE8E1] p-2">
+          {([
+            { key: "RETAIL" as const, title: "Retail Delivery", subtitle: "Single customer orders" },
+            { key: "WHOLESALE" as const, title: "Bulk / Wholesale", subtitle: "Reseller & large orders" },
+          ]).map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              role="tab"
+              id={`delivery-tab-${option.key.toLowerCase()}`}
+              aria-selected={activeMode === option.key}
+              aria-controls={`delivery-panel-${option.key.toLowerCase()}`}
+              onClick={() => {
+                setActiveMode(option.key);
+                setMessage("");
+              }}
+              className={`min-w-0 rounded-[1.15rem] px-3 py-4 text-left transition sm:px-5 ${
+                activeMode === option.key
+                  ? "bg-[#093E2D] text-white shadow-md"
+                  : "bg-white text-[#3A3B34] hover:bg-[#FDFBF8]"
+              }`}
+            >
+              <span className="block text-sm font-bold sm:text-base">{option.title}</span>
+              <span className={`mt-1 block text-[10px] sm:text-xs ${
+                activeMode === option.key ? "text-white/70" : "text-slate-500"
+              }`}>{option.subtitle}</span>
+            </button>
+          ))}
+        </div>
+
+        {activeMode === "RETAIL" ? (
+          <div
+            role="tabpanel"
+            id="delivery-panel-retail"
+            aria-labelledby="delivery-tab-retail"
+            className="mt-5 space-y-5"
+          >
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+              <h2 className="text-sm font-bold text-[#095138]">Retail Delivery Settings</h2>
+              <p className="mt-1 text-xs leading-5 text-[#3C6754]">
+                Set delivery charges and the free-shipping threshold for individual retail orders.
+              </p>
+            </div>
 
           <section className="rounded-3xl bg-white p-6 shadow-sm">
             <p className="text-xs font-black uppercase text-emerald-600">
@@ -475,6 +530,117 @@ export default function DeliveryPage() {
               </label>
             </div>
           </section>
+
+            <p className="rounded-2xl border border-[#E8DDCD] bg-[#F9F5EF] px-4 py-3 text-xs leading-5 text-[#716557]">
+              Delivery estimates and serviceable-area restrictions are currently shared by Retail and Bulk / Wholesale checkouts.
+            </p>
+
+          <section className="rounded-3xl bg-white p-6 shadow-sm lg:col-span-2">
+            <h2 className="text-xl font-black">
+              Estimated Delivery
+            </h2>
+
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <input
+                type="number"
+                min="0"
+                value={
+                  form.estimatedMinDays
+                }
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    estimatedMinDays:
+                      Number(
+                        e.target.value,
+                      ),
+                  })
+                }
+                className="rounded-2xl border p-3"
+                placeholder="Min days"
+              />
+
+              <input
+                type="number"
+                min="0"
+                value={
+                  form.estimatedMaxDays
+                }
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    estimatedMaxDays:
+                      Number(
+                        e.target.value,
+                      ),
+                  })
+                }
+                className="rounded-2xl border p-3"
+                placeholder="Max days"
+              />
+            </div>
+          </section>
+
+          <section className="rounded-3xl bg-white p-6 shadow-sm lg:col-span-2">
+            <label className="flex items-center gap-3 font-black">
+              <input
+                type="checkbox"
+                checked={
+                  form.restrictServiceability
+                }
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    restrictServiceability:
+                      e.target.checked,
+                  })
+                }
+                className="h-5 w-5"
+              />
+
+              Restrict serviceable areas
+            </label>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <textarea
+                rows={6}
+                value={states}
+                onChange={(e) =>
+                  setStates(
+                    e.target.value,
+                  )
+                }
+                placeholder={"Allowed states\nAndhra Pradesh\nTelangana"}
+                className="rounded-2xl border p-4"
+              />
+
+              <textarea
+                rows={6}
+                value={pincodes}
+                onChange={(e) =>
+                  setPincodes(
+                    e.target.value,
+                  )
+                }
+                placeholder={"Allowed pincodes\n522001\n522002"}
+                className="rounded-2xl border p-4"
+              />
+            </div>
+          </section>
+          </div>
+        ) : (
+          <div
+            role="tabpanel"
+            id="delivery-panel-wholesale"
+            aria-labelledby="delivery-tab-wholesale"
+            className="mt-5 space-y-5"
+          >
+            <div className="rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3">
+              <h2 className="text-sm font-bold text-violet-900">Bulk / Wholesale Delivery Settings</h2>
+              <p className="mt-1 text-xs leading-5 text-violet-700">
+                Manage reseller freight rates, transport agencies and the bulk checkout message separately from Retail.
+              </p>
+            </div>
 
           <section className="rounded-3xl bg-white p-6 shadow-sm">
             <p className="text-xs font-black uppercase text-violet-600">
@@ -816,100 +982,8 @@ export default function DeliveryPage() {
               className="mt-4 w-full rounded-2xl border p-4 text-sm"
             />
           </section>
-
-          <section className="rounded-3xl bg-white p-6 shadow-sm lg:col-span-2">
-            <h2 className="text-xl font-black">
-              Estimated Delivery
-            </h2>
-
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              <input
-                type="number"
-                min="0"
-                value={
-                  form.estimatedMinDays
-                }
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    estimatedMinDays:
-                      Number(
-                        e.target.value,
-                      ),
-                  })
-                }
-                className="rounded-2xl border p-3"
-                placeholder="Min days"
-              />
-
-              <input
-                type="number"
-                min="0"
-                value={
-                  form.estimatedMaxDays
-                }
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    estimatedMaxDays:
-                      Number(
-                        e.target.value,
-                      ),
-                  })
-                }
-                className="rounded-2xl border p-3"
-                placeholder="Max days"
-              />
-            </div>
-          </section>
-
-          <section className="rounded-3xl bg-white p-6 shadow-sm lg:col-span-2">
-            <label className="flex items-center gap-3 font-black">
-              <input
-                type="checkbox"
-                checked={
-                  form.restrictServiceability
-                }
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    restrictServiceability:
-                      e.target.checked,
-                  })
-                }
-                className="h-5 w-5"
-              />
-
-              Restrict serviceable areas
-            </label>
-
-            <div className="mt-5 grid gap-4 lg:grid-cols-2">
-              <textarea
-                rows={6}
-                value={states}
-                onChange={(e) =>
-                  setStates(
-                    e.target.value,
-                  )
-                }
-                placeholder={"Allowed states\nAndhra Pradesh\nTelangana"}
-                className="rounded-2xl border p-4"
-              />
-
-              <textarea
-                rows={6}
-                value={pincodes}
-                onChange={(e) =>
-                  setPincodes(
-                    e.target.value,
-                  )
-                }
-                placeholder={"Allowed pincodes\n522001\n522002"}
-                className="rounded-2xl border p-4"
-              />
-            </div>
-          </section>
-        </div>
+          </div>
+        )}
 
         <button
           type="button"
@@ -919,7 +993,9 @@ export default function DeliveryPage() {
         >
           {saving
             ? "Saving..."
-            : "Save Delivery Settings"}
+            : activeMode === "RETAIL"
+              ? "Save Retail Delivery Settings"
+              : "Save Wholesale Delivery Settings"}
         </button>
       </div>
     </main>
