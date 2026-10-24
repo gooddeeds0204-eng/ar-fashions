@@ -317,7 +317,7 @@ export default function CategoriesPage() {
           </h1>
 
           <p className="mt-2 max-w-xl text-[11px] leading-5 text-[#7B7066]">
-            Main category select chesi full subcategory list clean ga browse cheyyandi.
+            Choose a main category to explore its collections.
           </p>
         </div>
 
@@ -458,7 +458,7 @@ export default function CategoriesPage() {
             </p>
 
             <p className="mt-2 text-[10px] leading-5 text-[#8A7E72]">
-              Admin lo ee main category ki subcategories add chesaka ikkada automatic ga kanipistayi.
+              More styles will be added to this collection soon.
             </p>
           </div>
         )}
