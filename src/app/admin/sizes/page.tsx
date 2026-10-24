@@ -675,7 +675,7 @@ export default function SizesPage() {
 
             <p className="mt-1 text-xs leading-5 text-slate-400">
               Age reference maatrame. Height, chest and waist
-              customer ki correct fit choose cheyyadaniki main guide.
+              the main guide customers use to choose a suitable fit.
             </p>
           </div>
 
