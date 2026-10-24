@@ -542,7 +542,7 @@ export default function DeliveryPage() {
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-violet-700">
-                  Parcel pack ayyaka weight + destination batti admin final courier/transport charge enter chestaru.
+                  After packing, enter the final courier or transport charge based on package weight and destination.
                 </p>
               </div>
             )}
