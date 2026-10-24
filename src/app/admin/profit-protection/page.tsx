@@ -244,7 +244,7 @@ export default function ProfitProtectionPage() {
             </h1>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
-              Compares current variant costs with retail and reseller selling prices to flag low-margin or loss-making products before a sale. This screen is warning-only; product save ni block cheyyadu.
+              Compares current variant costs with retail and reseller selling prices to flag low-margin or loss-making products before a sale. These warnings do not block product updates.
             </p>
           </div>
 
