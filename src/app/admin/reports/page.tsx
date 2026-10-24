@@ -338,6 +338,9 @@ export default function ReportsPage() {
   ] =
     useState("");
 
+  const [search, setSearch] = useState("");
+  const [orderStatus, setOrderStatus] = useState("ALL");
+
   async function loadReports() {
     try {
       setLoading(true);
@@ -467,7 +470,7 @@ export default function ReportsPage() {
           .deliveredSales,
       ],
       ["Total Orders (All Statuses)", data.summary.totalOrders],
-      ["Order Register Lines (All Statuses)", data.salesRows.length],
+      ["Exported Order Lines (All Statuses)", filteredSalesRows.length],
       ["IMPORTANT", "Only DELIVERED orders are counted as completed sales; other order statuses appear in the register for reconciliation."],
       [
         "Delivered Orders",
@@ -501,7 +504,7 @@ export default function ReportsPage() {
       ],
       [],
       ["ORDER NUMBER", "ORDER DATE", "ORDER TYPE", "ORDER STATUS", "PAYMENT STATUS", "CUSTOMER", "PHONE", "PAYMENT METHOD", "ITEM QTY", "PRODUCTS", "SUBTOTAL", "DISCOUNT", "DELIVERY", "TOTAL", "COUPON", "FREIGHT PENDING"],
-      ...data.salesRows.map(
+      ...filteredSalesRows.map(
         (row) => [
           row.orderNumber,
           new Date(
@@ -773,6 +776,23 @@ export default function ReportsPage() {
   useEffect(() => {
     void loadReports();
   }, [days, period, month, customFrom, customTo]);
+
+  const filteredSalesRows = (data?.salesRows ?? []).filter((row) => {
+    const text = search.trim().toLowerCase();
+    const matchesSearch = !text || [
+      row.orderNumber, row.customerName, row.products, row.phone ?? "",
+    ].some((value) => value.toLowerCase().includes(text));
+    const matchesStatus = orderStatus === "ALL" || row.orderStatus === orderStatus;
+    return matchesSearch && matchesStatus;
+  });
+
+  const gstOrderCount = new Set(
+    (data?.gstAuditRows ?? []).map((row) => row.orderNumber),
+  ).size;
+
+  const periodSummary = data
+    ? `${new Date(data.range.from).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })} – ${new Date(data.range.to).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })}`
+    : "";
 
   const maxTrend =
     useMemo(() => {
