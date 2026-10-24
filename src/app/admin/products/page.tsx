@@ -3095,7 +3095,7 @@ export default function ProductsPage() {
                           </label>
                         )}
 
-                        <p className="mb-3 text-[10px] font-semibold text-emerald-200">${measurementTemplate.title}</p>
+                        <p className="mb-3 text-[10px] font-semibold text-emerald-200">{measurementTemplate.title}</p>
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                           {measurementTemplate.primaryFields.map(
                             (field) => (
