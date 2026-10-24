@@ -356,7 +356,7 @@ export default function SizesPage() {
           </h1>
 
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-            Age ranges are only a reference for kids' sizes. Enter the measured height, chest, waist and other relevant dimensions for an accurate fit guide.
+            Age ranges are only a reference for children sizes. Enter the measured height, chest, waist and other relevant dimensions for an accurate fit guide.
           </p>
         </div>
 
