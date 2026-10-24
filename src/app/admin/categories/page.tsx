@@ -207,7 +207,7 @@ export default function CategoriesPage() {
 
     if (!parentId) {
       setMessage(
-        "Main category select cheyyandi.",
+        "Select a main category.",
       );
       return;
     }
@@ -490,7 +490,7 @@ export default function CategoriesPage() {
       !editParentId
     ) {
       setMessage(
-        "Subcategory ki main category select cheyyandi.",
+        "Choose a main category for this subcategory.",
       );
       return;
     }
@@ -894,11 +894,11 @@ export default function CategoriesPage() {
 
         {!isCoreMain ? (
           <p className="mt-3 text-[11px] leading-5 text-emerald-300">
-            Manual changes permanent ga save avutayi. Title, image, parent main category and order next refresh lo kuda same ga untayi.
+            Changes to the title, image, parent category and display order are saved and retained after refresh.
           </p>
         ) : (
           <p className="mt-3 text-[11px] leading-5 text-slate-500">
-            Main category title/order fixed. Image maatrame change cheyyachu.
+            Main category names and order are fixed. You can update the image.
           </p>
         )}
 
@@ -1128,7 +1128,7 @@ export default function CategoriesPage() {
               </h2>
 
               <p className="mt-1 text-xs leading-5 text-slate-500">
-                First Women / Men / Girl Kids / Boy Kids select chesi, aa main category kindha subcategory add cheyyandi.
+                Select Women, Men, Girl Kids or Boy Kids, then add a subcategory under the selected group.
               </p>
             </div>
 
@@ -1444,7 +1444,7 @@ export default function CategoriesPage() {
 
             <div className="border-t border-white/10 px-5 py-4 sm:px-6">
               <p className="mb-4 text-xs leading-5 text-slate-500">
-                Old Kids or other previous main categories data-safe ga ikkada preserve ayyayi. Storefront main categories మాత్రం Women, Men, Girl Kids, Boy Kids.
+                Previously created main categories are preserved for reference. The storefront displays Women, Men, Girl Kids and Boy Kids.
               </p>
 
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
