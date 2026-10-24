@@ -1338,7 +1338,13 @@ export default function ProductDetailPage() {
 
     setAdding(true);
 
-    const cart = getCart();
+    // Only one paid retail item per order; free campaign rewards remain separate.
+    const cart = isReseller
+      ? getCart()
+      : getCart().filter(
+          (item) => (item.mode ?? "RETAIL") === "RESELLER" ||
+            Boolean(item.campaignOfferId && item.campaignReward),
+        );
 
     const existingIndex = cart.findIndex(
       (item) =>
@@ -1349,13 +1355,9 @@ export default function ProductDetailPage() {
     );
 
     if (existingIndex >= 0) {
-      const newQuantity =
-        cart[existingIndex].quantity + quantity;
-
-      cart[existingIndex].quantity = Math.min(
-        newQuantity,
-        selectedVariant.stock,
-      );
+      cart[existingIndex].quantity = isReseller
+        ? Math.min(cart[existingIndex].quantity + quantity, selectedVariant.stock)
+        : 1;
 
       cart[existingIndex].sizeName =
         sizeLabel(
@@ -1380,7 +1382,7 @@ export default function ProductDetailPage() {
           selectedVariant.size.inches,
         ),
         price: currentPrice,
-        quantity,
+        quantity: isReseller ? quantity : 1,
         mode: isReseller ? "RESELLER" : "RETAIL",
         resellerMOQ: isReseller ? minimumQuantity : undefined,
       });
@@ -1498,7 +1500,13 @@ export default function ProductDetailPage() {
 
     setAdding(true);
 
-    const cart = getCart();
+    // Only one paid retail item per order; free campaign rewards remain separate.
+    const cart = isReseller
+      ? getCart()
+      : getCart().filter(
+          (item) => (item.mode ?? "RETAIL") === "RESELLER" ||
+            Boolean(item.campaignOfferId && item.campaignReward),
+        );
 
     const modeValue =
       isReseller ? "RESELLER" : "RETAIL";
@@ -1512,12 +1520,9 @@ export default function ProductDetailPage() {
       );
 
     if (existingIndex >= 0) {
-      cart[existingIndex].quantity =
-        Math.min(
-          cart[existingIndex].quantity +
-            quantity,
-          selectedVariant.stock,
-        );
+      cart[existingIndex].quantity = isReseller
+        ? Math.min(cart[existingIndex].quantity + quantity, selectedVariant.stock)
+        : 1;
 
       cart[existingIndex].sizeName =
         sizeLabel(
@@ -1548,7 +1553,7 @@ export default function ProductDetailPage() {
           ),
         price:
           currentPrice,
-        quantity,
+        quantity: isReseller ? quantity : 1,
         mode:
           modeValue,
         resellerMOQ:
@@ -2041,6 +2046,8 @@ export default function ProductDetailPage() {
             )}
           </div>
 
+          {/* Retail purchases are one unit; reseller controls remain available. */}
+          {isReseller ? (
           {/* QUANTITY */}
           <div className="mt-4 flex items-center justify-between gap-4 rounded-[1.35rem] border border-black/[0.06] bg-[#FAF7F0] p-4">
             <div>
@@ -2090,6 +2097,16 @@ export default function ProductDetailPage() {
               </button>
             </div>
           </div>
+
+          ) : (
+            <div className="mt-4 flex items-center justify-between rounded-[1.35rem] border border-[#DFD0B6] bg-[#FAF7F0] p-4">
+              <div>
+                <p className="text-sm font-bold text-[#0B3427]">Retail Quantity</p>
+                <p className="mt-1 text-[10px] text-[#796B5C]">One item per retail order</p>
+              </div>
+              <span className="rounded-xl border border-[#DCCAB0] bg-white px-5 py-3 text-sm font-bold text-[#0B3427]">1 piece</span>
+            </div>
+          )}
 
           {/* ACTION */}
           {!isReseller || meetsMOQ ? (
