@@ -7,6 +7,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import BrandLogo from "@/components/BrandLogo";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 import {
   RETAILER_CITIES,
   normalizeRetailerState,
@@ -443,6 +444,13 @@ export default function SignupPage() {
                 approval required
               </p>
             </button>
+          </div>
+
+          <div className="mt-6">
+            <GoogleSignInButton />
+            <p className="mt-2 text-center text-[10px] leading-5 text-[#87796C]">
+              Google creates a customer account. Wholesale approval can be requested after signing in.
+            </p>
           </div>
 
           <form
