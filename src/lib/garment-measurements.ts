@@ -58,3 +58,52 @@ export function mergeGarmentMeasurements(
     ...(value ?? {}),
   };
 }
+
+/**
+ * Product-type-aware admin measurement fields.
+ * Existing stored values are never deleted when a template changes:
+ * the editor exposes the remaining fields under "Additional fields".
+ */
+export function getGarmentMeasurementTemplate(
+  categoryName: string,
+  productName = "",
+) {
+  const type = `${categoryName} ${productName}`.toLowerCase();
+  const matches = (pattern: RegExp) => pattern.test(type);
+  const allKeys = GARMENT_MEASUREMENT_FIELDS.map((field) => field.key);
+
+  let title = "Garment";
+  let keys: GarmentMeasurementField[] = allKeys;
+
+  const multiPiece = matches(/coat|ghagra|lehenga|set|co-ord|coord|suit|tracksuit|ethnic|punjabi/);
+
+  if (matches(/saree|dupatta|scarf|shawl/)) {
+    title = "Fabric / drape measurements";
+    keys = ["garmentLengthIn", "topLengthIn"];
+  } else if (multiPiece) {
+    title = "Top & bottom — separate garment measurements";
+    keys = [
+      "chestIn", "waistIn", "shoulderIn", "armholeIn",
+      "sleeveLengthIn", "topLengthIn", "garmentLengthIn",
+      "bottomWaistMinIn", "bottomWaistMaxIn", "bottomLengthIn", "hipIn",
+    ];
+  } else if (matches(/jean|trouser|pant|legging|jegging|palazzo|short|skirt/)) {
+    title = "Bottom wear measurements";
+    keys = ["bottomWaistMinIn", "bottomWaistMaxIn", "hipIn", "bottomLengthIn"];
+  } else if (matches(/shirt|t-shirt|t shirt|kurti|tunic|tops?|sweatshirt|shrug|jacket/)) {
+    title = "Top wear measurements";
+    keys = ["chestIn", "waistIn", "shoulderIn", "armholeIn", "sleeveLengthIn", "topLengthIn"];
+  } else if (matches(/frock|dress|gown/)) {
+    title = "Dress / frock measurements";
+    keys = ["chestIn", "waistIn", "shoulderIn", "sleeveLengthIn", "garmentLengthIn", "hipIn"];
+  }
+
+  const primaryFields = keys
+    .map((key) => GARMENT_MEASUREMENT_FIELDS.find((field) => field.key === key))
+    .filter((field): field is (typeof GARMENT_MEASUREMENT_FIELDS)[number] => Boolean(field));
+  const additionalFields = GARMENT_MEASUREMENT_FIELDS.filter(
+    (field) => !keys.includes(field.key),
+  );
+
+  return { title, primaryFields, additionalFields };
+}
