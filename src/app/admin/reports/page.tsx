@@ -829,88 +829,95 @@ export default function ReportsPage() {
     <main className="min-h-screen bg-[#FAF7F0] px-4 py-6 text-[#211C18] md:px-8">
       <div className="mx-auto max-w-7xl">
 
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">
-              AS FASHIONS
-            </p>
-
-            <h1 className="mt-1 text-3xl font-black tracking-tight">
-              Reports & Analytics
-            </h1>
-
-            <p className="mt-1 text-sm text-zinc-500">
-              Sales, orders, customers and product performance.
-            </p>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">AS FASHIONS · ADMIN</p>
+            <h1 className="mt-1 font-serif text-3xl font-bold tracking-tight text-[#172F24]">Reports</h1>
+            <p className="mt-1 text-sm text-[#81766A]">Simple sales tracking and clear auditor working records.</p>
           </div>
-
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={
-                downloadSalesReport
-              }
-              disabled={
-                !data ||
-                loading
-              }
-              className="rounded-xl bg-emerald-700 px-4 py-2.5 text-xs font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              ↓ Download Sales Report
-            </button>
-
-            <button
-              type="button"
-              onClick={
-                downloadGstAuditorReport
-              }
-              disabled={
-                !data ||
-                loading
-              }
-              className="rounded-xl bg-[#031B14] px-4 py-2.5 text-xs font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              ↓ GST Auditor Report
-            </button>
-
-            <button
-              type="button"
-              onClick={
-                loadReports
-              }
-              className="rounded-xl border border-black/5 bg-white px-4 py-2.5 text-xs font-black shadow-sm"
-            >
-              ↻ Refresh
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => void loadReports()}
+            className="rounded-xl border border-[#DFD5C5] bg-white px-4 py-2.5 text-xs font-bold text-[#234935] shadow-sm"
+          >
+            ↻ Refresh
+          </button>
         </div>
 
-        <div className="mt-5 flex gap-2">
-          {[
-            7,
-            30,
-            90,
-          ].map((value) => (
+        <div role="tablist" aria-label="Report type" className="mt-5 grid grid-cols-3 gap-2 rounded-[18px] border border-[#E7DECF] bg-[#F0ECE4] p-1.5">
+          {([
+            { id: "SALES" as const, label: "Sales Report" },
+            { id: "GST" as const, label: "GST Auditor" },
+            { id: "ADVANCED" as const, label: "More Analytics" },
+          ]).map((tab) => (
             <button
-              key={value}
+              key={tab.id}
               type="button"
-              onClick={() =>
-                setDays(
-                  value as
-                    | 7
-                    | 30
-                    | 90,
-                )
-              }
-              className={`rounded-xl px-4 py-2 text-xs font-black ${
-                days === value
-                  ? "bg-zinc-950 text-white"
-                  : "border border-black/5 bg-white text-zinc-600"
+              role="tab"
+              aria-selected={reportTab === tab.id}
+              onClick={() => setReportTab(tab.id)}
+              className={`min-h-11 rounded-xl px-2 py-2.5 text-xs font-bold transition sm:text-sm ${
+                reportTab === tab.id
+                  ? "bg-[#124432] text-white shadow-sm"
+                  : "text-[#6C665C] hover:bg-white"
               }`}
             >
-              {value} Days
+              {tab.label}
             </button>
           ))}
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-[#ECE4D8] bg-white p-4">
+          <p className="text-xs font-bold text-[#3B4F40]">Select report period</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {([
+              { id: "7" as const, label: "7 Days" },
+              { id: "30" as const, label: "30 Days" },
+              { id: "90" as const, label: "90 Days" },
+              { id: "MONTH" as const, label: "Full Month" },
+              { id: "CUSTOM" as const, label: "Custom Dates" },
+            ]).map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => {
+                  setPeriod(option.id);
+                  if (["7", "30", "90"].includes(option.id)) {
+                    setDays(Number(option.id) as 7 | 30 | 90);
+                  }
+                }}
+                className={`rounded-full border px-3 py-2 text-[11px] font-bold ${
+                  period === option.id
+                    ? "border-[#124432] bg-[#124432] text-white"
+                    : "border-[#E7E0D4] bg-[#FAF9F6] text-[#655D53]"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          {period === "MONTH" ? (
+            <label className="mt-4 block max-w-xs text-xs font-semibold text-[#655D53]">
+              Calendar month
+              <input type="month" value={month} onChange={(event) => setMonth(event.target.value)}
+                className="mt-2 block w-full rounded-xl border border-[#DDD2C0] bg-white px-3 py-3 text-sm" />
+            </label>
+          ) : period === "CUSTOM" ? (
+            <div className="mt-4 grid max-w-lg grid-cols-2 gap-3">
+              <label className="block text-xs font-semibold text-[#655D53]">
+                From date
+                <input type="date" value={customFrom} onChange={(event) => setCustomFrom(event.target.value)}
+                  className="mt-2 block w-full min-w-0 rounded-xl border border-[#DDD2C0] bg-white px-2 py-3 text-sm" />
+              </label>
+              <label className="block text-xs font-semibold text-[#655D53]">
+                To date
+                <input type="date" value={customTo} onChange={(event) => setCustomTo(event.target.value)}
+                  className="mt-2 block w-full min-w-0 rounded-xl border border-[#DDD2C0] bg-white px-2 py-3 text-sm" />
+              </label>
+              <p className="col-span-2 text-[11px] text-[#96897C]">Up to 366 days per download.</p>
+            </div>
+          ) : null}
+          {data && <p className="mt-3 text-[11px] text-[#92877B]">Selected period: {periodSummary}</p>}
         </div>
 
         {error ? (
