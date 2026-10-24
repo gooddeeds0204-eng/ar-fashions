@@ -356,9 +356,7 @@ export default function SizesPage() {
           </h1>
 
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-            Kids ki age ni reference ga maatrame use cheyyandi.
-            Correct fit kosam height, chest, waist and other body
-            measurements maintain cheyyandi.
+            Age ranges are only a reference for kids' sizes. Enter the measured height, chest, waist and other relevant dimensions for an accurate fit guide.
           </p>
         </div>
 
@@ -538,7 +536,7 @@ export default function SizesPage() {
               </div>
 
               <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3 text-[11px] leading-5 text-slate-400">
-                Preset values are a reference starting point. Supplier or product-specific chart unte fields ni manual ga edit cheyyandi.
+                Preset measurements are a starting point. Update each field using verified supplier or product-specific measurements.
               </div>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
