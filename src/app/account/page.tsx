@@ -1,5 +1,7 @@
 "use client";
 
+import GoogleSignInButton from "@/components/GoogleSignInButton";
+
 import {
   FormEvent,
   useEffect,
@@ -1382,6 +1384,14 @@ export default function AccountPage() {
         )}
       </div>
 
+
+      <div className="mx-auto mb-6 max-w-5xl rounded-2xl border border-[#E4D7C4] bg-[#FFFDF9] p-4 sm:p-5">
+        <p className="text-sm font-bold text-[#213B2D]">Google Account</p>
+        <p className="mt-1 mb-3 text-xs leading-5 text-[#766E64]">
+          Connect Google to your existing account. Your Google email must match your profile email.
+        </p>
+        <div className="max-w-sm"><GoogleSignInButton mode="link" /></div>
+      </div>
 
       {editProfileOpen && (
         <div className="fixed inset-0 z-[120] overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4">
