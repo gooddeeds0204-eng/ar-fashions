@@ -200,6 +200,11 @@ export default function CartPage() {
       return;
     }
 
+    if (current && (current.mode ?? "RETAIL") === "RETAIL") {
+      notify("ERROR", "Retail quantity is fixed", "Retail checkout allows only one paid item.");
+      return;
+    }
+
     const nextCart =
       cart.map((item) =>
         item.id === itemId
@@ -238,6 +243,11 @@ export default function CartPage() {
         "Smart Pack Locked",
         "Smart Stock quantities cannot be changed individually.",
       );
+      return;
+    }
+
+    if (current && (current.mode ?? "RETAIL") === "RETAIL") {
+      removeItem(itemId);
       return;
     }
 
@@ -619,11 +629,34 @@ export default function CartPage() {
     hasRetailItems &&
     hasResellerItems;
 
+  const retailPaidItems = cart.filter(
+    (item) => (item.mode ?? "RETAIL") === "RETAIL" &&
+      !isCampaignRewardItem(item),
+  );
+  const invalidRetailCart =
+    retailPaidItems.length > 1 ||
+    retailPaidItems.some((item) => item.quantity !== 1);
+
+  function fixRetailCart() {
+    let kept = false;
+    saveCart(
+      cart.filter((item) => {
+        if ((item.mode ?? "RETAIL") !== "RETAIL" || isCampaignRewardItem(item)) return true;
+        if (kept) return false;
+        kept = true;
+        item.quantity = 1;
+        return true;
+      }),
+    );
+    notify("SUCCESS", "Retail bag updated", "One retail product with quantity 1 kept.");
+  }
+
   const isResellerOrder =
     hasResellerItems &&
     !hasRetailItems;
 
   const canCheckout =
+    !invalidRetailCart &&
     !isMixedCart &&
     !invalidCuratedCart &&
     invalidResellerGroups.length ===
@@ -1145,6 +1178,11 @@ export default function CartPage() {
                                       Qty 1
                                     </p>
                                   </div>
+                                ) : (item.mode ?? "RETAIL") === "RETAIL" ? (
+                                  <div className="rounded-xl border border-[#D6C4A9] bg-[#FAF7F0] px-4 py-2 text-center">
+                                    <p className="text-[8px] font-black uppercase tracking-wider text-[#6B5435]">Retail</p>
+                                    <p className="mt-0.5 text-sm font-black text-[#063326]">Qty {item.quantity}</p>
+                                  </div>
                                 ) : item.smartStockBalance ? (
                                   <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-2 text-center">
                                     <p className="text-[8px] font-black uppercase tracking-wider text-emerald-600">
@@ -1466,6 +1504,22 @@ export default function CartPage() {
                   </div>
                 )}
 
+                {invalidRetailCart && (
+                  <div className="mt-5 rounded-[1.1rem] border border-amber-200 bg-amber-50 p-4">
+                    <p className="text-[11px] font-black text-amber-900">One product per retail order</p>
+                    <p className="mt-1 text-[10px] leading-5 text-amber-800">
+                      Retail purchases are limited to one paid item, quantity 1. Reseller sets and verified campaign gifts use their existing rules.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={fixRetailCart}
+                      className="mt-3 rounded-full bg-[#063326] px-4 py-2.5 text-[10px] font-bold text-white"
+                    >
+                      Keep first retail item →
+                    </button>
+                  </div>
+                )}
+
                 {invalidCuratedCart && (
                   <div className="mt-5 rounded-[1.1rem] border border-red-200 bg-red-50 p-4">
                     <p className="text-[10px] font-black text-red-800">
@@ -1668,9 +1722,11 @@ export default function CartPage() {
                 ? "Checkout →"
                 : isMixedCart
                   ? "Separate Orders"
-                  : invalidCuratedCart
-                    ? "Fix Set"
-                    : "MOQ Required"}
+                  : invalidRetailCart
+                    ? "Fix Retail Bag"
+                    : invalidCuratedCart
+                      ? "Fix Set"
+                      : "MOQ Required"}
             </button>
           </div>
         </div>
