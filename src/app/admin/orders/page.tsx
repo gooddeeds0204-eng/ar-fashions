@@ -1752,7 +1752,7 @@ export default function AdminOrdersPage() {
                 ) : (
                   <div className="mt-4">
                     <p className="text-[10px] leading-5 text-violet-700">
-                      Packing complete ayyaka parcel service ledha transport agency select chesi LR / tracking number enter cheyyandi.
+                      After packing, choose a courier or transport service and enter the LR or tracking number.
                     </p>
 
                     <label className="mt-4 block text-[9px] font-black uppercase tracking-[0.08em] text-violet-800">
@@ -1868,7 +1868,7 @@ export default function AdminOrdersPage() {
                           </p>
 
                           <p className="mt-1 text-[10px] leading-5 text-zinc-500">
-                            LR receipt, docket or transport booking slip ni direct ga upload cheyyandi.
+                            Upload the LR receipt, docket or transport booking slip.
                           </p>
                         </div>
 
