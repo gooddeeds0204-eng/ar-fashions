@@ -1815,8 +1815,7 @@ export default function ProductsPage() {
             </h1>
 
             <p className="mt-2 max-w-2xl text-sm text-slate-400">
-              Products, colors, sizes, pricing and stock variants
-              అన్నీ ఒకే చోట manage చేయండి.
+              Manage products, colours, sizes, pricing and stock variants in one place.
             </p>
           </div>
 
