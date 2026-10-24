@@ -366,7 +366,7 @@ export default function HomeCategoryCardsManager({
         </h2>
 
         <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-400">
-          Homepage main categories fixed ga 4 maatrame: Women, Men, Girl Kids, Boy Kids. Subcategories separate ga kindha add cheyyandi.
+          The homepage has four main categories: Women, Men, Girl Kids and Boy Kids. Add subcategories within each group.
         </p>
       </div>
 
@@ -534,7 +534,7 @@ export default function HomeCategoryCardsManager({
 
       <div className="border-t border-white/10 bg-black/15 px-5 py-4 sm:px-6">
         <p className="text-[10px] leading-5 text-slate-500">
-          Main category create/remove controls ikkada intentionally levu. Ee four fixed storefront groups kindha subcategories ni manage cheyyali.
+          Main category creation and removal are unavailable here. Manage subcategories under the four storefront groups.
         </p>
       </div>
     </section>
