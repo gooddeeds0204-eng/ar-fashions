@@ -152,9 +152,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!Number.isInteger(quantity) || quantity < 1) {
+    if (!Number.isInteger(quantity) || quantity !== 1) {
       return NextResponse.json(
-        { error: "quantity must be a positive integer." },
+        { error: "Retail cart allows one item only (quantity 1)." },
         { status: 400 },
       );
     }
@@ -249,26 +249,16 @@ export async function POST(request: NextRequest) {
     });
 
     if (existing) {
-      const newQuantity = existing.quantity + quantity;
-
-      if (
-        stock !== null &&
-        newQuantity > stock
-      ) {
-        return NextResponse.json(
-          {
-            error: `Only ${stock} pieces available. Current cart quantity is ${existing.quantity}.`,
-          },
-          { status: 409 },
-        );
-      }
+      await prisma.cartItem.deleteMany({
+        where: { cartId: cart.id, id: { not: existing.id } },
+      });
 
       const updated = await prisma.cartItem.update({
         where: {
           id: existing.id,
         },
         data: {
-          quantity: newQuantity,
+          quantity: 1,
           unitPrice,
         },
       });
@@ -285,6 +275,9 @@ export async function POST(request: NextRequest) {
         },
       });
     }
+
+    // New retail selection replaces prior cart selections, rather than stacking items.
+    await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
 
     const created = await prisma.cartItem.create({
       data: {
@@ -350,10 +343,10 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    if (!Number.isInteger(quantity) || quantity < 1) {
+    if (!Number.isInteger(quantity) || quantity !== 1) {
       return NextResponse.json(
         {
-          error: "quantity must be at least 1.",
+          error: "Retail quantity is fixed at 1.",
         },
         { status: 400 },
       );
