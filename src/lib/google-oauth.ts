@@ -173,7 +173,7 @@ export async function verifyGoogleIdentity(
   );
   if (!jwk) throw new Error("GOOGLE_SIGNING_KEY_NOT_FOUND");
 
-  const publicKey = createPublicKey({ key: jwk, format: "jwk" });
+  const publicKey = createPublicKey({ key: jwk as unknown as Record<string, string>, format: "jwk" });
   const isValid = verify(
     "RSA-SHA256",
     Buffer.from(encodedHeader + "." + encodedPayload),
