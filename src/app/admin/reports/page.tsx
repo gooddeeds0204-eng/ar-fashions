@@ -932,6 +932,260 @@ export default function ReportsPage() {
           </div>
         ) : data ? (
           <>
+            {reportTab === "SALES" && (
+              <div className="mt-5 space-y-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-xl font-black text-[#203C2E]">Sales Overview</h2>
+                    <p className="mt-1 text-xs leading-5 text-[#81776B]">
+                      Completed sales count delivered orders only. The order register includes every status.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={downloadSalesReport}
+                    className="rounded-xl bg-[#12613F] px-4 py-3 text-xs font-bold text-white"
+                  >
+                    ↓ Download Sales Register (.csv)
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                  {[
+                    { label: "Delivered Sales", value: money(data.summary.deliveredSales), caption: "Completed orders only" },
+                    { label: "Delivered Orders", value: String(data.summary.deliveredOrders), caption: "Successfully delivered" },
+                    { label: "Total Orders", value: String(data.summary.totalOrders), caption: "All order statuses" },
+                    { label: "Pending Pipeline", value: money(data.summary.pipelineValue), caption: String(data.summary.pipelineOrders) + " active orders · not yet sales" },
+                  ].map((metric) => (
+                    <div key={metric.label} className="rounded-2xl border border-[#ECE5DA] bg-white p-4 shadow-sm sm:p-5">
+                      <p className="text-[11px] font-semibold text-[#7B7367]">{metric.label}</p>
+                      <p className="mt-2 text-2xl font-black tabular-nums text-[#163D2B]">{metric.value}</p>
+                      <p className="mt-1 text-[10px] leading-4 text-[#9B9083]">{metric.caption}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <section className="rounded-2xl border border-[#E9E2D7] bg-white p-4 shadow-sm sm:p-5">
+                  <h3 className="text-sm font-black text-[#263F30]">Sales by customer type</h3>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <div className="rounded-xl bg-[#EFF8F1] p-4">
+                      <p className="text-[11px] text-[#5A7162]">Retail Sales</p>
+                      <p className="mt-1 text-xl font-bold text-[#145637]">{money(data.salesByType.RETAIL.sales)}</p>
+                      <p className="mt-1 text-[10px] text-[#708776]">{data.salesByType.RETAIL.orders} delivered orders</p>
+                    </div>
+                    <div className="rounded-xl bg-[#F5F2FA] p-4">
+                      <p className="text-[11px] text-[#756584]">Wholesale Sales</p>
+                      <p className="mt-1 text-xl font-bold text-[#4E306B]">{money(data.salesByType.RESELLER.sales)}</p>
+                      <p className="mt-1 text-[10px] text-[#887A97]">{data.salesByType.RESELLER.orders} delivered orders</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-[11px]">
+                    <p className="rounded-lg bg-[#FAF8F4] p-3 text-[#625C55]">Delivered discounts <strong className="mt-1 block text-sm text-[#29392E]">{money(data.summary.discountTotal)}</strong></p>
+                    <p className="rounded-lg bg-[#FAF8F4] p-3 text-[#625C55]">Delivered shipping collected <strong className="mt-1 block text-sm text-[#29392E]">{money(data.summary.deliveryRevenue)}</strong></p>
+                  </div>
+                </section>
+
+                <section className="overflow-hidden rounded-2xl border border-[#E9E2D7] bg-white shadow-sm">
+                  <div className="space-y-3 border-b border-[#EFE9E0] p-4 sm:p-5">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-base font-black text-[#263F30]">Order-wise Sales Register</h3>
+                        <p className="mt-1 text-xs text-[#8A8074]">
+                          {filteredSalesRows.length} orders in this view. Filtered rows are included in the CSV download.
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-[#EFF8F1] px-3 py-1.5 text-[10px] font-bold text-[#276146]">Live order data</span>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-[1fr_180px]">
+                      <input
+                        type="search"
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        placeholder="Search order, customer, product..."
+                        aria-label="Search sales register"
+                        className="w-full rounded-xl border border-[#E6DECE] px-3 py-3 text-sm outline-none focus:border-emerald-600"
+                      />
+                      <select
+                        value={orderStatus}
+                        onChange={(event) => setOrderStatus(event.target.value)}
+                        aria-label="Filter by order status"
+                        className="rounded-xl border border-[#E6DECE] bg-white px-3 py-3 text-xs font-semibold"
+                      >
+                        <option value="ALL">All Order Statuses</option>
+                        {["PENDING","CONFIRMED","PACKED","SHIPPED","DELIVERED","CANCELLED","RETURN_REQUESTED","RETURNED","REFUNDED"].map((status) => (
+                          <option key={status} value={status}>{status.replaceAll("_"," ")}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[850px] text-left text-xs">
+                      <thead className="bg-[#F8F6F1] text-[10px] font-bold uppercase tracking-wide text-[#6D6A61]">
+                        <tr>
+                          <th className="px-4 py-3">Order / Date</th>
+                          <th className="px-4 py-3">Customer</th>
+                          <th className="px-4 py-3">Type</th>
+                          <th className="px-4 py-3">Status</th>
+                          <th className="px-4 py-3">Payment</th>
+                          <th className="px-4 py-3 text-right">Items</th>
+                          <th className="px-4 py-3 text-right">Order Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#F3EEE7]">
+                        {filteredSalesRows.slice(0, 100).map((row) => (
+                          <tr key={row.orderNumber} className="hover:bg-[#FAFAF6]">
+                            <td className="px-4 py-3">
+                              <p className="font-bold text-[#234E37]">{row.orderNumber}</p>
+                              <p className="mt-1 text-[10px] text-[#867B70]">{new Date(row.date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })}</p>
+                            </td>
+                            <td className="px-4 py-3 text-[#3E453D]">{row.customerName}</td>
+                            <td className="px-4 py-3">{row.type === "RESELLER" ? "Wholesale" : "Retail"}</td>
+                            <td className="px-4 py-3">
+                              <span className="rounded-full bg-[#F1EEE8] px-2.5 py-1 text-[10px] font-bold">{statusLabel(row.orderStatus)}</span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <p className="font-semibold">{statusLabel(row.paymentStatus)}</p>
+                              <p className="mt-1 text-[10px] text-[#898075]">{row.paymentMethod ?? "—"}</p>
+                            </td>
+                            <td className="px-4 py-3 text-right tabular-nums">{row.itemQuantity}</td>
+                            <td className="px-4 py-3 text-right font-black tabular-nums">{money(row.totalAmount)}</td>
+                          </tr>
+                        ))}
+                        {filteredSalesRows.length === 0 && (
+                          <tr><td colSpan={7} className="px-5 py-10 text-center text-sm text-[#8B8176]">No orders match the selected period and filters.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  {filteredSalesRows.length > 100 && (
+                    <p className="border-t border-[#F0EAE0] p-3 text-center text-xs text-[#887E72]">
+                      Showing first 100 of {filteredSalesRows.length} orders. Download CSV for every matching row.
+                    </p>
+                  )}
+                </section>
+              </div>
+            )}
+
+            {reportTab === "GST" && (
+              <div className="mt-5 space-y-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-xl font-black text-[#203C2E]">GST Auditor Working Register</h2>
+                    <p className="mt-1 text-xs leading-5 text-[#81776B]">
+                      Invoice-level reconciliation worksheet for your CA, not a completed GST return.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={downloadGstAuditorReport}
+                    className="rounded-xl bg-[#103C2D] px-4 py-3 text-xs font-bold text-white"
+                  >
+                    ↓ Download GST Working CSV
+                  </button>
+                </div>
+
+                <div className="rounded-2xl border border-amber-200 bg-[#FFFAEF] p-4 sm:p-5">
+                  <p className="text-sm font-black text-amber-950">Tax details require verification before filing</p>
+                  <p className="mt-2 text-xs leading-6 text-amber-900">
+                    The website does not yet store verified supplier GSTIN, product HSN, taxable amount or
+                    CGST/SGST/IGST breakup per invoice. These columns remain blank in the download.
+                    Order date is used as a reference; it is not a confirmed tax invoice issue date.
+                    Credits, refunds, GST rates and buyer registration must be checked by your auditor.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                  {[
+                    { label: "Orders to Reconcile", value: gstOrderCount },
+                    { label: "Invoice Item Lines", value: data.gstAuditRows.length },
+                    { label: "Missing Tax Verification", value: data.gstAuditRows.length },
+                    { label: "GST Values Calculated", value: "Not available" },
+                  ].map((metric) => (
+                    <div key={metric.label} className="rounded-2xl border border-[#ECE5DA] bg-white p-4">
+                      <p className="text-[11px] text-[#7F7468]">{metric.label}</p>
+                      <p className="mt-2 text-xl font-bold text-[#214333]">{metric.value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <section className="rounded-2xl border border-[#E9E2D7] bg-white p-4 sm:p-5">
+                  <h3 className="text-base font-black text-[#244032]">Auditor verification checklist</h3>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {[
+                      ["1. Business & invoice details", "Verify seller GSTIN, registration type, legal name, invoice number and issue date."],
+                      ["2. Buyer & place of supply", "Verify buyer GSTIN (when B2B), delivery state and interstate/intrastate tax treatment."],
+                      ["3. Goods & taxes", "Confirm correct HSN, item value, applicable GST rate, discounts and shipping tax treatment."],
+                      ["4. Returns & reconciliation", "Match payments, cancelled/returned orders, credit notes and GSTR-1/3B totals."],
+                    ].map(([title, detail]) => (
+                      <div key={title} className="rounded-xl bg-[#F8F7F3] p-3">
+                        <p className="text-xs font-bold text-[#244032]">{title}</p>
+                        <p className="mt-1 text-xs leading-5 text-[#786F65]">{detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-4 text-[11px] leading-5 text-[#8B8076]">
+                    Important: This CSV is for spreadsheet review. It is not the GST Portal offline-utility upload template.
+                    See the official <a className="font-bold text-[#155B3B] underline" href="https://tutorial.gst.gov.in/userguide/returns/GSTR_1.htm" target="_blank" rel="noopener noreferrer">GSTR-1 guidance</a>.
+                  </p>
+                </section>
+
+                <section className="overflow-hidden rounded-2xl border border-[#E9E2D7] bg-white">
+                  <div className="p-4 sm:p-5">
+                    <h3 className="text-base font-black text-[#244032]">Invoice Line Review</h3>
+                    <p className="mt-1 text-xs text-[#84796D]">
+                      Every order status is included for reconciliation. Do not sum repeated order totals across product lines.
+                    </p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[770px] text-left text-xs">
+                      <thead className="bg-[#F8F6F1] text-[10px] uppercase text-[#74695C]">
+                        <tr>
+                          <th className="px-4 py-3">Invoice Reference</th>
+                          <th className="px-4 py-3">Order Status</th>
+                          <th className="px-4 py-3">Destination</th>
+                          <th className="px-4 py-3">Item & Qty</th>
+                          <th className="px-4 py-3 text-right">Line Value</th>
+                          <th className="px-4 py-3">Tax Review</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#F2EDE4]">
+                        {data.gstAuditRows.slice(0, 100).map((row) => (
+                          <tr key={row.lineItemId}>
+                            <td className="px-4 py-3">
+                              <p className="font-bold text-[#214B36]">{row.invoiceNumber}</p>
+                              <p className="mt-1 text-[10px] text-[#857A6E]">{new Date(row.invoiceDate).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })} · order date</p>
+                            </td>
+                            <td className="px-4 py-3">{statusLabel(row.orderStatus)}</td>
+                            <td className="px-4 py-3">{row.customerState || "Not captured"}</td>
+                            <td className="px-4 py-3">
+                              <p className="font-semibold">{row.productName}</p>
+                              <p className="mt-1 text-[10px] text-[#857A6E]">Qty {row.quantity} · {row.colorName ?? "—"} · {row.sizeName ?? "—"}</p>
+                            </td>
+                            <td className="px-4 py-3 text-right font-bold tabular-nums">{money(row.lineAmount)}</td>
+                            <td className="px-4 py-3 text-[10px] font-bold text-amber-800">Needs verification</td>
+                          </tr>
+                        ))}
+                        {data.gstAuditRows.length === 0 && (
+                          <tr><td colSpan={6} className="px-4 py-10 text-center text-xs text-[#887E73]">No order items in the selected period.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                  {data.gstAuditRows.length > 100 && (
+                    <p className="border-t border-[#F0EAE0] p-3 text-center text-xs text-[#877D70]">
+                      Showing 100 of {data.gstAuditRows.length} lines. Download CSV for the full register.
+                    </p>
+                  )}
+                </section>
+              </div>
+            )}
+
+            {reportTab === "ADVANCED" && (
+              <div className="mt-5">
+                <p className="mb-4 rounded-xl border border-[#E5DED2] bg-white p-4 text-xs leading-5 text-[#756B5E]">
+                  Additional product, profit, purchasing and supplier analytics. These are optional and do not affect GST filing.
+                </p>
+
             <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-3xl bg-white p-5 shadow-sm">
                 <p className="text-xs font-bold text-zinc-400">
@@ -2178,6 +2432,8 @@ export default function ReportsPage() {
                 • {data.notes.costAlertRule}
               </p>
             </section>
+              </div>
+            )}
           </>
         ) : null}
       </div>
