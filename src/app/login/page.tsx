@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import BrandLogo from "@/components/BrandLogo";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
+import { useEffect } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,6 +17,24 @@ export default function LoginPage() {
     useState(false);
   const [error, setError] =
     useState("");
+
+  useEffect(() => {
+    const reason = new URLSearchParams(window.location.search).get("google");
+    const messages: Record<string, string> = {
+      not_configured: "Google Sign-In is being configured. Please use your password for now.",
+      sign_in_first: "Sign in to your account before connecting Google.",
+      existing_account: "An account with this email already exists. Sign in with your password, then connect Google from My Account.",
+      link_email_mismatch: "Your Google email must match the email saved in your AS FASHIONS profile.",
+      already_linked: "That Google account is already connected to a different customer.",
+      expired: "Google sign-in expired. Please try again.",
+      cancelled: "Google sign-in was cancelled.",
+      invalid_state: "Google sign-in validation failed. Please try again.",
+      account_unavailable: "This account is unavailable. Please contact support.",
+      provider_error: "Google could not complete sign-in. Please try again.",
+      failed: "Google sign-in could not be completed. Please try again.",
+    };
+    if (reason) setError(messages[reason] || "Google sign-in could not be completed.");
+  }, []);
 
   async function submit(
     event: FormEvent,
@@ -122,6 +142,15 @@ export default function LoginPage() {
             addresses and approved
             reseller pricing.
           </p>
+
+          <div className="mt-8">
+            <GoogleSignInButton />
+            <div className="my-5 flex items-center gap-3">
+              <div className="h-px flex-1 bg-[#E4D7C4]" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#887B6A]">or sign in with password</span>
+              <div className="h-px flex-1 bg-[#E4D7C4]" />
+            </div>
+          </div>
 
           <form
             onSubmit={submit}
