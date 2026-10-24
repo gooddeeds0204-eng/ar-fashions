@@ -189,6 +189,10 @@ type SalesRow = {
   orderNumber: string;
   date: string;
   type: string;
+  orderStatus: string;
+  paymentStatus: string;
+  couponCode: string | null;
+  deliveryChargePending: boolean;
   customerName: string;
   phone: string | null;
   paymentMethod: string | null;
@@ -205,6 +209,10 @@ type GstAuditRow = {
   invoiceDate: string;
   orderNumber: string;
   orderType: string;
+  orderStatus: string;
+  paymentStatus: string;
+  deliveryChargePending: boolean;
+  lineItemId: string;
   customerName: string;
   phone: string | null;
   customerState: string;
@@ -301,6 +309,15 @@ export default function ReportsPage() {
       7 | 30 | 90
     >(30);
 
+  const [reportTab, setReportTab] = useState<"SALES" | "GST" | "ADVANCED">("SALES");
+  const [period, setPeriod] = useState<"7" | "30" | "90" | "MONTH" | "CUSTOM">("30");
+  const indiaToday = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(new Date());
+  const [month, setMonth] = useState(indiaToday.slice(0, 7));
+  const [customFrom, setCustomFrom] = useState(indiaToday.slice(0, 8) + "01");
+  const [customTo, setCustomTo] = useState(indiaToday);
+
   const [
     data,
     setData,
@@ -326,9 +343,27 @@ export default function ReportsPage() {
       setLoading(true);
       setError("");
 
+      const params = new URLSearchParams();
+      if (period === "MONTH" && /^\d{4}-\d{2}$/.test(month)) {
+        const [year, monthValue] = month.split("-").map(Number);
+        const lastDay = new Date(Date.UTC(year, monthValue, 0)).getUTCDate();
+        params.set("from", `${month}-01`);
+        params.set("to", `${month}-${String(lastDay).padStart(2, "0")}`);
+      } else if (period === "CUSTOM") {
+        if (!customFrom || !customTo) {
+          setError("Choose both From and To dates.");
+          setLoading(false);
+          return;
+        }
+        params.set("from", customFrom);
+        params.set("to", customTo);
+      } else {
+        params.set("days", String(days));
+      }
+
       const response =
         await fetch(
-          `/api/admin/reports?days=${days}`,
+          `/api/admin/reports?${params.toString()}`,
           {
             cache:
               "no-store",
@@ -728,8 +763,8 @@ export default function ReportsPage() {
   }
 
   useEffect(() => {
-    loadReports();
-  }, [days]);
+    void loadReports();
+  }, [days, period, month, customFrom, customTo]);
 
   const maxTrend =
     useMemo(() => {
