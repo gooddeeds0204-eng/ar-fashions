@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   GARMENT_MEASUREMENT_FIELDS,
+  getGarmentMeasurementTemplate,
   mergeGarmentMeasurements,
   type GarmentMeasurementField,
   type GarmentMeasurementValues,
@@ -440,7 +441,13 @@ export default function EditProductPage() {
 
   const isDetailedMeasurementProduct =
     product?.gender === "KIDS" ||
-    product?.gender === "WOMEN";
+    product?.gender === "WOMEN" ||
+    product?.gender === "MEN";
+
+  const measurementTemplate = getGarmentMeasurementTemplate(
+    categories.find((category) => category.id === product?.categoryId)?.name ?? "",
+    product?.name ?? "",
+  );
 
   const selectedKidsSizeIds =
     useMemo(() => {
@@ -1772,7 +1779,9 @@ export default function EditProductPage() {
               <h2 className="mt-1 text-xl font-bold">
                 {product.gender === "WOMEN"
                   ? "Women — exact measurements by size"
-                  : "Kids — exact measurements by age/size"}
+                  : product.gender === "MEN"
+                    ? "Men — exact measurements by size"
+                    : "Kids — exact measurements by age/size"}
               </h2>
               <p className="mt-1 text-sm leading-6 text-slate-500">
                 Actual garment measurements inches lo update cheyyandi. Chest/Waist full circumference ga enter cheyyandi. Empty fields customer ki hide avutayi.
@@ -1803,7 +1812,7 @@ export default function EditProductPage() {
                         <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">
                           {product.gender === "KIDS"
                             ? "Age / Size"
-                            : "Women Size"}
+                            : product.gender === "MEN" ? "Men Size" : "Women Size"}
                         </p>
                         <p className="mt-1 text-base font-black text-emerald-300">
                           {size?.name ?? sizeId}
@@ -1834,8 +1843,9 @@ export default function EditProductPage() {
                       </label>
                     )}
 
+                    <p className="mb-3 text-[10px] font-semibold text-emerald-200">{measurementTemplate.title}</p>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                      {GARMENT_MEASUREMENT_FIELDS.map((field) => (
+                      {measurementTemplate.primaryFields.map((field) => (
                         <label key={field.key}>
                           <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
                             {field.label}
@@ -1856,6 +1866,37 @@ export default function EditProductPage() {
                         </label>
                       ))}
                     </div>
+                    {measurementTemplate.additionalFields.length > 0 && (
+                      <details className="mt-4 rounded-xl border border-white/10 bg-slate-900/40 p-3">
+                        <summary className="cursor-pointer text-[11px] font-bold text-slate-300">
+                          Additional measurements (optional)
+                        </summary>
+                        <div className="mt-3">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      {measurementTemplate.additionalFields.map((field) => (
+                        <label key={field.key}>
+                          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                            {field.label}
+                          </span>
+                          <input
+                            value={values[field.key]}
+                            onChange={(event) =>
+                              updateKidsProductMeasurement(
+                                sizeId,
+                                field.key,
+                                event.target.value,
+                              )
+                            }
+                            inputMode="decimal"
+                            placeholder={field.placeholder}
+                            className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-3 text-sm outline-none focus:border-emerald-400"
+                          />
+                        </label>
+                      ))}
+                    </div>
+                        </div>
+                      </details>
+                    )}
                   </div>
                 );
               })}
