@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAuthenticatedAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
+import { verifyProductDeletePin } from "@/lib/product-delete-pin";
 import { requireSameOriginJson } from "@/lib/public-write-security";
 
 export const dynamic = "force-dynamic";
@@ -27,18 +28,19 @@ export async function DELETE(request: Request) {
     const body = await request.json();
     const phrase = String(body?.confirmation ?? "").trim();
     const password = String(body?.password ?? "");
+    const deletePin = String(body?.deletePin ?? "").trim();
     const expectedCount = Number(body?.expectedCount);
     const acknowledged = body?.acknowledgePermanentLoss === true;
 
     if (
       phrase !== "DELETE ALL ORDERS" ||
       !acknowledged ||
-      !password ||
+      (!password && !deletePin) ||
       !Number.isSafeInteger(expectedCount) ||
       expectedCount < 1
     ) {
       return NextResponse.json(
-        { error: "Enter the exact confirmation phrase, your admin password and acknowledge the permanent deletion." },
+        { error: "Enter the exact confirmation phrase, your admin password or delete PIN, and acknowledge the permanent deletion." },
         { status: 400 },
       );
     }
@@ -48,9 +50,13 @@ export async function DELETE(request: Request) {
       select: { passwordHash: true },
     });
 
-    if (!admin?.passwordHash || !(await verifyPassword(password, admin.passwordHash))) {
+    const passwordValid = Boolean(
+      password && admin?.passwordHash && await verifyPassword(password, admin.passwordHash),
+    );
+    const pinCheck = deletePin ? await verifyProductDeletePin(deletePin) : null;
+    if (!passwordValid && !pinCheck?.valid) {
       return NextResponse.json(
-        { error: "Admin password is incorrect." },
+        { error: "Admin password or product delete PIN is incorrect." },
         { status: 403 },
       );
     }
