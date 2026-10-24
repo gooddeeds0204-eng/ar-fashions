@@ -935,6 +935,15 @@ export default function CheckoutPage() {
   const isResellerOrder =
     hasResellerItems && !hasRetailItems;
 
+  // A retail order may have one purchased unit plus a verified free campaign reward.
+  const retailPaidItems = cart.filter((item) =>
+    (item.mode ?? "RETAIL") === "RETAIL" &&
+    !(item.campaignOfferId && item.campaignReward),
+  );
+  const invalidRetailCart =
+    retailPaidItems.length > 1 ||
+    retailPaidItems.some((item) => item.quantity !== 1);
+
   const invalidResellerGroups = useMemo(() => {
     const groups = new Map<
       string,
@@ -1100,13 +1109,16 @@ export default function CheckoutPage() {
       : !onlinePaymentAvailable;
 
   const checkoutBlocked =
+    invalidRetailCart ||
     siteSettings.maintenanceMode ||
     salesClosed ||
     selectedPaymentUnavailable ||
     retailMinimumNotMet;
 
   const checkoutBlockMessage =
-    siteSettings.maintenanceMode
+    invalidRetailCart
+      ? "Retail checkout allows only one paid product with quantity 1. Please fix your cart."
+      : siteSettings.maintenanceMode
       ? siteSettings.maintenanceMessage
       : salesClosed
         ? activeSalesMessage
@@ -1451,6 +1463,12 @@ export default function CheckoutPage() {
   }
 
   async function placeOrder() {
+    if (invalidRetailCart) {
+      showCheckoutAlert("Retail checkout allows only one paid product, quantity 1. Please fix your bag first.");
+      router.push("/cart");
+      return;
+    }
+
     if (isMixedCart) {
       showCheckoutAlert(
         "Retail and reseller items must be ordered separately.",
