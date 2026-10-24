@@ -560,7 +560,7 @@ export default function DeliveryPage() {
                 </h2>
 
                 <p className="mt-1 text-xs leading-5 text-[#7B7066]">
-                  Bulk orders ki parcel service ledha transport agency ni manual ga add cheyyandi. Packing ayyaka order screen lo service select chesi LR / tracking number enter cheyochu.
+                  Add courier services or transport agencies for bulk orders. Once an order is packed, select the service and enter its LR or tracking number.
                 </p>
               </div>
 
