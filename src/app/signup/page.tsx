@@ -247,7 +247,7 @@ export default function SignupPage() {
         );
 
         setError(
-          "Location permission allow chesi malli try cheyyandi.",
+          "Allow location access in your browser and try again.",
         );
       },
 
@@ -677,7 +677,7 @@ export default function SignupPage() {
                       </p>
 
                       <p className="mt-1 text-[9px] leading-4 text-[#7B7066]">
-                        Button tap chesthe current shop location capture ayi full address, State, City / Town, pincode automatic ga fill avutayi.
+                        Use your current location to help fill in your shop address, city, state and PIN code. Please verify the details before submitting.
                       </p>
                     </div>
 
@@ -718,7 +718,7 @@ export default function SignupPage() {
                   "ERROR" ? (
                     <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3">
                       <p className="text-[9px] font-semibold leading-4 text-amber-900">
-                        Location permission allow cheyyandi, taruvata button press cheyyandi.
+                        Enable location permission in your browser, then try again.
                       </p>
                     </div>
                   ) : null}
