@@ -502,8 +502,7 @@ export default function SizesPage() {
                   </h3>
 
                   <p className="mt-1 text-xs leading-5 text-slate-400">
-                    Age is only a guide. Customer actual body
-                    measurements tho compare chesi size select chestaru.
+                    Age is only a guide. Customers should compare garment measurements with clothing that already fits well.
                   </p>
                 </div>
 
