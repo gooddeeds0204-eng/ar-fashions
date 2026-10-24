@@ -1960,7 +1960,7 @@ export default function ProductsPage() {
                     </p>
 
                     <p className="mt-1 text-xs leading-5 text-slate-500">
-                      Website, Amazon, Flipkart, Meesho and godown stock ki same SKU system.
+                      Use one SKU system across the website, sales channels and warehouse stock.
                     </p>
                   </div>
 
@@ -2089,7 +2089,7 @@ export default function ProductsPage() {
                   </p>
 
                   <p className="mt-2 text-[10px] leading-5 text-slate-500">
-                    Same design lo colours/sizes maarina family code maaradu. Kids variant SKU ki colour + Years/Months age; adult SKU ki colour + size add avutayi.
+                    Keep the same design code across colour and size variants. Kids SKUs include colour and an age range; adult SKUs include colour and size.
                   </p>
                 </div>
               </div>
@@ -2248,18 +2248,11 @@ export default function ProductsPage() {
                     </h3>
 
                     <p className="mt-2 text-xs leading-5 text-slate-400">
-                      Seller stock balanced ga move
-                      avvadaniki available colours
-                      and sizes automatic ga pack lo
-                      distribute avutayi.
+                      Available colours and sizes are automatically distributed across a balanced reseller pack.
                     </p>
 
                     <p className="mt-2 text-xs leading-5 text-slate-500">
-                      ON unte reseller single colour
-                      or single size lo full MOQ
-                      select cheyyaleru. System
-                      current stock batti exact pack
-                      automatic ga prepare chestundi.
+                      When enabled, reseller packs use available colours and sizes rather than a single variant. The pack is calculated using current stock.
                     </p>
                   </div>
 
@@ -2554,7 +2547,7 @@ export default function ProductsPage() {
                   </h2>
 
                   <p className="mt-1 text-sm text-slate-500">
-                    Prathi colour ki actual ga available unna sizes maatrame select cheyyandi.
+                    Select only the sizes available for each colour.
                   </p>
 
                   {isKidsProduct && (
@@ -2696,7 +2689,7 @@ export default function ProductsPage() {
                             Kids Fit Measurements — age is only a guide
                           </p>
                           <p className="mt-1 text-[10px] text-slate-500">
-                            Age preset select cheste reference measurements automatic ga fill avutayi. Tarvata supplier/product chart batti edit cheyochu.
+                            Selecting an age preset fills reference measurements. Check them against the actual garment before saving.
                           </p>
                         </div>
 
@@ -2866,7 +2859,7 @@ export default function ProductsPage() {
                 </p>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Colour select chesaka aa colour ki sizes ikkada vastayi.
+                  Select a colour to manage its available sizes.
                 </p>
               </div>
             ) : (
@@ -3026,7 +3019,7 @@ export default function ProductsPage() {
                 </h2>
 
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Actual garment ni measure chesi inches lo enter cheyyandi. Chest/Waist values full circumference ga maintain cheyyandi. Empty fields customer ki chupinchavu; relevant measurements maatrame visible avutayi.
+                  Enter actual garment measurements in inches. Record chest and waist as full circumference. Blank values will not appear on the storefront.
                 </p>
               </div>
 
@@ -3392,13 +3385,13 @@ export default function ProductsPage() {
               </p>
 
               <p className="mt-1 text-xs leading-5 text-slate-500">
-                Mundu colour select cheyyandi. Taruvata upload chese photos aa colour ki link avutayi.
+                Choose a colour before uploading. New photos will be linked to that colour.
               </p>
 
               {selectedColors.length ===
               0 ? (
                 <p className="mt-3 rounded-xl border border-dashed border-white/10 p-3 text-xs text-slate-400">
-                  Product Colors section lo colour select cheyyandi.
+                  Select a colour in the Product Colours section before uploading media.
                 </p>
               ) : (
                 <div className="mt-3 flex flex-wrap gap-2">
