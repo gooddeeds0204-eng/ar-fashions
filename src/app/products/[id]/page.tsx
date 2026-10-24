@@ -211,6 +211,51 @@ function measurementBothUnits(
     : raw;
 }
 
+type MeasurementUnit = "in" | "cm";
+
+function formatGarmentMeasurement(
+  rawValue: string | null | undefined,
+  unit: MeasurementUnit,
+) {
+  const raw = String(rawValue ?? "").trim().replace(/\s*in(?:ches)?\s*$/i, "");
+  if (!raw) return "—";
+  if (unit === "cm") {
+    const cm = inchesToCmDisplay(raw);
+    return cm ? `${cm} cm` : "—";
+  }
+  return `${raw} in`;
+}
+
+function getKeyMeasurements(
+  guide: SizeGuide | null,
+  categoryName: string,
+  productName: string,
+) {
+  const type = `${categoryName} ${productName}`.toLowerCase();
+  const isSet = /set|coat|ghagra|lehenga|suit|coord|co-ord|tracksuit|night suit|blazer/.test(type);
+  const isBottom = !isSet && /jean|pant|trouser|legging|jegging|palazzo|short|skirt/.test(type);
+  const isUpper = !isSet && !isBottom && /shirt|t-shirt|t shirt|kurti|tunic|top|sweatshirt|shrug|jacket/.test(type);
+  if (isBottom) {
+    return [
+      { label: "Waist", value: guide?.bottomWaistMinIn || guide?.waistIn },
+      { label: "Hip", value: guide?.hipIn },
+      { label: "Length", value: guide?.bottomLengthIn || guide?.garmentLengthIn },
+    ];
+  }
+  if (isUpper) {
+    return [
+      { label: "Chest", value: guide?.chestIn },
+      { label: "Shoulder", value: guide?.shoulderIn },
+      { label: "Length", value: guide?.topLengthIn || guide?.garmentLengthIn },
+    ];
+  }
+  return [
+    { label: "Chest", value: guide?.chestIn },
+    { label: isSet && /ghagra|lehenga|palazzo/.test(type) ? "Bottom Waist" : "Waist", value: guide?.waistIn || guide?.bottomWaistMinIn },
+    { label: "Full Length", value: guide?.garmentLengthIn || guide?.topLengthIn || guide?.bottomLengthIn },
+  ];
+}
+
 function getCart(): CartItem[] {
   try {
     const raw = localStorage.getItem("ar-fashions-cart");
@@ -248,6 +293,7 @@ export default function ProductDetailPage() {
   const [selectedMedia, setSelectedMedia] = useState(0);
   const [sizeGuides, setSizeGuides] = useState<SizeGuide[]>([]);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+  const [measurementUnit, setMeasurementUnit] = useState<MeasurementUnit>("in");
 
   const [quantity, setQuantity] = useState(1);
   const [isReseller, setIsReseller] = useState(false);
@@ -741,21 +787,9 @@ export default function ProductDetailPage() {
           heightCm:
             globalGuide?.heightCm ??
             null,
-          chestIn:
-            productMeasurement
-              ?.chestIn ||
-            globalGuide?.chestIn ||
-            null,
-          waistIn:
-            productMeasurement
-              ?.waistIn ||
-            globalGuide?.waistIn ||
-            null,
-          hipIn:
-            productMeasurement
-              ?.hipIn ||
-            globalGuide?.hipIn ||
-            null,
+          chestIn: productMeasurement?.chestIn || null,
+          waistIn: productMeasurement?.waistIn || null,
+          hipIn: productMeasurement?.hipIn || null,
           shoulderIn:
             productMeasurement
               ?.shoulderIn ||
@@ -784,36 +818,13 @@ export default function ProductDetailPage() {
             productMeasurement
               ?.bottomLengthIn ||
             null,
-          garmentLengthIn:
-            productMeasurement
-              ?.garmentLengthIn ||
-            globalGuide
-              ?.garmentLengthIn ||
-            null,
+          garmentLengthIn: productMeasurement?.garmentLengthIn || null,
           fitNote:
             globalGuide?.fitNote ??
             null,
         } satisfies SizeGuide;
       })
-      .filter((guide) =>
-        [
-          guide.ageGuide,
-          guide.heightCm,
-          guide.inches,
-          guide.chestIn,
-          guide.waistIn,
-          guide.hipIn,
-          guide.shoulderIn,
-          guide.armholeIn,
-          guide.sleeveLengthIn,
-          guide.topLengthIn,
-          guide.garmentLengthIn,
-          guide.bottomWaistMinIn,
-          guide.bottomWaistMaxIn,
-          guide.bottomLengthIn,
-          guide.fitNote,
-        ].some(Boolean),
-      );
+      ;
   }, [product, sizeGuides]);
 
   const sizeGuideById = useMemo(
@@ -840,6 +851,18 @@ export default function ProductDetailPage() {
         selectedSizeId,
       ],
     );
+
+  const selectedSizeName =
+    sizes.find((size) => size.id === selectedSizeId)?.name ||
+    selectedProductSizeGuide?.name ||
+    "—";
+
+  const keyMeasurements = getKeyMeasurements(
+    selectedProductSizeGuide,
+    product?.category.name ?? "",
+    product?.name ?? "",
+  );
+  const hasKeyMeasurements = keyMeasurements.some((field) => Boolean(field.value));
 
   const selectedVariant = useMemo(() => {
     if (!product) return null;
@@ -1892,7 +1915,8 @@ export default function ProductDetailPage() {
 
                     {(() => {
                       const guide =
-                        sizeGuideById.get(size.id);
+                        productSizeGuides.find((item) => item.id === size.id)
+                        ?? sizeGuideById.get(size.id);
 
                       if (
                         guide?.ageGuide ||
@@ -1925,52 +1949,76 @@ export default function ProductDetailPage() {
               })}
             </div>
 
-            {selectedProductSizeGuide ? (
-              <div className="mt-3 rounded-xl border border-[#E4D7C4] bg-[#FFFDF9] p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#7C3A45]">
-                    Selected Size Measurements
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSizeGuideOpen(true)
-                    }
-                    className="text-[9px] font-black text-[#031B14] underline decoration-[#D4AF37] underline-offset-4"
-                  >
-                    View all
-                  </button>
-                </div>
-
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {GARMENT_MEASUREMENT_FIELDS
-                    .map((field) => [
-                      field,
-                      selectedProductSizeGuide[
-                        field.key as keyof SizeGuide
-                      ] as string | null | undefined,
-                    ] as const)
-                    .filter(([, value]) =>
-                      Boolean(value),
-                    )
-                    .slice(0, 4)
-                    .map(([field, value]) => (
-                      <span
-                        key={field.key}
-                        className="rounded-full bg-[#F4EBDD] px-2.5 py-1.5 text-[9px] font-bold text-[#6B5435]"
+            <div className="mt-4 overflow-hidden rounded-[1.15rem] border border-[#E5D5BC] bg-[#FFFDF9] shadow-[0_7px_25px_rgba(58,44,28,0.045)]">
+              <div className="border-b border-[#EDE2D2] bg-[linear-gradient(115deg,#FFFDF9,#F7F0E5)] px-3.5 py-3 sm:px-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#947653]">
+                      Exact garment fit
+                    </p>
+                    <h3 className="mt-1 font-serif text-lg leading-none text-[#062D23]">
+                      Size &amp; Measurements
+                    </h3>
+                  </div>
+                  <div className="inline-flex items-center gap-0.5 rounded-full border border-[#DFCDB3] bg-white p-0.5" aria-label="Measurement units">
+                    {(["in", "cm"] as const).map((unit) => (
+                      <button
+                        key={unit}
+                        type="button"
+                        aria-pressed={measurementUnit === unit}
+                        onClick={() => setMeasurementUnit(unit)}
+                        className={`min-w-[43px] rounded-full px-2.5 py-1.5 text-[10px] font-bold transition ${
+                          measurementUnit === unit
+                            ? "bg-[#063326] text-white"
+                            : "text-[#7B7066] hover:bg-[#F5EEE5]"
+                        }`}
                       >
-                        {field.shortLabel}:{" "}
-                        <strong className="text-[#211C18]">
-                          {measurementBothUnits(
-                            value,
-                          )}
-                        </strong>
-                      </span>
+                        {unit === "in" ? "In" : "CM"}
+                      </button>
                     ))}
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-[#063326] px-3 py-1.5 text-[10px] font-bold text-white">
+                    Size {selectedSizeName}
+                  </span>
+                  {selectedProductSizeGuide?.ageGuide ? (
+                    <span className="rounded-full border border-[#E3D5C2] bg-[#FFF9EF] px-3 py-1.5 text-[10px] font-semibold text-[#584939]">
+                      Age {selectedProductSizeGuide.ageGuide}
+                    </span>
+                  ) : null}
                 </div>
               </div>
-            ) : null}
+              <div className="grid grid-cols-3 gap-2 px-3 py-3.5 sm:gap-3 sm:px-4">
+                {keyMeasurements.map((field) => (
+                  <div
+                    key={field.label}
+                    className="min-w-0 rounded-xl border border-[#EBE1D4] bg-[#FAF7F0] px-2 py-3 text-center sm:px-3"
+                  >
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.06em] text-[#8A7763]">
+                      {field.label}
+                    </p>
+                    <p className="mt-1.5 break-words text-[clamp(0.82rem,3vw,1.25rem)] font-black leading-tight tracking-tight text-[#08392B]">
+                      {formatGarmentMeasurement(field.value, measurementUnit)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#EEE3D6] px-3.5 py-3 sm:px-4">
+                <p className="max-w-[250px] text-[10px] leading-4 text-[#7B7066]">
+                  {hasKeyMeasurements
+                    ? "Actual garment values shown where available. Compare with a well-fitting dress."
+                    : "Exact measurements are pending for this size. Age/size labels are only a guide."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setSizeGuideOpen(true)}
+                  className="shrink-0 rounded-full border border-[#A38B65] bg-white px-3.5 py-2 text-[10px] font-bold text-[#064331] transition hover:bg-[#F3EBDE]"
+                >
+                  Full size guide →
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* STOCK */}
@@ -2865,22 +2913,33 @@ export default function ProductDetailPage() {
         )}
 
       {sizeGuideOpen && (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 p-0 sm:items-center sm:p-5">
-          <div className="max-h-[86vh] w-full max-w-4xl overflow-hidden rounded-t-[2rem] bg-[#FFFDF9] shadow-2xl sm:rounded-[2rem]">
+        <div
+          role="presentation"
+          className="fixed inset-0 z-[80] flex items-end justify-center bg-black/65 p-0 backdrop-blur-sm sm:items-center sm:p-5"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSizeGuideOpen(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="product-size-guide-title"
+            className="max-h-[90dvh] w-full max-w-4xl overflow-hidden rounded-t-[2rem] border border-[#E6D8C4] bg-[#FFFDF9] shadow-[0_30px_100px_rgba(0,0,0,0.28)] sm:rounded-[2rem]"
+          >
             <div className="flex items-start justify-between gap-4 border-b border-[#E4D7C4] px-5 py-5 sm:px-6">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6B5435]">
                   {product.gender === "WOMEN"
                     ? "Women Fit Guide"
-                    : "Kids Fit Guide"}
+                    : product.gender === "MEN"
+                      ? "Men Fit Guide"
+                      : "Kids Fit Guide"}
                 </p>
-                <h2 className="mt-1 text-xl font-black text-[#211C18]">
-                  Choose by measurements
+                <h2 id="product-size-guide-title" className="mt-1 font-serif text-2xl text-[#062E23]">
+                  Your complete size guide
                 </h2>
                 <p className="mt-1 max-w-xl text-xs leading-5 text-[#7B7066]">
-                  {product.gender === "WOMEN"
-                    ? "Choose using exact garment measurements. All available fields are shown in both inches and centimetres."
-                    : "Age is only a guide. Choose using actual garment measurements shown in both inches and centimetres."}
+                  Product-specific garment measurements are shown when entered. Reference ages and heights are approximate, not exact garment dimensions.
                 </p>
               </div>
 
@@ -2895,7 +2954,25 @@ export default function ProductDetailPage() {
               </button>
             </div>
 
-            <div className="max-h-[65vh] overflow-auto bg-[#FAF7F0] p-4 sm:p-5">
+            <div className="max-h-[66dvh] overflow-y-auto bg-[#FAF7F0] p-4 sm:p-5">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[10px] font-bold text-[#655548]">Select unit for all measurements</p>
+                <div className="inline-flex rounded-full border border-[#DCCDB9] bg-white p-1" aria-label="Full guide units">
+                  {(["in", "cm"] as const).map((unit) => (
+                    <button
+                      key={unit}
+                      type="button"
+                      aria-pressed={measurementUnit === unit}
+                      onClick={() => setMeasurementUnit(unit)}
+                      className={`rounded-full px-4 py-1.5 text-xs font-bold ${
+                        measurementUnit === unit ? "bg-[#063326] text-white" : "text-[#776A5A]"
+                      }`}
+                    >
+                      {unit === "in" ? "Inches" : "Centimeters"}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="mb-4 rounded-2xl border border-[#E4D7C4] bg-white p-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#7C3A45]">
                   How to measure
@@ -2955,8 +3032,9 @@ export default function ProductDetailPage() {
                                   {field.shortLabel}
                                 </p>
                                 <p className="mt-1 text-sm font-black text-[#211C18]">
-                                  {measurementBothUnits(
+                                  {formatGarmentMeasurement(
                                     value,
+                                    measurementUnit,
                                   )}
                                 </p>
                               </div>
@@ -2969,18 +3047,27 @@ export default function ProductDetailPage() {
                   return (
                     <div
                       key={guide.id}
-                      className="rounded-2xl border border-[#E4D7C4] bg-white p-4 shadow-sm"
+                      className={`rounded-2xl border bg-white p-4 shadow-sm ${
+                        guide.id === selectedSizeId
+                          ? "border-[#0A4B38] ring-1 ring-[#0A4B38]/15"
+                          : "border-[#E4D7C4]"
+                      }`}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#EFE6D8] pb-3">
                         <div>
                           <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#9A8D80]">
                             {product.gender === "WOMEN"
                               ? "Women Size"
-                              : "Age / Size"}
+                              : product.gender === "MEN"
+                                ? "Men Size"
+                                : "Kids Age / Size"}
                           </p>
-                          <p className="mt-1 text-xl font-black text-[#031B14]">
-                            {guide.name}
-                          </p>
+                          <div className="mt-1 flex items-center gap-2">
+                            <p className="text-xl font-black text-[#031B14]">{guide.name}</p>
+                            {guide.id === selectedSizeId ? (
+                              <span className="rounded-full bg-[#063326] px-2.5 py-1 text-[9px] font-bold text-white">Selected</span>
+                            ) : null}
+                          </div>
                         </div>
 
                         <div className="text-right text-[10px] font-semibold text-[#6B5435]">
@@ -2994,9 +3081,17 @@ export default function ProductDetailPage() {
                       </div>
 
                       <div className="mt-4 space-y-4">
-                        {renderGroup("Top / Upper", topEntries)}
-                        {renderGroup("General Fit", generalEntries)}
-                        {renderGroup("Bottom / Lehenga / Pant", bottomEntries)}
+                        {measurementEntries.length === 0 ? (
+                          <p className="rounded-xl bg-[#F8F2EA] p-3 text-xs leading-5 text-[#7B7066]">
+                            Exact garment measurements pending for this size. Check the size label and contact support if you need fit help.
+                          </p>
+                        ) : (
+                          <>
+                            {renderGroup("Top / Upper", topEntries)}
+                            {renderGroup("General Fit", generalEntries)}
+                            {renderGroup("Bottom / Lehenga / Pant", bottomEntries)}
+                          </>
+                        )}
                       </div>
                     </div>
                   );
@@ -3004,7 +3099,7 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="mt-4 rounded-2xl border border-[#E4D7C4] bg-[#FFFDF9] px-4 py-3 text-[10px] font-semibold leading-5 text-[#7B7066]">
-                1 inch = 2.54 cm. For best fit, compare these garment measurements with a similar garment that already fits well.
+                1 inch = 2.54 cm. Chest, Waist and Hip refer to full garment circumference where specified. Compare exact measurements with a similar well-fitting garment; age is only an estimate.
               </div>
             </div>
 
