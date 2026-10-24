@@ -450,7 +450,7 @@ export default function InventoryPage() {
 
     if (!storageRack.trim()) {
       setMessage(
-        "Rack code enter cheyyandi.",
+        "Enter a rack code.",
       );
       return;
     }
@@ -1178,7 +1178,7 @@ export default function InventoryPage() {
                           .value,
                       )
                     }
-                    placeholder="e.g. Amazon-FK Godown"
+                    placeholder="e.g. Main Warehouse"
                     className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-bold outline-none focus:border-emerald-400 focus:bg-white"
                   />
                 </label>
