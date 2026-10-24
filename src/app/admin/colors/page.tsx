@@ -47,7 +47,7 @@ export default function ColorsPage() {
       setColors(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error(error);
-      alert("Colors load కాలేదు");
+      alert("Unable to load colours. Please try again.");
     } finally {
       setLoading(false);
     }
