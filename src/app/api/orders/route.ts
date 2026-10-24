@@ -1080,6 +1080,25 @@ export async function POST(request: Request) {
       submittedCampaignIds[0] ??
       null;
 
+    // Enforce retail single-unit purchases on the server, not only in browser state.
+    // An eligible campaign reward remains a separate free, single-unit item.
+    if (type === "RETAIL") {
+      const paidRetailItems = items.filter(
+        (item) => !cleanString(item.campaignOfferId),
+      );
+      if (
+        paidRetailItems.length > 1 ||
+        paidRetailItems.some((item) => validQuantity(item.quantity) !== 1)
+      ) {
+        return NextResponse.json(
+          {
+            error: "Retail orders allow only one paid product, quantity 1. Please update your bag.",
+          },
+          { status: 400 },
+        );
+      }
+    }
+
     if (
       requestedCampaignId &&
       type !== "RETAIL"
