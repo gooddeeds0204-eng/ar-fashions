@@ -282,6 +282,16 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("ALL");
+
+  // Dashboard To Do cards open the matching order status immediately.
+  useEffect(() => {
+    const requestedStatus = new URLSearchParams(window.location.search)
+      .get("status")
+      ?.toUpperCase();
+    if (requestedStatus && statuses.includes(requestedStatus)) {
+      setSelectedStatus(requestedStatus);
+    }
+  }, []);
   const [updating, setUpdating] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] =
     useState<Order | null>(null);
