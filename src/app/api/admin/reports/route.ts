@@ -52,35 +52,47 @@ export async function GET(
         searchParams.get("days"),
       );
 
-    const days =
-      VALID_RANGES.includes(
-        requestedDays,
-      )
-        ? requestedDays
-        : 30;
+    let days =
+      VALID_RANGES.includes(requestedDays) ? requestedDays : 30;
 
     const now = new Date();
+    let startDate = new Date(now);
+    startDate.setUTCDate(startDate.getUTCDate() - (days - 1));
+    startDate.setUTCHours(0, 0, 0, 0);
 
-    const startDate =
-      new Date(now);
-
-    startDate.setUTCDate(
-      startDate.getUTCDate() -
-        (days - 1),
-    );
-
-    startDate.setUTCHours(
-      0,
-      0,
-      0,
-      0,
-    );
+    // A custom range uses Asia/Kolkata calendar days, inclusive.
+    // Invoice issue dates are not separately tracked yet; this is
+    // an order-created-date register for auditor reconciliation.
+    let endDate = now;
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
+    const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+    if (from !== null || to !== null) {
+      if (!from || !to || !datePattern.test(from) || !datePattern.test(to)) {
+        return NextResponse.json({ error: "Choose valid From and To dates." }, { status: 400 });
+      }
+      const localStart = new Date(from + "T00:00:00+05:30");
+      const localEnd = new Date(to + "T00:00:00+05:30");
+      const rangeDays = Math.round((localEnd.getTime() - localStart.getTime()) / 86400000) + 1;
+      if (
+        !Number.isFinite(localStart.getTime()) ||
+        !Number.isFinite(localEnd.getTime()) ||
+        rangeDays < 1 || rangeDays > 366 ||
+        localStart.toISOString().slice(0, 10) !== new Date(Date.parse(from + "T00:00:00Z") - 19800000).toISOString().slice(0, 10)
+      ) {
+        return NextResponse.json({ error: "Select a valid range of up to 366 days." }, { status: 400 });
+      }
+      startDate = localStart;
+      endDate = new Date(localEnd.getTime() + 86400000);
+      days = rangeDays;
+    }
 
     const orders =
       await prisma.order.findMany({
         where: {
           createdAt: {
             gte: startDate,
+            lt: endDate,
           },
         },
 
@@ -107,6 +119,7 @@ export async function GET(
         where: {
           createdAt: {
             gte: startDate,
+            lt: endDate,
           },
         },
 
@@ -721,7 +734,7 @@ export async function GET(
       ).length;
 
     const salesRows =
-      deliveredOrders.map(
+      orders.map(
         (order) => ({
           orderNumber:
             order.orderNumber,
@@ -731,6 +744,11 @@ export async function GET(
 
           type:
             order.type,
+
+          orderStatus: order.status,
+          paymentStatus: order.paymentStatus,
+          couponCode: order.couponCode,
+          deliveryChargePending: order.deliveryChargePending,
 
           customerName:
             order.user.name ??
@@ -799,7 +817,7 @@ export async function GET(
       );
 
     const gstAuditRows =
-      deliveredOrders.flatMap(
+      orders.flatMap(
         (order) =>
           order.items.map(
             (item) => ({
@@ -817,6 +835,11 @@ export async function GET(
 
               orderType:
                 order.type,
+
+              orderStatus: order.status,
+              paymentStatus: order.paymentStatus,
+              deliveryChargePending: order.deliveryChargePending,
+              lineItemId: item.id,
 
               customerName:
                 order.user.name ??
@@ -1682,7 +1705,7 @@ export async function GET(
         from:
           startDate.toISOString(),
         to:
-          now.toISOString(),
+          endDate.toISOString(),
       },
 
       summary: {
