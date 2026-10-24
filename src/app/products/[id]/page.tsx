@@ -2048,7 +2048,6 @@ export default function ProductDetailPage() {
 
           {/* Retail purchases are one unit; reseller controls remain available. */}
           {isReseller ? (
-          {/* QUANTITY */}
           <div className="mt-4 flex items-center justify-between gap-4 rounded-[1.35rem] border border-black/[0.06] bg-[#FAF7F0] p-4">
             <div>
               <p className="text-sm font-black">
