@@ -288,6 +288,7 @@ export default function AdminOrdersPage() {
 
   const [showDeleteAll, setShowDeleteAll] = useState(false);
   const [deleteAllPassword, setDeleteAllPassword] = useState("");
+  const [deleteAllPin, setDeleteAllPin] = useState("");
   const [deleteAllPhrase, setDeleteAllPhrase] = useState("");
   const [deleteAllAcknowledged, setDeleteAllAcknowledged] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
@@ -926,11 +927,11 @@ export default function AdminOrdersPage() {
   async function deleteAllOrders() {
     if (
       deleteAllPhrase.trim() !== "DELETE ALL ORDERS" ||
-      !deleteAllPassword ||
+      (!deleteAllPassword && !deleteAllPin) ||
       !deleteAllAcknowledged ||
       orders.length === 0
     ) {
-      setDeleteAllError("Confirm the deletion phrase and enter your admin password.");
+      setDeleteAllError("Confirm the deletion phrase and enter your admin password or product delete PIN.");
       return;
     }
 
@@ -943,6 +944,7 @@ export default function AdminOrdersPage() {
         body: JSON.stringify({
           confirmation: deleteAllPhrase,
           password: deleteAllPassword,
+          deletePin: deleteAllPin,
           expectedCount: orders.length,
           acknowledgePermanentLoss: deleteAllAcknowledged,
         }),
@@ -956,6 +958,7 @@ export default function AdminOrdersPage() {
       setSelectedStatus("ALL");
       setShowDeleteAll(false);
       setDeleteAllPassword("");
+      setDeleteAllPin("");
       setDeleteAllPhrase("");
       setDeleteAllAcknowledged(false);
       await loadOrders();
@@ -1201,6 +1204,7 @@ export default function AdminOrdersPage() {
                   setDeleteAllError("");
                   setDeleteAllPhrase("");
                   setDeleteAllPassword("");
+                  setDeleteAllPin("");
                   setDeleteAllAcknowledged(false);
                   setShowDeleteAll(true);
                 }}
@@ -2614,7 +2618,7 @@ export default function AdminOrdersPage() {
               placeholder="DELETE ALL ORDERS"
             />
             <label className="mt-4 block text-xs font-semibold text-[#4D4037]" htmlFor="delete-all-password">
-              Admin password
+              Admin password (or use the Product Delete PIN below)
             </label>
             <input
               id="delete-all-password"
@@ -2625,6 +2629,20 @@ export default function AdminOrdersPage() {
               onChange={(event) => setDeleteAllPassword(event.target.value)}
               className="mt-2 w-full rounded-xl border border-[#DDCAB5] bg-white px-3.5 py-3 text-sm outline-none focus:border-red-500"
               placeholder="Enter your admin password"
+            />
+            <label className="mt-4 block text-xs font-semibold text-[#4D4037]" htmlFor="delete-all-pin">
+              Product Delete PIN (alternative)
+            </label>
+            <input
+              id="delete-all-pin"
+              type="password"
+              inputMode="numeric"
+              autoComplete="off"
+              value={deleteAllPin}
+              disabled={deletingAll}
+              onChange={(event) => setDeleteAllPin(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-[#DDCAB5] bg-white px-3.5 py-3 text-sm outline-none focus:border-red-500"
+              placeholder="Enter configured product delete PIN"
             />
             <label className="mt-4 flex cursor-pointer items-start gap-3 text-xs leading-5 text-[#55483D]">
               <input
@@ -2656,7 +2674,7 @@ export default function AdminOrdersPage() {
                   deletingAll ||
                   orders.length === 0 ||
                   !deleteAllAcknowledged ||
-                  !deleteAllPassword ||
+                  (!deleteAllPassword && !deleteAllPin) ||
                   deleteAllPhrase.trim() !== "DELETE ALL ORDERS"
                 }
                 onClick={() => void deleteAllOrders()}
