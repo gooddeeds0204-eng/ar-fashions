@@ -1158,7 +1158,7 @@ export default function InventoryPage() {
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-slate-600">
-                  Order padina ventane staff ki ee exact Godown → Rack → Shelf → Bin location kanipistundi.
+                  Staff can see the warehouse, rack, shelf and bin location when processing an order.
                 </p>
               </div>
 
