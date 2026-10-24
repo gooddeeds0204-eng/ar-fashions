@@ -3156,11 +3156,11 @@ export default function Home() {
         </section>
       ) : (
         <>
-      {/* CINEMATIC EDITORIAL HERO */}
-      <section className="bg-[#031B14]">
+      {/* CINEMATIC EDITORIAL HERO — admin-managed media and CTA remain intact */}
+      <section className="bg-[#031B14] sm:pb-4 sm:pt-3">
         <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div
-            className="ar-hero-frame relative touch-pan-y overflow-hidden bg-[#082219] sm:rounded-b-[2rem]"
+            className="ar-hero-frame relative isolate touch-pan-y overflow-hidden bg-[#082219] sm:rounded-[1.6rem] sm:border sm:border-[#D2BA88]/20 sm:shadow-[0_28px_65px_rgba(0,0,0,0.25)]"
             style={
               {
                 "--ar-hero-mobile-ratio":
@@ -3426,7 +3426,16 @@ export default function Home() {
                 }}
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-[#02150F]/58 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#02150F]/95 via-[#02150F]/18 to-transparent sm:bg-gradient-to-t sm:from-[#02150F]/55 sm:via-transparent" />
+              <div
+                className={`absolute inset-0 hidden sm:block ${
+                  activeBanner?.textAlign === "RIGHT"
+                    ? "bg-gradient-to-l from-[#021810]/75 via-[#021810]/20 to-transparent"
+                    : activeBanner?.textAlign === "CENTER"
+                      ? "bg-gradient-to-t from-[#021810]/35 to-transparent"
+                      : "bg-gradient-to-r from-[#021810]/85 via-[#021810]/25 to-transparent"
+                }`}
+              />
             </div>
 
             {!activeBanner &&
@@ -3442,7 +3451,7 @@ export default function Home() {
             ) : null}
 
             <div
-              className={`pointer-events-none relative z-20 flex h-full p-6 pb-14 sm:p-10 lg:p-14 ${
+              className={`pointer-events-none relative z-20 flex h-full p-5 pb-[4.5rem] sm:p-10 lg:px-16 lg:py-12 ${
                 activeBanner?.textAlign ===
                 "CENTER"
                   ? "items-end justify-center text-center sm:items-center"
@@ -3453,7 +3462,7 @@ export default function Home() {
               }`}
             >
               <div
-                className={`max-w-[560px] ${
+                className={`w-full max-w-[530px] ${
                   activeBanner?.textAlign ===
                   "CENTER"
                     ? "flex flex-col items-center"
@@ -3464,7 +3473,7 @@ export default function Home() {
                 }`}
               >
                 <p
-                  className="text-[8px] font-black uppercase tracking-[0.42em] sm:text-[10px]"
+                  className="text-[9px] font-semibold uppercase tracking-[0.35em] sm:text-[11px]"
                   style={{
                     color:
                       activeBanner
@@ -3480,11 +3489,11 @@ export default function Home() {
                 >
                   {activeBanner
                     ?.eyebrowText ||
-                    "New Season"}
+                    "THE AS EDIT"}
                 </p>
 
                 <h1
-                  className="mt-3 max-w-[520px] whitespace-pre-line text-[2.9rem] font-black leading-[0.9] tracking-[-0.045em] sm:text-[4.8rem]"
+                  className="mt-3 max-w-[520px] whitespace-pre-line text-[clamp(2.35rem,8.5vw,3.35rem)] font-medium leading-[0.98] tracking-[-0.04em] sm:mt-4 sm:text-[clamp(3.15rem,5vw,5.1rem)]"
                   style={{
                     color:
                       activeBanner
@@ -3500,11 +3509,11 @@ export default function Home() {
                 >
                   {activeBanner
                     ?.title ||
-                    "Tradition\nReimagined"}
+                    "Elegant\nEveryday Fashion"}
                 </h1>
 
                 <p
-                  className="mt-4 max-w-[360px] whitespace-pre-line text-[1.02rem] leading-6 sm:text-[1.3rem]"
+                  className="mt-3 max-w-[350px] whitespace-pre-line text-[0.83rem] leading-5 sm:mt-5 sm:text-[1.05rem] sm:leading-7"
                   style={{
                     color:
                       activeBanner
@@ -3520,10 +3529,10 @@ export default function Home() {
                 >
                   {activeBanner
                     ?.subtitle ||
-                    "Ethnic looks for your modern era"}
+                    "Curated styles for Women, Men, Girl Kids & Boy Kids."}
                 </p>
 
-                <div className="pointer-events-auto mt-6">
+                <div className="pointer-events-auto mt-6 flex flex-wrap items-center gap-2.5 sm:gap-3">
                   <button
                     type="button"
                     onClick={() => {
@@ -3546,7 +3555,7 @@ export default function Home() {
                           });
                       }
                     }}
-                    className="inline-flex items-center gap-4 rounded-[0.2rem] border px-5 py-3.5 text-[9px] font-black uppercase tracking-[0.13em] shadow-[0_12px_30px_rgba(0,0,0,0.16)] transition-[transform,opacity] duration-200 active:scale-[0.98]"
+                    className="inline-flex min-h-11 items-center justify-center gap-3 rounded-full border px-5 py-3 text-[10px] font-bold tracking-[0.04em] shadow-[0_12px_30px_rgba(0,0,0,0.15)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(0,0,0,0.2)] active:scale-[0.98] sm:px-6"
                     style={{
                       color:
                         activeBanner
@@ -3571,7 +3580,14 @@ export default function Home() {
                     {activeBanner
                       ?.buttonText ||
                       "Shop the collection"}
-                    <span>→</span>
+                    <span aria-hidden="true">→</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/categories")}
+                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#FFF8EC]/65 bg-[#031B14]/25 px-4 py-3 text-[10px] font-bold tracking-[0.04em] text-[#FFF8EC] backdrop-blur-sm transition hover:border-[#FFF8EC] hover:bg-[#FFF8EC]/15 active:scale-[0.98] sm:px-6"
+                  >
+                    Explore categories
                   </button>
                 </div>
               </div>
@@ -3593,9 +3609,34 @@ export default function Home() {
               </div>
             ) : null}
 
+            {(activeBanner ? banners.length > 1 : heroProducts.length > 1) ? (
+              <div className="pointer-events-none absolute inset-x-5 top-1/2 z-30 hidden -translate-y-1/2 items-center justify-between sm:flex">
+                <button
+                  type="button"
+                  aria-label="Previous banner"
+                  className="pointer-events-auto grid h-11 w-11 place-items-center rounded-full border border-white/45 bg-[#071B15]/40 text-xl text-[#FFF8EC] backdrop-blur-sm transition hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  onClick={() => activeBanner
+                    ? setBannerIndex((current) => (current - 1 + banners.length) % banners.length)
+                    : moveHeroSlide(-1)}
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  aria-label="Next banner"
+                  className="pointer-events-auto grid h-11 w-11 place-items-center rounded-full border border-white/45 bg-[#071B15]/40 text-xl text-[#FFF8EC] backdrop-blur-sm transition hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  onClick={() => activeBanner
+                    ? setBannerIndex((current) => (current + 1) % banners.length)
+                    : moveHeroSlide(1)}
+                >
+                  →
+                </button>
+              </div>
+            ) : null}
+
             {activeBanner &&
             banners.length > 1 ? (
-              <div className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2">
+              <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/15 bg-[#041A13]/35 px-3 py-2 backdrop-blur-md">
                 {banners.map(
                   (
                     banner,
@@ -3612,12 +3653,10 @@ export default function Home() {
                           index,
                         )
                       }
-                      className={`h-2 w-2 rounded-full border border-white/70 ${
-                        index ===
-                        bannerIndex %
-                          banners.length
-                          ? "bg-white"
-                          : "bg-transparent"
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        index === bannerIndex % banners.length
+                          ? "w-8 bg-[#FFF8EC]"
+                          : "w-2.5 bg-white/40 hover:bg-white/70"
                       }`}
                     />
                   ),
@@ -3626,7 +3665,7 @@ export default function Home() {
             ) : !activeBanner &&
               heroProducts.length >
                 1 ? (
-              <div className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2">
+              <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/15 bg-[#041A13]/35 px-3 py-2 backdrop-blur-md">
                 {heroProducts.map(
                   (
                     product,
@@ -3643,12 +3682,10 @@ export default function Home() {
                           index,
                         )
                       }
-                      className={`h-2 w-2 rounded-full border border-white/70 ${
-                        index ===
-                        heroSlideIndex %
-                          heroProducts.length
-                          ? "bg-white"
-                          : "bg-transparent"
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        index === heroSlideIndex % heroProducts.length
+                          ? "w-8 bg-[#FFF8EC]"
+                          : "w-2.5 bg-white/40 hover:bg-white/70"
                       }`}
                     />
                   ),
