@@ -102,23 +102,15 @@ export async function verifyPassword(
       const originalSalt = Buffer.from(salt, "base64url");
       if (originalSalt.length !== 16) return false;
 
-      // Legacy implementations may use the encoded salt text or
-      // the decoded random salt bytes as the KDF salt.
-      const textSaltHash = (await scrypt(
+      // The original admin hashing implementation used the
+      // base64url-encoded salt STRING as the scrypt salt.
+      const supplied = (await scrypt(
         password,
         salt,
         KEY_LENGTH,
       )) as Buffer;
 
-      if (timingSafeEqual(textSaltHash, expected)) return true;
-
-      const rawSaltHash = (await scrypt(
-        password,
-        originalSalt,
-        KEY_LENGTH,
-      )) as Buffer;
-
-      return timingSafeEqual(rawSaltHash, expected);
+      return timingSafeEqual(supplied, expected);
     }
 
     return false;
