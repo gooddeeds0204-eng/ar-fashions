@@ -1482,14 +1482,7 @@ export default function EditProductPage() {
                   </h3>
 
                   <p className="mt-2 text-xs leading-5 text-slate-400">
-                    ON chesthe reseller single
-                    color / single size lo full
-                    MOQ select cheyyaleru.
-                    Available colors and sizes
-                    automatic ga cover ayi,
-                    extra pieces high-stock
-                    variants nunchi balanced ga
-                    allocate avutayi.
+                    When enabled, reseller packs cover the available colours and sizes. Additional units are allocated from variants with more stock.
                   </p>
                 </div>
 
@@ -1622,7 +1615,7 @@ export default function EditProductPage() {
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Prathi colour ki actual ga available unna sizes maatrame select cheyyandi.
+                Select only the sizes available for each colour.
               </p>
             </div>
 
@@ -1646,7 +1639,7 @@ export default function EditProductPage() {
               </p>
 
               <p className="mt-1 text-sm text-slate-500">
-                Colour select chesaka aa colour ki sizes ikkada manage cheyyachu.
+                Choose a colour to manage its available sizes.
               </p>
             </div>
           ) : (
@@ -1784,7 +1777,7 @@ export default function EditProductPage() {
                     : "Kids — exact measurements by age/size"}
               </h2>
               <p className="mt-1 text-sm leading-6 text-slate-500">
-                Actual garment measurements inches lo update cheyyandi. Chest/Waist full circumference ga enter cheyyandi. Empty fields customer ki hide avutayi.
+                Enter actual garment measurements in inches. Record chest and waist as full circumference. Blank values will be hidden from customers.
               </p>
             </div>
 
@@ -2098,7 +2091,7 @@ export default function EditProductPage() {
               </p>
 
               <p className="mt-1 text-xs leading-5 text-slate-500">
-                Upload chese photos/video ee selected colour ki link avutayi.
+                Uploaded photos and videos will be linked to the selected colour.
               </p>
 
               <div className="mt-3 flex flex-wrap gap-2">
