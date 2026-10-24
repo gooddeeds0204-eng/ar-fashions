@@ -1484,7 +1484,7 @@ export default function AdminBannersPage() {
                 </h3>
 
                 <p className="mt-1 text-xs leading-5 text-zinc-500">
-                  Mobile and desktop hero ki separate ratio and zoom save avtayi. 100% base fit; zoom penchithe subject closer ga vastundi.
+                  Set a separate aspect ratio and zoom for mobile and desktop banners. Use 100% for the original view, or increase zoom to bring the subject closer.
                 </p>
               </div>
 
@@ -2054,7 +2054,7 @@ export default function AdminBannersPage() {
                 </h3>
 
                 <p className="mt-1 text-xs leading-5 text-zinc-500">
-                  Poster upload paina unna media controls lo change cheyyachu. Ikkada hero text each element ni separate ga style cheyyachu.
+                  Change the banner media using the upload controls above. Each heading, subtitle and button can be styled separately.
                 </p>
               </div>
 
@@ -2275,7 +2275,7 @@ export default function AdminBannersPage() {
                   </select>
 
                   <p className="mt-2 text-[10px] leading-5 text-zinc-400">
-                    Category select chesthe CTA click direct ga aa category products ki scroll/filter avtundi. Category empty unte CTA URL field use avtundi.
+                    Choose a category to link the banner button to its products. If no category is selected, the button uses the URL entered above.
                   </p>
                 </label>
               </div>
