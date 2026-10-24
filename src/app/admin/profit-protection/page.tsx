@@ -244,7 +244,7 @@ export default function ProfitProtectionPage() {
             </h1>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
-              Current variant cost ni actual retail/reseller fallback pricing tho compare chesi loss and low-margin risk ni sale mundhe show chestundi. This screen is warning-only; product save ni block cheyyadu.
+              Compares current variant costs with retail and reseller selling prices to flag low-margin or loss-making products before a sale. This screen is warning-only; product save ni block cheyyadu.
             </p>
           </div>
 
